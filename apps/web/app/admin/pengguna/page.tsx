@@ -1,6 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search, Download, Users, Loader2 } from "lucide-react";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Input,
+  Pagination,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
 
 type User = {
@@ -102,209 +121,145 @@ export default function AdminPenggunaPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="up-page">
+    <div className="flex max-w-[1200px] flex-col gap-5">
       {/* Header */}
-      <div className="up-header">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="up-title">Manajemen Pengguna</h1>
-          <p className="up-sub">{total.toLocaleString("id-ID")} pengguna terdaftar</p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Pengguna</h1>
+          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} pengguna terdaftar</p>
         </div>
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={handleExportCSV}
           disabled={exporting}
-          className="up-export-btn"
-          style={{
-            padding: "9px 16px",
-            borderRadius: "10px",
-            background: "#10B981",
-            color: "white",
-            border: "none",
-            fontSize: "13px",
-            fontWeight: 600,
-            cursor: "pointer",
-            opacity: exporting ? 0.6 : 1,
-          }}
+          leftIcon={<Download size={16} aria-hidden="true" />}
         >
-          {exporting ? "⏳ Mengekspor..." : "📥 Ekspor CSV"}
-        </button>
+          {exporting ? "Mengekspor..." : "Ekspor CSV"}
+        </Button>
       </div>
 
       {/* Filters */}
-      <div className="up-filters">
-        <form onSubmit={handleSearch} className="up-search-form">
-          <input
-            className="up-search-input"
+      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
+        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+          <Input
+            containerClassName="flex-1"
+            leftIcon={<Search size={16} aria-hidden="true" />}
             placeholder="Cari nama atau email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            aria-label="Cari pengguna"
           />
-          <button type="submit" className="up-search-btn">🔍 Cari</button>
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
-        <div className="up-role-tabs">
-          {["all", "student", "trainer", "affiliate", "super_admin"].map((role) => (
-            <button
-              key={role}
-              onClick={() => { setSelectedRole(role); setPage(1); }}
-              className={`up-role-tab ${selectedRole === role ? "up-role-active" : ""}`}
-            >
-              {role === "all" ? "Semua" : role.replace("_", " ")}
-            </button>
-          ))}
-        </div>
+        <Tabs value={selectedRole} onValueChange={(v) => { setSelectedRole(v); setPage(1); }}>
+          <TabsList className="flex-wrap">
+            {["all", "student", "trainer", "affiliate", "super_admin"].map((role) => (
+              <TabsTrigger key={role} value={role} className="capitalize">
+                {role === "all" ? "Semua" : role.replace("_", " ")}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Table */}
-      <div className="up-table-wrap">
-        {loading ? (
-          <div className="up-loading"><span className="up-spinner" /></div>
-        ) : users.length === 0 ? (
-          <div className="up-empty">
-            <p>👥</p><p>Tidak ada pengguna ditemukan</p>
-          </div>
-        ) : (
-          <table className="up-table">
-            <thead>
-              <tr>
-                <th>Pengguna</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Provider</th>
-                <th>Kursus</th>
-                <th>Bergabung</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => {
-                const roleNames = user.roles?.map((r) => r.role) ?? [];
-                const initials = user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-                return (
-                  <tr key={user.id}>
-                    <td>
-                      <div className="up-user-cell">
-                        <div className="up-user-avatar">{initials}</div>
-                        <div>
-                          <p className="up-user-name">{user.name}</p>
-                          <p className="up-user-email">{user.email}</p>
+      {loading ? (
+        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
+          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+        </div>
+      ) : users.length === 0 ? (
+        <EmptyState icon={Users} title="Tidak ada pengguna ditemukan" description="Coba ubah kata kunci pencarian atau filter role." />
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="overflow-x-auto">
+            <Table>
+              <THead>
+                <tr>
+                  <TH>Pengguna</TH>
+                  <TH>Role</TH>
+                  <TH>Status</TH>
+                  <TH>Provider</TH>
+                  <TH>Kursus</TH>
+                  <TH>Bergabung</TH>
+                  <TH>Aksi</TH>
+                </tr>
+              </THead>
+              <TBody>
+                {users.map((user) => {
+                  const roleNames = user.roles?.map((r) => r.role) ?? [];
+                  return (
+                    <TR key={user.id}>
+                      <TD>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={user.name} size="md" />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-text-primary">{user.name}</p>
+                            <p className="text-xs text-text-secondary">{user.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      {roleNames.map((r) => (
-                        <span key={r} className={`up-badge ${ROLES_COLOR[r] ?? "bg-gray-100 text-gray-600"}`}>
-                          {r.replace("_", " ")}
+                      </TD>
+                      <TD>
+                        <div className="flex flex-wrap gap-1">
+                          {roleNames.map((r) => (
+                            <span
+                              key={r}
+                              className={cn(
+                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize",
+                                ROLES_COLOR[r] ?? "bg-gray-100 text-gray-600",
+                              )}
+                            >
+                              {r.replace("_", " ")}
+                            </span>
+                          ))}
+                        </div>
+                      </TD>
+                      <TD>
+                        <Badge variant={user.isVerified ? "success" : "warning"} dot>
+                          {user.isVerified ? "Terverifikasi" : "Belum"}
+                        </Badge>
+                      </TD>
+                      <TD>
+                        <span className="rounded-md bg-surface-sunken px-2 py-0.5 text-xs text-text-secondary">
+                          {user.provider ?? "email"}
                         </span>
-                      ))}
-                    </td>
-                    <td>
-                      <span className={`up-badge ${user.isVerified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                        {user.isVerified ? "✓ Terverifikasi" : "⏳ Belum"}
-                      </span>
-                    </td>
-                    <td><span className="up-provider">{user.provider ?? "email"}</span></td>
-                    <td><span className="up-count">{user._count?.enrollments ?? 0}</span></td>
-                    <td>
-                      <span className="up-date">
+                      </TD>
+                      <TD>
+                        <span className="font-bold text-accent-cyan-strong">{user._count?.enrollments ?? 0}</span>
+                      </TD>
+                      <TD className="whitespace-nowrap text-text-secondary">
                         {new Date(user.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="up-actions">
+                      </TD>
+                      <TD>
                         <button
-                          className={`up-action-btn ${user.isVerified ? "up-btn-warn" : "up-btn-success"}`}
                           onClick={() => toggleVerify(user.id, user.isVerified)}
                           title={user.isVerified ? "Cabut verifikasi" : "Verifikasi email"}
+                          className={cn(
+                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                            user.isVerified
+                              ? "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20"
+                              : "bg-green-600/10 text-green-700 hover:bg-green-600/20",
+                          )}
                         >
                           {user.isVerified ? "Cabut" : "Verifikasi"}
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="up-pagination">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="up-page-btn">← Prev</button>
-          <span className="up-page-info">Halaman {page} dari {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="up-page-btn">Next →</button>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+              <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+              <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+            </div>
+          )}
         </div>
       )}
-
-      <style jsx>{`
-        .up-page { display: flex; flex-direction: column; gap: 20px; max-width: 1200px; }
-        .up-header { display: flex; align-items: center; justify-content: space-between; }
-        .up-title { font-size: 20px; font-weight: 800; color: #1D1D1F; }
-        .up-sub { font-size: 13px; color: #6E6E73; margin-top: 3px; }
-
-        .up-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .up-search-form { display: flex; gap: 8px; flex: 1; min-width: 240px; }
-        .up-search-input {
-          flex: 1; padding: 9px 14px; border-radius: 10px;
-          border: 1.5px solid #E5E5EA; font-size: 13px; outline: none;
-        }
-        .up-search-input:focus { border-color: #0077A8; box-shadow: 0 0 0 3px rgba(0,119,168,0.1); }
-        .up-search-btn {
-          padding: 9px 16px; border-radius: 10px; background: #0077A8;
-          color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer;
-        }
-        .up-search-btn:hover { background: #005f87; }
-
-        .up-role-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-        .up-role-tab {
-          padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
-          border: 1.5px solid #E5E5EA; background: white; cursor: pointer;
-          color: #6E6E73; transition: all 0.18s; text-transform: capitalize;
-        }
-        .up-role-active { background: #0077A8; color: white; border-color: #0077A8; }
-
-        .up-table-wrap { background: white; border-radius: 18px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-        .up-table { width: 100%; border-collapse: collapse; }
-        .up-table thead tr { background: #F9FAFB; border-bottom: 1px solid #F0F0F5; }
-        .up-table th { padding: 12px 16px; font-size: 11px; font-weight: 700; color: #6E6E73; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; white-space: nowrap; }
-        .up-table td { padding: 12px 16px; font-size: 13px; color: #1D1D1F; border-bottom: 1px solid #F5F5F7; }
-        .up-table tr:last-child td { border-bottom: none; }
-        .up-table tr:hover td { background: #FAFAFA; }
-
-        .up-user-cell { display: flex; align-items: center; gap: 10px; }
-        .up-user-avatar {
-          width: 34px; height: 34px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #7C3AED);
-          color: white; font-size: 11px; font-weight: 800;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .up-user-name { font-size: 13px; font-weight: 600; }
-        .up-user-email { font-size: 11px; color: #6E6E73; }
-
-        .up-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; display: inline-block; margin: 1px; text-transform: capitalize; }
-        .up-provider { font-size: 12px; color: #6E6E73; background: #F5F5F7; padding: 3px 8px; border-radius: 6px; }
-        .up-count { font-size: 13px; font-weight: 700; color: #0077A8; }
-        .up-date { font-size: 12px; color: #6E6E73; }
-
-        .up-actions { display: flex; gap: 6px; }
-        .up-action-btn { padding: 5px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; transition: all 0.18s; }
-        .up-btn-success { background: #DCFCE7; color: #16A34A; }
-        .up-btn-success:hover { background: #16A34A; color: white; }
-        .up-btn-warn { background: #FEF3C7; color: #D97706; }
-        .up-btn-warn:hover { background: #D97706; color: white; }
-
-        .up-loading { display: flex; justify-content: center; align-items: center; padding: 48px; }
-        .up-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #0077A8; border-top-color: transparent; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .up-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px; color: #9CA3AF; font-size: 14px; }
-        .up-empty p:first-child { font-size: 32px; }
-
-        .up-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; }
-        .up-page-btn { padding: 8px 16px; border-radius: 10px; border: 1.5px solid #E5E5EA; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #1D1D1F; transition: all 0.18s; }
-        .up-page-btn:hover:not(:disabled) { border-color: #0077A8; color: #0077A8; }
-        .up-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .up-page-info { font-size: 13px; color: #6E6E73; }
-      `}</style>
     </div>
   );
 }

@@ -1,6 +1,28 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import {
+  Users,
+  Activity,
+  Wallet,
+  ShoppingBag,
+  GraduationCap,
+  Trophy,
+  TrendingUp,
+  PieChart,
+  Database,
+  RefreshCw,
+  AlertCircle,
+  BookOpen,
+  CreditCard,
+  Star,
+  Newspaper,
+  CalendarDays,
+  BookMarked,
+  ClipboardList,
+  type LucideIcon,
+} from "lucide-react";
+import { Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 /* ─────────────────────────── Types ────────────────────────────────────────── */
@@ -277,17 +299,17 @@ function HorizontalBarChart({ data }: { data: TopCourse[] }) {
 
 /* ─────────────────────────── Page Component ──────────────────────────────── */
 
-const DB_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  users: { label: "Users", icon: "👥", color: "#0077A8" },
-  courses: { label: "Kursus", icon: "📖", color: "#7C3AED" },
-  orders: { label: "Orders", icon: "💳", color: "#059669" },
-  enrollments: { label: "Enrollment", icon: "🎓", color: "#DC2626" },
-  reviews: { label: "Review", icon: "⭐", color: "#F59E0B" },
-  blogs: { label: "Blog", icon: "✍️", color: "#EC4899" },
-  events: { label: "Event", icon: "🎫", color: "#8B5CF6" },
-  ebooks: { label: "E-Book", icon: "📘", color: "#0891B2" },
-  leads: { label: "Leads", icon: "📋", color: "#64748B" },
-  payouts: { label: "Payouts", icon: "💰", color: "#059669" },
+const DB_LABELS: Record<string, { label: string; icon: LucideIcon; color: string }> = {
+  users: { label: "Users", icon: Users, color: "#0077A8" },
+  courses: { label: "Kursus", icon: BookOpen, color: "#7C3AED" },
+  orders: { label: "Orders", icon: CreditCard, color: "#059669" },
+  enrollments: { label: "Enrollment", icon: GraduationCap, color: "#DC2626" },
+  reviews: { label: "Review", icon: Star, color: "#F59E0B" },
+  blogs: { label: "Blog", icon: Newspaper, color: "#EC4899" },
+  events: { label: "Event", icon: CalendarDays, color: "#8B5CF6" },
+  ebooks: { label: "E-Book", icon: BookMarked, color: "#0891B2" },
+  leads: { label: "Leads", icon: ClipboardList, color: "#64748B" },
+  payouts: { label: "Payouts", icon: Wallet, color: "#059669" },
 };
 
 export default function SystemHealthPage() {
@@ -325,172 +347,150 @@ export default function SystemHealthPage() {
 
   if (loading) {
     return (
-      <div className="sh-loading">
-        <span className="sh-spinner" />
-        <style jsx>{`
-          .sh-loading { display:flex; justify-content:center; align-items:center; min-height:50vh; }
-          .sh-spinner { width:36px; height:36px; border-radius:50%; border:3px solid #0077A8; border-top-color:transparent; animation:spin .8s linear infinite; }
-          @keyframes spin { to { transform:rotate(360deg); } }
-        `}</style>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="sh-error">
-        <p>❌ {error ?? "Data tidak tersedia"}</p>
-        <button onClick={fetchData}>Coba Lagi</button>
-        <style jsx>{`
-          .sh-error { text-align:center; padding:60px 20px; color:#EF4444; }
-          .sh-error button { margin-top:16px; padding:8px 20px; border-radius:8px; border:1px solid #0077A8; color:#0077A8; background:white; cursor:pointer; font-weight:600; }
-          .sh-error button:hover { background:#E8F4F9; }
-        `}</style>
+      <div className="px-5 py-16 text-center">
+        <p className="flex items-center justify-center gap-2 text-red-600">
+          <AlertCircle size={18} aria-hidden="true" /> {error ?? "Data tidak tersedia"}
+        </p>
+        <button
+          type="button"
+          onClick={fetchData}
+          className="mt-4 rounded-lg border border-solid border-accent-cyan-strong bg-surface-card px-5 py-2 font-semibold text-accent-cyan-strong transition hover:bg-surface-accent-soft"
+        >
+          Coba Lagi
+        </button>
       </div>
     );
   }
 
-  const kpiCards = [
-    { label: "Total Users", value: data.users.total.toLocaleString("id-ID"), icon: "👥", color: "#0077A8", bg: "#E8F4F9" },
-    { label: "Active (24h)", value: data.users.activeToday.toLocaleString("id-ID"), icon: "🟢", color: "#059669", bg: "#D1FAE5" },
-    { label: "Total Revenue", value: `Rp ${data.revenue.total.toLocaleString("id-ID")}`, icon: "💰", color: "#DC2626", bg: "#FEE2E2" },
-    { label: "Total Orders", value: data.orders.total.toLocaleString("id-ID"), icon: "💳", color: "#7C3AED", bg: "#EDE9FE" },
-    { label: "Enrollments", value: data.enrollments.total.toLocaleString("id-ID"), icon: "🎓", color: "#059669", bg: "#D1FAE5" },
-    { label: "Top Rating", value: data.topCourses[0] ? `⭐ ${data.topCourses[0].rating.toFixed(1)}` : "-", icon: "🏆", color: "#F59E0B", bg: "#FEF3C7" },
+  const kpiCards: { label: string; value: string; icon: LucideIcon; color: string; bg: string }[] = [
+    { label: "Total Users", value: data.users.total.toLocaleString("id-ID"), icon: Users, color: "#0077A8", bg: "#E8F4F9" },
+    { label: "Active (24h)", value: data.users.activeToday.toLocaleString("id-ID"), icon: Activity, color: "#059669", bg: "#D1FAE5" },
+    { label: "Total Revenue", value: `Rp ${data.revenue.total.toLocaleString("id-ID")}`, icon: Wallet, color: "#DC2626", bg: "#FEE2E2" },
+    { label: "Total Orders", value: data.orders.total.toLocaleString("id-ID"), icon: ShoppingBag, color: "#7C3AED", bg: "#EDE9FE" },
+    { label: "Enrollments", value: data.enrollments.total.toLocaleString("id-ID"), icon: GraduationCap, color: "#059669", bg: "#D1FAE5" },
+    { label: "Top Rating", value: data.topCourses[0] ? data.topCourses[0].rating.toFixed(1) : "-", icon: Trophy, color: "#F59E0B", bg: "#FEF3C7" },
   ];
 
   return (
-    <div className="sh-page">
+    <div className="flex flex-col gap-5">
       {/* Header */}
-      <div className="sh-header">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="sh-title">Kesehatan Sistem</h1>
-          <p className="sh-subtitle">
+          <h1 className="text-2xl font-extrabold tracking-tight text-text-primary">Kesehatan Sistem</h1>
+          <p className="mt-1 text-[13px] text-text-secondary">
             Visualisasi data real-time platform Jago Akademi
-            {lastRefresh && <span className="sh-refresh-time"> · Terakhir: {lastRefresh.toLocaleTimeString("id-ID")}</span>}
+            {lastRefresh && (
+              <span className="font-medium text-accent-cyan-strong"> · Terakhir: {lastRefresh.toLocaleTimeString("id-ID")}</span>
+            )}
           </p>
         </div>
-        <button type="button" className="sh-refresh-btn" onClick={fetchData}>
-          🔄 Refresh
+        <button
+          type="button"
+          onClick={fetchData}
+          className="inline-flex items-center gap-2 rounded-xl border border-solid border-border-default bg-surface-card px-4 py-2 text-[13px] font-semibold text-accent-cyan-strong transition hover:bg-surface-accent-soft"
+        >
+          <RefreshCw size={15} aria-hidden="true" /> Refresh
         </button>
       </div>
 
       {/* KPI Summary */}
-      <div className="sh-kpi-grid">
-        {kpiCards.map((k) => (
-          <div key={k.label} className="sh-kpi-card">
-            <div className="sh-kpi-icon" style={{ background: k.bg }}>
-              <span>{k.icon}</span>
-            </div>
-            <div className="sh-kpi-body">
-              <p className="sh-kpi-value" style={{ color: k.color }}>{k.value}</p>
-              <p className="sh-kpi-label">{k.label}</p>
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3.5">
+        {kpiCards.map((k) => {
+          const Icon = k.icon;
+          return (
+            <Card key={k.label} hoverable className="flex items-center gap-3.5 p-4">
+              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: k.bg }}>
+                <Icon size={20} style={{ color: k.color }} aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-lg font-extrabold" style={{ color: k.color }}>{k.value}</p>
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{k.label}</p>
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Charts Row 1: Revenue + User Growth */}
-      <div className="sh-grid-2">
-        <div className="sh-card">
-          <div className="sh-card-head">
-            <h2>💰 Tren Revenue (12 Bulan)</h2>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <TrendingUp size={18} className="text-accent-cyan-strong" aria-hidden="true" />
+            <h2 className="text-[15px] font-bold text-text-primary">Tren Revenue (12 Bulan)</h2>
           </div>
           <LineChart data={data.revenue.chart} valueKey="amount" color="#0077A8" gradientId="revGrad" prefix="Rp " />
-        </div>
-        <div className="sh-card">
-          <div className="sh-card-head">
-            <h2>👥 Pertumbuhan User (12 Bulan)</h2>
+        </Card>
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <Users size={18} className="text-accent-purple" aria-hidden="true" />
+            <h2 className="text-[15px] font-bold text-text-primary">Pertumbuhan User (12 Bulan)</h2>
           </div>
           <BarChart data={data.users.chart} valueKey="count" color="#7C3AED" />
-        </div>
+        </Card>
       </div>
 
       {/* Charts Row 2: Enrollment + Order Distribution */}
-      <div className="sh-grid-2">
-        <div className="sh-card">
-          <div className="sh-card-head">
-            <h2>🎓 Tren Enrollment (12 Bulan)</h2>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <GraduationCap size={18} className="text-green-600" aria-hidden="true" />
+            <h2 className="text-[15px] font-bold text-text-primary">Tren Enrollment (12 Bulan)</h2>
           </div>
           <LineChart data={data.enrollments.chart} valueKey="count" color="#059669" gradientId="enrGrad" />
-        </div>
-        <div className="sh-card">
-          <div className="sh-card-head">
-            <h2>📊 Distribusi Status Order</h2>
+        </Card>
+        <Card className="p-6">
+          <div className="mb-4 flex items-center gap-2">
+            <PieChart size={18} className="text-accent-cyan-strong" aria-hidden="true" />
+            <h2 className="text-[15px] font-bold text-text-primary">Distribusi Status Order</h2>
           </div>
           <DonutChart data={data.orders.distribution} />
-        </div>
+        </Card>
       </div>
 
       {/* Top Courses */}
-      <div className="sh-card">
-        <div className="sh-card-head">
-          <h2>🏆 Top 5 Kursus Terpopuler</h2>
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Trophy size={18} className="text-amber-500" aria-hidden="true" />
+          <h2 className="text-[15px] font-bold text-text-primary">Top 5 Kursus Terpopuler</h2>
         </div>
         <HorizontalBarChart data={data.topCourses} />
-      </div>
+      </Card>
 
       {/* Database Overview */}
-      <div className="sh-card">
-        <div className="sh-card-head">
-          <h2>🗄️ Database Overview</h2>
+      <Card className="p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <Database size={18} className="text-accent-cyan-strong" aria-hidden="true" />
+          <h2 className="text-[15px] font-bold text-text-primary">Database Overview</h2>
         </div>
-        <div className="sh-db-grid">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
           {Object.entries(data.dbOverview).map(([key, count]) => {
-            const meta = DB_LABELS[key] ?? { label: key, icon: "📁", color: "#6B7280" };
+            const meta = DB_LABELS[key] ?? { label: key, icon: Database, color: "#6B7280" };
+            const Icon = meta.icon;
             return (
-              <div key={key} className="sh-db-item">
-                <div className="sh-db-icon">{meta.icon}</div>
-                <div className="sh-db-count" style={{ color: meta.color }}>{count.toLocaleString("id-ID")}</div>
-                <div className="sh-db-label">{meta.label}</div>
+              <div key={key} className="rounded-xl bg-surface-sunken p-4 text-center transition hover:-translate-y-0.5">
+                <Icon size={22} className="mx-auto mb-1.5" style={{ color: meta.color }} aria-hidden="true" />
+                <div className="text-xl font-extrabold" style={{ color: meta.color }}>{count.toLocaleString("id-ID")}</div>
+                <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{meta.label}</div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      {/* ─── Styles ──────────────────────────────────────────────────────── */}
+      {/* ─── Chart-internal styles (SVG/CSS primitives used by the chart
+             components above — page shell now uses the UI kit + tokens) ──── */}
       <style jsx global>{`
-        .sh-page { display: flex; flex-direction: column; gap: 20px; }
-
-        /* Header */
-        .sh-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
-        .sh-title { font-size: 24px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em; }
-        .sh-subtitle { font-size: 13px; color: #6E6E73; margin-top: 4px; }
-        .sh-refresh-time { color: #0077A8; font-weight: 500; }
-        .sh-refresh-btn {
-          padding: 8px 18px; border-radius: 10px; border: 1px solid rgba(0,119,168,0.2);
-          background: white; color: #0077A8; font-weight: 600; font-size: 13px;
-          cursor: pointer; transition: all 0.18s;
-        }
-        .sh-refresh-btn:hover { background: #E8F4F9; border-color: #0077A8; }
-
-        /* KPI Grid */
-        .sh-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-        .sh-kpi-card {
-          display: flex; align-items: center; gap: 14px;
-          background: white; border-radius: 14px; padding: 16px 18px;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-          transition: transform 0.18s, box-shadow 0.18s;
-        }
-        .sh-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .sh-kpi-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .sh-kpi-body { min-width: 0; }
-        .sh-kpi-value { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .sh-kpi-label { font-size: 11px; color: #6E6E73; margin-top: 2px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.04em; }
-
-        /* Grid */
-        .sh-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (max-width: 900px) { .sh-grid-2 { grid-template-columns: 1fr; } }
-
-        /* Cards */
-        .sh-card { background: white; border-radius: 16px; padding: 20px 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-        .sh-card-head { margin-bottom: 16px; }
-        .sh-card-head h2 { font-size: 15px; font-weight: 700; color: #1D1D1F; }
-
         /* SVG Charts */
         .sh-svg { width: 100%; height: auto; }
-        .sh-tick { font-size: 9px; fill: #9CA3AF; font-family: 'Inter', sans-serif; }
+        .sh-tick { font-size: 9px; fill: #6E6E73; font-family: 'Inter', sans-serif; }
         .sh-empty { text-align: center; color: #9CA3AF; padding: 40px 0; font-size: 13px; }
 
         /* Donut */
@@ -511,7 +511,7 @@ export default function SystemHealthPage() {
         .sh-hbar-title { font-size: 13px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sh-hbar-trainer { font-size: 11px; color: #9CA3AF; }
         .sh-hbar-bar-wrap { width: 200px; flex-shrink: 0; position: relative; }
-        .sh-hbar-bar { height: 22px; border-radius: 6px; background: linear-gradient(90deg, #0077A8, #00B4D8); min-width: 8px; transition: width 0.5s ease; }
+        .sh-hbar-bar { height: 22px; border-radius: 6px; background: linear-gradient(100deg, #0077A8 0%, #7C3AED 55%, #CC0052 100%); min-width: 8px; transition: width 0.5s ease; }
         .sh-hbar-val { position: absolute; right: 0; top: 3px; font-size: 11px; font-weight: 600; color: #6E6E73; padding-left: 8px; }
         .sh-hbar-rating { font-size: 12px; color: #F59E0B; font-weight: 600; flex-shrink: 0; width: 60px; text-align: right; }
 

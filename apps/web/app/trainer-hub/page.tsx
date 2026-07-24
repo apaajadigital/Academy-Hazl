@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import { BookOpen, Users, CreditCard, Wallet, Clock, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
 type DashboardData = {
@@ -40,89 +45,103 @@ export default function TrainerHubPage() {
     })();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#6E6E73]">Memuat...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-page">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
+    );
+  }
+  if (error) return <div className="flex min-h-screen items-center justify-center bg-surface-page text-red-600">{error}</div>;
   if (!data) return null;
 
-  const stats = [
-    { label: "Total Kursus", value: data.totalCourses, sub: `${data.publishedCourses} dipublikasikan` },
-    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID") },
-    { label: "Pendapatan Kotor", value: `Rp ${data.totalRevenue.toLocaleString("id-ID")}` },
-    { label: "Pendapatan Bersih (70%)", value: `Rp ${data.netRevenue.toLocaleString("id-ID")}`, highlight: true },
+  const stats: { label: string; value: string | number; sub?: string; highlight?: boolean; Icon: LucideIcon; wrap: string }[] = [
+    { label: "Total Kursus", value: data.totalCourses, sub: `${data.publishedCourses} dipublikasikan`, Icon: BookOpen, wrap: "bg-surface-accent-soft text-accent-cyan-strong" },
+    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), Icon: Users, wrap: "bg-accent-purple/10 text-accent-purple" },
+    { label: "Pendapatan Kotor", value: `Rp ${data.totalRevenue.toLocaleString("id-ID")}`, Icon: CreditCard, wrap: "bg-green-600/10 text-green-600" },
+    { label: "Pendapatan Bersih (70%)", value: `Rp ${data.netRevenue.toLocaleString("id-ID")}`, highlight: true, Icon: Wallet, wrap: "" },
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-surface-page">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-[#1D1D1F]">Trainer Hub</h1>
-            <p className="text-sm text-[#6E6E73] mt-0.5">Kelola kursus, pantau penjualan, tarik saldo</p>
+            <h1 className="font-display text-xl font-bold text-text-primary">Trainer Hub</h1>
+            <p className="mt-0.5 text-sm text-text-secondary">Kelola kursus, pantau penjualan, tarik saldo</p>
           </div>
-          <div className="flex gap-3">
-            <Link href="/trainer-hub/profil" className="px-4 py-2 border border-[#E5E5EA] text-[#6E6E73] text-sm rounded-xl hover:bg-[#F5F5F7] transition-colors">
-              Edit Profil
-            </Link>
-            <Link href="/trainer-hub/ulasan" className="px-4 py-2 border border-[#E5E5EA] text-[#6E6E73] text-sm rounded-xl hover:bg-[#F5F5F7] transition-colors">
-              Ulasan Siswa
-            </Link>
-            <Link href="/trainer-hub/payout" className="px-4 py-2 border border-[#0077A8] text-[#0077A8] text-sm rounded-xl hover:bg-[#E8F4F9] transition-colors">
-              Tarik Saldo
-            </Link>
-            <Link href="/trainer-hub/kursus" className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87] transition-colors">
-              Kelola Kursus
-            </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/trainer-hub/profil" className="btn btn-ghost btn-sm">Edit Profil</Link>
+            <Link href="/trainer-hub/ulasan" className="btn btn-ghost btn-sm">Ulasan Siswa</Link>
+            <Link href="/trainer-hub/payout" className="btn btn-outline btn-sm">Tarik Saldo</Link>
+            <Link href="/trainer-hub/kursus" className="btn btn-primary btn-sm">Kelola Kursus</Link>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map(({ label, value, sub, highlight }) => (
-            <div key={label} className={`rounded-2xl border p-5 ${highlight ? "bg-[#0077A8] border-[#0077A8] text-white" : "bg-white border-[#E5E5EA]"}`}>
-              <div className={`text-xs font-medium mb-2 ${highlight ? "text-blue-100" : "text-[#6E6E73]"}`}>{label}</div>
-              <div className={`text-2xl font-bold ${highlight ? "text-white" : "text-[#1D1D1F]"}`}>{value}</div>
-              {sub && <div className={`text-xs mt-1 ${highlight ? "text-blue-100" : "text-[#6E6E73]"}`}>{sub}</div>}
+      <div className="mx-auto max-w-6xl p-6">
+        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {stats.map(({ label, value, sub, highlight, Icon, wrap }) => (
+            <div
+              key={label}
+              className={cn(
+                "flex flex-col gap-3 rounded-[var(--radius-lg)] border p-5 shadow-e1",
+                highlight ? "border-transparent bg-brand-gradient text-white" : "border-border-default bg-surface-card",
+              )}
+            >
+              <span className={cn("flex h-10 w-10 items-center justify-center rounded-lg", highlight ? "bg-white/20 text-white" : wrap)}>
+                <Icon size={20} aria-hidden="true" />
+              </span>
+              <div>
+                <p className={cn("text-xs font-medium", highlight ? "text-white/80" : "text-text-secondary")}>{label}</p>
+                <p className={cn("mt-1 font-display text-2xl font-bold", highlight ? "text-white" : "text-text-primary")}>{value}</p>
+                {sub && <p className={cn("mt-1 text-xs", highlight ? "text-white/80" : "text-text-secondary")}>{sub}</p>}
+              </div>
             </div>
           ))}
         </div>
 
         {data.pendingPayouts > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 p-4">
             <div className="flex items-center gap-3">
-              <span className="text-amber-600 text-xl">⏳</span>
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600">
+                <Clock size={18} aria-hidden="true" />
+              </span>
               <div>
                 <p className="text-sm font-medium text-amber-800">{data.pendingPayouts} permintaan penarikan menunggu konfirmasi</p>
                 <p className="text-xs text-amber-600">Biasanya diproses dalam 1–3 hari kerja</p>
               </div>
             </div>
-            <Link href="/trainer-hub/payout" className="text-xs text-amber-700 font-medium hover:underline">Lihat →</Link>
+            <Link href="/trainer-hub/payout" className="text-xs font-medium text-amber-700 hover:underline">Lihat →</Link>
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E5EA]">
-            <h2 className="font-semibold text-[#1D1D1F]">Kursus Saya</h2>
-            <Link href="/trainer-hub/kursus" className="text-sm text-[#0077A8] hover:underline">Lihat semua →</Link>
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="flex items-center justify-between border-b border-border-default px-6 py-4">
+            <h2 className="font-display font-semibold text-text-primary">Kursus Saya</h2>
+            <Link href="/trainer-hub/kursus" className="text-sm text-accent-cyan-strong hover:underline">Lihat semua →</Link>
           </div>
           {data.courses.length === 0 ? (
-            <div className="text-center py-12 text-[#6E6E73]">
-              <div className="text-4xl mb-3">📚</div>
-              <p>Belum ada kursus. Mulai buat kursus pertama Anda!</p>
+            <div className="p-6">
+              <EmptyState
+                icon={BookOpen}
+                title="Belum ada kursus"
+                description="Mulai buat kursus pertama Anda!"
+              />
             </div>
           ) : (
-            <div className="divide-y divide-[#F5F5F7]">
+            <div className="divide-y divide-border-default">
               {data.courses.slice(0, 5).map((c) => (
-                <div key={c.id} className="px-6 py-4 flex items-center justify-between hover:bg-[#F5F5F7]">
+                <div key={c.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-surface-page">
                   <div>
-                    <p className="font-medium text-[#1D1D1F] text-sm">{c.title}</p>
-                    <p className="text-xs text-[#6E6E73] mt-0.5">{c.enrollments} peserta · Rp {c.price.toLocaleString("id-ID")}</p>
+                    <p className="text-sm font-medium text-text-primary">{c.title}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">{c.enrollments} peserta · Rp {c.price.toLocaleString("id-ID")}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${c.status === "published" ? "bg-green-100 text-green-700" : "bg-[#F5F5F7] text-[#6E6E73]"}`}>
+                    <Badge variant={c.status === "published" ? "success" : "neutral"} dot>
                       {c.status === "published" ? "Aktif" : "Draft"}
-                    </span>
-                    <Link href={`/trainer-hub/kursus/${c.id}`} className="text-xs text-[#0077A8] hover:underline">Analitik →</Link>
+                    </Badge>
+                    <Link href={`/trainer-hub/kursus/${c.id}`} className="text-xs text-accent-cyan-strong hover:underline">Analitik →</Link>
                   </div>
                 </div>
               ))}

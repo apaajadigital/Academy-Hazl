@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { AlertTriangle, Rocket, Loader2 } from "lucide-react";
+import { Badge, Button, Card, Input, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
 type LessonStat = {
@@ -136,8 +139,14 @@ export default function CourseAnalyticsPage() {
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#6E6E73]">Memuat...</div>;
-  if (error || !data) return <div className="min-h-screen flex items-center justify-center text-red-500">{error || "Data tidak ditemukan."}</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-page">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
+    );
+  }
+  if (error || !data) return <div className="flex min-h-screen items-center justify-center bg-surface-page text-red-600">{error || "Data tidak ditemukan."}</div>;
 
   const metrics = [
     { label: "Total Pelajaran", value: data.totalLessons },
@@ -148,39 +157,40 @@ export default function CourseAnalyticsPage() {
     { label: "Pendapatan Bersih (70%)", value: `Rp ${data.netRevenue.toLocaleString("id-ID")}`, highlight: true },
   ];
 
+  const statusVariant: "success" | "danger" | "warning" | "neutral" =
+    status === "published" ? "success" :
+    status === "archived" ? "danger" :
+    status === "pending" ? "warning" :
+    status === "rejected" ? "danger" :
+    "neutral";
+  const statusLabel =
+    status === "published" ? "Aktif Penjualan" :
+    status === "archived" ? "Archived (Off)" :
+    status === "pending" ? "Menunggu Peninjauan" :
+    status === "rejected" ? "Ditolak (Butuh Revisi)" :
+    "Draft";
+
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-12">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-4">
+    <div className="min-h-screen bg-surface-page pb-12">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sm mb-1">
-              <Link href="/trainer-hub" className="text-[#0077A8] hover:underline">Trainer Hub</Link>
-              <span className="text-[#6E6E73]">/</span>
-              <Link href="/trainer-hub/kursus" className="text-[#0077A8] hover:underline">Kursus</Link>
-              <span className="text-[#6E6E73]">/</span>
-              <span className="text-[#1D1D1F] font-medium">Analitik</span>
+            <div className="mb-1 flex items-center gap-2 text-sm">
+              <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+              <span className="text-text-secondary">/</span>
+              <Link href="/trainer-hub/kursus" className="text-accent-cyan-strong hover:underline">Kursus</Link>
+              <span className="text-text-secondary">/</span>
+              <span className="font-medium text-text-primary">Analitik</span>
             </div>
-            <h1 className="text-xl font-bold text-[#1D1D1F] mt-1">{data.title}</h1>
+            <h1 className="mt-1 font-display text-xl font-bold text-text-primary">{data.title}</h1>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-              status === "published" ? "bg-green-100 text-green-700" : 
-              status === "archived" ? "bg-red-100 text-red-700" : 
-              status === "pending" ? "bg-yellow-100 text-yellow-700" : 
-              status === "rejected" ? "bg-rose-100 text-rose-700" : 
-              "bg-gray-100 text-gray-700"
-            }`}>
-              {
-                status === "published" ? "Aktif Penjualan" : 
-                status === "archived" ? "Archived (Off)" : 
-                status === "pending" ? "Menunggu Peninjauan" : 
-                status === "rejected" ? "Ditolak (Butuh Revisi)" : 
-                "Draft"
-              }
-            </span>
+            <Badge variant={statusVariant} dot>{statusLabel}</Badge>
             {(status === "draft" || status === "rejected") && (
-              <button
+              <Button
+                variant="cyan"
+                size="sm"
                 onClick={async () => {
                   if (!confirm("Apakah Anda yakin ingin mengajukan kelas ini ke admin untuk direview? Setelah diajukan, status akan berubah menjadi Menunggu Peninjauan.")) return;
                   setSavingStatus(true);
@@ -209,133 +219,137 @@ export default function CourseAnalyticsPage() {
                   }
                 }}
                 disabled={savingStatus}
-                className="px-4 py-2 bg-[#0077A8] hover:bg-[#005f87] text-sm text-white font-semibold rounded-xl transition-colors disabled:opacity-50"
+                loading={savingStatus}
+                leftIcon={<Rocket size={16} aria-hidden="true" />}
               >
-                {savingStatus ? "Mengajukan..." : "🚀 Ajukan Review"}
-              </button>
+                {savingStatus ? "Mengajukan..." : "Ajukan Review"}
+              </Button>
             )}
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleToggleArchive}
               disabled={savingStatus || status === "draft" || status === "pending" || status === "rejected"}
-              className="px-4 py-2 bg-white border border-[#E5E5EA] text-sm text-[#1D1D1F] font-semibold rounded-xl hover:bg-[#F5F5F7] transition-colors disabled:opacity-50"
             >
               {savingStatus ? "Memproses..." : status === "archived" ? "Aktifkan Penjualan" : "Nonaktifkan (Archive)"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="mx-auto max-w-5xl p-6">
         {/* Rejection Alert Warning */}
         {(data.status === "draft" || data.status === "rejected") && data.adminFeedback && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+          <div className="mb-6 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 p-5">
             <div className="flex items-start gap-3">
-              <span className="text-xl">⚠️</span>
+              <AlertTriangle size={20} className="mt-0.5 flex-shrink-0 text-amber-600" aria-hidden="true" />
               <div>
                 <p className="text-sm font-semibold text-amber-800">Umpan Balik Penolakan Kelas dari Admin:</p>
-                <p className="text-sm text-amber-700 mt-1 whitespace-pre-wrap">{data.adminFeedback}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm text-amber-700">{data.adminFeedback}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3">
           {metrics.map(({ label, value, highlight }) => (
-            <div key={label} className={`rounded-2xl border p-5 ${highlight ? "bg-[#0077A8] border-[#0077A8]" : "bg-white border-[#E5E5EA]"}`}>
-              <div className={`text-xs font-medium mb-2 ${highlight ? "text-blue-100" : "text-[#6E6E73]"}`}>{label}</div>
-              <div className={`text-xl font-bold ${highlight ? "text-white" : "text-[#1D1D1F]"}`}>{value}</div>
+            <div
+              key={label}
+              className={cn(
+                "rounded-[var(--radius-lg)] border p-5 shadow-e1",
+                highlight ? "border-transparent bg-brand-gradient" : "border-border-default bg-surface-card",
+              )}
+            >
+              <div className={cn("text-xs font-medium", highlight ? "text-white/80" : "text-text-secondary")}>{label}</div>
+              <div className={cn("mt-2 font-display text-xl font-bold", highlight ? "text-white" : "text-text-primary")}>{value}</div>
             </div>
           ))}
         </div>
 
         {/* 2-col Grid: Completion Info + Zoom Live Session Setup */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Progress Completion */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6 flex flex-col justify-between">
+          <Card className="flex flex-col justify-between p-6">
             <div>
-              <h2 className="font-semibold text-[#1D1D1F] mb-4">Progress Completion</h2>
+              <h2 className="mb-4 font-display font-semibold text-text-primary">Progress Completion</h2>
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-[#6E6E73]">{data.completedCount} dari {data.totalEnrollments} peserta menyelesaikan kursus</span>
-                <span className="font-semibold text-[#1D1D1F]">{data.completionRate}%</span>
+                <span className="text-text-secondary">{data.completedCount} dari {data.totalEnrollments} peserta menyelesaikan kursus</span>
+                <span className="font-semibold text-text-primary">{data.completionRate}%</span>
               </div>
             </div>
-            <div className="bg-[#E5E5EA] rounded-full h-3 overflow-hidden mt-4">
-              <div className="bg-[#0077A8] h-3 rounded-full transition-all" style={{ width: `${data.completionRate}%` }} />
+            <div className="mt-4 h-3 overflow-hidden rounded-full bg-surface-sunken">
+              <div className="h-3 rounded-full bg-accent-cyan-strong transition-all" style={{ width: `${data.completionRate}%` }} />
             </div>
-          </div>
+          </Card>
 
           {/* Zoom Schedule Module */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6">
-            <h2 className="font-semibold text-[#1D1D1F] mb-4">Sesi Live (Zoom)</h2>
+          <Card className="p-6">
+            <h2 className="mb-4 font-display font-semibold text-text-primary">Sesi Live (Zoom)</h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1">Link URL Zoom Sesi Live</label>
-                <input
-                  type="text"
-                  placeholder="https://zoom.us/j/..."
-                  value={zoomLink}
-                  onChange={(e) => setZoomLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E5E5EA] rounded-xl text-sm outline-none focus:border-[#0077A8]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1">Jadwal Sesi Live</label>
-                <input
-                  type="datetime-local"
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E5E5EA] rounded-xl text-sm outline-none focus:border-[#0077A8]"
-                />
-              </div>
-              <button
+              <Input
+                label="Link URL Zoom Sesi Live"
+                type="text"
+                placeholder="https://zoom.us/j/..."
+                value={zoomLink}
+                onChange={(e) => setZoomLink(e.target.value)}
+              />
+              <Input
+                label="Jadwal Sesi Live"
+                type="datetime-local"
+                value={schedule}
+                onChange={(e) => setSchedule(e.target.value)}
+              />
+              <Button
+                variant="cyan"
                 onClick={handleSaveLive}
                 disabled={savingLive}
-                className="w-full py-2 bg-[#0077A8] hover:bg-[#005f87] text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50"
+                loading={savingLive}
+                className="w-full"
               >
                 {savingLive ? "Menyimpan..." : "Simpan Sesi Live"}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Watch Time & Drop-off Stats per Lesson */}
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6 overflow-hidden">
-          <h2 className="font-semibold text-[#1D1D1F] mb-4">Analitik Drop-Off & Durasi Tontonan Pelajaran</h2>
-          
+        <Card className="p-6">
+          <h2 className="mb-4 font-display font-semibold text-text-primary">Analitik Drop-Off & Durasi Tontonan Pelajaran</h2>
+
           {data.lessons.length === 0 ? (
-            <p className="text-sm text-[#6E6E73] py-4 text-center">Belum ada data materi untuk kursus ini.</p>
+            <p className="py-4 text-center text-sm text-text-secondary">Belum ada data materi untuk kursus ini.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm border-collapse text-left">
-                <thead>
-                  <tr className="border-b border-[#E5E5EA] text-[#6E6E73] text-xs uppercase font-semibold">
-                    <th className="py-3 px-4">Materi Pelajaran</th>
-                    <th className="py-3 px-4">Modul / Seksi</th>
-                    <th className="py-3 px-4 text-center">Avg Watch Time</th>
-                    <th className="py-3 px-4 text-center">Selesai (User)</th>
-                    <th className="py-3 px-4 text-center">Tingkat Drop-off</th>
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>Materi Pelajaran</TH>
+                    <TH>Modul / Seksi</TH>
+                    <TH className="text-center">Avg Watch Time</TH>
+                    <TH className="text-center">Selesai (User)</TH>
+                    <TH className="text-center">Tingkat Drop-off</TH>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#F5F5F7]">
+                </THead>
+                <TBody>
                   {data.lessons.map((les) => (
-                    <tr key={les.lessonId} className="hover:bg-[#FAFAFA] transition-colors">
-                      <td className="py-3 px-4 font-medium text-[#1D1D1F]">{les.title}</td>
-                      <td className="py-3 px-4 text-[#6E6E73]">{les.sectionTitle}</td>
-                      <td className="py-3 px-4 text-center font-semibold text-[#0077A8]">{Math.round(les.avgWatchPct)}%</td>
-                      <td className="py-3 px-4 text-center text-[#1D1D1F]">{les.completedCount}</td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${les.dropOffRate > 50 ? "bg-red-50 text-red-600" : les.dropOffRate > 25 ? "bg-amber-50 text-amber-600" : "bg-green-50 text-green-600"}`}>
+                    <TR key={les.lessonId}>
+                      <TD className="font-medium text-text-primary">{les.title}</TD>
+                      <TD className="text-text-secondary">{les.sectionTitle}</TD>
+                      <TD className="text-center font-semibold text-accent-cyan-strong">{Math.round(les.avgWatchPct)}%</TD>
+                      <TD className="text-center text-text-primary">{les.completedCount}</TD>
+                      <TD className="text-center">
+                        <Badge variant={les.dropOffRate > 50 ? "danger" : les.dropOffRate > 25 ? "warning" : "success"}>
                           {les.dropOffRate}%
-                        </span>
-                      </td>
-                    </tr>
+                        </Badge>
+                      </TD>
+                    </TR>
                   ))}
-                </tbody>
-              </table>
+                </TBody>
+              </Table>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

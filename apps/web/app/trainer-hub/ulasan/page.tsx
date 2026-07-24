@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Star, Loader2 } from "lucide-react";
+import { Avatar, Card } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
 type Review = {
@@ -42,75 +46,77 @@ export default function TrainerReviewsPage() {
     })();
   }, [router]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#6E6E73]">Memuat ulasan...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-page">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
+    );
+  }
+  if (error) return <div className="flex min-h-screen items-center justify-center bg-surface-page text-red-600">{error}</div>;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-12">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-2 text-sm mb-1">
-            <Link href="/trainer-hub" className="text-[#0077A8] hover:underline">Trainer Hub</Link>
-            <span className="text-[#6E6E73]">/</span>
-            <span className="text-[#1D1D1F] font-medium">Ulasan Siswa</span>
+    <div className="min-h-screen bg-surface-page pb-12">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-1 flex items-center gap-2 text-sm">
+            <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+            <span className="text-text-secondary">/</span>
+            <span className="font-medium text-text-primary">Ulasan Siswa</span>
           </div>
-          <h1 className="text-xl font-bold text-[#1D1D1F] mt-1">Ulasan Siswa</h1>
+          <h1 className="mt-1 font-display text-xl font-bold text-text-primary">Ulasan Siswa</h1>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden p-6">
-          <h2 className="font-semibold text-[#1D1D1F] mb-6">Daftar Feedback & Ulasan Kursus Anda</h2>
+      <div className="mx-auto max-w-4xl p-6">
+        <Card className="p-6">
+          <h2 className="mb-6 font-display font-semibold text-text-primary">Daftar Feedback & Ulasan Kursus Anda</h2>
 
           {reviews.length === 0 ? (
-            <div className="text-center py-12 text-[#6E6E73]">
-              <div className="text-4xl mb-3">⭐</div>
-              <p>Belum ada ulasan dari siswa untuk kursus Anda.</p>
-            </div>
+            <EmptyState
+              icon={Star}
+              title="Belum ada ulasan"
+              description="Belum ada ulasan dari siswa untuk kursus Anda."
+            />
           ) : (
             <div className="space-y-6">
-              {reviews.map((rev) => {
-                const initials = rev.user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
-                return (
-                  <div key={rev.id} className="border-b border-[#F5F5F7] pb-6 last:border-b-0 last:pb-0">
-                    <div className="flex items-start gap-4">
-                      {rev.user.avatarUrl ? (
-                        <img src={rev.user.avatarUrl} alt={rev.user.name} className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#0077A8] to-[#7C3AED] text-white flex items-center justify-center font-bold text-sm">
-                          {initials}
-                        </div>
-                      )}
+              {reviews.map((rev) => (
+                <div key={rev.id} className="border-b border-border-default pb-6 last:border-b-0 last:pb-0">
+                  <div className="flex items-start gap-4">
+                    <Avatar src={rev.user.avatarUrl ?? undefined} name={rev.user.name} size="md" className="flex-shrink-0" />
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-sm text-[#1D1D1F]">{rev.user.name}</p>
-                          <span className="text-xs text-[#6E6E73]">
-                            {new Date(rev.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-1 my-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <span key={i} className={`text-sm ${i < rev.rating ? "text-amber-400" : "text-gray-200"}`}>
-                              ★
-                            </span>
-                          ))}
-                        </div>
-
-                        {rev.content ? (
-                          <p className="text-sm text-[#374151] mt-2 whitespace-pre-wrap">{rev.content}</p>
-                        ) : (
-                          <p className="text-sm text-gray-400 italic mt-2">Tidak ada ulasan tertulis.</p>
-                        )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-text-primary">{rev.user.name}</p>
+                        <span className="text-xs text-text-secondary">
+                          {new Date(rev.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
                       </div>
+
+                      <div className="my-1 flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={16}
+                            aria-hidden="true"
+                            className={cn(i < rev.rating ? "text-amber-400" : "text-border-strong")}
+                            fill={i < rev.rating ? "currentColor" : "none"}
+                          />
+                        ))}
+                      </div>
+
+                      {rev.content ? (
+                        <p className="mt-2 whitespace-pre-wrap text-sm text-text-primary">{rev.content}</p>
+                      ) : (
+                        <p className="mt-2 text-sm italic text-text-muted">Tidak ada ulasan tertulis.</p>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Button, Card, Input, Textarea } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type UserProfile = {
@@ -93,26 +95,32 @@ export default function TrainerProfilPage() {
     setTimeout(() => setSaved(false), 3000);
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-[#6E6E73]">Memuat...</div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface-page">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
+    );
+  }
 
   const initials = (user?.name ?? "T").charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center gap-2 text-sm">
-          <Link href="/trainer-hub" className="text-[#0077A8] hover:underline">Trainer Hub</Link>
-          <span className="text-[#6E6E73]">/</span>
-          <span className="text-[#1D1D1F] font-medium">Profil Saya</span>
+    <div className="min-h-screen bg-surface-page">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="mx-auto flex max-w-2xl items-center gap-2 text-sm">
+          <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+          <span className="text-text-secondary">/</span>
+          <span className="font-medium text-text-primary">Profil Saya</span>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-6">
+      <div className="mx-auto max-w-2xl p-6">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Avatar preview */}
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+          <Card className="p-6">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full">
                 {form.avatarUrl ? (
                   // Kept as a plain <img>: this is a live preview of a URL the user is
                   // typing into the form. The host is arbitrary/unvalidated and the
@@ -121,108 +129,97 @@ export default function TrainerProfilPage() {
                   <img
                     src={form.avatarUrl}
                     alt="Avatar"
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
                 ) : (
-                  <div className="w-full h-full bg-[#0077A8] flex items-center justify-center text-white font-bold text-xl">
+                  <div className="flex h-full w-full items-center justify-center bg-accent-cyan-strong text-xl font-bold text-white">
                     {initials}
                   </div>
                 )}
               </div>
               <div>
-                <p className="font-semibold text-[#1D1D1F]">{user?.name}</p>
-                <p className="text-sm text-[#6E6E73]">{user?.email}</p>
+                <p className="font-semibold text-text-primary">{user?.name}</p>
+                <p className="text-sm text-text-secondary">{user?.email}</p>
               </div>
             </div>
 
-            <h2 className="text-sm font-semibold text-[#1D1D1F] mb-4">Informasi Dasar</h2>
+            <h2 className="mb-4 font-display text-sm font-semibold text-text-primary">Informasi Dasar</h2>
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">Nama Tampilan</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                  placeholder="Nama Anda"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">URL Foto Profil</label>
-                <input
-                  value={form.avatarUrl}
-                  onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                  placeholder="https://cdn.contoh.com/foto.jpg"
-                  type="url"
-                />
-                <p className="text-xs text-[#6E6E73] mt-1">URL ke foto profil publik Anda</p>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">Headline Profesional</label>
-                <input
-                  value={form.headline}
-                  onChange={(e) => setForm({ ...form, headline: e.target.value })}
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                  placeholder="Contoh: Digital Marketing Expert | 10+ tahun pengalaman"
-                  maxLength={120}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">Lokasi</label>
-                <input
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                  placeholder="Jakarta, Indonesia"
-                />
-              </div>
+              <Input
+                label="Nama Tampilan"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+                placeholder="Nama Anda"
+              />
+              <Input
+                label="URL Foto Profil"
+                type="url"
+                value={form.avatarUrl}
+                onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
+                placeholder="https://cdn.contoh.com/foto.jpg"
+                hint="URL ke foto profil publik Anda"
+              />
+              <Input
+                label="Headline Profesional"
+                value={form.headline}
+                onChange={(e) => setForm({ ...form, headline: e.target.value })}
+                placeholder="Contoh: Digital Marketing Expert | 10+ tahun pengalaman"
+                maxLength={120}
+              />
+              <Input
+                label="Lokasi"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                placeholder="Jakarta, Indonesia"
+              />
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-[#1D1D1F]">Bio & Media Sosial</h2>
+          <Card className="space-y-4 p-6">
+            <h2 className="font-display text-sm font-semibold text-text-primary">Bio & Media Sosial</h2>
             <div>
-              <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">Bio</label>
-              <textarea
+              <Textarea
+                label="Bio"
                 value={form.bio}
                 onChange={(e) => setForm({ ...form, bio: e.target.value })}
                 rows={5}
-                className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
                 placeholder="Ceritakan tentang keahlian, pengalaman, dan passion Anda sebagai trainer..."
                 maxLength={1000}
               />
-              <p className="text-xs text-[#6E6E73] mt-1 text-right">{form.bio.length}/1000</p>
+              <p className="mt-1 text-right text-xs text-text-muted">{form.bio.length}/1000</p>
             </div>
             <div>
-              <label className="block text-xs font-medium text-[#3C3C43] mb-1.5">LinkedIn</label>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-[#6E6E73] bg-[#F5F5F7] border border-[#E5E5EA] rounded-l-xl px-3 py-2.5 whitespace-nowrap">linkedin.com/in/</span>
+              <label className="mb-1.5 block text-sm font-medium text-text-primary">LinkedIn</label>
+              <div className="flex items-center">
+                <span className="whitespace-nowrap rounded-l-[var(--radius-md)] border border-r-0 border-border-strong bg-surface-sunken px-3 py-2.5 text-sm text-text-secondary">linkedin.com/in/</span>
                 <input
                   value={form.linkedin.replace(/^.*linkedin\.com\/in\//i, "")}
                   onChange={(e) => setForm({ ...form, linkedin: `https://linkedin.com/in/${e.target.value}` })}
-                  className="flex-1 border border-[#E5E5EA] border-l-0 rounded-r-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
+                  className="w-full rounded-r-[var(--radius-md)] border border-border-strong bg-surface-card px-4 py-2.5 text-[0.9375rem] text-text-primary outline-none transition-[border-color,box-shadow] placeholder:text-text-muted focus:border-accent-cyan-strong focus:ring-2 focus:ring-accent-cyan-strong/20"
                   placeholder="username-anda"
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">{error}</div>
+            <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertCircle size={16} className="flex-shrink-0" aria-hidden="true" />
+              {error}
+            </div>
           )}
           {saved && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">✅ Profil berhasil disimpan.</div>
+            <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+              <CheckCircle2 size={16} className="flex-shrink-0" aria-hidden="true" />
+              Profil berhasil disimpan.
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full py-2.5 bg-[#0077A8] text-white rounded-xl text-sm font-medium hover:bg-[#005f87] disabled:opacity-50 transition-colors"
-          >
+          <Button type="submit" variant="cyan" disabled={saving} loading={saving} className="w-full">
             {saving ? "Menyimpan..." : "Simpan Profil"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

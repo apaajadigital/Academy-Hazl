@@ -1,6 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import { Search, Download, Wallet, CheckCircle2, Clock, CreditCard, Loader2 } from "lucide-react";
+import {
+  Badge,
+  type BadgeProps,
+  Button,
+  Input,
+  Pagination,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { getToken } from "@/lib/auth/token";
 
 type Order = {
@@ -14,12 +33,12 @@ type Order = {
   items: { itemTitle: string | null; itemType: string; amount: number }[];
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  failed: "bg-red-100 text-red-700",
-  expired: "bg-gray-100 text-gray-500",
-  refunded: "bg-purple-100 text-purple-700",
+const STATUS_VARIANT: Record<string, NonNullable<BadgeProps["variant"]>> = {
+  paid: "success",
+  pending: "warning",
+  failed: "danger",
+  expired: "neutral",
+  refunded: "info",
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -97,175 +116,137 @@ export default function AdminTransaksiPage() {
 
   const totalPages = Math.ceil(total / limit);
 
+  const summaryCards: { label: string; value: string | number; Icon: LucideIcon; wrap: string }[] = [
+    { label: "Pendapatan (halaman ini)", value: `Rp ${summary.totalRevenue.toLocaleString("id-ID")}`, Icon: Wallet, wrap: "bg-green-600/10 text-green-600" },
+    { label: "Transaksi Lunas", value: summary.paidCount, Icon: CheckCircle2, wrap: "bg-surface-accent-soft text-accent-cyan-strong" },
+    { label: "Menunggu Pembayaran", value: summary.pendingCount, Icon: Clock, wrap: "bg-amber-500/10 text-amber-600" },
+  ];
+
   return (
-    <div className="tr-page">
-      <div className="tr-header">
+    <div className="flex max-w-[1200px] flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="tr-title">Laporan Transaksi</h1>
-          <p className="tr-sub">{total.toLocaleString("id-ID")} transaksi total</p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Laporan Transaksi</h1>
+          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} transaksi total</p>
         </div>
-        <button
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={handleExportCSV}
           disabled={exporting}
-          className="tr-export-btn"
-          style={{
-            padding: "9px 16px",
-            borderRadius: "10px",
-            background: "#10B981",
-            color: "white",
-            border: "none",
-            fontSize: "13px",
-            fontWeight: 600,
-            cursor: "pointer",
-            opacity: exporting ? 0.6 : 1,
-          }}
+          leftIcon={<Download size={16} aria-hidden="true" />}
         >
-          {exporting ? "⏳ Mengekspor..." : "📥 Ekspor CSV"}
-        </button>
+          {exporting ? "Mengekspor..." : "Ekspor CSV"}
+        </Button>
       </div>
 
       {/* Summary cards */}
-      <div className="tr-summary-grid">
-        {[
-          { label: "Pendapatan (halaman ini)", value: `Rp ${summary.totalRevenue.toLocaleString("id-ID")}`, icon: "💰", cls: "text-green-600" },
-          { label: "Transaksi Lunas", value: summary.paidCount, icon: "✅", cls: "text-blue-600" },
-          { label: "Menunggu Pembayaran", value: summary.pendingCount, icon: "⏳", cls: "text-yellow-600" },
-        ].map(({ label, value, icon, cls }) => (
-          <div key={label} className="tr-summary-card">
-            <span className="tr-summary-icon">{icon}</span>
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+        {summaryCards.map(({ label, value, Icon, wrap }) => (
+          <div key={label} className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-5 shadow-e1">
+            <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${wrap}`}>
+              <Icon size={22} aria-hidden="true" />
+            </span>
             <div>
-              <p className={`tr-summary-value ${cls}`}>{value}</p>
-              <p className="tr-summary-label">{label}</p>
+              <p className="font-display text-lg font-extrabold text-text-primary">{value}</p>
+              <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-text-secondary">{label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="tr-filters">
-        <form onSubmit={handleSearch} className="tr-search-form">
-          <input className="tr-input" placeholder="Cari nama pelanggan atau email..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button type="submit" className="tr-search-btn">🔍 Cari</button>
+      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
+        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+          <Input
+            containerClassName="flex-1"
+            leftIcon={<Search size={16} aria-hidden="true" />}
+            placeholder="Cari nama pelanggan atau email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Cari transaksi"
+          />
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
-        <div className="tr-status-tabs">
-          {["all", "paid", "pending", "failed", "expired", "refunded"].map((s) => (
-            <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }} className={`tr-tab ${statusFilter === s ? "tr-tab-active" : ""}`}>
-              {s === "all" ? "Semua" : STATUS_LABEL[s] ?? s}
-            </button>
-          ))}
-        </div>
+        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+          <TabsList className="flex-wrap">
+            {["all", "paid", "pending", "failed", "expired", "refunded"].map((s) => (
+              <TabsTrigger key={s} value={s}>
+                {s === "all" ? "Semua" : STATUS_LABEL[s] ?? s}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Table */}
-      <div className="tr-table-wrap">
-        {loading ? (
-          <div className="tr-loading"><span className="tr-spinner" /></div>
-        ) : orders.length === 0 ? (
-          <div className="tr-empty"><p>💳</p><p>Tidak ada transaksi ditemukan</p></div>
-        ) : (
-          <table className="tr-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>Pelanggan</th><th>Produk</th><th>Metode</th>
-                <th>Status</th><th>Jumlah</th><th>Tanggal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => {
-                const badge = STATUS_BADGE[order.status] ?? "bg-gray-100 text-gray-500";
-                const title = order.items[0]?.itemTitle ?? "—";
-                return (
-                  <tr key={order.id}>
-                    <td><code className="tr-id">{order.id.slice(0, 8)}…</code></td>
-                    <td>
-                      <p className="tr-user-name">{order.user.name}</p>
-                      <p className="tr-user-email">{order.user.email}</p>
-                    </td>
-                    <td>
-                      <p className="tr-product">{title}</p>
-                      {order.items.length > 1 && <p className="tr-more">+{order.items.length - 1} item</p>}
-                    </td>
-                    <td><span className="tr-method">{order.paymentMethod ?? "—"}</span></td>
-                    <td><span className={`tr-badge ${badge}`}>{STATUS_LABEL[order.status] ?? order.status}</span></td>
-                    <td>
-                      <p className="tr-amount">Rp {Number(order.finalAmount).toLocaleString("id-ID")}</p>
-                      {Number(order.originalAmount) !== Number(order.finalAmount) && (
-                        <p className="tr-orig">Rp {Number(order.originalAmount).toLocaleString("id-ID")}</p>
-                      )}
-                    </td>
-                    <td>
-                      <span className="tr-date">
+      {loading ? (
+        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
+          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+        </div>
+      ) : orders.length === 0 ? (
+        <EmptyState icon={CreditCard} title="Tidak ada transaksi ditemukan" description="Coba ubah kata kunci pencarian atau filter status." />
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[800px]">
+              <THead>
+                <tr>
+                  <TH>ID</TH>
+                  <TH>Pelanggan</TH>
+                  <TH>Produk</TH>
+                  <TH>Metode</TH>
+                  <TH>Status</TH>
+                  <TH>Jumlah</TH>
+                  <TH>Tanggal</TH>
+                </tr>
+              </THead>
+              <TBody>
+                {orders.map((order) => {
+                  const title = order.items[0]?.itemTitle ?? "—";
+                  return (
+                    <TR key={order.id}>
+                      <TD>
+                        <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-xs text-text-secondary">{order.id.slice(0, 8)}…</code>
+                      </TD>
+                      <TD>
+                        <p className="font-semibold text-text-primary">{order.user.name}</p>
+                        <p className="text-xs text-text-muted">{order.user.email}</p>
+                      </TD>
+                      <TD>
+                        <p className="max-w-[180px] truncate">{title}</p>
+                        {order.items.length > 1 && <p className="text-xs text-text-muted">+{order.items.length - 1} item</p>}
+                      </TD>
+                      <TD>
+                        <span className="rounded-md bg-surface-sunken px-2 py-0.5 text-xs uppercase text-text-secondary">{order.paymentMethod ?? "—"}</span>
+                      </TD>
+                      <TD>
+                        <Badge variant={STATUS_VARIANT[order.status] ?? "neutral"}>{STATUS_LABEL[order.status] ?? order.status}</Badge>
+                      </TD>
+                      <TD>
+                        <p className="font-bold text-text-primary">Rp {Number(order.finalAmount).toLocaleString("id-ID")}</p>
+                        {Number(order.originalAmount) !== Number(order.finalAmount) && (
+                          <p className="text-xs text-text-muted line-through">Rp {Number(order.originalAmount).toLocaleString("id-ID")}</p>
+                        )}
+                      </TD>
+                      <TD className="whitespace-nowrap text-text-secondary">
                         {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </div>
 
-      {totalPages > 1 && (
-        <div className="tr-pagination">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="tr-page-btn">← Prev</button>
-          <span className="tr-page-info">Halaman {page} dari {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="tr-page-btn">Next →</button>
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+              <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+              <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+            </div>
+          )}
         </div>
       )}
-
-      <style jsx>{`
-        .tr-page { display:flex; flex-direction:column; gap:20px; max-width:1200px; }
-        .tr-header { display:flex; align-items:center; justify-content:space-between; }
-        .tr-title { font-size:20px; font-weight:800; color:#1D1D1F; }
-        .tr-sub { font-size:13px; color:#6E6E73; margin-top:3px; }
-
-        .tr-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-        .tr-summary-card { background:white; border-radius:16px; padding:18px 20px; display:flex; align-items:center; gap:14px; border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 4px rgba(0,0,0,0.06); }
-        .tr-summary-icon { font-size:28px; }
-        .tr-summary-value { font-size:18px; font-weight:800; }
-        .tr-summary-label { font-size:11px; color:#6E6E73; margin-top:2px; }
-
-        .tr-filters { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .tr-search-form { display:flex; gap:8px; flex:1; min-width:240px; }
-        .tr-input { flex:1; padding:9px 14px; border-radius:10px; border:1.5px solid #E5E5EA; font-size:13px; outline:none; }
-        .tr-input:focus { border-color:#0077A8; box-shadow:0 0 0 3px rgba(0,119,168,0.1); }
-        .tr-search-btn { padding:9px 16px; border-radius:10px; background:#0077A8; color:white; border:none; font-size:13px; font-weight:600; cursor:pointer; }
-        .tr-status-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-        .tr-tab { padding:7px 14px; border-radius:999px; font-size:12px; font-weight:600; border:1.5px solid #E5E5EA; background:white; cursor:pointer; color:#6E6E73; transition:all 0.18s; }
-        .tr-tab-active { background:#0077A8; color:white; border-color:#0077A8; }
-
-        .tr-table-wrap { background:white; border-radius:18px; overflow:hidden; border:1px solid rgba(0,0,0,0.06); box-shadow:0 1px 4px rgba(0,0,0,0.06); overflow-x:auto; }
-        .tr-table { width:100%; border-collapse:collapse; min-width:800px; }
-        .tr-table thead tr { background:#F9FAFB; border-bottom:1px solid #F0F0F5; }
-        .tr-table th { padding:12px 14px; font-size:11px; font-weight:700; color:#6E6E73; text-transform:uppercase; letter-spacing:0.05em; text-align:left; white-space:nowrap; }
-        .tr-table td { padding:11px 14px; font-size:13px; border-bottom:1px solid #F5F5F7; vertical-align:middle; }
-        .tr-table tr:last-child td { border-bottom:none; }
-        .tr-table tr:hover td { background:#FAFAFA; }
-
-        .tr-id { font-size:11px; font-family:monospace; background:#F3F4F6; padding:2px 6px; border-radius:5px; color:#6B7280; }
-        .tr-user-name { font-size:13px; font-weight:600; }
-        .tr-user-email { font-size:11px; color:#9CA3AF; }
-        .tr-product { font-size:13px; max-width:180px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .tr-more { font-size:10px; color:#9CA3AF; }
-        .tr-method { font-size:11px; background:#F5F5F7; padding:3px 8px; border-radius:6px; color:#6E6E73; text-transform:uppercase; }
-        .tr-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; display:inline-block; }
-        .tr-amount { font-size:13px; font-weight:700; color:#1D1D1F; }
-        .tr-orig { font-size:10px; color:#9CA3AF; text-decoration:line-through; }
-        .tr-date { font-size:12px; color:#6E6E73; }
-
-        .tr-loading { display:flex; justify-content:center; padding:48px; }
-        .tr-spinner { width:32px; height:32px; border-radius:50%; border:3px solid #0077A8; border-top-color:transparent; animation:spin 0.8s linear infinite; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        .tr-empty { display:flex; flex-direction:column; align-items:center; gap:8px; padding:48px; color:#9CA3AF; font-size:14px; }
-        .tr-empty p:first-child { font-size:32px; }
-
-        .tr-pagination { display:flex; align-items:center; justify-content:center; gap:16px; }
-        .tr-page-btn { padding:8px 16px; border-radius:10px; border:1.5px solid #E5E5EA; background:white; font-size:13px; font-weight:600; cursor:pointer; color:#1D1D1F; transition:all 0.18s; }
-        .tr-page-btn:hover:not(:disabled) { border-color:#0077A8; color:#0077A8; }
-        .tr-page-btn:disabled { opacity:0.4; cursor:not-allowed; }
-        .tr-page-info { font-size:13px; color:#6E6E73; }
-      `}</style>
     </div>
   );
 }

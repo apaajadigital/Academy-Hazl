@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, X, Download } from "lucide-react";
+import { Search, X, Download, ClipboardList, Loader2 } from "lucide-react";
+import { Button, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -96,8 +99,8 @@ function StatusSelect({ id, value, onChange }: { id: string; value: string; onCh
       value={value}
       onChange={handleChange}
       disabled={busy}
-      className="rounded-lg border-0 px-2 py-1 text-xs font-semibold cursor-pointer transition-opacity"
-      style={{ background: s.bg, color: s.text, opacity: busy ? 0.5 : 1, outline: "none" }}
+      className="cursor-pointer rounded-lg border-0 px-2 py-1 text-xs font-semibold transition-opacity outline-none"
+      style={{ background: s.bg, color: s.text, opacity: busy ? 0.5 : 1 }}
       aria-label="Ubah status lead"
     >
       {STATUSES.filter((s) => s.value !== "").map((st) => (
@@ -203,81 +206,72 @@ export default function AdminLeadsPage() {
   }, {});
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1100 }}>
+    <div className="flex max-w-[1100px] flex-col gap-5">
 
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: "#1D1D1F" }}>Leads CRM</h1>
-          <p style={{ fontSize: 13, color: "#6E6E73", marginTop: 3 }}>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Leads CRM</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             {meta.total.toLocaleString("id-ID")} leads dari semua landing page
           </p>
         </div>
-        <button
+        <Button
           id="leads-export-csv-btn"
+          variant="secondary"
+          size="sm"
           onClick={handleExportCSV}
           disabled={exporting}
-          style={{
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "8px 16px", borderRadius: 10,
-            background: "white", border: "1.5px solid #E5E5EA",
-            fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#1D1D1F",
-            opacity: exporting ? 0.6 : 1,
-          }}
+          leftIcon={<Download size={15} aria-hidden="true" />}
         >
-          <Download size={15} aria-hidden="true" />
           {exporting ? "Mengekspor..." : "Export CSV"}
-        </button>
+        </Button>
       </div>
 
       {/* Metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 10 }}>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
         {STATUSES.filter((s) => s.value).map((s) => {
           const st = STATUS_STYLE[s.value]!;
+          const active = status === s.value;
           return (
             <button
               id={`leads-filter-status-${s.value}-btn`}
               key={s.value}
-              onClick={() => handleStatus(status === s.value ? "" : s.value)}
-              style={{
-                background: status === s.value ? st.bg : "white",
-                border: `1.5px solid ${status === s.value ? st.text : "#E5E5EA"}`,
-                borderRadius: 14, padding: "14px 12px",
-                textAlign: "left", cursor: "pointer", transition: "all 0.18s",
-              }}
+              onClick={() => handleStatus(active ? "" : s.value)}
+              className={cn(
+                "rounded-[var(--radius-lg)] border p-3.5 text-left transition-colors",
+                active ? "" : "border-border-default bg-surface-card hover:bg-surface-sunken",
+              )}
+              style={active ? { background: st.bg, borderColor: st.text } : undefined}
             >
-              <p style={{ fontSize: 20, fontWeight: 800, color: st.text }}>
+              <p className="text-xl font-extrabold" style={{ color: st.text }}>
                 {counts[s.value] ?? 0}
               </p>
-              <p style={{ fontSize: 11, color: "#6E6E73", marginTop: 2 }}>{s.label}</p>
+              <p className="mt-0.5 text-xs text-text-secondary">{s.label}</p>
             </button>
           );
         })}
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="flex flex-wrap items-center gap-2.5">
         {/* Search */}
-        <div style={{ position: "relative", flex: 1, minWidth: 200, maxWidth: 320 }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }} aria-hidden="true" />
+        <div className="relative min-w-[200px] max-w-[320px] flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden="true" />
           <input
             id="leads-search-input"
             type="search"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Cari nama / email / perusahaan…"
-            style={{
-              width: "100%", padding: "8px 32px 8px 32px",
-              borderRadius: 10, border: "1.5px solid #E5E5EA",
-              fontSize: 13, outline: "none", background: "white",
-            }}
+            className="w-full rounded-[var(--radius-md)] border border-solid border-border-strong bg-surface-card py-2 pl-9 pr-9 text-sm text-text-primary outline-none transition-[border-color,box-shadow] focus:border-accent-cyan-strong focus:ring-2 focus:ring-accent-cyan-strong/20"
             aria-label="Cari lead"
           />
           {query && (
             <button
               id="leads-search-clear-btn"
               onClick={() => handleSearch("")}
-              style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#9CA3AF" }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               aria-label="Hapus pencarian"
             >
               <X size={14} aria-hidden="true" />
@@ -286,7 +280,7 @@ export default function AdminLeadsPage() {
         </div>
 
         {/* Source pills */}
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div className="flex flex-wrap gap-1.5">
           {SOURCES.map((s) => {
             const active = source === s.value;
             const style = s.value ? SOURCE_STYLE[s.value] : null;
@@ -295,12 +289,11 @@ export default function AdminLeadsPage() {
                 id={`leads-source-${s.value || "all"}-btn`}
                 key={s.value}
                 onClick={() => handleSource(s.value)}
-                style={{
-                  padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                  border: "none", cursor: "pointer", transition: "all 0.18s",
-                  background: active ? (style?.bg ?? "#E5E5EA") : "#F5F5F7",
-                  color: active ? (style?.text ?? "#1D1D1F") : "#6E6E73",
-                }}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                  !active && "bg-surface-sunken text-text-secondary hover:bg-surface-page",
+                )}
+                style={active ? { background: style?.bg ?? "var(--surface-sunken)", color: style?.text ?? "var(--text-primary)" } : undefined}
                 aria-pressed={active}
               >
                 {s.label}
@@ -312,92 +305,84 @@ export default function AdminLeadsPage() {
 
       {/* Table */}
       {loading ? (
-        <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
-          <span style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #0077A8", borderTopColor: "transparent", display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
+          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
         </div>
       ) : leads.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "48px 24px", background: "white", borderRadius: 16, border: "1px solid #E5E5EA" }}>
-          <p style={{ fontSize: 32, marginBottom: 8 }}>📋</p>
-          <p style={{ fontSize: 15, color: "#1D1D1F", fontWeight: 600, marginBottom: 4 }}>Tidak ada leads ditemukan</p>
-          <p style={{ fontSize: 13, color: "#6E6E73" }}>
-            {query || source || status ? "Coba ubah filter atau hapus pencarian." : "Leads akan muncul di sini saat ada yang mengisi form di landing page."}
-          </p>
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title="Tidak ada leads ditemukan"
+          description={
+            query || source || status
+              ? "Coba ubah filter atau hapus pencarian."
+              : "Leads akan muncul di sini saat ada yang mengisi form di landing page."
+          }
+        />
       ) : (
-        <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5E5EA", background: "white" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid #E5E5EA", background: "#F9FAFB" }}>
-                {["Nama & Email", "Perusahaan", "Telepon", "Sumber", "Status", "Tanggal"].map((h) => (
-                  <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontWeight: 700, color: "#6E6E73", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead, i) => {
-                const src = SOURCE_STYLE[lead.source] ?? SOURCE_STYLE["other"]!;
-                return (
-                  <tr
-                    key={lead.id}
-                    style={{
-                      borderBottom: i < leads.length - 1 ? "1px solid #F3F4F6" : "none",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#F9FAFB")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
-                  >
-                    <td style={{ padding: "12px 14px" }}>
-                      <p style={{ fontWeight: 600, color: "#1D1D1F" }}>{lead.name}</p>
-                      <p style={{ color: "#6E6E73", marginTop: 1, fontSize: 12 }}>{lead.email}</p>
-                      {lead.message && (
-                        <p style={{ color: "#9CA3AF", marginTop: 3, fontSize: 11, maxWidth: 240, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {lead.message}
-                        </p>
-                      )}
-                    </td>
-                    <td style={{ padding: "12px 14px", color: "#374151" }}>{lead.company ?? "—"}</td>
-                    <td style={{ padding: "12px 14px", color: "#374151", fontFamily: "monospace", fontSize: 12 }}>{lead.phone ?? "—"}</td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span style={{ background: src.bg, color: src.text, padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>
-                        {src.label}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <StatusSelect id={lead.id} value={lead.status} onChange={(v) => handleStatusChange(lead.id, v)} />
-                    </td>
-                    <td style={{ padding: "12px 14px", color: "#9CA3AF", fontSize: 12, whiteSpace: "nowrap" }}>
-                      {fmtDate(lead.createdAt)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="overflow-x-auto">
+            <Table>
+              <THead>
+                <tr>
+                  {["Nama & Email", "Perusahaan", "Telepon", "Sumber", "Status", "Tanggal"].map((h) => (
+                    <TH key={h}>{h}</TH>
+                  ))}
+                </tr>
+              </THead>
+              <TBody>
+                {leads.map((lead) => {
+                  const src = SOURCE_STYLE[lead.source] ?? SOURCE_STYLE["other"]!;
+                  return (
+                    <TR key={lead.id}>
+                      <TD>
+                        <p className="font-semibold text-text-primary">{lead.name}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
+                        {lead.message && (
+                          <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
+                        )}
+                      </TD>
+                      <TD className="text-text-secondary">{lead.company ?? "—"}</TD>
+                      <TD className="font-mono text-xs text-text-secondary">{lead.phone ?? "—"}</TD>
+                      <TD>
+                        <span
+                          className="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold"
+                          style={{ background: src.bg, color: src.text }}
+                        >
+                          {src.label}
+                        </span>
+                      </TD>
+                      <TD>
+                        <StatusSelect id={lead.id} value={lead.status} onChange={(v) => handleStatusChange(lead.id, v)} />
+                      </TD>
+                      <TD className="whitespace-nowrap text-xs text-text-muted">{fmtDate(lead.createdAt)}</TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </div>
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+        <div className="flex items-center justify-center gap-2">
           <button
             id="leads-prev-page-btn"
             onClick={() => handlePage(page - 1)}
             disabled={page <= 1}
-            style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #E5E5EA", background: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: page <= 1 ? 0.4 : 1 }}
+            className="rounded-[var(--radius-md)] border border-border-strong bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40"
           >
             ← Prev
           </button>
-          <span style={{ fontSize: 13, color: "#6E6E73" }}>
+          <span className="text-sm text-text-secondary">
             {page} / {totalPages} ({meta.total.toLocaleString("id-ID")} leads)
           </span>
           <button
             id="leads-next-page-btn"
             onClick={() => handlePage(page + 1)}
             disabled={page >= totalPages}
-            style={{ padding: "8px 14px", borderRadius: 10, border: "1.5px solid #E5E5EA", background: "white", cursor: "pointer", fontSize: 13, fontWeight: 600, opacity: page >= totalPages ? 0.4 : 1 }}
+            className="rounded-[var(--radius-md)] border border-border-strong bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40"
           >
             Next →
           </button>

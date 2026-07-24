@@ -8,6 +8,23 @@ import {
   ChevronRight, ToggleLeft, ToggleRight, Mail,
 } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
+import {
+  Button,
+  Input,
+  Select,
+  Badge,
+  type BadgeProps,
+  Card,
+  Modal,
+  ModalContent,
+  TableContainer,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+} from "@/components/ui";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -53,8 +70,8 @@ function authHeaders() {
 }
 
 const PLAN_STYLE: Record<string, { bg: string; text: string }> = {
-  trial:      { bg: "rgba(234,179,8,0.12)",  text: "#A16207" },
-  starter:    { bg: "rgba(59,130,246,0.1)",  text: "#2563EB" },
+  trial:      { bg: "rgba(180,83,9,0.12)",   text: "#B45309" },
+  starter:    { bg: "rgba(0,119,168,0.1)",   text: "#0077A8" },
   pro:        { bg: "rgba(124,58,237,0.1)",  text: "#7C3AED" },
   enterprise: { bg: "rgba(22,163,74,0.1)",   text: "#15803D" },
 };
@@ -90,49 +107,37 @@ function InviteModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)" }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: "white", borderRadius: 20, padding: 28, width: "100%", maxWidth: 400, boxShadow: "0 24px 80px rgba(0,0,0,0.18)" }}>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: "#1D1D1F", marginBottom: 16 }}>
-          {done ? "Undangan Terkirim" : "Undang Pengguna"}
-        </h2>
+    <Modal open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <ModalContent title={done ? "Undangan Terkirim" : "Undang Pengguna"} className="max-w-md">
         {done ? (
           <>
-            <p style={{ fontSize: 13, color: "#6E6E73", marginBottom: 18 }}>Undangan sudah dikirim ke <strong>{email}</strong>.</p>
-            <button onClick={onClose} style={{ width: "100%", padding: "11px 0", borderRadius: 12, background: "#0077A8", color: "white", border: "none", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>Selesai</button>
+            <p className="mb-[18px] text-sm text-text-secondary">Undangan sudah dikirim ke <strong>{email}</strong>.</p>
+            <Button onClick={onClose} variant="cyan" className="w-full">Selesai</Button>
           </>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {error && <div style={{ background: "#FEE2E2", color: "#DC2626", padding: "10px 14px", borderRadius: 10, fontSize: 13 }}>{error}</div>}
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1D1D1F", marginBottom: 5 }}>Email</label>
-              <input id="invite-email-input" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@perusahaan.com" style={inputStyle} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "#1D1D1F", marginBottom: 5 }}>Role</label>
-              <select id="invite-role-select" value={role} onChange={(e) => setRole(e.target.value as typeof role)} style={{ ...inputStyle, cursor: "pointer" }}>
-                <option value="lms_employee">Karyawan (Employee)</option>
-                <option value="lms_admin">Admin LMS</option>
-              </select>
-            </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-              <button type="button" onClick={onClose} style={{ flex: 1, padding: "10px 0", borderRadius: 12, background: "#F5F5F7", color: "#1D1D1F", border: "none", fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Batal</button>
-              <button id="invite-submit-btn" type="submit" disabled={loading} style={{ flex: 2, padding: "10px 0", borderRadius: 12, background: "#0077A8", color: "white", border: "none", fontWeight: 700, fontSize: 14, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+            {error && <div className="rounded-[var(--radius-md)] bg-red-600/10 px-3.5 py-2.5 text-sm text-red-700">{error}</div>}
+            <Input id="invite-email-input" label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@perusahaan.com" />
+            <Select id="invite-role-select" label="Role" value={role} onChange={(e) => setRole(e.target.value as typeof role)}>
+              <option value="lms_employee">Karyawan (Employee)</option>
+              <option value="lms_admin">Admin LMS</option>
+            </Select>
+            <div className="mt-1 flex gap-2.5">
+              <Button type="button" onClick={onClose} variant="ghost" className="flex-1">Batal</Button>
+              <Button id="invite-submit-btn" type="submit" disabled={loading} variant="cyan" className="flex-[2]">
                 {loading ? "Mengirim…" : "Kirim Undangan"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
-      </div>
-    </div>
+      </ModalContent>
+    </Modal>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "9px 12px", border: "1.5px solid #E5E5EA", borderRadius: 10, fontSize: 13, outline: "none", boxSizing: "border-box",
-};
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+const SECTION_TAB = "border-b-[3px] px-4 py-2.5 text-sm font-semibold transition-colors -mb-0.5";
 
 export default function AdminTenantDetailPage() {
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -178,19 +183,18 @@ export default function AdminTenantDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 300 }}>
-        <span style={{ width: 32, height: 32, borderRadius: "50%", border: "3px solid #0077A8", borderTopColor: "transparent", display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div className="flex min-h-[300px] items-center justify-center">
+        <span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
       </div>
     );
   }
 
   if (!tenant) {
     return (
-      <div style={{ textAlign: "center", padding: 48 }}>
-        <p style={{ fontSize: 40, marginBottom: 8 }}>🔍</p>
-        <p style={{ fontWeight: 600, color: "#1D1D1F", marginBottom: 12 }}>Tenant tidak ditemukan</p>
-        <button onClick={() => router.push("/admin/lms")} style={{ padding: "10px 20px", borderRadius: 12, background: "#0077A8", color: "white", border: "none", cursor: "pointer", fontWeight: 700 }}>← Kembali ke LMS</button>
+      <div className="flex flex-col items-center gap-3 p-12 text-center">
+        <Building2 size={40} className="text-border-strong" />
+        <p className="font-semibold text-text-primary">Tenant tidak ditemukan</p>
+        <Button onClick={() => router.push("/admin/lms")} variant="cyan" size="sm" leftIcon={<ArrowLeft size={15} />}>Kembali ke LMS</Button>
       </div>
     );
   }
@@ -199,47 +203,55 @@ export default function AdminTenantDetailPage() {
   const expired = tenant.trialEndsAt && new Date(tenant.trialEndsAt) < new Date();
   const seatUsed = tenant._count?.enrollments ?? 0;
   const seatPct = Math.min(100, Math.round((seatUsed / tenant.seatLimit) * 100));
+  const statusVariant: BadgeProps["variant"] = expired ? "danger" : tenant.isActive ? "success" : "neutral";
+
+  const stats: { label: string; value: number; icon: typeof Building2; color: string }[] = [
+    { label: "Batch", value: tenant._count?.batches ?? 0, icon: Layers, color: "#0077A8" },
+    { label: "Kursus", value: tenant._count?.courses ?? 0, icon: Building2, color: "#7C3AED" },
+    { label: "Total Enrolled", value: tenant._count?.enrollments ?? 0, icon: BarChart3, color: "#16A34A" },
+    { label: "Undangan", value: tenant._count?.invites ?? 0, icon: Users, color: "#B45309" },
+  ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 1100 }}>
+    <div className="flex max-w-[1100px] flex-col gap-5">
 
       {/* Breadcrumb */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <Link href="/admin/lms" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#6E6E73", textDecoration: "none" }}>
+      <div className="flex items-center gap-2">
+        <Link href="/admin/lms" className="flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary">
           <ArrowLeft size={14} aria-hidden="true" /> LMS B2B
         </Link>
-        <ChevronRight size={12} style={{ color: "#9CA3AF" }} aria-hidden="true" />
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#1D1D1F" }}>{tenant.name}</span>
+        <ChevronRight size={12} className="text-text-muted" aria-hidden="true" />
+        <span className="text-sm font-semibold text-text-primary">{tenant.name}</span>
       </div>
 
-      {/* Tenant header card */}
-      <div style={{ background: "linear-gradient(135deg,#0a1628 0%,#0d2040 100%)", borderRadius: 20, padding: 28, color: "white" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(255,255,255,0.12)", color: "white", fontSize: 20, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1px solid rgba(255,255,255,0.15)" }}>
+      {/* Tenant header card (light) */}
+      <Card className="p-7">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-brand-gradient flex size-14 shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold text-white">
               {tenant.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                <h1 style={{ fontSize: 20, fontWeight: 800 }}>{tenant.name}</h1>
-                <span style={{ ...plan, fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 999 }}>{tenant.planType.toUpperCase()}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 10px", borderRadius: 999, background: expired ? "rgba(220,38,38,0.25)" : tenant.isActive ? "rgba(22,163,74,0.25)" : "rgba(107,114,128,0.25)", color: expired ? "#FCA5A5" : tenant.isActive ? "#86EFAC" : "#9CA3AF" }}>
-                  {expired ? "KADALUARSA" : tenant.isActive ? "AKTIF" : "NON-AKTIF"}
-                </span>
+              <div className="mb-1 flex flex-wrap items-center gap-2.5">
+                <h1 className="font-display text-xl font-extrabold text-text-primary">{tenant.name}</h1>
+                <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: plan.bg, color: plan.text }}>{tenant.planType.toUpperCase()}</span>
+                <Badge variant={statusVariant} dot>{expired ? "KADALUARSA" : tenant.isActive ? "AKTIF" : "NON-AKTIF"}</Badge>
               </div>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", fontFamily: "monospace" }}>/{tenant.slug}</p>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+              <p className="font-mono text-sm text-text-muted">/{tenant.slug}</p>
+              <p className="mt-0.5 text-xs text-text-muted">
                 Bergabung: {fmtDate(tenant.createdAt)}{tenant.trialEndsAt ? ` · Trial s/d: ${fmtDate(tenant.trialEndsAt)}` : ""}
               </p>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button id="tenant-detail-invite-btn" onClick={() => setShowInvite(true)}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 12, background: "rgba(255,255,255,0.1)", color: "white", border: "1px solid rgba(255,255,255,0.2)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-              <Mail size={14} aria-hidden="true" /> Undang
-            </button>
-            <button id="tenant-detail-toggle-btn" onClick={toggleActive}
-              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 12, background: tenant.isActive ? "rgba(220,38,38,0.2)" : "rgba(22,163,74,0.2)", color: tenant.isActive ? "#FCA5A5" : "#86EFAC", border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
+          <div className="flex gap-2.5">
+            <Button id="tenant-detail-invite-btn" onClick={() => setShowInvite(true)} variant="secondary" size="sm" leftIcon={<Mail size={14} />}>
+              Undang
+            </Button>
+            <button
+              id="tenant-detail-toggle-btn"
+              onClick={toggleActive}
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tenant.isActive ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white" : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`}
+            >
               {tenant.isActive ? <ToggleRight size={14} aria-hidden="true" /> : <ToggleLeft size={14} aria-hidden="true" />}
               {tenant.isActive ? "Nonaktifkan" : "Aktifkan"}
             </button>
@@ -247,42 +259,37 @@ export default function AdminTenantDetailPage() {
         </div>
 
         {/* Seat usage bar */}
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Penggunaan Kursi</span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", fontWeight: 600 }}>{seatUsed} / {tenant.seatLimit} ({seatPct}%)</span>
+        <div className="mt-5">
+          <div className="mb-1.5 flex justify-between">
+            <span className="text-xs text-text-secondary">Penggunaan Kursi</span>
+            <span className="text-xs font-semibold text-text-primary">{seatUsed} / {tenant.seatLimit} ({seatPct}%)</span>
           </div>
-          <div style={{ height: 6, background: "rgba(255,255,255,0.12)", borderRadius: 999 }}>
-            <div style={{ height: 6, borderRadius: 999, width: `${seatPct}%`, background: seatPct > 80 ? "#F87171" : "#34D399", transition: "width 0.5s ease" }} />
+          <div className="h-1.5 rounded-full bg-surface-sunken">
+            <div className="h-1.5 rounded-full transition-[width] duration-500" style={{ width: `${seatPct}%`, background: seatPct > 80 ? "#DC2626" : "#16A34A" }} />
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Stats row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 }}>
-        {[
-          { label: "Batch", value: tenant._count?.batches ?? 0, icon: Layers, color: "#0077A8" },
-          { label: "Kursus", value: tenant._count?.courses ?? 0, icon: Building2, color: "#7C3AED" },
-          { label: "Total Enrolled", value: tenant._count?.enrollments ?? 0, icon: BarChart3, color: "#059669" },
-          { label: "Undangan", value: tenant._count?.invites ?? 0, icon: Users, color: "#D97706" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} style={{ background: "white", borderRadius: 16, padding: "16px 14px", display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <span style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map(({ label, value, icon: Icon, color }) => (
+          <Card key={label} className="flex items-center gap-3 p-4">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px]" style={{ background: `${color}18` }}>
               <Icon size={16} strokeWidth={1.75} style={{ color }} aria-hidden="true" />
             </span>
             <div>
-              <p style={{ fontSize: 20, fontWeight: 800, color }}>{value}</p>
-              <p style={{ fontSize: 10, color: "#6E6E73" }}>{label}</p>
+              <p className="text-xl font-extrabold" style={{ color }}>{value}</p>
+              <p className="text-[10px] text-text-secondary">{label}</p>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Section tabs */}
-      <div style={{ display: "flex", gap: 4, borderBottom: "2px solid #E5E5EA" }}>
+      <div className="flex gap-1 border-b-2 border-solid border-border-default">
         {([["overview", "📋 Overview"], ["batches", "👥 Batch"], ["courses", "📚 Kursus"], ["members", "🧑‍💼 Anggota"]] as const).map(([s, label]) => (
           <button key={s} id={`tenant-section-${s}-btn`} onClick={() => setActiveSection(s)}
-            style={{ padding: "9px 16px", border: "none", background: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: activeSection === s ? "#0077A8" : "#6E6E73", borderBottom: `3px solid ${activeSection === s ? "#0077A8" : "transparent"}`, marginBottom: -2 }}>
+            className={`${SECTION_TAB} ${activeSection === s ? "border-accent-cyan-strong text-accent-cyan-strong" : "border-transparent text-text-secondary hover:text-text-primary"}`}>
             {label}
           </button>
         ))}
@@ -290,9 +297,9 @@ export default function AdminTenantDetailPage() {
 
       {/* Section: Overview */}
       {activeSection === "overview" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-          <div style={{ background: "white", borderRadius: 16, padding: 20, border: "1px solid #E5E5EA" }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F", marginBottom: 14 }}>Info Tenant</h3>
+        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+          <Card className="p-5">
+            <h3 className="mb-3.5 text-sm font-bold text-text-primary">Info Tenant</h3>
             {[
               ["Nama", tenant.name],
               ["Slug", `/${tenant.slug}`],
@@ -302,61 +309,59 @@ export default function AdminTenantDetailPage() {
               ["Dibuat", fmtDate(tenant.createdAt)],
               ["Trial Berakhir", fmtDate(tenant.trialEndsAt)],
             ].map(([k, v]) => (
-              <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                <span style={{ color: "#9CA3AF" }}>{k}</span>
-                <span style={{ fontWeight: 600, color: "#1D1D1F", fontFamily: k === "Slug" || k === "Warna Brand" ? "monospace" : "inherit" }}>{v}</span>
+              <div key={k} className="flex justify-between border-b border-solid border-border-default py-2 text-sm last:border-0">
+                <span className="text-text-muted">{k}</span>
+                <span className={`font-semibold text-text-primary ${k === "Slug" || k === "Warna Brand" ? "font-mono" : ""}`}>{v}</span>
               </div>
             ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ background: "white", borderRadius: 16, padding: 20, border: "1px solid #E5E5EA", flex: 1 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F", marginBottom: 14 }}>Batch Terbaru</h3>
+          </Card>
+          <div className="flex flex-col gap-3.5">
+            <Card className="flex-1 p-5">
+              <h3 className="mb-3.5 text-sm font-bold text-text-primary">Batch Terbaru</h3>
               {batches.length === 0
-                ? <p style={{ fontSize: 13, color: "#9CA3AF" }}>Belum ada batch.</p>
+                ? <p className="text-sm text-text-muted">Belum ada batch.</p>
                 : batches.slice(0, 4).map((b) => (
-                  <div key={b.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                    <span style={{ fontWeight: 600, color: "#1D1D1F" }}>{b.name}</span>
-                    <span style={{ color: "#9CA3AF" }}>{b._count?.members ?? 0} peserta</span>
+                  <div key={b.id} className="flex justify-between border-b border-solid border-border-default py-2 text-sm last:border-0">
+                    <span className="font-semibold text-text-primary">{b.name}</span>
+                    <span className="text-text-muted">{b._count?.members ?? 0} peserta</span>
                   </div>
                 ))
               }
-            </div>
-            <div style={{ background: "white", borderRadius: 16, padding: 20, border: "1px solid #E5E5EA", flex: 1 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F", marginBottom: 14 }}>Kursus Aktif</h3>
+            </Card>
+            <Card className="flex-1 p-5">
+              <h3 className="mb-3.5 text-sm font-bold text-text-primary">Kursus Aktif</h3>
               {courses.filter((c) => c.status === "published").length === 0
-                ? <p style={{ fontSize: 13, color: "#9CA3AF" }}>Belum ada kursus published.</p>
+                ? <p className="text-sm text-text-muted">Belum ada kursus published.</p>
                 : courses.filter((c) => c.status === "published").slice(0, 4).map((c) => (
-                  <div key={c.id} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F3F4F6", fontSize: 13 }}>
-                    <span style={{ fontWeight: 600, color: "#1D1D1F" }}>{c.title}</span>
-                    <span style={{ color: "#9CA3AF" }}>{c._count?.lessons ?? 0} pelajaran</span>
+                  <div key={c.id} className="flex justify-between border-b border-solid border-border-default py-2 text-sm last:border-0">
+                    <span className="font-semibold text-text-primary">{c.title}</span>
+                    <span className="text-text-muted">{c._count?.lessons ?? 0} pelajaran</span>
                   </div>
                 ))
               }
-            </div>
+            </Card>
           </div>
         </div>
       )}
 
       {/* Section: Batches */}
       {activeSection === "batches" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {batches.length === 0
-            ? <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "48px 24px", background: "white", borderRadius: 16, border: "1px solid #E5E5EA" }}><p style={{ color: "#6E6E73" }}>Belum ada batch.</p></div>
+            ? <div className="col-span-full rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada batch.</p></div>
             : batches.map((b) => (
-              <div key={b.id} style={{ background: "white", borderRadius: 16, padding: 18, border: "1px solid #E5E5EA", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F" }}>{b.name}</p>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: b.isActive ? "#DCFCE7" : "#F3F4F6", color: b.isActive ? "#16A34A" : "#6B7280" }}>
-                    {b.isActive ? "Aktif" : "Non-aktif"}
-                  </span>
+              <Card key={b.id} className="p-[18px]">
+                <div className="mb-2.5 flex items-center justify-between">
+                  <p className="text-sm font-bold text-text-primary">{b.name}</p>
+                  <Badge variant={b.isActive ? "success" : "neutral"}>{b.isActive ? "Aktif" : "Non-aktif"}</Badge>
                 </div>
-                {b.description && <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 10 }}>{b.description}</p>}
-                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#6E6E73" }}>
+                {b.description && <p className="mb-2.5 text-xs text-text-muted">{b.description}</p>}
+                <div className="flex gap-4 text-xs text-text-secondary">
                   <span>👥 {b._count?.members ?? 0} peserta</span>
                   <span>📚 {b._count?.assignments ?? 0} kursus assigned</span>
                   {b.startDate && <span>📅 {fmtDate(b.startDate)}</span>}
                 </div>
-              </div>
+              </Card>
             ))
           }
         </div>
@@ -364,23 +369,21 @@ export default function AdminTenantDetailPage() {
 
       {/* Section: Courses */}
       {activeSection === "courses" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12 }}>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {courses.length === 0
-            ? <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "48px 24px", background: "white", borderRadius: 16, border: "1px solid #E5E5EA" }}><p style={{ color: "#6E6E73" }}>Belum ada kursus.</p></div>
+            ? <div className="col-span-full rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada kursus.</p></div>
             : courses.map((c) => (
-              <div key={c.id} style={{ background: "white", borderRadius: 16, padding: 18, border: "1px solid #E5E5EA", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F" }}>{c.title}</p>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: c.status === "published" ? "#DCFCE7" : "#F3F4F6", color: c.status === "published" ? "#16A34A" : "#6B7280" }}>
-                    {c.status === "published" ? "Published" : "Draft"}
-                  </span>
+              <Card key={c.id} className="p-[18px]">
+                <div className="mb-2.5 flex items-center justify-between">
+                  <p className="text-sm font-bold text-text-primary">{c.title}</p>
+                  <Badge variant={c.status === "published" ? "success" : "neutral"}>{c.status === "published" ? "Published" : "Draft"}</Badge>
                 </div>
-                {c.description && <p style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 10 }}>{c.description}</p>}
-                <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#6E6E73" }}>
+                {c.description && <p className="mb-2.5 text-xs text-text-muted">{c.description}</p>}
+                <div className="flex gap-4 text-xs text-text-secondary">
                   <span>📖 {c._count?.lessons ?? 0} pelajaran</span>
                   <span>👥 {c._count?.enrollments ?? 0} enrolled</span>
                 </div>
-              </div>
+              </Card>
             ))
           }
         </div>
@@ -388,35 +391,32 @@ export default function AdminTenantDetailPage() {
 
       {/* Section: Members */}
       {activeSection === "members" && (
-        <div style={{ background: "white", borderRadius: 16, border: "1px solid #E5E5EA", overflow: "hidden" }}>
-          {members.length === 0
-            ? <div style={{ textAlign: "center", padding: "48px 24px" }}><p style={{ color: "#6E6E73" }}>Belum ada anggota. Gunakan tombol &quot;Undang&quot; untuk mengundang pengguna.</p></div>
-            : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #E5E5EA", background: "#F9FAFB" }}>
-                    {["Nama", "Email", "Role"].map((h) => (
-                      <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontWeight: 700, color: "#6E6E73", fontSize: 11, textTransform: "uppercase" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {members.map((m, i) => (
-                    <tr key={m.id} style={{ borderBottom: i < members.length - 1 ? "1px solid #F3F4F6" : "none" }}>
-                      <td style={{ padding: "12px 16px", fontWeight: 600, color: "#1D1D1F" }}>{m.name}</td>
-                      <td style={{ padding: "12px 16px", color: "#6E6E73" }}>{m.email}</td>
-                      <td style={{ padding: "12px 16px" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 999, background: m.role === "lms_admin" ? "rgba(124,58,237,0.1)" : "rgba(0,119,168,0.1)", color: m.role === "lms_admin" ? "#7C3AED" : "#0077A8" }}>
+        members.length === 0
+          ? <div className="rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada anggota. Gunakan tombol &quot;Undang&quot; untuk mengundang pengguna.</p></div>
+          : (
+            <TableContainer>
+              <Table>
+                <THead>
+                  <TR className="hover:bg-transparent">
+                    <TH>Nama</TH><TH>Email</TH><TH>Role</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {members.map((m) => (
+                    <TR key={m.id}>
+                      <TD className="py-3 font-semibold text-text-primary">{m.name}</TD>
+                      <TD className="py-3 text-text-secondary">{m.email}</TD>
+                      <TD className="py-3">
+                        <span className="rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: m.role === "lms_admin" ? "rgba(124,58,237,0.1)" : "rgba(0,119,168,0.1)", color: m.role === "lms_admin" ? "#7C3AED" : "#0077A8" }}>
                           {m.role === "lms_admin" ? "Admin LMS" : "Karyawan"}
                         </span>
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   ))}
-                </tbody>
-              </table>
-            )
-          }
-        </div>
+                </TBody>
+              </Table>
+            </TableContainer>
+          )
       )}
 
       {/* Invite modal */}

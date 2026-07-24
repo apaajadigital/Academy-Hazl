@@ -1,6 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  Search,
+  Eye,
+  Check,
+  X,
+  Archive,
+  Star,
+  GraduationCap,
+  PlayCircle,
+  Video,
+  FileText,
+  Save,
+  Lock,
+  BookOpen,
+  Loader2,
+} from "lucide-react";
+import {
+  Badge,
+  Button,
+  Input,
+  Select,
+  Textarea,
+  Modal,
+  ModalContent,
+  Pagination,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
 type Course = {
@@ -52,12 +89,14 @@ type CourseDetail = {
   sections?: DetailSection[];
 };
 
-const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  draft:     { label: "Draft",     cls: "bg-gray-100 text-gray-600" },
-  pending:   { label: "Review",    cls: "bg-yellow-100 text-yellow-700" },
-  published: { label: "Aktif",     cls: "bg-green-100 text-green-700" },
-  rejected:  { label: "Ditolak",   cls: "bg-red-100 text-red-700" },
-  archived:  { label: "Arsip",     cls: "bg-gray-100 text-gray-500" },
+type StatusVariant = "neutral" | "warning" | "success" | "danger";
+
+const STATUS_MAP: Record<string, { label: string; variant: StatusVariant }> = {
+  draft:     { label: "Draft",   variant: "neutral" },
+  pending:   { label: "Review",  variant: "warning" },
+  published: { label: "Aktif",   variant: "success" },
+  rejected:  { label: "Ditolak", variant: "danger" },
+  archived:  { label: "Arsip",   variant: "neutral" },
 };
 
 const LEVEL_LABEL: Record<string, string> = {
@@ -271,447 +310,337 @@ export default function AdminKursusPage() {
 
   const totalPages = Math.ceil(total / limit);
 
+  const actionPill =
+    "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
+
   return (
-    <div className="ak-page">
+    <div className="flex max-w-[1200px] flex-col gap-5">
       {/* Header */}
-      <div className="ak-header">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="ak-title">Manajemen Kursus</h1>
-          <p className="ak-sub">{total.toLocaleString("id-ID")} kursus total</p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Kursus</h1>
+          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} kursus total</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="ak-filters">
-        <form onSubmit={handleSearch} className="ak-search-form">
-          <input className="ak-search-input" placeholder="Cari judul kursus atau trainer..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <button type="submit" className="ak-search-btn">🔍 Cari</button>
+      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
+        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+          <Input
+            containerClassName="flex-1"
+            leftIcon={<Search size={16} aria-hidden="true" />}
+            placeholder="Cari judul kursus atau trainer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Cari kursus"
+          />
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
-        <div className="ak-status-tabs">
-          {["all", "pending", "published", "draft", "rejected", "archived"].map((s) => {
-            const info = STATUS_MAP[s];
-            return (
-              <button key={s} onClick={() => { setStatusFilter(s); setPage(1); }} className={`ak-status-tab ${statusFilter === s ? "ak-tab-active" : ""}`}>
-                {s === "all" ? "Semua" : info?.label ?? s}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+          <TabsList className="flex-wrap">
+            {["all", "pending", "published", "draft", "rejected", "archived"].map((s) => (
+              <TabsTrigger key={s} value={s}>
+                {s === "all" ? "Semua" : STATUS_MAP[s]?.label ?? s}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Table */}
-      <div className="ak-table-wrap">
-        {loading ? (
-          <div className="ak-loading"><span className="ak-spinner" /></div>
-        ) : courses.length === 0 ? (
-          <div className="ak-empty"><p>📖</p><p>Tidak ada kursus ditemukan</p></div>
-        ) : (
-          <table className="ak-table">
-            <thead>
-              <tr>
-                <th>Kursus</th>
-                <th>Trainer</th>
-                <th>Status</th>
-                <th>Level</th>
-                <th>Harga</th>
-                <th>Pendaftar</th>
-                <th>Rating</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {courses.map((c) => {
-                const status = STATUS_MAP[c.status] ?? STATUS_MAP["draft"]!;
-                return (
-                  <tr key={c.id}>
-                    <td>
-                      <div className="ak-course-cell">
-                        <div>
-                          <p className="ak-course-title">
-                            {c.title}
-                            {c.isFeatured && <span className="ak-featured-badge">⭐ Unggulan</span>}
-                            {c.format === "private_class" && <span className="ak-private-badge">🔒 Private Class</span>}
-                          </p>
-                          <p className="ak-course-cat">{c.category?.name ?? "Umum"} · {c._count?.sections ?? 0} bab</p>
+      {loading ? (
+        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
+          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+        </div>
+      ) : courses.length === 0 ? (
+        <EmptyState icon={BookOpen} title="Tidak ada kursus ditemukan" description="Coba ubah kata kunci pencarian atau filter status." />
+      ) : (
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[860px]">
+              <THead>
+                <tr>
+                  <TH>Kursus</TH>
+                  <TH>Trainer</TH>
+                  <TH>Status</TH>
+                  <TH>Level</TH>
+                  <TH>Harga</TH>
+                  <TH>Pendaftar</TH>
+                  <TH>Rating</TH>
+                  <TH>Aksi</TH>
+                </tr>
+              </THead>
+              <TBody>
+                {courses.map((c) => {
+                  const status = STATUS_MAP[c.status] ?? STATUS_MAP["draft"]!;
+                  return (
+                    <TR key={c.id}>
+                      <TD>
+                        <div className="flex max-w-[220px] flex-wrap items-center gap-1.5">
+                          <span className="font-semibold text-text-primary">{c.title}</span>
+                          {c.isFeatured && (
+                            <Badge variant="warning">
+                              <Star size={11} fill="currentColor" aria-hidden="true" /> Unggulan
+                            </Badge>
+                          )}
+                          {c.format === "private_class" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs font-semibold text-accent-purple">
+                              <Lock size={11} aria-hidden="true" /> Private Class
+                            </span>
+                          )}
+                          <p className="w-full text-xs text-text-muted">{c.category?.name ?? "Umum"} · {c._count?.sections ?? 0} bab</p>
                         </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p className="ak-trainer-name">{c.trainer.name}</p>
-                      <p className="ak-trainer-email">{c.trainer.email}</p>
-                    </td>
-                    <td>
-                      <span className={`ak-badge ${status.cls}`}>{status.label}</span>
-                    </td>
-                    <td>
-                      <span className="ak-level">{LEVEL_LABEL[c.level ?? ""] ?? "—"}</span>
-                    </td>
-                    <td>
-                      <div>
+                      </TD>
+                      <TD>
+                        <p className="font-medium text-text-primary">{c.trainer.name}</p>
+                        <p className="text-xs text-text-muted">{c.trainer.email}</p>
+                      </TD>
+                      <TD>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </TD>
+                      <TD className="whitespace-nowrap text-text-secondary">{LEVEL_LABEL[c.level ?? ""] ?? "—"}</TD>
+                      <TD>
                         {c.salePrice && Number(c.salePrice) < Number(c.price) ? (
                           <>
-                            <p className="ak-sale-price">Rp {Number(c.salePrice).toLocaleString("id-ID")}</p>
-                            <p className="ak-orig-price">Rp {Number(c.price).toLocaleString("id-ID")}</p>
+                            <p className="font-bold text-accent-cyan-strong">Rp {Number(c.salePrice).toLocaleString("id-ID")}</p>
+                            <p className="text-xs text-text-muted line-through">Rp {Number(c.price).toLocaleString("id-ID")}</p>
                           </>
                         ) : (
-                          <p className="ak-price">
+                          <p className="font-semibold text-text-primary">
                             {Number(c.price) === 0 ? "Gratis" : `Rp ${Number(c.price).toLocaleString("id-ID")}`}
                           </p>
                         )}
-                      </div>
-                    </td>
-                    <td><span className="ak-enrolled">🎓 {c.totalEnrolled}</span></td>
-                    <td><span className="ak-rating">⭐ {parseFloat(c.avgRating).toFixed(1)}</span></td>
-                    <td>
-                      <div className="ak-actions">
-                        <button
-                          className="ak-btn ak-btn-detail"
-                          onClick={() => openDetailModal(c.id)}
-                          disabled={actionLoading !== null}
-                        >
-                          👁️ Detail & Review
-                        </button>
-                        {c.status === "pending" && (
-                          <>
+                      </TD>
+                      <TD>
+                        <span className="inline-flex items-center gap-1 font-semibold text-green-700">
+                          <GraduationCap size={14} aria-hidden="true" /> {c.totalEnrolled}
+                        </span>
+                      </TD>
+                      <TD>
+                        <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+                          <Star size={14} fill="currentColor" aria-hidden="true" /> {parseFloat(c.avgRating).toFixed(1)}
+                        </span>
+                      </TD>
+                      <TD>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <button
+                            className={cn(actionPill, "bg-surface-accent-soft text-accent-cyan-strong hover:bg-accent-cyan-strong hover:text-white")}
+                            onClick={() => openDetailModal(c.id)}
+                            disabled={actionLoading !== null}
+                          >
+                            <Eye size={14} aria-hidden="true" /> Detail &amp; Review
+                          </button>
+                          {c.status === "pending" && (
+                            <>
+                              <button
+                                className={cn(actionPill, "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white")}
+                                onClick={() => updateStatus(c.id, "published")}
+                                disabled={actionLoading !== null}
+                              >
+                                <Check size={14} aria-hidden="true" /> Approve
+                              </button>
+                              <button
+                                className={cn(actionPill, "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white")}
+                                onClick={() => openDetailModal(c.id)}
+                                disabled={actionLoading !== null}
+                              >
+                                <X size={14} aria-hidden="true" /> Tolak
+                              </button>
+                            </>
+                          )}
+                          {c.status === "published" && (
                             <button
-                              className="ak-btn ak-btn-approve"
+                              className={cn(actionPill, "bg-surface-sunken text-text-secondary hover:bg-text-secondary hover:text-white")}
+                              onClick={() => updateStatus(c.id, "archived")}
+                              disabled={actionLoading !== null}
+                            >
+                              <Archive size={14} aria-hidden="true" /> Arsip
+                            </button>
+                          )}
+                          {(c.status === "rejected" || c.status === "archived") && (
+                            <button
+                              className={cn(actionPill, "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white")}
                               onClick={() => updateStatus(c.id, "published")}
                               disabled={actionLoading !== null}
-                            >✓ Approve</button>
-                            <button
-                              className="ak-btn ak-btn-reject"
-                              onClick={() => openDetailModal(c.id)}
-                              disabled={actionLoading !== null}
-                            >✕ Tolak</button>
-                          </>
-                        )}
-                        {c.status === "published" && (
+                            >
+                              <Check size={14} aria-hidden="true" /> Aktifkan
+                            </button>
+                          )}
                           <button
-                            className="ak-btn ak-btn-archive"
-                            onClick={() => updateStatus(c.id, "archived")}
+                            className={cn(
+                              actionPill,
+                              c.isFeatured
+                                ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"
+                                : "bg-surface-sunken text-text-muted hover:bg-surface-sunken/70",
+                            )}
+                            onClick={() => toggleFeatured(c.id, c.isFeatured)}
                             disabled={actionLoading !== null}
-                          >Arsip</button>
-                        )}
-                        {(c.status === "rejected" || c.status === "archived") && (
-                          <button
-                            className="ak-btn ak-btn-approve"
-                            onClick={() => updateStatus(c.id, "published")}
-                            disabled={actionLoading !== null}
-                          >Aktifkan</button>
-                        )}
-                        <button
-                          className={`ak-btn ${c.isFeatured ? "ak-btn-unfeat" : "ak-btn-feat"}`}
-                          onClick={() => toggleFeatured(c.id, c.isFeatured)}
-                          disabled={actionLoading !== null}
-                          title={c.isFeatured ? "Hapus dari unggulan" : "Jadikan unggulan"}
-                        >
-                          {c.isFeatured ? "☆" : "⭐"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+                            title={c.isFeatured ? "Hapus dari unggulan" : "Jadikan unggulan"}
+                          >
+                            <Star size={14} fill={c.isFeatured ? "currentColor" : "none"} aria-hidden="true" />
+                          </button>
+                        </div>
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="ak-pagination">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="ak-page-btn">← Prev</button>
-          <span className="ak-page-info">Halaman {page} dari {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="ak-page-btn">Next →</button>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+              <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+              <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+            </div>
+          )}
         </div>
       )}
 
       {/* Review Modal */}
-      {selectedCourseId && (
-        <div className="ak-modal-overlay" onClick={() => setSelectedCourseId(null)}>
-          <div className="ak-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ak-modal-header">
-              <h2 className="ak-modal-title">Review & Approval Kursus</h2>
-              <button className="ak-modal-close" onClick={() => setSelectedCourseId(null)}>✕</button>
-            </div>
-            
-            {modalLoading ? (
-              <div className="ak-modal-loading"><span className="ak-spinner" /></div>
-            ) : !detailCourse ? (
-              <div className="ak-modal-empty">Gagal memuat detail kursus.</div>
-            ) : (
-              <div className="ak-modal-body">
-                {/* Course Metadata */}
-                <div className="ak-detail-grid">
-                  <div className="ak-detail-card">
-                    <span className="ak-detail-label">Judul Kursus</span>
-                    <span className="ak-detail-val">{detailCourse.title}</span>
-                  </div>
-                  <div className="ak-detail-card">
-                    <span className="ak-detail-label">Trainer</span>
-                    <span className="ak-detail-val">{detailCourse.trainer.name} ({detailCourse.trainer.email})</span>
-                  </div>
-                  <div className="ak-detail-card">
-                    <span className="ak-detail-label">Kategori / Level</span>
-                    <span className="ak-detail-val">{detailCourse.category?.name ?? "Umum"} · {LEVEL_LABEL[detailCourse.level ?? ""] ?? "—"}</span>
-                  </div>
-                  <div className="ak-detail-card">
-                    <span className="ak-detail-label">Harga Kelas</span>
-                    <span className="ak-detail-val">
-                      {Number(detailCourse.price) === 0 ? "Gratis" : `Rp ${Number(detailCourse.price).toLocaleString("id-ID")}`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Course Video Preview */}
-                {detailCourse.previewVideo && (
-                  <div className="ak-preview-section">
-                    <h3 className="ak-section-title">Video Pengantar / Preview</h3>
-                    <div className="ak-video-wrap">
-                      <a href={detailCourse.previewVideo} target="_blank" rel="noopener noreferrer" className="ak-video-link">
-                        📺 Putar Video Preview ({detailCourse.previewVideo})
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* Course Structure */}
-                <div className="ak-structure-section">
-                  <h3 className="ak-section-title">Struktur Kurikulum ({detailCourse.sections?.length ?? 0} Bab)</h3>
-                  {(!detailCourse.sections || detailCourse.sections.length === 0) ? (
-                    <p className="ak-no-curriculum">Belum ada materi kurikulum yang ditambahkan.</p>
-                  ) : (
-                    <div className="ak-sections-list">
-                      {detailCourse.sections.map((sec, idx) => (
-                        <div key={sec.id} className="ak-section-item">
-                          <div className="ak-section-hdr">
-                            Bab {idx + 1}: {sec.title}
-                          </div>
-                          <ul className="ak-lessons-list">
-                            {sec.lessons?.map((les) => (
-                              <li key={les.id} className="ak-lesson-item">
-                                <span className="ak-les-type">{les.type === "video" ? "📹" : "📄"}</span>
-                                <span className="ak-les-title">{les.title}</span>
-                                <span className="ak-les-dur">{les.duration ? `${Math.round(les.duration / 60)} m` : ""}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Private Class Settings */}
-                <div className="ak-private-section">
-                  <h3 className="ak-section-title">Pengaturan Private Class</h3>
-                  <div className="ak-private-fields">
-                    <label className="ak-private-field">
-                      <span className="ak-private-label">Format Kursus</span>
-                      <select
-                        className="ak-private-input"
-                        value={pcFormat}
-                        onChange={(e) => setPcFormat(e.target.value === "private_class" ? "private_class" : "regular")}
-                      >
-                        <option value="regular">Reguler</option>
-                        <option value="private_class">Private Class</option>
-                      </select>
-                    </label>
-                    <label className="ak-private-field">
-                      <span className="ak-private-label">Link Grup WhatsApp</span>
-                      <input
-                        className="ak-private-input"
-                        type="text"
-                        placeholder="https://chat.whatsapp.com/..."
-                        value={pcWaLink}
-                        onChange={(e) => setPcWaLink(e.target.value)}
-                      />
-                    </label>
-                    <label className="ak-private-field">
-                      <span className="ak-private-label">Kontak Onboarding (nomor WA, angka saja)</span>
-                      <input
-                        className="ak-private-input"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="6285283423737"
-                        value={pcContact}
-                        onChange={(e) => setPcContact(e.target.value)}
-                      />
-                    </label>
-                  </div>
+      <Modal open={selectedCourseId !== null} onOpenChange={(o) => { if (!o) setSelectedCourseId(null); }}>
+        <ModalContent
+          title="Review & Approval Kursus"
+          className="max-w-2xl"
+          footer={
+            detailCourse ? (
+              <div className="flex w-full flex-wrap items-center justify-between gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setSelectedCourseId(null)} disabled={savingApproval}>
+                  Batal
+                </Button>
+                <div className="flex flex-wrap items-center gap-2">
                   <button
-                    className="ak-btn ak-btn-save-private"
-                    onClick={handleSavePrivateClass}
-                    disabled={savingPrivate || savingApproval}
+                    className={cn(actionPill, "px-4 py-2 bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white")}
+                    onClick={handleRejectDetail}
+                    disabled={savingApproval}
                   >
-                    {savingPrivate ? "Menyimpan..." : "💾 Simpan Pengaturan"}
+                    <X size={15} aria-hidden="true" />
+                    {savingApproval ? "Memproses..." : "Tolak & Kirim Feedback"}
                   </button>
-                </div>
-
-                {/* Feedback Input Form */}
-                <div className="ak-feedback-section">
-                  <h3 className="ak-section-title">Catatan & Umpan Balik Admin (Wajib jika menolak)</h3>
-                  <textarea
-                    className="ak-feedback-input"
-                    rows={4}
-                    placeholder="Tulis umpan balik kelas di sini... (contoh: Silakan lengkapi video pada Bab 2, resolusi audio kurang jernih, dll.)"
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                  />
-                </div>
-
-                {/* Footer Actions */}
-                <div className="ak-modal-footer">
-                  <button className="ak-btn ak-btn-cancel" onClick={() => setSelectedCourseId(null)} disabled={savingApproval}>
-                    Batal
-                  </button>
-                  <div className="ak-modal-actions">
-                    <button
-                      className="ak-btn ak-btn-modal-reject"
-                      onClick={handleRejectDetail}
-                      disabled={savingApproval}
-                    >
-                      {savingApproval ? "Memproses..." : "✕ Tolak & Kirim Feedback"}
-                    </button>
-                    <button
-                      className="ak-btn ak-btn-modal-approve"
-                      onClick={handleApproveDetail}
-                      disabled={savingApproval}
-                    >
-                      {savingApproval ? "Memproses..." : "✓ Setujui & Publikasikan"}
-                    </button>
-                  </div>
+                  <Button variant="cyan" size="sm" onClick={handleApproveDetail} disabled={savingApproval} leftIcon={<Check size={15} aria-hidden="true" />}>
+                    {savingApproval ? "Memproses..." : "Setujui & Publikasikan"}
+                  </Button>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-      )}
+            ) : undefined
+          }
+        >
+          {modalLoading ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+            </div>
+          ) : !detailCourse ? (
+            <div className="py-12 text-center text-text-muted">Gagal memuat detail kursus.</div>
+          ) : (
+            <div className="flex flex-col gap-5 text-left">
+              {/* Course Metadata */}
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {[
+                  { label: "Judul Kursus", value: detailCourse.title },
+                  { label: "Trainer", value: `${detailCourse.trainer.name} (${detailCourse.trainer.email})` },
+                  { label: "Kategori / Level", value: `${detailCourse.category?.name ?? "Umum"} · ${LEVEL_LABEL[detailCourse.level ?? ""] ?? "—"}` },
+                  { label: "Harga Kelas", value: Number(detailCourse.price) === 0 ? "Gratis" : `Rp ${Number(detailCourse.price).toLocaleString("id-ID")}` },
+                ].map((d) => (
+                  <div key={d.label} className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-border-default bg-surface-sunken px-4 py-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-text-muted">{d.label}</span>
+                    <span className="text-sm font-semibold text-text-primary">{d.value}</span>
+                  </div>
+                ))}
+              </div>
 
-      <style jsx>{`
-        .ak-page { display: flex; flex-direction: column; gap: 20px; max-width: 1200px; }
-        .ak-header { display: flex; align-items: center; justify-content: space-between; }
-        .ak-title { font-size: 20px; font-weight: 800; color: #1D1D1F; }
-        .ak-sub { font-size: 13px; color: #6E6E73; margin-top: 3px; }
+              {/* Course Video Preview */}
+              {detailCourse.previewVideo && (
+                <div className="rounded-[var(--radius-md)] border border-[rgba(0,119,168,0.2)] bg-surface-accent-soft p-4">
+                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-text-primary">Video Pengantar / Preview</h3>
+                  <a
+                    href={detailCourse.previewVideo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-cyan-strong hover:underline"
+                  >
+                    <PlayCircle size={16} aria-hidden="true" /> Putar Video Preview ({detailCourse.previewVideo})
+                  </a>
+                </div>
+              )}
 
-        .ak-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .ak-search-form { display: flex; gap: 8px; flex: 1; min-width: 240px; }
-        .ak-search-input { flex: 1; padding: 9px 14px; border-radius: 10px; border: 1.5px solid #E5E5EA; font-size: 13px; outline: none; }
-        .ak-search-input:focus { border-color: #0077A8; box-shadow: 0 0 0 3px rgba(0,119,168,0.1); }
-        .ak-search-btn { padding: 9px 16px; border-radius: 10px; background: #0077A8; color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .ak-search-btn:hover { background: #005f87; }
+              {/* Course Structure */}
+              <div>
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-text-primary">
+                  Struktur Kurikulum ({detailCourse.sections?.length ?? 0} Bab)
+                </h3>
+                {(!detailCourse.sections || detailCourse.sections.length === 0) ? (
+                  <p className="text-sm italic text-text-muted">Belum ada materi kurikulum yang ditambahkan.</p>
+                ) : (
+                  <div className="flex max-h-60 flex-col gap-2.5 overflow-y-auto pr-1">
+                    {detailCourse.sections.map((sec, idx) => (
+                      <div key={sec.id} className="overflow-hidden rounded-[var(--radius-md)] border border-border-default bg-surface-sunken">
+                        <div className="border-b border-border-default bg-surface-page px-3.5 py-2 text-xs font-bold text-text-primary">
+                          Bab {idx + 1}: {sec.title}
+                        </div>
+                        <ul className="m-0 list-none p-0">
+                          {sec.lessons?.map((les) => (
+                            <li key={les.id} className="flex items-center gap-2 border-b border-border-default px-3.5 py-2 text-xs text-text-secondary last:border-0">
+                              {les.type === "video" ? <Video size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
+                              <span className="flex-1">{les.title}</span>
+                              <span className="text-[11px] text-text-muted">{les.duration ? `${Math.round(les.duration / 60)} m` : ""}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-        .ak-status-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-        .ak-status-tab { padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1.5px solid #E5E5EA; background: white; cursor: pointer; color: #6E6E73; transition: all 0.18s; }
-        .ak-tab-active { background: #0077A8; color: white; border-color: #0077A8; }
+              {/* Private Class Settings */}
+              <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-accent-purple/25 bg-accent-purple/5 p-4">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-text-primary">Pengaturan Private Class</h3>
+                <Select
+                  label="Format Kursus"
+                  value={pcFormat}
+                  onChange={(e) => setPcFormat(e.target.value === "private_class" ? "private_class" : "regular")}
+                >
+                  <option value="regular">Reguler</option>
+                  <option value="private_class">Private Class</option>
+                </Select>
+                <Input
+                  label="Link Grup WhatsApp"
+                  type="text"
+                  placeholder="https://chat.whatsapp.com/..."
+                  value={pcWaLink}
+                  onChange={(e) => setPcWaLink(e.target.value)}
+                />
+                <Input
+                  label="Kontak Onboarding (nomor WA, angka saja)"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="6285283423737"
+                  value={pcContact}
+                  onChange={(e) => setPcContact(e.target.value)}
+                />
+                <button
+                  className="inline-flex items-center gap-1.5 self-start rounded-full bg-accent-purple px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  onClick={handleSavePrivateClass}
+                  disabled={savingPrivate || savingApproval}
+                >
+                  <Save size={16} aria-hidden="true" />
+                  {savingPrivate ? "Menyimpan..." : "Simpan Pengaturan"}
+                </button>
+              </div>
 
-        .ak-table-wrap { background: white; border-radius: 18px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow-x: auto; }
-        .ak-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        .ak-table thead tr { background: #F9FAFB; border-bottom: 1px solid #F0F0F5; }
-        .ak-table th { padding: 12px 14px; font-size: 11px; font-weight: 700; color: #6E6E73; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; white-space: nowrap; }
-        .ak-table td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #F5F5F7; vertical-align: middle; }
-        .ak-table tr:last-child td { border-bottom: none; }
-        .ak-table tr:hover td { background: #FAFAFA; }
-
-        .ak-course-cell { display: flex; align-items: flex-start; gap: 10px; }
-        .ak-course-title { font-size: 13px; font-weight: 600; color: #1D1D1F; max-width: 200px; line-height: 1.3; }
-        .ak-featured-badge { font-size: 9px; background: #FEF3C7; color: #D97706; padding: 2px 6px; border-radius: 999px; margin-left: 4px; font-weight: 700; }
-        .ak-private-badge { font-size: 9px; background: #EDE9FE; color: #7C3AED; padding: 2px 6px; border-radius: 999px; margin-left: 4px; font-weight: 700; white-space: nowrap; }
-        .ak-course-cat { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
-        .ak-trainer-name { font-size: 13px; font-weight: 500; }
-        .ak-trainer-email { font-size: 11px; color: #9CA3AF; }
-        .ak-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; display: inline-block; }
-        .ak-level { font-size: 12px; }
-        .ak-price { font-size: 13px; font-weight: 600; color: #1D1D1F; }
-        .ak-sale-price { font-size: 13px; font-weight: 700; color: #0077A8; }
-        .ak-orig-price { font-size: 10px; color: #9CA3AF; text-decoration: line-through; }
-        .ak-enrolled { font-size: 12px; font-weight: 600; color: #059669; }
-        .ak-rating { font-size: 12px; font-weight: 600; color: #D97706; }
-
-        .ak-actions { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
-        .ak-btn { padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-        .ak-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .ak-btn-approve { background: #DCFCE7; color: #16A34A; }
-        .ak-btn-approve:hover:not(:disabled) { background: #16A34A; color: white; }
-        .ak-btn-reject { background: #FEE2E2; color: #DC2626; }
-        .ak-btn-reject:hover:not(:disabled) { background: #DC2626; color: white; }
-        .ak-btn-archive { background: #F3F4F6; color: #6B7280; }
-        .ak-btn-archive:hover:not(:disabled) { background: #6B7280; color: white; }
-        .ak-btn-feat { background: #FEF3C7; color: #D97706; font-size: 14px; padding: 4px 8px; }
-        .ak-btn-unfeat { background: #F3F4F6; color: #9CA3AF; font-size: 14px; padding: 4px 8px; }
-
-        .ak-btn-detail { background: #E5F3FF; color: #0077A8; }
-        .ak-btn-detail:hover:not(:disabled) { background: #0077A8; color: white; }
-
-        .ak-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .ak-modal { background: white; border-radius: 20px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.15); animation: scaleUp 0.2s ease-out; text-align: left; }
-        @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        
-        .ak-modal-header { padding: 18px 24px; border-bottom: 1px solid #F0F0F5; display: flex; justify-content: space-between; align-items: center; }
-        .ak-modal-title { font-size: 16px; font-weight: 700; color: #1D1D1F; }
-        .ak-modal-close { background: none; border: none; font-size: 18px; color: #6E6E73; cursor: pointer; padding: 4px; }
-        .ak-modal-close:hover { color: #1D1D1F; }
-
-        .ak-modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-        .ak-modal-loading { display: flex; justify-content: center; padding: 60px 0; }
-        .ak-modal-empty { text-align: center; color: #9CA3AF; padding: 40px 0; }
-
-        .ak-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .ak-detail-card { background: #F9FAFB; border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 4px; border: 1px solid #F0F0F5; text-align: left; }
-        .ak-detail-label { font-size: 10px; font-weight: 700; color: #8E8E93; text-transform: uppercase; }
-        .ak-detail-val { font-size: 13px; font-weight: 600; color: #1D1D1F; }
-
-        .ak-section-title { font-size: 12px; font-weight: 700; color: #1D1D1F; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em; text-align: left; }
-        .ak-preview-section { background: #F0F9FF; border: 1px solid #BEE3F8; border-radius: 12px; padding: 14px; text-align: left; }
-        .ak-video-link { display: inline-flex; align-items: center; font-size: 13px; font-weight: 600; color: #0077A8; text-decoration: none; }
-        .ak-video-link:hover { text-decoration: underline; }
-
-        .ak-structure-section { display: flex; flex-direction: column; text-align: left; }
-        .ak-no-curriculum { font-size: 13px; color: #8E8E93; font-style: italic; }
-        .ak-sections-list { display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
-        .ak-section-item { background: #F9FAFB; border-radius: 12px; border: 1px solid #E5E5EA; overflow: hidden; }
-        .ak-section-hdr { background: #F2F2F7; padding: 8px 14px; font-size: 12px; font-weight: 700; color: #1D1D1F; border-bottom: 1px solid #E5E5EA; text-align: left; }
-        .ak-lessons-list { list-style: none; padding: 0; margin: 0; }
-        .ak-lesson-item { padding: 8px 14px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #3A3A3C; border-bottom: 1px solid #E5E5EA; text-align: left; }
-        .ak-lesson-item:last-child { border-bottom: none; }
-        .ak-les-type { font-size: 14px; }
-        .ak-les-title { flex: 1; text-align: left; }
-        .ak-les-dur { color: #8E8E93; font-size: 11px; }
-
-        .ak-private-section { background: #FAF5FF; border: 1px solid #E9D5FF; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; text-align: left; }
-        .ak-private-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-        .ak-private-field { display: flex; flex-direction: column; gap: 4px; }
-        .ak-private-label { font-size: 10px; font-weight: 700; color: #8E8E93; text-transform: uppercase; }
-        .ak-private-input { width: 100%; border: 1.5px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; font-size: 13px; outline: none; transition: border-color 0.18s; font-family: inherit; background: white; }
-        .ak-private-input:focus { border-color: #7C3AED; box-shadow: 0 0 0 3px rgba(124,58,237,0.1); }
-        .ak-btn-save-private { background: #7C3AED; color: white; align-self: flex-start; padding: 8px 14px; }
-        .ak-btn-save-private:hover:not(:disabled) { background: #6D28D9; }
-
-        .ak-feedback-section { display: flex; flex-direction: column; text-align: left; }
-        .ak-feedback-input { width: 100%; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 12px; font-size: 13px; outline: none; transition: border-color 0.18s; font-family: inherit; }
-        .ak-feedback-input:focus { border-color: #0077A8; box-shadow: 0 0 0 3px rgba(0,119,168,0.1); }
-
-        .ak-modal-footer { border-top: 1px solid #F0F0F5; padding-top: 16px; display: flex; justify-content: space-between; align-items: center; }
-        .ak-btn-cancel { background: #F2F2F7; color: #1D1D1F; }
-        .ak-btn-cancel:hover { background: #E5E5EA; }
-        .ak-modal-actions { display: flex; gap: 8px; }
-        .ak-btn-modal-reject { background: #FEE2E2; color: #DC2626; }
-        .ak-btn-modal-reject:hover { background: #DC2626; color: white; }
-        .ak-btn-modal-approve { background: #0077A8; color: white; }
-        .ak-btn-modal-approve:hover { background: #005f87; }
-
-        .ak-loading { display: flex; justify-content: center; padding: 48px; }
-        .ak-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #0077A8; border-top-color: transparent; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .ak-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px; color: #9CA3AF; font-size: 14px; }
-        .ak-empty p:first-child { font-size: 32px; }
-
-        .ak-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; }
-        .ak-page-btn { padding: 8px 16px; border-radius: 10px; border: 1.5px solid #E5E5EA; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #1D1D1F; transition: all 0.18s; }
-        .ak-page-btn:hover:not(:disabled) { border-color: #0077A8; color: #0077A8; }
-        .ak-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .ak-page-info { font-size: 13px; color: #6E6E73; }
-      `}</style>
+              {/* Feedback Input Form */}
+              <Textarea
+                label="Catatan & Umpan Balik Admin (Wajib jika menolak)"
+                rows={4}
+                placeholder="Tulis umpan balik kelas di sini... (contoh: Silakan lengkapi video pada Bab 2, resolusi audio kurang jernih, dll.)"
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+              />
+            </div>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

@@ -2,6 +2,32 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  Users,
+  BookOpen,
+  GraduationCap,
+  Wallet,
+  ShoppingBag,
+  IdCard,
+  Undo2,
+  Star,
+  TrendingUp,
+  TrendingDown,
+  Mail,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  ClipboardList,
+  BarChart3,
+  Tag,
+  CalendarDays,
+  Newspaper,
+  Building2,
+  type LucideIcon,
+} from "lucide-react";
+import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
 type Stats = {
@@ -34,13 +60,26 @@ type PopularCourse = {
   trainer: { name: string };
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  paid: "bg-green-100 text-green-700",
-  pending: "bg-yellow-100 text-yellow-700",
-  failed: "bg-red-100 text-red-700",
-  expired: "bg-gray-100 text-gray-500",
+// Maps an order status to a Badge variant. The raw status string is still the
+// displayed label; only the pill styling is derived here.
+const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+  paid: "success",
+  pending: "warning",
+  failed: "danger",
+  expired: "neutral",
 };
 
+const QUICK_ACTIONS: { href: string; label: string; icon: LucideIcon; desc: string }[] = [
+  { href: "/admin/pengguna",  label: "Manajemen Pengguna", icon: Users,        desc: "Kelola akun & role" },
+  { href: "/admin/kursus",    label: "Approval Kursus",    icon: CheckCircle2,  desc: "Review kursus baru" },
+  { href: "/admin/leads",     label: "Leads CRM",          icon: ClipboardList, desc: "Follow-up prospek" },
+  { href: "/admin/transaksi", label: "Laporan Keuangan",   icon: BarChart3,     desc: "Export & analisis" },
+  { href: "/admin/kupon",     label: "Buat Kupon",         icon: Tag,           desc: "Diskon & promo" },
+  { href: "/admin/event",     label: "Kelola Event",       icon: CalendarDays,  desc: "Seminar & workshop" },
+  { href: "/admin/blog",      label: "Konten Blog",        icon: Newspaper,     desc: "Artikel & SEO" },
+  { href: "/admin/review",    label: "Moderasi Review",    icon: Star,          desc: "Approve ulasan" },
+  { href: "/admin/lms",       label: "LMS B2B",            icon: Building2,      desc: "Tenant & lisensi" },
+];
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -81,273 +120,267 @@ export default function AdminDashboardPage() {
 
   const KPI_CARDS = stats
     ? [
-        { label: "Total Pengguna",     value: stats.totalUsers,          icon: "👥", color: "#0077A8", bg: "#E8F4F9", change: "+12%" },
-        { label: "Kursus Aktif",       value: stats.totalCourses,        icon: "📖", color: "#7C3AED", bg: "#EDE9FE", change: "+3%" },
-        { label: "Total Pendaftaran",  value: stats.totalEnrollments,    icon: "🎓", color: "#059669", bg: "#D1FAE5", change: "+8%" },
-        { label: "Total Pendapatan",   value: null, revenue: stats.totalRevenue, icon: "💰", color: "#DC2626", bg: "#FEE2E2", change: "+22%" },
-        { label: "Omset Retail",       value: null, revenue: stats.retailRevenue, icon: "💸", color: "#059669", bg: "#D1FAE5", change: "+15%" },
-        { label: "Langganan Aktif",    value: stats.activeSubscriptions, icon: "⭐", color: "#F59E0B", bg: "#FEF3C7", change: "+5%" },
-        { label: "Tingkat Refund",     value: null, numValue: stats.refundRate, labelSuffix: "%", icon: "🔄", color: "#DC2626", bg: "#FEE2E2", change: "-1%" },
-        { label: "Rata-rata Rating",   value: null, numValue: stats.avgRating, labelSuffix: " / 5.0", icon: "🌟", color: "#F59E0B", bg: "#FEF3C7", change: "+0.1" },
+        { label: "Total Pengguna",     value: stats.totalUsers,          icon: Users,        color: "#0077A8", bg: "#E8F4F9", change: "+12%" },
+        { label: "Kursus Aktif",       value: stats.totalCourses,        icon: BookOpen,     color: "#7C3AED", bg: "#EDE9FE", change: "+3%" },
+        { label: "Total Pendaftaran",  value: stats.totalEnrollments,    icon: GraduationCap, color: "#059669", bg: "#D1FAE5", change: "+8%" },
+        { label: "Total Pendapatan",   value: null, revenue: stats.totalRevenue, icon: Wallet, color: "#DC2626", bg: "#FEE2E2", change: "+22%" },
+        { label: "Omset Retail",       value: null, revenue: stats.retailRevenue, icon: ShoppingBag, color: "#059669", bg: "#D1FAE5", change: "+15%" },
+        { label: "Langganan Aktif",    value: stats.activeSubscriptions, icon: IdCard, color: "#F59E0B", bg: "#FEF3C7", change: "+5%" },
+        { label: "Tingkat Refund",     value: null, numValue: stats.refundRate, labelSuffix: "%", icon: Undo2, color: "#DC2626", bg: "#FEE2E2", change: "-1%" },
+        { label: "Rata-rata Rating",   value: null, numValue: stats.avgRating, labelSuffix: " / 5.0", icon: Star, color: "#F59E0B", bg: "#FEF3C7", change: "+0.1" },
       ]
     : [];
 
+  const maxEnrolled = Math.max(...courses.map((c) => c.totalEnrolled), 1);
+
   if (loading) {
     return (
-      <div className="adm-loading">
-        <span className="adm-spinner" />
-        <style jsx>{`.adm-loading{display:flex;justify-content:center;align-items:center;min-height:50vh;}.adm-spinner{width:36px;height:36px;border-radius:50%;border:3px solid #0077A8;border-top-color:transparent;animation:spin 0.8s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}`}</style>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="adp-page">
+    <div className="flex max-w-[1200px] flex-col gap-6">
       {/* Header */}
-      <div className="adp-header">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="adp-title">{greeting}, Admin 👋</h1>
-          <p className="adp-sub">
+          <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-green-600" aria-hidden="true" /> Sistem Online
+          </span>
+          <h1 className="text-[22px] font-extrabold text-text-primary">{greeting}, Admin 👋</h1>
+          <p className="mt-1 text-[13px] text-text-secondary">
             {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
         </div>
-        <div className="adp-header-actions">
-          <Link href="/admin/kursus" className="adp-action-btn adp-btn-outline">+ Tambah Kursus</Link>
-          <Link href="/admin/pengguna" className="adp-action-btn adp-btn-primary">Kelola Pengguna</Link>
+        <div className="flex gap-2.5">
+          <Link href="/admin/kursus" className="btn btn-outline btn-sm">+ Tambah Kursus</Link>
+          <Link href="/admin/pengguna" className="btn btn-primary btn-sm">Kelola Pengguna</Link>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="adp-kpi-grid">
-        {KPI_CARDS.map(({ label, value, revenue, numValue, labelSuffix, icon, color, bg, change }) => (
-          <div key={label} className="adp-kpi-card">
-            <div className="adp-kpi-top">
-              <div className="adp-kpi-icon" style={{ background: bg }}>
-                <span>{icon}</span>
-              </div>
-              {change && (
-                <span className={`adp-kpi-change ${change.startsWith("-") ? "adp-change-neg" : "adp-change-pos"}`}>
-                  {change.startsWith("+") ? "↑" : change.startsWith("-") ? "↓" : "→"} {change}
+      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        {KPI_CARDS.map(({ label, value, revenue, numValue, labelSuffix, icon: Icon, color, bg, change }) => {
+          const isNeg = change.startsWith("-");
+          const Trend = isNeg ? TrendingDown : TrendingUp;
+          return (
+            <Card key={label} hoverable className="p-5">
+              <div className="mb-3 flex items-start justify-between">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: bg }}>
+                  <Icon size={18} style={{ color }} aria-hidden="true" />
                 </span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold",
+                    isNeg ? "bg-red-600/10 text-red-700" : "bg-green-600/10 text-green-700",
+                  )}
+                >
+                  <Trend size={13} aria-hidden="true" /> {change}
+                </span>
+              </div>
+              <p className="text-[22px] font-extrabold leading-none" style={{ color }}>
+                {revenue !== undefined && revenue !== null
+                  ? `Rp ${revenue.toLocaleString("id-ID")}`
+                  : numValue !== undefined && numValue !== null
+                  ? `${numValue}${labelSuffix ?? ""}`
+                  : (value ?? 0).toLocaleString("id-ID")}
+              </p>
+              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{label}</p>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Bento: leads + popular courses (left) · recent orders table (right) */}
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Left column */}
+        <div className="flex flex-col gap-5 lg:col-span-1">
+          {/* Leads gradient card */}
+          <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-brand-gradient p-5 text-white shadow-e3">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
+                <Mail size={20} aria-hidden="true" />
+              </span>
+              <span className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold backdrop-blur-sm">Real-time</span>
+            </div>
+            <h2 className="text-lg font-extrabold text-white">Leads Baru</h2>
+            <p className="mt-1 text-[13px] text-white/80">
+              {newLeadsCount === null
+                ? "Memuat…"
+                : newLeadsCount === 0
+                ? "Tidak ada leads baru saat ini"
+                : "Leads baru menunggu follow-up"}
+            </p>
+            <p className="my-3 text-4xl font-extrabold leading-none">{newLeadsCount ?? "—"}</p>
+            <div className="flex flex-col gap-2">
+              {newLeadsCount !== null && newLeadsCount > 0 ? (
+                <>
+                  <Link
+                    href="/admin/leads?status=new"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong transition hover:bg-white/90"
+                  >
+                    Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/admin/leads"
+                    className="flex items-center justify-center gap-1 text-[13px] font-semibold text-white/90 transition hover:text-white"
+                  >
+                    Kelola Leads <ArrowRight size={14} aria-hidden="true" />
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href="/admin/leads"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong transition hover:bg-white/90"
+                >
+                  Kelola Leads <ArrowRight size={16} aria-hidden="true" />
+                </Link>
               )}
             </div>
-            <p className="adp-kpi-value" style={{ color }}>
-              {revenue !== undefined && revenue !== null
-                ? `Rp ${revenue.toLocaleString("id-ID")}`
-                : numValue !== undefined && numValue !== null
-                ? `${numValue}${labelSuffix ?? ""}`
-                : (value ?? 0).toLocaleString("id-ID")}
-            </p>
-            <p className="adp-kpi-label">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Two columns: Recent Orders + Popular Courses */}
-      <div className="adp-grid2">
-        {/* Recent Transactions */}
-        <div className="adp-card">
-          <div className="adp-card-header">
-            <h2 className="adp-card-title">Transaksi Terbaru</h2>
-            <Link href="/admin/transaksi" className="adp-card-link">Lihat Semua →</Link>
           </div>
 
-          {orders.length === 0 ? (
-            <p className="adp-empty">Belum ada transaksi.</p>
-          ) : (
-            <div className="adp-order-list">
-              {orders.map((order) => {
-                const title = order.items[0]?.itemTitle ?? "—";
-                const badge = STATUS_BADGE[order.status] ?? STATUS_BADGE.expired;
-                return (
-                  <div key={order.id} className="adp-order-row">
-                    <div className="adp-order-avatar">
-                      {order.user.name.slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="adp-order-info">
-                      <p className="adp-order-name">{order.user.name}</p>
-                      <p className="adp-order-product">{title}</p>
-                    </div>
-                    <div className="adp-order-right">
-                      <p className="adp-order-amount">Rp {Number(order.finalAmount).toLocaleString("id-ID")}</p>
-                      <span className={`adp-order-badge ${badge}`}>{order.status}</span>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Popular courses */}
+          <Card className="p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-sm font-bold text-text-primary">
+                <TrendingUp size={18} className="text-accent-purple" aria-hidden="true" /> Kursus Terpopuler
+              </h2>
+              <Link href="/admin/kursus" className="text-xs font-semibold text-accent-cyan-strong hover:underline">
+                Kelola →
+              </Link>
             </div>
-          )}
+            {courses.length === 0 ? (
+              <p className="py-6 text-center text-sm text-text-muted">Belum ada kursus.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {courses.map((course, i) => {
+                  const pct = Math.max((course.totalEnrolled / maxEnrolled) * 100, 4);
+                  return (
+                    <div key={course.id} className="flex items-center gap-3">
+                      <span className="w-5 flex-shrink-0 text-center text-sm font-extrabold text-border-strong">#{i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[13px] font-semibold text-text-primary">{course.title}</p>
+                        <p className="text-[11px] text-text-secondary">{course.trainer.name}</p>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
+                            <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="flex flex-shrink-0 items-center gap-1 text-[11px] text-text-secondary">
+                            <GraduationCap size={12} aria-hidden="true" /> {course.totalEnrolled}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-amber-600">
+                        <Star size={12} className="fill-amber-500 text-amber-500" aria-hidden="true" />
+                        {parseFloat(course.avgRating).toFixed(1)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
         </div>
 
-        {/* Popular Courses */}
-        <div className="adp-card">
-          <div className="adp-card-header">
-            <h2 className="adp-card-title">Kursus Terpopuler</h2>
-            <Link href="/admin/kursus" className="adp-card-link">Kelola →</Link>
-          </div>
+        {/* Right column — recent orders table */}
+        <div className="lg:col-span-2">
+          <TableContainer>
+            <div className="flex items-center justify-between border-b border-solid border-border-default px-6 py-5">
+              <div>
+                <h2 className="text-base font-bold text-text-primary">Transaksi Terbaru</h2>
+                <p className="mt-0.5 text-xs text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
+              </div>
+              <Link href="/admin/transaksi" className="whitespace-nowrap text-xs font-semibold text-accent-cyan-strong hover:underline">
+                Semua Pesanan →
+              </Link>
+            </div>
 
-          {courses.length === 0 ? (
-            <p className="adp-empty">Belum ada kursus.</p>
-          ) : (
-            <div className="adp-course-list">
-              {courses.map((course, i) => (
-                <div key={course.id} className="adp-course-row">
-                  <span className="adp-course-rank">#{i + 1}</span>
-                  <div className="adp-course-info">
-                    <p className="adp-course-title">{course.title}</p>
-                    <p className="adp-course-trainer">{course.trainer.name}</p>
-                  </div>
-                  <div className="adp-course-stats">
-                    <span className="adp-course-enrolled">🎓 {course.totalEnrolled}</span>
-                    <span className="adp-course-rating">⭐ {parseFloat(course.avgRating).toFixed(1)}</span>
-                  </div>
+            {orders.length === 0 ? (
+              <p className="py-10 text-center text-sm text-text-muted">Belum ada transaksi.</p>
+            ) : (
+              <>
+                <Table>
+                  <THead>
+                    <TR className="hover:bg-transparent">
+                      <TH>Pembeli</TH>
+                      <TH>Kursus</TH>
+                      <TH>Tanggal</TH>
+                      <TH>Status</TH>
+                      <TH className="text-right">Total</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {orders.map((order) => {
+                      const title = order.items[0]?.itemTitle ?? "—";
+                      const variant = STATUS_VARIANT[order.status] ?? "neutral";
+                      return (
+                        <TR key={order.id}>
+                          <TD>
+                            <div className="flex items-center gap-2.5">
+                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                                {order.user.name.slice(0, 2).toUpperCase()}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-[13px] font-semibold text-text-primary">{order.user.name}</p>
+                                <p className="truncate text-[11px] text-text-secondary">{order.user.email}</p>
+                              </div>
+                            </div>
+                          </TD>
+                          <TD className="text-[13px] text-text-primary">{title}</TD>
+                          <TD className="whitespace-nowrap text-[13px] text-text-secondary">
+                            {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                          </TD>
+                          <TD>
+                            <Badge variant={variant}>{order.status}</Badge>
+                          </TD>
+                          <TD className="whitespace-nowrap text-right text-[13px] font-bold text-text-primary">
+                            Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                          </TD>
+                        </TR>
+                      );
+                    })}
+                  </TBody>
+                </Table>
+
+                {/* Pagination (recent orders are a single page) */}
+                <div className="flex justify-center border-t border-solid border-border-default px-6 py-4">
+                  <nav aria-label="Paginasi" className="flex items-center gap-1">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-solid border-border-default text-border-strong opacity-50">
+                      <ChevronLeft size={18} aria-hidden="true" />
+                    </span>
+                    <span className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-accent-cyan-strong px-2 text-sm font-semibold text-white">1</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-solid border-border-default text-border-strong opacity-50">
+                      <ChevronRight size={18} aria-hidden="true" />
+                    </span>
+                  </nav>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Leads Alert Widget */}
-      <div className="adp-card" style={{ marginBottom: 0 }}>
-        <div className="adp-card-header">
-          <h2 className="adp-card-title">📋 Leads Masuk</h2>
-          <Link href="/admin/leads" className="adp-card-link">Kelola Leads →</Link>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 20, padding: "12px 0" }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: newLeadsCount && newLeadsCount > 0 ? "#FEF3C7" : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>📩</div>
-          <div>
-            <p style={{ fontSize: 28, fontWeight: 800, color: newLeadsCount && newLeadsCount > 0 ? "#D97706" : "#6B7280" }}>
-              {newLeadsCount ?? "—"}
-            </p>
-            <p style={{ fontSize: 13, color: "#6E6E73" }}>
-              {newLeadsCount === null ? "Memuat…" : newLeadsCount === 0 ? "Tidak ada leads baru saat ini" : `Leads baru menunggu follow-up`}
-            </p>
-          </div>
-          {newLeadsCount !== null && newLeadsCount > 0 && (
-            <Link href="/admin/leads?status=new" className="adp-action-btn adp-btn-primary" style={{ marginLeft: "auto", whiteSpace: "nowrap" }}>
-              Tindak Lanjuti
-            </Link>
-          )}
+              </>
+            )}
+          </TableContainer>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="adp-quick-grid">
-        {[
-          { href: "/admin/pengguna",  label: "Manajemen Pengguna",    icon: "👥",  desc: "Kelola akun & role" },
-          { href: "/admin/kursus",    label: "Approval Kursus",       icon: "✅",  desc: "Review kursus baru" },
-          { href: "/admin/leads",     label: "Leads CRM",             icon: "📋",  desc: "Follow-up prospek" },
-          { href: "/admin/transaksi", label: "Laporan Keuangan",      icon: "📊",  desc: "Export & analisis" },
-          { href: "/admin/kupon",     label: "Buat Kupon",            icon: "🏷️",  desc: "Diskon & promo" },
-          { href: "/admin/event",     label: "Kelola Event",          icon: "🎫",  desc: "Seminar & workshop" },
-          { href: "/admin/blog",      label: "Konten Blog",           icon: "✍️",  desc: "Artikel & SEO" },
-          { href: "/admin/review",    label: "Moderasi Review",       icon: "⭐",  desc: "Approve ulasan" },
-          { href: "/admin/lms",       label: "LMS B2B",               icon: "🏢",  desc: "Tenant & lisensi" },
-        ].map(({ href, label, icon, desc }) => (
-          <Link key={href} href={href} className="adp-quick-card">
-            <span className="adp-quick-icon">{icon}</span>
-            <div>
-              <p className="adp-quick-label">{label}</p>
-              <p className="adp-quick-desc">{desc}</p>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex items-center gap-3 rounded-2xl border border-solid border-border-default bg-surface-card p-3.5 shadow-e1 transition hover:-translate-y-0.5 hover:border-accent-cyan-strong hover:shadow-e2"
+          >
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-surface-accent-soft text-accent-cyan-strong">
+              <Icon size={18} aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-text-primary">{label}</p>
+              <p className="truncate text-[10px] text-text-muted">{desc}</p>
             </div>
-            <span className="adp-quick-arrow">→</span>
+            <ChevronRight size={14} className="flex-shrink-0 text-border-strong" aria-hidden="true" />
           </Link>
         ))}
       </div>
-
-      <style jsx>{`
-        .adp-page { display: flex; flex-direction: column; gap: 24px; max-width: 1200px; }
-
-        .adp-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .adp-title { font-size: 22px; font-weight: 800; color: #1D1D1F; }
-        .adp-sub { font-size: 13px; color: #6E6E73; margin-top: 3px; }
-        .adp-header-actions { display: flex; gap: 10px; }
-        .adp-action-btn { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
-        .adp-btn-outline { background: white; color: #0077A8; border: 1.5px solid #0077A8; }
-        .adp-btn-outline:hover { background: #0077A8; color: white; }
-        .adp-btn-primary { background: #0077A8; color: white; border: 1.5px solid #0077A8; }
-        .adp-btn-primary:hover { background: #005f87; }
-
-        /* KPI Cards */
-        .adp-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-        .adp-kpi-card {
-          background: white; border-radius: 18px; padding: 20px;
-          border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-          transition: all 0.22s; cursor: default;
-        }
-        .adp-kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        .adp-kpi-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .adp-kpi-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .adp-kpi-change { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
-        .adp-change-pos { background: #DCFCE7; color: #16A34A; }
-        .adp-change-neg { background: #FEE2E2; color: #DC2626; }
-        .adp-kpi-value { font-size: 22px; font-weight: 800; margin-bottom: 4px; line-height: 1; }
-        .adp-kpi-label { font-size: 11px; color: #6E6E73; font-weight: 500; }
-
-        /* 2-col grid */
-        .adp-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .adp-card {
-          background: white; border-radius: 18px; padding: 20px 22px;
-          border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-        }
-        .adp-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .adp-card-title { font-size: 14px; font-weight: 700; color: #1D1D1F; }
-        .adp-card-link { font-size: 12px; color: #0077A8; text-decoration: none; font-weight: 600; }
-        .adp-card-link:hover { text-decoration: underline; }
-        .adp-empty { font-size: 13px; color: #9CA3AF; text-align: center; padding: 24px; }
-
-        /* Orders */
-        .adp-order-list { display: flex; flex-direction: column; gap: 10px; }
-        .adp-order-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F5F5F7; }
-        .adp-order-row:last-child { border-bottom: none; }
-        .adp-order-avatar {
-          width: 36px; height: 36px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 11px; font-weight: 800;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .adp-order-info { flex: 1; min-width: 0; }
-        .adp-order-name { font-size: 13px; font-weight: 600; color: #1D1D1F; }
-        .adp-order-product { font-size: 11px; color: #6E6E73; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .adp-order-right { text-align: right; flex-shrink: 0; }
-        .adp-order-amount { font-size: 13px; font-weight: 700; color: #1D1D1F; }
-        .adp-order-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-block; margin-top: 3px; }
-
-        /* Courses */
-        .adp-course-list { display: flex; flex-direction: column; gap: 10px; }
-        .adp-course-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F5F5F7; }
-        .adp-course-row:last-child { border-bottom: none; }
-        .adp-course-rank { font-size: 13px; font-weight: 800; color: #C0C0C7; width: 20px; text-align: center; flex-shrink: 0; }
-        .adp-course-info { flex: 1; min-width: 0; }
-        .adp-course-title { font-size: 13px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .adp-course-trainer { font-size: 11px; color: #6E6E73; margin-top: 1px; }
-        .adp-course-stats { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
-        .adp-course-enrolled, .adp-course-rating { font-size: 11px; color: #6E6E73; }
-
-        /* Quick Actions */
-        .adp-quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .adp-quick-card {
-          background: white; border-radius: 14px; padding: 14px 16px;
-          display: flex; align-items: center; gap: 12px;
-          border: 1px solid rgba(0,0,0,0.06); text-decoration: none;
-          transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .adp-quick-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.1); border-color: #0077A8; }
-        .adp-quick-icon { font-size: 20px; flex-shrink: 0; }
-        .adp-quick-label { font-size: 12px; font-weight: 700; color: #1D1D1F; }
-        .adp-quick-desc { font-size: 10px; color: #9CA3AF; margin-top: 2px; }
-        .adp-quick-arrow { font-size: 14px; color: #C0C0C7; margin-left: auto; flex-shrink: 0; }
-
-        @media (max-width: 1100px) {
-          .adp-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-          .adp-quick-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 768px) {
-          .adp-grid2 { grid-template-columns: 1fr; }
-          .adp-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-      `}</style>
     </div>
   );
 }

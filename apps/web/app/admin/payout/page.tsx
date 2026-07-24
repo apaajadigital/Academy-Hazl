@@ -1,7 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Search, Settings, Check, Inbox } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
+import {
+  Button,
+  Input,
+  Textarea,
+  Card,
+  Badge,
+  type BadgeProps,
+  Modal,
+  ModalContent,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TableContainer,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Pagination,
+} from "@/components/ui";
 
 type TrainerPayout = {
   id: string;
@@ -34,11 +56,11 @@ type Stats = {
   affiliate: { pending: number; approved: number; paid: number; pendingAmount: number };
 };
 
-const STATUS_MAP: Record<string, { label: string; cls: string }> = {
-  pending:  { label: "Menunggu",  cls: "bg-amber-100 text-amber-700" },
-  approved: { label: "Disetujui", cls: "bg-blue-100 text-blue-700" },
-  rejected: { label: "Ditolak",   cls: "bg-red-100 text-red-700" },
-  paid:     { label: "Dibayar",   cls: "bg-green-100 text-green-700" },
+const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"] }> = {
+  pending:  { label: "Menunggu",  variant: "warning" },
+  approved: { label: "Disetujui", variant: "info" },
+  rejected: { label: "Ditolak",   variant: "danger" },
+  paid:     { label: "Dibayar",   variant: "success" },
 };
 
 export default function AdminPayoutPage() {
@@ -182,226 +204,246 @@ export default function AdminPayoutPage() {
   const affPages = Math.ceil(affTotal / limit);
 
   const kpiCards = stats ? [
-    { label: "Trainer Pending", value: stats.trainer.pending, color: "#F59E0B" },
-    { label: "Afiliator Pending", value: stats.affiliate.pending, color: "#F59E0B" },
-    { label: "Total Sudah Dibayar", value: stats.trainer.paid + stats.affiliate.paid, color: "#10B981" },
+    { label: "Trainer Pending", value: stats.trainer.pending, color: "#B45309" },
+    { label: "Afiliator Pending", value: stats.affiliate.pending, color: "#B45309" },
+    { label: "Total Sudah Dibayar", value: stats.trainer.paid + stats.affiliate.paid, color: "#16A34A" },
     { label: "Nominal Pending", value: `Rp ${(stats.trainer.pendingAmount + stats.affiliate.pendingAmount).toLocaleString("id-ID")}`, color: "#0077A8" },
   ] : [];
 
+  // Semantic action-select button styling (money moderation controls).
+  const actBtn = (active: boolean, tone: "approve" | "reject" | "paid") => {
+    const base = "rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-colors";
+    if (tone === "approve") return `${base} ${active ? "border-green-700 bg-green-600 text-white" : "border-transparent bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`;
+    if (tone === "reject") return `${base} ${active ? "border-red-700 bg-red-600 text-white" : "border-transparent bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white"}`;
+    return `${base} ${active ? "border-[#005f87] bg-accent-cyan-strong text-white" : "border-transparent bg-surface-accent-soft text-accent-cyan-strong hover:bg-accent-cyan-strong hover:text-white"}`;
+  };
+
   return (
-    <div className="po-page">
+    <div className="flex max-w-[1200px] flex-col gap-5">
       {/* Header */}
-      <div className="po-header">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="po-title">Pencatatan Payout</h1>
-          <p className="po-sub">Kelola penarikan saldo Trainer & Afiliator</p>
+          <h1 className="font-display text-xl font-extrabold text-text-primary">Pencatatan Payout</h1>
+          <p className="mt-1 text-sm text-text-secondary">Kelola penarikan saldo Trainer &amp; Afiliator</p>
         </div>
       </div>
 
       {/* KPI Cards */}
       {stats && (
-        <div className="po-kpi-grid">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {kpiCards.map((k) => (
-            <div key={k.label} className="po-kpi-card">
-              <span className="po-kpi-label">{k.label}</span>
-              <span className="po-kpi-val" style={{ color: k.color }}>{k.value}</span>
-            </div>
+            <Card key={k.label} className="flex flex-col gap-1.5 p-4">
+              <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{k.label}</span>
+              <span className="text-2xl font-extrabold" style={{ color: k.color }}>{k.value}</span>
+            </Card>
           ))}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="po-tabs-row">
-        <div className="po-tab-btns">
-          <button type="button" data-testid="tab-trainer" className={`po-tab-btn ${tab === "trainer" ? "po-tab-active" : ""}`} onClick={() => handleSwitchTab("trainer")}>
-            👨‍🏫 Trainer
-          </button>
-          <button type="button" data-testid="tab-affiliate" className={`po-tab-btn ${tab === "affiliate" ? "po-tab-active" : ""}`} onClick={() => handleSwitchTab("affiliate")}>
-            🤝 Afiliator
-          </button>
-        </div>
+      <div className="flex flex-col gap-3">
+        <Tabs value={tab} onValueChange={(v) => handleSwitchTab(v as "trainer" | "affiliate")}>
+          <TabsList>
+            <TabsTrigger value="trainer" data-testid="tab-trainer">👨‍🏫 Trainer</TabsTrigger>
+            <TabsTrigger value="affiliate" data-testid="tab-affiliate">🤝 Afiliator</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <div className="po-filters">
-          <form onSubmit={handleSearch} className="po-search-form">
-            <input className="po-search-input" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            <button type="submit" className="po-search-btn">🔍</button>
+        <div className="flex flex-wrap items-center gap-3">
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <Input className="min-w-[200px] py-2" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search size={16} />} />
+            <Button type="submit" variant="cyan" size="sm" aria-label="Cari"><Search size={16} /></Button>
           </form>
-          <div className="po-status-tabs">
-            {["all", "pending", "approved", "rejected", "paid"].map((s) => (
-              <button key={s} className={`po-status-tab ${statusFilter === s ? "po-st-active" : ""}`} onClick={() => { setStatusFilter(s); if (tab === "trainer") setTrainerPage(1); else setAffPage(1); }}>
-                {s === "all" ? "Semua" : STATUS_MAP[s]?.label ?? s}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            value={statusFilter}
+            onValueChange={(s) => { setStatusFilter(s); if (tab === "trainer") setTrainerPage(1); else setAffPage(1); }}
+          >
+            <TabsList className="flex-wrap">
+              {["all", "pending", "approved", "rejected", "paid"].map((s) => (
+                <TabsTrigger key={s} value={s}>
+                  {s === "all" ? "Semua" : STATUS_MAP[s]?.label ?? s}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       </div>
 
       {/* Table */}
-      <div className="po-table-wrap">
-        {tab === "trainer" ? (
-          trainerLoading ? (
-            <div className="po-loading"><span className="po-spinner" /></div>
-          ) : trainerPayouts.length === 0 ? (
-            <div className="po-empty"><p>📭</p><p>Tidak ada data payout trainer.</p></div>
-          ) : (
-            <table className="po-table">
-              <thead>
-                <tr>
-                  <th>TRAINER</th>
-                  <th>BANK / REKENING</th>
-                  <th>JUMLAH</th>
-                  <th>TANGGAL</th>
-                  <th>STATUS</th>
-                  <th>CATATAN</th>
-                  <th>AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
+      {tab === "trainer" ? (
+        trainerLoading ? (
+          <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+        ) : trainerPayouts.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
+            <Inbox size={32} className="text-border-strong" />
+            <p className="text-sm">Tidak ada data payout trainer.</p>
+          </div>
+        ) : (
+          <TableContainer>
+            <Table className="min-w-[800px]">
+              <THead>
+                <TR className="hover:bg-transparent">
+                  <TH>Trainer</TH><TH>Bank / Rekening</TH><TH>Jumlah</TH><TH>Tanggal</TH><TH>Status</TH><TH>Catatan</TH><TH>Aksi</TH>
+                </TR>
+              </THead>
+              <TBody>
                 {trainerPayouts.map((p) => {
                   const st = STATUS_MAP[p.status] ?? STATUS_MAP["pending"]!;
                   return (
-                    <tr key={p.id}>
-                      <td>
-                        <p className="po-name">{p.trainer.name}</p>
-                        <p className="po-email">{p.trainer.email}</p>
-                      </td>
-                      <td>
-                        <p className="po-bank">{p.bankName}</p>
-                        <p className="po-acct">{p.accountNo} · {p.accountName}</p>
-                      </td>
-                      <td><span className="po-amount">Rp {parseFloat(p.amount).toLocaleString("id-ID")}</span></td>
-                      <td>
-                        <p className="po-date">{new Date(p.requestedAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                        {p.processedAt && <p className="po-date-sub">Diproses: {new Date(p.processedAt).toLocaleDateString("id-ID")}</p>}
-                      </td>
-                      <td><span className={`po-badge ${st.cls}`}>{st.label}</span></td>
-                      <td><span className="po-note">{p.note ?? "—"}</span></td>
-                      <td>
+                    <TR key={p.id}>
+                      <TD className="py-3">
+                        <p className="text-sm font-semibold text-text-primary">{p.trainer.name}</p>
+                        <p className="text-xs text-text-muted">{p.trainer.email}</p>
+                      </TD>
+                      <TD className="py-3">
+                        <p className="text-sm text-text-primary">{p.bankName}</p>
+                        <p className="text-xs text-text-muted">{p.accountNo} · {p.accountName}</p>
+                      </TD>
+                      <TD className="py-3"><span className="text-sm font-bold text-text-primary">Rp {parseFloat(p.amount).toLocaleString("id-ID")}</span></TD>
+                      <TD className="py-3">
+                        <p className="text-xs text-text-secondary">{new Date(p.requestedAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        {p.processedAt && <p className="text-[10px] text-text-muted">Diproses: {new Date(p.processedAt).toLocaleDateString("id-ID")}</p>}
+                      </TD>
+                      <TD className="py-3"><Badge variant={st.variant}>{st.label}</Badge></TD>
+                      <TD className="py-3"><span className="block max-w-[140px] truncate text-xs text-text-secondary">{p.note ?? "—"}</span></TD>
+                      <TD className="py-3">
                         {p.status === "pending" || p.status === "approved" ? (
-                          <button className="po-btn po-btn-action" onClick={() => openModal(p, "trainer")}>⚙️ Kelola</button>
+                          <button className="inline-flex items-center gap-1 rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white" onClick={() => openModal(p, "trainer")}><Settings size={13} /> Kelola</button>
                         ) : (
-                          <span className="po-done">✓</span>
+                          <Check size={16} className="text-green-600" />
                         )}
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   );
                 })}
-              </tbody>
-            </table>
-          )
+              </TBody>
+            </Table>
+          </TableContainer>
+        )
+      ) : (
+        affLoading ? (
+          <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+        ) : affWithdrawals.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
+            <Inbox size={32} className="text-border-strong" />
+            <p className="text-sm">Tidak ada data withdrawal afiliator.</p>
+          </div>
         ) : (
-          affLoading ? (
-            <div className="po-loading"><span className="po-spinner" /></div>
-          ) : affWithdrawals.length === 0 ? (
-            <div className="po-empty"><p>📭</p><p>Tidak ada data withdrawal afiliator.</p></div>
-          ) : (
-            <table className="po-table">
-              <thead>
-                <tr>
-                  <th>AFILIATOR</th>
-                  <th>BANK / REKENING</th>
-                  <th>JUMLAH</th>
-                  <th>TANGGAL</th>
-                  <th>STATUS</th>
-                  <th>CATATAN</th>
-                  <th>AKSI</th>
-                </tr>
-              </thead>
-              <tbody>
+          <TableContainer>
+            <Table className="min-w-[800px]">
+              <THead>
+                <TR className="hover:bg-transparent">
+                  <TH>Afiliator</TH><TH>Bank / Rekening</TH><TH>Jumlah</TH><TH>Tanggal</TH><TH>Status</TH><TH>Catatan</TH><TH>Aksi</TH>
+                </TR>
+              </THead>
+              <TBody>
                 {affWithdrawals.map((w) => {
                   const st = STATUS_MAP[w.status] ?? STATUS_MAP["pending"]!;
                   return (
-                    <tr key={w.id}>
-                      <td>
-                        <p className="po-name">{w.affiliate.user.name}</p>
-                        <p className="po-email">{w.affiliate.user.email}</p>
-                        <p className="po-code">Kode: {w.affiliate.code}</p>
-                      </td>
-                      <td>
-                        <p className="po-bank">{w.bankName}</p>
-                        <p className="po-acct">{w.accountNo} · {w.accountName}</p>
-                      </td>
-                      <td><span className="po-amount">Rp {parseFloat(w.amount).toLocaleString("id-ID")}</span></td>
-                      <td>
-                        <p className="po-date">{new Date(w.requestedAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
-                        {w.processedAt && <p className="po-date-sub">Diproses: {new Date(w.processedAt).toLocaleDateString("id-ID")}</p>}
-                      </td>
-                      <td><span className={`po-badge ${st.cls}`}>{st.label}</span></td>
-                      <td><span className="po-note">{w.note ?? "—"}</span></td>
-                      <td>
+                    <TR key={w.id}>
+                      <TD className="py-3">
+                        <p className="text-sm font-semibold text-text-primary">{w.affiliate.user.name}</p>
+                        <p className="text-xs text-text-muted">{w.affiliate.user.email}</p>
+                        <p className="mt-0.5 text-[10px] font-semibold text-accent-cyan-strong">Kode: {w.affiliate.code}</p>
+                      </TD>
+                      <TD className="py-3">
+                        <p className="text-sm text-text-primary">{w.bankName}</p>
+                        <p className="text-xs text-text-muted">{w.accountNo} · {w.accountName}</p>
+                      </TD>
+                      <TD className="py-3"><span className="text-sm font-bold text-text-primary">Rp {parseFloat(w.amount).toLocaleString("id-ID")}</span></TD>
+                      <TD className="py-3">
+                        <p className="text-xs text-text-secondary">{new Date(w.requestedAt).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                        {w.processedAt && <p className="text-[10px] text-text-muted">Diproses: {new Date(w.processedAt).toLocaleDateString("id-ID")}</p>}
+                      </TD>
+                      <TD className="py-3"><Badge variant={st.variant}>{st.label}</Badge></TD>
+                      <TD className="py-3"><span className="block max-w-[140px] truncate text-xs text-text-secondary">{w.note ?? "—"}</span></TD>
+                      <TD className="py-3">
                         {w.status === "pending" || w.status === "approved" ? (
-                          <button className="po-btn po-btn-action" onClick={() => openModal(w, "affiliate")}>⚙️ Kelola</button>
+                          <button className="inline-flex items-center gap-1 rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white" onClick={() => openModal(w, "affiliate")}><Settings size={13} /> Kelola</button>
                         ) : (
-                          <span className="po-done">✓</span>
+                          <Check size={16} className="text-green-600" />
                         )}
-                      </td>
-                    </tr>
+                      </TD>
+                    </TR>
                   );
                 })}
-              </tbody>
-            </table>
-          )
-        )}
-      </div>
+              </TBody>
+            </Table>
+          </TableContainer>
+        )
+      )}
 
       {/* Pagination */}
       {tab === "trainer" && trainerPages > 1 && (
-        <div className="po-pagination">
-          <button onClick={() => setTrainerPage((p) => Math.max(1, p - 1))} disabled={trainerPage === 1} className="po-page-btn">← Prev</button>
-          <span className="po-page-info">Halaman {trainerPage} dari {trainerPages}</span>
-          <button onClick={() => setTrainerPage((p) => Math.min(trainerPages, p + 1))} disabled={trainerPage === trainerPages} className="po-page-btn">Next →</button>
+        <div className="flex justify-center">
+          <Pagination page={trainerPage} pageCount={trainerPages} onPageChange={setTrainerPage} />
         </div>
       )}
       {tab === "affiliate" && affPages > 1 && (
-        <div className="po-pagination">
-          <button onClick={() => setAffPage((p) => Math.max(1, p - 1))} disabled={affPage === 1} className="po-page-btn">← Prev</button>
-          <span className="po-page-info">Halaman {affPage} dari {affPages}</span>
-          <button onClick={() => setAffPage((p) => Math.min(affPages, p + 1))} disabled={affPage === affPages} className="po-page-btn">Next →</button>
+        <div className="flex justify-center">
+          <Pagination page={affPage} pageCount={affPages} onPageChange={setAffPage} />
         </div>
       )}
 
       {/* Modal */}
-      {modalItem && (
-        <div className="po-modal-overlay" onClick={() => setModalItem(null)}>
-          <div className="po-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="po-modal-header">
-              <h2 className="po-modal-title">Kelola Payout</h2>
-              <button className="po-modal-close" onClick={() => setModalItem(null)}>✕</button>
-            </div>
-            <div className="po-modal-body">
+      <Modal open={modalItem !== null} onOpenChange={(o) => { if (!o) setModalItem(null); }}>
+        {modalItem && (
+          <ModalContent
+            title="Kelola Payout"
+            footer={
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setModalItem(null)} disabled={modalSaving}>Batal</Button>
+                {modalAction && (
+                  <button
+                    className={`rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors disabled:opacity-50 ${
+                      modalAction === "approved" ? "bg-green-600 hover:bg-green-700" :
+                      modalAction === "rejected" ? "bg-red-600 hover:bg-red-700" :
+                      "bg-accent-cyan-strong hover:bg-[#005f87]"
+                    }`}
+                    onClick={handleModalSubmit}
+                    disabled={modalSaving}
+                  >
+                    {modalSaving ? "Memproses..." :
+                      modalAction === "approved" ? "✓ Konfirmasi Setujui" :
+                      modalAction === "rejected" ? "✕ Konfirmasi Tolak" :
+                      "💰 Konfirmasi Dibayar"}
+                  </button>
+                )}
+              </>
+            }
+          >
+            <div className="flex flex-col gap-5">
               {/* Summary */}
-              <div className="po-modal-summary">
-                <div className="po-modal-field">
-                  <span className="po-field-label">Nama</span>
-                  <span className="po-field-val">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken px-4 py-3">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">Nama</span>
+                  <span className="text-sm font-semibold text-text-primary">
                     {modalTab === "trainer"
                       ? (modalItem as TrainerPayout).trainer.name
                       : (modalItem as AffiliateWithdrawal).affiliate.user.name}
                   </span>
                 </div>
-                <div className="po-modal-field">
-                  <span className="po-field-label">Jumlah</span>
-                  <span className="po-field-val po-amount">Rp {parseFloat(modalItem.amount).toLocaleString("id-ID")}</span>
+                <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken px-4 py-3">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">Jumlah</span>
+                  <span className="text-sm font-bold text-text-primary">Rp {parseFloat(modalItem.amount).toLocaleString("id-ID")}</span>
                 </div>
-                <div className="po-modal-field">
-                  <span className="po-field-label">Bank</span>
-                  <span className="po-field-val">{modalItem.bankName} — {modalItem.accountNo} ({modalItem.accountName})</span>
+                <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken px-4 py-3">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">Bank</span>
+                  <span className="text-sm font-semibold text-text-primary">{modalItem.bankName} — {modalItem.accountNo} ({modalItem.accountName})</span>
                 </div>
-                <div className="po-modal-field">
-                  <span className="po-field-label">Status Saat Ini</span>
-                  <span className={`po-badge ${STATUS_MAP[modalItem.status]?.cls ?? ""}`}>
-                    {STATUS_MAP[modalItem.status]?.label ?? modalItem.status}
-                  </span>
+                <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken px-4 py-3">
+                  <span className="text-[10px] font-bold uppercase text-text-muted">Status Saat Ini</span>
+                  <span><Badge variant={STATUS_MAP[modalItem.status]?.variant ?? "neutral"}>{STATUS_MAP[modalItem.status]?.label ?? modalItem.status}</Badge></span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="po-modal-actions-grid">
-                <h3 className="po-section-title">Pilih Tindakan</h3>
-                <div className="po-action-btns">
+              <div className="flex flex-col gap-2.5">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-text-primary">Pilih Tindakan</h3>
+                <div className="flex gap-2">
                   {modalItem.status === "pending" && (
                     <button
-                      className={`po-action-btn po-act-approve ${modalAction === "approved" ? "po-act-selected" : ""}`}
+                      className={actBtn(modalAction === "approved", "approve")}
                       onClick={() => { setModalAction("approved"); setModalNote(""); }}
                     >
                       ✓ Setujui
@@ -409,7 +451,7 @@ export default function AdminPayoutPage() {
                   )}
                   {modalItem.status === "pending" && (
                     <button
-                      className={`po-action-btn po-act-reject ${modalAction === "rejected" ? "po-act-selected" : ""}`}
+                      className={actBtn(modalAction === "rejected", "reject")}
                       onClick={() => { setModalAction("rejected"); setModalNote(""); }}
                     >
                       ✕ Tolak
@@ -417,7 +459,7 @@ export default function AdminPayoutPage() {
                   )}
                   {(modalItem.status === "pending" || modalItem.status === "approved") && (
                     <button
-                      className={`po-action-btn po-act-paid ${modalAction === "paid" ? "po-act-selected" : ""}`}
+                      className={actBtn(modalAction === "paid", "paid")}
                       onClick={() => { setModalAction("paid"); setModalNote(""); }}
                     >
                       💰 Tandai Dibayar
@@ -428,152 +470,22 @@ export default function AdminPayoutPage() {
 
               {/* Note input */}
               {modalAction && (
-                <div className="po-note-section">
-                  <label className="po-note-label">
-                    {modalAction === "rejected" ? "Alasan Penolakan (Wajib)" : modalAction === "paid" ? "Referensi Transfer (Opsional)" : "Catatan (Opsional)"}
-                  </label>
-                  <textarea
-                    className="po-note-input"
-                    rows={3}
-                    placeholder={
-                      modalAction === "rejected" ? "Contoh: Nomor rekening tidak valid..."
-                      : modalAction === "paid" ? "Contoh: Transfer BCA #12345 tanggal 17 Jul 2026"
-                      : "Catatan tambahan..."
-                    }
-                    value={modalNote}
-                    onChange={(e) => setModalNote(e.target.value)}
-                  />
-                </div>
+                <Textarea
+                  label={modalAction === "rejected" ? "Alasan Penolakan (Wajib)" : modalAction === "paid" ? "Referensi Transfer (Opsional)" : "Catatan (Opsional)"}
+                  rows={3}
+                  placeholder={
+                    modalAction === "rejected" ? "Contoh: Nomor rekening tidak valid..."
+                    : modalAction === "paid" ? "Contoh: Transfer BCA #12345 tanggal 17 Jul 2026"
+                    : "Catatan tambahan..."
+                  }
+                  value={modalNote}
+                  onChange={(e) => setModalNote(e.target.value)}
+                />
               )}
             </div>
-
-            <div className="po-modal-footer">
-              <button className="po-btn po-btn-cancel" onClick={() => setModalItem(null)} disabled={modalSaving}>Batal</button>
-              {modalAction && (
-                <button
-                  className={`po-btn ${
-                    modalAction === "approved" ? "po-btn-approve-final" :
-                    modalAction === "rejected" ? "po-btn-reject-final" :
-                    "po-btn-paid-final"
-                  }`}
-                  onClick={handleModalSubmit}
-                  disabled={modalSaving}
-                >
-                  {modalSaving ? "Memproses..." :
-                    modalAction === "approved" ? "✓ Konfirmasi Setujui" :
-                    modalAction === "rejected" ? "✕ Konfirmasi Tolak" :
-                    "💰 Konfirmasi Dibayar"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style jsx>{`
-        .po-page { display: flex; flex-direction: column; gap: 20px; max-width: 1200px; }
-        .po-header { display: flex; align-items: center; justify-content: space-between; }
-        .po-title { font-size: 20px; font-weight: 800; color: #1D1D1F; }
-        .po-sub { font-size: 13px; color: #6E6E73; margin-top: 3px; }
-
-        .po-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .po-kpi-card { background: white; border-radius: 16px; padding: 16px 20px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: flex; flex-direction: column; gap: 6px; }
-        .po-kpi-label { font-size: 11px; font-weight: 600; color: #8E8E93; text-transform: uppercase; letter-spacing: 0.03em; }
-        .po-kpi-val { font-size: 22px; font-weight: 800; }
-
-        .po-tabs-row { display: flex; flex-direction: column; gap: 12px; }
-        .po-tab-btns { display: flex; gap: 6px; }
-        .po-tab-btn { padding: 9px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; border: 1.5px solid #E5E5EA; background: white; cursor: pointer; color: #6E6E73; transition: all 0.18s; }
-        .po-tab-active { background: #0077A8; color: white; border-color: #0077A8; }
-
-        .po-filters { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .po-search-form { display: flex; gap: 6px; }
-        .po-search-input { padding: 8px 14px; border-radius: 10px; border: 1.5px solid #E5E5EA; font-size: 13px; outline: none; min-width: 200px; }
-        .po-search-input:focus { border-color: #0077A8; box-shadow: 0 0 0 3px rgba(0,119,168,0.1); }
-        .po-search-btn { padding: 8px 14px; border-radius: 10px; background: #0077A8; color: white; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .po-status-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-        .po-status-tab { padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; border: 1.5px solid #E5E5EA; background: white; cursor: pointer; color: #6E6E73; transition: all 0.18s; }
-        .po-st-active { background: #0077A8; color: white; border-color: #0077A8; }
-
-        .po-table-wrap { background: white; border-radius: 18px; overflow: hidden; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow-x: auto; }
-        .po-table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        .po-table thead tr { background: #F9FAFB; border-bottom: 1px solid #F0F0F5; }
-        .po-table th { padding: 12px 14px; font-size: 11px; font-weight: 700; color: #6E6E73; text-transform: uppercase; letter-spacing: 0.05em; text-align: left; white-space: nowrap; }
-        .po-table td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #F5F5F7; vertical-align: middle; }
-        .po-table tr:last-child td { border-bottom: none; }
-        .po-table tr:hover td { background: #FAFAFA; }
-
-        .po-name { font-size: 13px; font-weight: 600; color: #1D1D1F; }
-        .po-email { font-size: 11px; color: #9CA3AF; }
-        .po-code { font-size: 10px; color: #0077A8; font-weight: 600; margin-top: 2px; }
-        .po-bank { font-size: 13px; font-weight: 500; color: #1D1D1F; }
-        .po-acct { font-size: 11px; color: #9CA3AF; }
-        .po-amount { font-size: 13px; font-weight: 700; color: #1D1D1F; }
-        .po-date { font-size: 12px; color: #6E6E73; }
-        .po-date-sub { font-size: 10px; color: #9CA3AF; }
-        .po-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px; display: inline-block; }
-        .po-note { font-size: 11px; color: #6E6E73; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-        .po-done { font-size: 14px; color: #10B981; font-weight: 700; }
-
-        .po-btn { padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
-        .po-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .po-btn-action { background: #E5F3FF; color: #0077A8; }
-        .po-btn-action:hover { background: #0077A8; color: white; }
-
-        .po-loading { display: flex; justify-content: center; padding: 48px; }
-        .po-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #0077A8; border-top-color: transparent; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .po-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px; color: #9CA3AF; font-size: 14px; }
-        .po-empty p:first-child { font-size: 32px; }
-
-        .po-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; }
-        .po-page-btn { padding: 8px 16px; border-radius: 10px; border: 1.5px solid #E5E5EA; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #1D1D1F; transition: all 0.18s; }
-        .po-page-btn:hover:not(:disabled) { border-color: #0077A8; color: #0077A8; }
-        .po-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .po-page-info { font-size: 13px; color: #6E6E73; }
-
-        /* Modal */
-        .po-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-        .po-modal { background: white; border-radius: 20px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.15); animation: scaleUp 0.2s ease-out; }
-        @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .po-modal-header { padding: 18px 24px; border-bottom: 1px solid #F0F0F5; display: flex; justify-content: space-between; align-items: center; }
-        .po-modal-title { font-size: 16px; font-weight: 700; color: #1D1D1F; }
-        .po-modal-close { background: none; border: none; font-size: 18px; color: #6E6E73; cursor: pointer; }
-        .po-modal-close:hover { color: #1D1D1F; }
-
-        .po-modal-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
-        .po-modal-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .po-modal-field { background: #F9FAFB; border-radius: 12px; padding: 12px 16px; border: 1px solid #F0F0F5; display: flex; flex-direction: column; gap: 4px; }
-        .po-field-label { font-size: 10px; font-weight: 700; color: #8E8E93; text-transform: uppercase; }
-        .po-field-val { font-size: 13px; font-weight: 600; color: #1D1D1F; }
-
-        .po-modal-actions-grid { display: flex; flex-direction: column; gap: 10px; }
-        .po-section-title { font-size: 12px; font-weight: 700; color: #1D1D1F; text-transform: uppercase; letter-spacing: 0.03em; }
-        .po-action-btns { display: flex; gap: 8px; }
-        .po-action-btn { padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; border: 2px solid transparent; cursor: pointer; transition: all 0.18s; }
-        .po-act-approve { background: #DCFCE7; color: #16A34A; }
-        .po-act-approve:hover, .po-act-approve.po-act-selected { background: #16A34A; color: white; border-color: #15803D; }
-        .po-act-reject { background: #FEE2E2; color: #DC2626; }
-        .po-act-reject:hover, .po-act-reject.po-act-selected { background: #DC2626; color: white; border-color: #B91C1C; }
-        .po-act-paid { background: #E5F3FF; color: #0077A8; }
-        .po-act-paid:hover, .po-act-paid.po-act-selected { background: #0077A8; color: white; border-color: #005f87; }
-
-        .po-note-section { display: flex; flex-direction: column; gap: 6px; }
-        .po-note-label { font-size: 12px; font-weight: 600; color: #6E6E73; }
-        .po-note-input { width: 100%; border: 1.5px solid #E5E5EA; border-radius: 12px; padding: 12px; font-size: 13px; outline: none; font-family: inherit; resize: vertical; }
-        .po-note-input:focus { border-color: #0077A8; box-shadow: 0 0 0 3px rgba(0,119,168,0.1); }
-
-        .po-modal-footer { border-top: 1px solid #F0F0F5; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .po-btn-cancel { background: #F2F2F7; color: #1D1D1F; }
-        .po-btn-cancel:hover { background: #E5E5EA; }
-        .po-btn-approve-final { background: #16A34A; color: white; }
-        .po-btn-approve-final:hover { background: #15803D; }
-        .po-btn-reject-final { background: #DC2626; color: white; }
-        .po-btn-reject-final:hover { background: #B91C1C; }
-        .po-btn-paid-final { background: #0077A8; color: white; }
-        .po-btn-paid-final:hover { background: #005f87; }
-      `}</style>
+          </ModalContent>
+        )}
+      </Modal>
     </div>
   );
 }

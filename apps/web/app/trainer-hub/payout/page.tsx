@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Info } from "lucide-react";
+import { Badge, Button, Card, Input, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Payout = {
@@ -17,11 +19,11 @@ type Payout = {
   processedAt: string | null;
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-blue-100 text-blue-700",
-  rejected: "bg-red-100 text-red-700",
-  paid: "bg-green-100 text-green-700",
+const STATUS_VARIANT: Record<string, "warning" | "info" | "danger" | "success"> = {
+  pending: "warning",
+  approved: "info",
+  rejected: "danger",
+  paid: "success",
 };
 const STATUS_LABEL: Record<string, string> = {
   pending: "Menunggu", approved: "Disetujui", rejected: "Ditolak", paid: "Dibayar",
@@ -77,104 +79,97 @@ export default function TrainerPayoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-2 text-sm">
-          <Link href="/trainer-hub" className="text-[#0077A8] hover:underline">Trainer Hub</Link>
-          <span className="text-[#6E6E73]">/</span>
-          <span className="text-[#1D1D1F] font-medium">Penarikan Saldo</span>
+    <div className="min-h-screen bg-surface-page">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center gap-2 text-sm">
+          <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+          <span className="text-text-secondary">/</span>
+          <span className="font-medium text-text-primary">Penarikan Saldo</span>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6">
-          <h2 className="text-base font-semibold text-[#1D1D1F] mb-4">Ajukan Penarikan</h2>
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
+        <Card className="p-6">
+          <h2 className="mb-4 font-display text-base font-semibold text-text-primary">Ajukan Penarikan</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1.5">Jumlah (Rp)</label>
-                <input
-                  type="number" min="100000" step="1000" required
-                  value={form.amount}
-                  onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                  placeholder="Minimal Rp 100.000"
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1.5">Nama Bank</label>
-                <input
-                  type="text" required
-                  value={form.bankName}
-                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                  placeholder="Contoh: BCA, BNI, Mandiri"
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1.5">Nomor Rekening</label>
-                <input
-                  type="text" required
-                  value={form.accountNo}
-                  onChange={(e) => setForm({ ...form, accountNo: e.target.value })}
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#6E6E73] mb-1.5">Nama Pemilik Rekening</label>
-                <input
-                  type="text" required
-                  value={form.accountName}
-                  onChange={(e) => setForm({ ...form, accountName: e.target.value })}
-                  className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="Jumlah (Rp)"
+                type="number" min="100000" step="1000" required
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                placeholder="Minimal Rp 100.000"
+              />
+              <Input
+                label="Nama Bank"
+                type="text" required
+                value={form.bankName}
+                onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                placeholder="Contoh: BCA, BNI, Mandiri"
+              />
+              <Input
+                label="Nomor Rekening"
+                type="text" required
+                value={form.accountNo}
+                onChange={(e) => setForm({ ...form, accountNo: e.target.value })}
+              />
+              <Input
+                label="Nama Pemilik Rekening"
+                type="text" required
+                value={form.accountName}
+                onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+              />
             </div>
-            <p className="text-xs text-[#6E6E73]">⚠️ Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 100.000.</p>
+            <p className="flex items-start gap-2 text-xs text-text-secondary">
+              <Info size={14} className="mt-0.5 flex-shrink-0 text-text-muted" aria-hidden="true" />
+              Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 100.000.
+            </p>
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={submitting} className="px-5 py-2.5 bg-[#0077A8] text-white text-sm font-medium rounded-xl hover:bg-[#005f87] disabled:opacity-50">
+              <Button type="submit" variant="cyan" size="sm" disabled={submitting} loading={submitting}>
                 {submitting ? "Mengirim..." : "Ajukan Penarikan"}
-              </button>
-              {msg && <p className="text-sm text-[#0077A8]">{msg}</p>}
+              </Button>
+              {msg && <p className="text-sm text-accent-cyan-strong">{msg}</p>}
             </div>
           </form>
-        </div>
+        </Card>
 
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#E5E5EA]">
-            <h2 className="font-semibold text-[#1D1D1F]">Riwayat Penarikan</h2>
+        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+          <div className="border-b border-border-default px-6 py-4">
+            <h2 className="font-display font-semibold text-text-primary">Riwayat Penarikan</h2>
           </div>
           {loading ? (
-            <div className="text-center py-8 text-[#6E6E73]">Memuat...</div>
+            <div className="py-8 text-center text-text-secondary">Memuat...</div>
           ) : payouts.length === 0 ? (
-            <div className="text-center py-10 text-[#6E6E73]">Belum ada riwayat penarikan.</div>
+            <div className="py-10 text-center text-text-secondary">Belum ada riwayat penarikan.</div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-[#F5F5F7] text-[#6E6E73]">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">Jumlah</th>
-                  <th className="px-4 py-3 text-left font-medium">Bank</th>
-                  <th className="px-4 py-3 text-left font-medium">Tanggal</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-left font-medium">Catatan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F5F5F7]">
-                {payouts.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#F5F5F7]">
-                    <td className="px-4 py-3 font-semibold text-[#1D1D1F]">Rp {parseFloat(p.amount).toLocaleString("id-ID")}</td>
-                    <td className="px-4 py-3 text-[#6E6E73]">{p.bankName} · {p.accountNo}</td>
-                    <td className="px-4 py-3 text-xs text-[#6E6E73]">{new Date(p.requestedAt).toLocaleDateString("id-ID")}</td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGE[p.status] ?? "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABEL[p.status] ?? p.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#6E6E73]">{p.note ?? "—"}</td>
+            <div className="overflow-x-auto">
+              <Table>
+                <THead>
+                  <tr>
+                    <TH>Jumlah</TH>
+                    <TH>Bank</TH>
+                    <TH>Tanggal</TH>
+                    <TH>Status</TH>
+                    <TH>Catatan</TH>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </THead>
+                <TBody>
+                  {payouts.map((p) => (
+                    <TR key={p.id}>
+                      <TD className="font-semibold text-text-primary">Rp {parseFloat(p.amount).toLocaleString("id-ID")}</TD>
+                      <TD className="text-text-secondary">{p.bankName} · {p.accountNo}</TD>
+                      <TD className="text-xs text-text-secondary">{new Date(p.requestedAt).toLocaleDateString("id-ID")}</TD>
+                      <TD>
+                        <Badge variant={STATUS_VARIANT[p.status] ?? "neutral"} dot>
+                          {STATUS_LABEL[p.status] ?? p.status}
+                        </Badge>
+                      </TD>
+                      <TD className="text-xs text-text-secondary">{p.note ?? "—"}</TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            </div>
           )}
         </div>
       </div>
