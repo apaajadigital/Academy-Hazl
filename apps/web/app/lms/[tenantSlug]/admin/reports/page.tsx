@@ -3,8 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Download, Users, CheckCircle2, TrendingUp } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Select } from "@/components/ui/Select";
+import { TableContainer, Table, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 
 type ReportRow = {
   userId: string;
@@ -59,18 +65,21 @@ export default function LmsAdminReportsPage() {
   const avgPct = rows.length > 0 ? Math.round(rows.reduce((sum, r) => sum + r.completionPct, 0) / rows.length) : 0;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-[#6E6E73] mb-4">
-        <Link href={`/lms/${tenantSlug}/admin`} className="hover:text-[#0077A8]">Admin</Link>
+    <div className="mx-auto max-w-6xl p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+        <Link href={`/lms/${tenantSlug}/admin`} className="transition-colors hover:text-accent-cyan-strong">Admin</Link>
         <span>/</span>
-        <span className="text-[#1D1D1F]">Laporan</span>
+        <span className="text-text-primary">Laporan</span>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[#1D1D1F]">Laporan Completion</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-xl font-bold text-text-primary">Laporan Completion</h1>
         <div className="flex gap-2">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
+            leftIcon={<Download size={16} />}
             disabled={!tenantId}
             onClick={() =>
               downloadProtected(
@@ -78,12 +87,14 @@ export default function LmsAdminReportsPage() {
                 `laporan-${tenantSlug}.csv`,
               ).catch(() => {})
             }
-            className="px-3 py-2 text-xs text-[#0077A8] border border-[#0077A8] rounded-xl hover:bg-[#E8F4F9] disabled:opacity-50"
           >
             Unduh CSV
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="cyan"
+            size="sm"
+            leftIcon={<Download size={16} />}
             disabled={!tenantId}
             onClick={() =>
               downloadProtected(
@@ -91,82 +102,84 @@ export default function LmsAdminReportsPage() {
                 `laporan-${tenantSlug}.pdf`,
               ).catch(() => {})
             }
-            className="px-3 py-2 text-xs text-white bg-[#0077A8] rounded-xl hover:bg-[#005f87] disabled:opacity-50"
           >
             Unduh PDF
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-3 gap-4">
         {[
-          { label: "Total Enrollment", value: totalEnrollments },
-          { label: "Selesai", value: completedCount },
-          { label: "Rata-rata Progress", value: `${avgPct}%` },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-white border border-[#E5E5EA] rounded-2xl p-4 text-center">
-            <div className="text-2xl font-bold text-[#1D1D1F]">{value}</div>
-            <div className="text-xs text-[#6E6E73] mt-1">{label}</div>
-          </div>
+          { label: "Total Enrollment", value: totalEnrollments, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
+          { label: "Selesai", value: completedCount, Icon: CheckCircle2, tint: "bg-green-600/10 text-green-700" },
+          { label: "Rata-rata Progress", value: `${avgPct}%`, Icon: TrendingUp, tint: "bg-accent-purple/10 text-accent-purple" },
+        ].map(({ label, value, Icon, tint }) => (
+          <Card key={label} className="p-4 text-center">
+            <span className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${tint}`}>
+              <Icon size={18} />
+            </span>
+            <div className="text-2xl font-bold text-text-primary">{value}</div>
+            <div className="mt-1 text-xs text-text-secondary">{label}</div>
+          </Card>
         ))}
       </div>
 
       <div className="mb-4 flex gap-3">
-        <select
+        <Select
           value={selectedBatch}
           onChange={(e) => { setSelectedBatch(e.target.value); setLoading(true); }}
-          className="border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm"
+          className="text-sm"
         >
           <option value="">Semua Batch</option>
           {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-        </select>
+        </Select>
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-[#6E6E73]">Memuat...</div>
+        <div className="py-8 text-center text-text-secondary">Memuat...</div>
       ) : rows.length === 0 ? (
-        <div className="text-center py-12 text-[#6E6E73]">Tidak ada data.</div>
+        <div className="py-12 text-center text-text-secondary">Tidak ada data.</div>
       ) : (
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[#F5F5F7] text-[#6E6E73]">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium">Peserta</th>
-                <th className="px-4 py-3 text-left font-medium">Kursus</th>
-                <th className="px-4 py-3 text-center font-medium">Progress</th>
-                <th className="px-4 py-3 text-center font-medium">Selesai</th>
-                <th className="px-4 py-3 text-left font-medium">Terdaftar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F5F5F7]">
+        <TableContainer>
+          <Table>
+            <THead>
+              <TR className="hover:bg-transparent">
+                <TH>Peserta</TH>
+                <TH>Kursus</TH>
+                <TH className="text-center">Progress</TH>
+                <TH className="text-center">Selesai</TH>
+                <TH>Terdaftar</TH>
+              </TR>
+            </THead>
+            <TBody>
               {rows.map((r, i) => (
-                <tr key={i} className="hover:bg-[#F5F5F7]">
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-[#1D1D1F]">{r.userName}</p>
-                    <p className="text-xs text-[#6E6E73]">{r.userEmail}</p>
-                  </td>
-                  <td className="px-4 py-3 text-[#1D1D1F]">{r.courseTitle}</td>
-                  <td className="px-4 py-3">
+                <TR key={i}>
+                  <TD>
+                    <p className="text-sm font-medium text-text-primary">{r.userName}</p>
+                    <p className="text-xs text-text-secondary">{r.userEmail}</p>
+                  </TD>
+                  <TD className="text-text-primary">{r.courseTitle}</TD>
+                  <TD>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-[#E5E5EA] rounded-full h-1.5">
-                        <div className="bg-[#0077A8] h-1.5 rounded-full" style={{ width: `${r.completionPct}%` }} />
+                      <div className="h-1.5 flex-1 rounded-full bg-border-default">
+                        <div className="h-1.5 rounded-full bg-accent-cyan-strong" style={{ width: `${r.completionPct}%` }} />
                       </div>
-                      <span className="text-xs text-[#6E6E73] w-10 text-right">{r.completionPct}%</span>
+                      <span className="w-10 text-right text-xs text-text-secondary">{r.completionPct}%</span>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`text-xs px-2 py-1 rounded-full ${r.isCompleted ? "bg-green-100 text-green-700" : "bg-[#F5F5F7] text-[#6E6E73]"}`}>
+                  </TD>
+                  <TD className="text-center">
+                    <Badge variant={r.isCompleted ? "success" : "neutral"}>
                       {r.isCompleted ? "Ya" : "Belum"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-[#6E6E73]">
+                    </Badge>
+                  </TD>
+                  <TD className="text-xs text-text-secondary">
                     {new Date(r.enrolledAt).toLocaleDateString("id-ID")}
-                  </td>
-                </tr>
+                  </TD>
+                </TR>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TBody>
+          </Table>
+        </TableContainer>
       )}
     </div>
   );

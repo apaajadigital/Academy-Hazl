@@ -3,7 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { SquarePen } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select } from "@/components/ui/Select";
+import { Modal, ModalContent } from "@/components/ui/Modal";
 
 type Course = {
   id: string;
@@ -55,69 +63,67 @@ export default function LmsAdminCoursesPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-[#6E6E73] mb-4">
-        <Link href={`/lms/${tenantSlug}/admin`} className="hover:text-[#0077A8]">Admin</Link>
+    <div className="mx-auto max-w-4xl p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+        <Link href={`/lms/${tenantSlug}/admin`} className="transition-colors hover:text-accent-cyan-strong">Admin</Link>
         <span>/</span>
-        <span className="text-[#1D1D1F]">Kursus LMS</span>
+        <span className="text-text-primary">Kursus LMS</span>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[#1D1D1F]">Course Builder</h1>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87]">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-xl font-bold text-text-primary">Course Builder</h1>
+        <Button variant="cyan" size="sm" onClick={() => setShowForm(true)}>
           + Kursus Baru
-        </button>
+        </Button>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Buat Kursus LMS</h2>
-            <form onSubmit={createCourse} className="space-y-4">
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Judul kursus" className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" required />
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi (opsional)" rows={3} className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" />
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm">
-                <option value="draft">Draft</option>
-                <option value="published">Publikasikan</option>
-              </select>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2 text-sm border border-[#E5E5EA] rounded-xl">Batal</button>
-                <button type="submit" className="flex-1 py-2 text-sm text-white bg-[#0077A8] rounded-xl">Buat</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Modal open={showForm} onOpenChange={setShowForm}>
+        <ModalContent title="Buat Kursus LMS">
+          <form onSubmit={createCourse} className="space-y-4">
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Judul kursus" required />
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi (opsional)" rows={3} />
+            <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+              <option value="draft">Draft</option>
+              <option value="published">Publikasikan</option>
+            </Select>
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Batal</Button>
+              <Button type="submit" variant="cyan" className="flex-1">Buat</Button>
+            </div>
+          </form>
+        </ModalContent>
+      </Modal>
 
       {loading ? (
-        <div className="text-center py-8 text-[#6E6E73]">Memuat...</div>
+        <div className="py-8 text-center text-text-secondary">Memuat...</div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-12 text-[#6E6E73]">Belum ada kursus. Buat kursus pertama!</div>
+        <div className="py-12 text-center text-text-secondary">Belum ada kursus. Buat kursus pertama!</div>
       ) : (
         <div className="grid gap-4">
           {courses.map((c) => (
-            <div key={c.id} className="bg-white border border-[#E5E5EA] rounded-2xl p-5">
+            <Card key={c.id} className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-[#1D1D1F]">{c.title}</h3>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "published" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                    <h3 className="font-semibold text-text-primary">{c.title}</h3>
+                    <Badge variant={c.status === "published" ? "success" : "warning"}>
                       {c.status === "published" ? "Dipublikasikan" : "Draft"}
-                    </span>
+                    </Badge>
                   </div>
-                  {c.description && <p className="text-sm text-[#6E6E73] mt-1 line-clamp-2">{c.description}</p>}
-                  <div className="text-xs text-[#6E6E73] mt-2">
+                  {c.description && <p className="mt-1 line-clamp-2 text-sm text-text-secondary">{c.description}</p>}
+                  <div className="mt-2 text-xs text-text-secondary">
                     {c._count.lessons} pelajaran · {c._count.enrollments} peserta
                   </div>
                 </div>
                 <Link
                   href={`/lms/${tenantSlug}/admin/courses/${c.id}`}
-                  className="ml-4 px-3 py-1.5 text-xs text-[#0077A8] border border-[#0077A8] rounded-lg hover:bg-[#E8F4F9]"
+                  className="ml-4 inline-flex items-center gap-1.5 rounded-full border border-solid border-border-strong px-3 py-1.5 text-xs font-semibold text-accent-cyan-strong transition-colors hover:border-accent-cyan-strong hover:bg-surface-accent-soft"
                 >
+                  <SquarePen size={14} />
                   Edit Materi
                 </Link>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

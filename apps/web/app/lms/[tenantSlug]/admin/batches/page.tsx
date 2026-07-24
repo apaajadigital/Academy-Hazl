@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getValidToken } from "@/lib/auth/token";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select } from "@/components/ui/Select";
+import { Modal, ModalContent } from "@/components/ui/Modal";
 
 type Batch = {
   id: string;
@@ -99,112 +106,109 @@ export default function LmsAdminBatchesPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-[#6E6E73] mb-4">
-        <Link href={`/lms/${tenantSlug}/admin`} className="hover:text-[#0077A8]">Admin</Link>
+    <div className="mx-auto max-w-4xl p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+        <Link href={`/lms/${tenantSlug}/admin`} className="transition-colors hover:text-accent-cyan-strong">Admin</Link>
         <span>/</span>
-        <span className="text-[#1D1D1F]">Batch</span>
+        <span className="text-text-primary">Batch</span>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-[#1D1D1F]">Manajemen Batch</h1>
-        <button onClick={() => setShowForm(true)} className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87]">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-xl font-bold text-text-primary">Manajemen Batch</h1>
+        <Button variant="cyan" size="sm" onClick={() => setShowForm(true)}>
           + Batch Baru
-        </button>
+        </Button>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Buat Batch Baru</h2>
-            <form onSubmit={createBatch} className="space-y-4">
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nama batch (cth: Angkatan 2025)" className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" required />
-              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi (opsional)" rows={3} className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" />
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2 text-sm border border-[#E5E5EA] rounded-xl">Batal</button>
-                <button type="submit" className="flex-1 py-2 text-sm text-white bg-[#0077A8] rounded-xl">Buat</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Modal open={showForm} onOpenChange={setShowForm}>
+        <ModalContent title="Buat Batch Baru">
+          <form onSubmit={createBatch} className="space-y-4">
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nama batch (cth: Angkatan 2025)" required />
+            <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Deskripsi (opsional)" rows={3} />
+            <div className="flex gap-3">
+              <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowForm(false)}>Batal</Button>
+              <Button type="submit" variant="cyan" className="flex-1">Buat</Button>
+            </div>
+          </form>
+        </ModalContent>
+      </Modal>
 
       {loading ? (
-        <div className="text-center py-8 text-[#6E6E73]">Memuat...</div>
+        <div className="py-8 text-center text-text-secondary">Memuat...</div>
       ) : (
-        <div className="space-y-3 mb-8">
+        <div className="mb-8 space-y-3">
           {batches.map((b) => (
-            <div key={b.id} className="bg-white border border-[#E5E5EA] rounded-2xl p-4 flex items-center justify-between">
+            <Card key={b.id} className="flex items-center justify-between p-4">
               <div>
-                <div className="font-medium text-[#1D1D1F]">{b.name}</div>
-                {b.description && <div className="text-xs text-[#6E6E73] mt-0.5">{b.description}</div>}
-                <div className="text-xs text-[#6E6E73] mt-1">
+                <div className="font-medium text-text-primary">{b.name}</div>
+                {b.description && <div className="mt-0.5 text-xs text-text-secondary">{b.description}</div>}
+                <div className="mt-1 text-xs text-text-secondary">
                   {b._count.members} anggota · {b._count.assignments} kursus
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-1 rounded-full ${b.isActive ? "bg-green-100 text-green-700" : "bg-[#F5F5F7] text-[#6E6E73]"}`}>
+              <div className="flex items-center gap-3">
+                <Badge variant={b.isActive ? "success" : "neutral"}>
                   {b.isActive ? "Aktif" : "Nonaktif"}
-                </span>
-                <button onClick={() => setInviteBatchId(b.id)} className="text-xs text-[#0077A8] hover:underline">Undang</button>
+                </Badge>
+                <Button variant="secondary" size="sm" onClick={() => setInviteBatchId(b.id)}>Undang</Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
 
-      <div className="bg-white border border-[#E5E5EA] rounded-2xl p-6">
-        <h2 className="text-base font-semibold text-[#1D1D1F] mb-4">Undang Peserta</h2>
+      <Card className="p-6">
+        <h2 className="mb-4 text-base font-semibold text-text-primary">Undang Peserta</h2>
         <form onSubmit={sendInvites} className="space-y-3">
           {batches.length > 0 && (
-            <select value={inviteBatchId} onChange={(e) => setInviteBatchId(e.target.value)} className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm">
+            <Select value={inviteBatchId} onChange={(e) => setInviteBatchId(e.target.value)}>
               <option value="">Tanpa batch (opsional)</option>
               {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            </Select>
           )}
 
           {/* CSV upload */}
-          <div className="border border-dashed border-[#C7C7CC] rounded-xl p-4 bg-[#F5F5F7]">
-            <div className="text-xs font-medium text-[#3C3C43] mb-2">Import dari file CSV</div>
+          <div className="rounded-[var(--radius-md)] border border-dashed border-border-strong bg-surface-sunken p-4">
+            <div className="mb-2 text-xs font-medium text-text-primary">Import dari file CSV</div>
             <input
               type="file"
               accept=".csv"
               onChange={handleCsvUpload}
-              className="text-xs text-[#6E6E73] file:mr-3 file:text-xs file:font-medium file:px-3 file:py-1 file:rounded-lg file:bg-white file:border file:border-[#E5E5EA] file:text-[#0077A8] hover:file:bg-[#E8F4F9] cursor-pointer"
+              className="cursor-pointer text-xs text-text-secondary file:mr-3 file:rounded-lg file:border file:border-border-default file:bg-surface-card file:px-3 file:py-1 file:text-xs file:font-medium file:text-accent-cyan-strong hover:file:bg-surface-accent-soft"
             />
             {csvError && <p className="mt-2 text-xs text-red-600">{csvError}</p>}
             {csvParsed.length > 0 && (
-              <p className="mt-2 text-xs text-green-700 font-medium">
+              <p className="mt-2 text-xs font-medium text-green-700">
                 ✓ {csvParsed.length} email valid ditemukan dari CSV
               </p>
             )}
-            <p className="mt-2 text-xs text-[#6E6E73]">
+            <p className="mt-2 text-xs text-text-secondary">
               Format: satu kolom berisi alamat email. Kolom lain akan diabaikan.
             </p>
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#E5E5EA]" /></div>
-            <div className="relative flex justify-center"><span className="bg-white px-2 text-xs text-[#6E6E73]">atau ketik langsung</span></div>
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border-default" /></div>
+            <div className="relative flex justify-center"><span className="bg-surface-card px-2 text-xs text-text-secondary">atau ketik langsung</span></div>
           </div>
 
-          <textarea
+          <Textarea
             value={inviteEmails}
             onChange={(e) => setInviteEmails(e.target.value)}
             placeholder={"Masukkan email (satu per baris atau dipisah koma):\nuser1@contoh.com\nuser2@contoh.com"}
             rows={5}
-            className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm font-mono"
+            className="font-mono"
           />
           {inviteEmails.trim() && (
-            <p className="text-xs text-[#6E6E73]">
+            <p className="text-xs text-text-secondary">
               {inviteEmails.split(/[\n,]+/).map((v) => v.trim()).filter(Boolean).length} email akan diundang
             </p>
           )}
-          <button type="submit" disabled={inviting || !inviteEmails.trim()} className="w-full py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87] disabled:opacity-50">
+          <Button type="submit" variant="cyan" className="w-full" disabled={inviting || !inviteEmails.trim()}>
             {inviting ? "Mengirim undangan..." : "Kirim Undangan"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

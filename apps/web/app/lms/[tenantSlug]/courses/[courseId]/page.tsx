@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Check, Trophy, Clock, CheckCircle2 } from "lucide-react";
+import { Badge, Button } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Lesson = {
@@ -62,44 +64,51 @@ export default function LmsCoursePlayerPage() {
   const pct = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex flex-col">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-3 flex items-center gap-4">
-        <Link href={`/lms/${tenantSlug}`} className="text-sm text-[#0077A8] hover:underline">
-          ← Portal
+    <div className="flex min-h-screen flex-col bg-surface-page">
+      <div className="flex items-center gap-4 border-b border-border-default bg-surface-card px-6 py-3">
+        <Link
+          href={`/lms/${tenantSlug}`}
+          className="flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong hover:underline"
+        >
+          <ArrowLeft size={15} aria-hidden="true" />
+          Portal
         </Link>
         <div className="flex-1">
-          <div className="text-xs text-[#6E6E73] mb-1">{completedCount}/{lessons.length} pelajaran selesai</div>
-          <div className="bg-[#E5E5EA] rounded-full h-1.5 w-48">
-            <div className="bg-[#0077A8] h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+          <div className="mb-1 text-xs text-text-secondary">{completedCount}/{lessons.length} pelajaran selesai</div>
+          <div className="h-1.5 w-48 rounded-full bg-surface-sunken">
+            <div className="h-1.5 rounded-full bg-accent-cyan-strong transition-all duration-500" style={{ width: `${pct}%` }} />
           </div>
         </div>
         {pct === 100 && (
-          <Link href={`/lms/${tenantSlug}/certificates`} className="text-xs text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full">
-            🏆 Lihat Sertifikat
+          <Link href={`/lms/${tenantSlug}/certificates`}>
+            <Badge variant="warning">
+              <Trophy size={13} aria-hidden="true" />
+              Lihat Sertifikat
+            </Badge>
           </Link>
         )}
       </div>
 
       <div className="flex flex-1">
-        <aside className="w-64 bg-white border-r border-[#E5E5EA] overflow-y-auto hidden md:block">
-          <div className="p-3 space-y-1">
+        <aside className="hidden w-64 overflow-y-auto border-r border-border-default bg-surface-card md:block">
+          <div className="space-y-1 p-3">
             {loading ? (
-              <p className="text-xs text-[#6E6E73] p-2">Memuat...</p>
+              <p className="p-2 text-xs text-text-secondary">Memuat...</p>
             ) : (
               lessons.map((l, i) => (
                 <button
                   key={l.id}
                   onClick={() => setActiveLesson(l)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-sm transition-colors flex items-start gap-2 ${
+                  className={`flex w-full items-start gap-2 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                     activeLesson?.id === l.id
-                      ? "bg-[#E8F4F9] text-[#0077A8]"
-                      : "hover:bg-[#F5F5F7] text-[#3C3C43]"
+                      ? "bg-surface-accent-soft text-accent-cyan-strong"
+                      : "text-text-primary hover:bg-surface-sunken"
                   }`}
                 >
-                  <span className={`mt-0.5 w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${
-                    l.isCompleted ? "bg-green-100 text-green-700" : "bg-[#E5E5EA] text-[#6E6E73]"
+                  <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    l.isCompleted ? "bg-green-600/10 text-green-700" : "bg-surface-sunken text-text-muted"
                   }`}>
-                    {l.isCompleted ? "✓" : i + 1}
+                    {l.isCompleted ? <Check size={12} aria-hidden="true" /> : i + 1}
                   </span>
                   <span className="leading-snug">{l.title}</span>
                 </button>
@@ -108,18 +117,18 @@ export default function LmsCoursePlayerPage() {
           </div>
         </aside>
 
-        <main className="flex-1 p-6 max-w-3xl">
+        <main className="max-w-3xl flex-1 p-6">
           {!activeLesson ? (
-            <div className="text-center py-12 text-[#6E6E73]">Pilih pelajaran dari sidebar.</div>
+            <div className="py-12 text-center text-text-secondary">Pilih pelajaran dari sidebar.</div>
           ) : (
             <div>
-              <h2 className="text-xl font-bold text-[#1D1D1F] mb-4">{activeLesson.title}</h2>
+              <h2 className="mb-4 font-display text-xl font-bold text-text-primary">{activeLesson.title}</h2>
 
               {activeLesson.videoUrl && (
-                <div className="aspect-video bg-black rounded-2xl overflow-hidden mb-6">
+                <div className="mb-6 aspect-video overflow-hidden rounded-2xl bg-black">
                   <iframe
                     src={activeLesson.videoUrl}
-                    className="w-full h-full"
+                    className="h-full w-full"
                     allowFullScreen
                     title={activeLesson.title}
                   />
@@ -127,26 +136,33 @@ export default function LmsCoursePlayerPage() {
               )}
 
               {activeLesson.content && (
-                <div className="prose prose-sm max-w-none text-[#3C3C43] mb-6 bg-white rounded-2xl border border-[#E5E5EA] p-5 whitespace-pre-wrap">
+                <div className="prose prose-sm mb-6 max-w-none whitespace-pre-wrap rounded-2xl border border-border-default bg-surface-card p-5 text-text-primary">
                   {activeLesson.content}
                 </div>
               )}
 
               {activeLesson.durationMins && (
-                <p className="text-xs text-[#6E6E73] mb-4">Estimasi waktu: {activeLesson.durationMins} menit</p>
+                <p className="mb-4 flex items-center gap-1 text-xs text-text-secondary">
+                  <Clock size={13} aria-hidden="true" />
+                  Estimasi waktu: {activeLesson.durationMins} menit
+                </p>
               )}
 
               {!activeLesson.isCompleted ? (
-                <button
+                <Button
+                  variant="cyan"
+                  size="sm"
                   onClick={() => markComplete(activeLesson.id)}
-                  disabled={completing}
-                  className="px-6 py-2.5 bg-[#0077A8] text-white rounded-xl text-sm font-medium hover:bg-[#005f87] disabled:opacity-50"
+                  loading={completing}
+                  leftIcon={<Check size={16} aria-hidden="true" />}
                 >
-                  {completing ? "Menyimpan..." : "✓ Tandai Selesai"}
-                </button>
+                  {completing ? "Menyimpan..." : "Tandai Selesai"}
+                </Button>
               ) : (
-                <div className="flex items-center gap-2 text-green-700 text-sm">
-                  <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-xs">✓</span>
+                <div className="flex items-center gap-2 text-sm text-green-700">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-600/10">
+                    <CheckCircle2 size={14} aria-hidden="true" />
+                  </span>
                   Pelajaran ini sudah selesai
                 </div>
               )}

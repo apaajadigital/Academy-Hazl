@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Trophy, BadgeCheck, Download, ChevronRight, ArrowRight } from "lucide-react";
+import { Badge, Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type LmsCert = {
@@ -36,38 +38,44 @@ export default function LmsCertificatesPage() {
   }, [tenantSlug, router]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <div className="bg-white border-b border-[#E5E5EA] px-6 py-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Link href={`/lms/${tenantSlug}`} className="text-[#0077A8] hover:underline">Portal</Link>
-          <span className="text-[#6E6E73]">/</span>
-          <span className="text-[#1D1D1F] font-medium">Sertifikat Saya</span>
+    <div className="min-h-screen bg-surface-page">
+      <div className="border-b border-border-default bg-surface-card px-6 py-4">
+        <div className="flex items-center gap-1.5 text-sm">
+          <Link href={`/lms/${tenantSlug}`} className="text-accent-cyan-strong hover:underline">Portal</Link>
+          <ChevronRight size={14} className="text-text-muted" aria-hidden="true" />
+          <span className="font-medium text-text-primary">Sertifikat Saya</span>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto p-6">
-        <h1 className="text-xl font-bold text-[#1D1D1F] mb-6">Sertifikat Penyelesaian</h1>
+      <div className="mx-auto max-w-3xl p-6">
+        <h1 className="mb-6 font-display text-xl font-bold text-text-primary">Sertifikat Penyelesaian</h1>
 
         {loading ? (
-          <div className="text-center py-12 text-[#6E6E73]">Memuat...</div>
+          <div className="py-12 text-center text-text-secondary">Memuat...</div>
         ) : certs.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-2xl border border-[#E5E5EA]">
-            <div className="text-4xl mb-3">🏆</div>
-            <p className="text-[#6E6E73]">Belum ada sertifikat.</p>
-            <p className="text-xs text-[#6E6E73] mt-1">Selesaikan semua pelajaran dalam sebuah kursus untuk mendapatkan sertifikat.</p>
-            <Link href={`/lms/${tenantSlug}`} className="mt-4 inline-block text-sm text-[#0077A8] hover:underline">
-              Kembali ke daftar kursus →
+          <Card className="py-12 text-center">
+            <Trophy size={40} className="mx-auto mb-3 text-amber-500" aria-hidden="true" />
+            <p className="text-text-secondary">Belum ada sertifikat.</p>
+            <p className="mt-1 text-xs text-text-muted">Selesaikan semua pelajaran dalam sebuah kursus untuk mendapatkan sertifikat.</p>
+            <Link
+              href={`/lms/${tenantSlug}`}
+              className="mt-4 inline-flex items-center gap-1 text-sm text-accent-cyan-strong hover:underline"
+            >
+              Kembali ke daftar kursus
+              <ArrowRight size={14} aria-hidden="true" />
             </Link>
-          </div>
+          </Card>
         ) : (
           <div className="grid gap-4">
             {certs.map((cert) => (
-              <div key={cert.id} className="bg-white border border-[#E5E5EA] rounded-2xl p-6 flex items-center justify-between">
+              <Card key={cert.id} className="flex items-center justify-between p-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🏆</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
+                    <Trophy size={22} aria-hidden="true" />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-[#1D1D1F]">{cert.courseTitle}</h3>
-                    <p className="text-xs text-[#6E6E73] mt-0.5">
+                    <h3 className="font-semibold text-text-primary">{cert.courseTitle}</h3>
+                    <p className="mt-0.5 text-xs text-text-secondary">
                       Diterbitkan {new Date(cert.issuedAt).toLocaleDateString("id-ID", {
                         day: "numeric", month: "long", year: "numeric",
                       })}
@@ -75,18 +83,22 @@ export default function LmsCertificatesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs px-2.5 py-1 bg-green-100 text-green-700 rounded-full font-medium">Terverifikasi</span>
+                  <Badge variant="success">
+                    <BadgeCheck size={13} aria-hidden="true" />
+                    Terverifikasi
+                  </Badge>
                   <a
                     href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/lms/portal/${tenantSlug}/certificates/${cert.id}/download`}
                     target="_blank"
                     rel="noopener noreferrer"
                     download
-                    className="text-xs px-3 py-1.5 rounded-lg bg-[#0077A8] text-white hover:bg-[#005f87] transition-colors font-medium"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-accent-cyan-strong px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                   >
+                    <Download size={13} aria-hidden="true" />
                     Unduh PDF
                   </a>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}

@@ -3,7 +3,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Award, BarChart3, Home, Trophy } from "lucide-react";
+import {
+  BookOpen,
+  Home,
+  Trophy,
+  GraduationCap,
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+} from "lucide-react";
+import { Avatar, Badge, Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,91 +49,113 @@ function Sidebar({ slug, tenant }: { slug: string; tenant: TenantInfo | null }) 
   ];
 
   return (
-    <aside style={{
-      width: 220, flexShrink: 0, background: "white",
-      borderRight: "1px solid #E5E5EA",
-      display: "flex", flexDirection: "column", minHeight: "100vh",
-      position: "sticky", top: 0,
-    }}>
-      {/* Brand */}
-      <div style={{ padding: "20px 18px", borderBottom: "1px solid #F3F4F6" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: primary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "white", flexShrink: 0 }}>
-            {(tenant?.name ?? "LMS").slice(0, 2).toUpperCase()}
-          </div>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#1D1D1F", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tenant?.name ?? slug}</p>
-            <p style={{ fontSize: 10, color: "#9CA3AF" }}>LMS Portal</p>
+    <aside className="sticky top-0 flex min-h-screen w-64 flex-shrink-0 flex-col border-r border-border-default bg-surface-card">
+      {/* Company brand — tenant logo + name (white-label branding hook) */}
+      <div className="border-b border-border-default px-4 py-5">
+        <div className="flex items-center gap-3 rounded-xl bg-surface-sunken p-3">
+          <Avatar
+            src={tenant?.logoUrl ?? undefined}
+            name={tenant?.name ?? slug}
+            size="md"
+            className="rounded-xl border-0"
+            style={tenant?.logoUrl ? undefined : { background: primary, color: "#ffffff" }}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-text-primary">{tenant?.name ?? slug}</p>
+            <p className="text-[11px] text-text-secondary">LMS Portal</p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav style={{ padding: "12px 10px", flex: 1 }}>
+      <nav className="flex-1 px-3 py-3">
         {navItems.map(({ href, icon: Icon, label }) => {
           const isActive = typeof window !== "undefined" && window.location.pathname === href;
           return (
             <Link
               key={href}
               href={href}
+              className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all"
               style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 10, marginBottom: 2,
-                textDecoration: "none", fontSize: 13, fontWeight: 600,
                 background: isActive ? `${primary}15` : "transparent",
-                color: isActive ? primary : "#6E6E73",
-                transition: "all 0.15s",
+                color: isActive ? primary : "var(--text-secondary)",
               }}
             >
-              <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
+              <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
               {label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Back to Dashboard */}
-      <div style={{ padding: "14px 18px", borderTop: "1px solid #F3F4F6", display: "flex", flexDirection: "column", gap: 6 }}>
-        <Link href="/dashboard" style={{ fontSize: 11, color: "#9CA3AF", textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
-          ← Kembali ke Dashboard
+      {/* Back links */}
+      <div className="flex flex-col gap-2 border-t border-border-default px-4 py-4">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-1.5 text-[11px] text-text-secondary transition-colors hover:text-accent-cyan-strong"
+        >
+          <ArrowLeft size={13} aria-hidden="true" />
+          Kembali ke Dashboard
         </Link>
-        <Link href="/" style={{ fontSize: 11, color: "#C4C4C6", textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
-          ↖ Jago Akademi
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-accent-cyan-strong"
+        >
+          <GraduationCap size={13} aria-hidden="true" />
+          Jago Akademi
         </Link>
       </div>
     </aside>
   );
 }
 
-// ─── Stats Bar ────────────────────────────────────────────────────────────────
+// ─── Welcome banner + progress summary ─────────────────────────────────────────
 
-function StatsBar({ courses, primary }: { courses: CourseProgress[]; primary: string }) {
+function WelcomeBanner({ courses, tenant }: { courses: CourseProgress[]; tenant: TenantInfo | null }) {
   const completed = courses.filter((c) => c.isCompleted).length;
   const active = courses.filter((c) => !c.isCompleted).length;
   const avgPct = courses.length > 0 ? Math.round(courses.reduce((s, c) => s + c.completionPct, 0) / courses.length) : 0;
   const certs = courses.filter((c) => c.certificate).length;
 
-  const stats = [
-    { label: "Kursus Selesai", value: completed, icon: CheckCircle2, color: "#059669" },
-    { label: "Kursus Aktif", value: active, icon: BookOpen, color: primary },
-    { label: "Rata-rata Progress", value: `${avgPct}%`, icon: BarChart3, color: "#7C3AED" },
-    { label: "Sertifikat", value: certs, icon: Award, color: "#D97706" },
+  const summary = [
+    { label: "Kursus Aktif", value: active },
+    { label: "Kursus Selesai", value: completed },
+    { label: "Sertifikat", value: certs },
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 24 }}>
-      {stats.map(({ label, value, icon: Icon, color }) => (
-        <div key={label} style={{ background: "white", borderRadius: 16, padding: "16px 14px", display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 1px 6px rgba(0,0,0,0.05)" }}>
-          <span style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            <Icon size={16} strokeWidth={1.75} style={{ color }} aria-hidden="true" />
-          </span>
-          <div>
-            <p style={{ fontSize: 18, fontWeight: 800, color }}>{value}</p>
-            <p style={{ fontSize: 10, color: "#6E6E73", marginTop: 1 }}>{label}</p>
+    <section className="relative mb-7 overflow-hidden rounded-[28px] bg-brand-gradient p-6 text-white md:p-8">
+      <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+      <div className="relative z-10 grid items-center gap-6 md:grid-cols-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold leading-tight md:text-[28px]">
+            Selamat belajar!
+          </h1>
+          <p className="mt-2 text-sm text-white/90">
+            {tenant ? `Portal belajar ${tenant.name}` : "Memuat portal…"}
+          </p>
+        </div>
+
+        {/* Glass progress panel */}
+        <div className="glass-card flex flex-col gap-4 rounded-[20px] p-5 text-white">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-white/80">Rata-rata Progress</span>
+            <span className="font-display text-2xl font-bold">{avgPct}%</span>
+          </div>
+          <div className="h-3 w-full overflow-hidden rounded-full bg-white/25">
+            <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${avgPct}%` }} />
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            {summary.map(({ label, value }) => (
+              <div key={label}>
+                <p className="font-display text-xl font-bold">{value}</p>
+                <p className="text-[11px] text-white/75">{label}</p>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -135,60 +167,57 @@ function CourseCard({ c, slug, primary }: { c: CourseProgress; slug: string; pri
   const dueSoon = c.dueDate && !c.isCompleted && !overdue && (new Date(c.dueDate).getTime() - now.getTime()) < 7 * 86400000;
 
   return (
-    <Link
-      href={`/lms/${slug}/courses/${c.courseId}`}
-      style={{ display: "block", textDecoration: "none" }}
-    >
-      <article style={{
-        background: "white", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 18,
-        padding: 20, boxShadow: "0 1px 6px rgba(0,0,0,0.05)", transition: "all 0.2s",
-      }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = "0 1px 6px rgba(0,0,0,0.05)"; }}
-      >
+    <Link href={`/lms/${slug}/courses/${c.courseId}`} className="block no-underline">
+      <Card hoverable className="p-5">
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1D1D1F", lineHeight: 1.3 }}>{c.courseTitle}</h3>
+        <div className="mb-3 flex items-start justify-between gap-2.5">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex flex-wrap items-center gap-1.5">
+              <h3 className="text-sm font-bold leading-snug text-text-primary">{c.courseTitle}</h3>
               {c.isCompleted && (
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "#DCFCE7", color: "#16A34A" }}>✓ Selesai</span>
+                <Badge variant="success">
+                  <Check size={12} aria-hidden="true" />
+                  Selesai
+                </Badge>
               )}
-              {c.isMandatory && !c.isCompleted && (
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: `${primary}18`, color: primary }}>Wajib</span>
-              )}
-              {overdue && (
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "#FEE2E2", color: "#DC2626" }}>Terlambat</span>
-              )}
-              {dueSoon && (
-                <span style={{ fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "rgba(234,179,8,0.12)", color: "#A16207" }}>Deadline dekat</span>
-              )}
+              {c.isMandatory && !c.isCompleted && <Badge variant="info">Wajib</Badge>}
+              {overdue && <Badge variant="danger">Terlambat</Badge>}
+              {dueSoon && <Badge variant="warning">Deadline dekat</Badge>}
             </div>
             {c.description && (
-              <p style={{ fontSize: 12, color: "#6E6E73", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{c.description}</p>
+              <p className="line-clamp-2 text-xs text-text-secondary">{c.description}</p>
             )}
           </div>
           {c.certificate && (
-            <span style={{ fontSize: 18, flexShrink: 0 }} title={`Sertifikat diterbitkan ${new Date(c.certificate.issuedAt).toLocaleDateString("id-ID")}`}>🏆</span>
+            <span
+              className="flex-shrink-0 text-amber-500"
+              title={`Sertifikat diterbitkan ${new Date(c.certificate.issuedAt).toLocaleDateString("id-ID")}`}
+            >
+              <Trophy size={20} aria-hidden="true" />
+            </span>
           )}
         </div>
 
         {/* Progress */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ flex: 1, background: "#F3F4F6", borderRadius: 999, height: 6 }}>
-            <div style={{ height: 6, borderRadius: 999, width: `${c.completionPct}%`, background: c.isCompleted ? "#34D399" : primary, transition: "width 0.5s ease" }} />
+        <div className="flex items-center gap-2.5">
+          <div className="h-1.5 flex-1 rounded-full bg-surface-sunken">
+            <div
+              className="h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${c.completionPct}%`, background: c.isCompleted ? "#34D399" : primary }}
+            />
           </div>
-          <span style={{ fontSize: 12, color: "#9CA3AF", whiteSpace: "nowrap", minWidth: 80, textAlign: "right" }}>
+          <span className="min-w-[80px] whitespace-nowrap text-right text-xs text-text-muted">
             {c.completedLessons}/{c.totalLessons} pelajaran
           </span>
         </div>
 
         {c.dueDate && (
-          <p style={{ fontSize: 11, color: overdue ? "#DC2626" : "#9CA3AF", marginTop: 8 }}>
-            📅 Deadline: {new Date(c.dueDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+          <p className={`mt-2 flex items-center gap-1 text-[11px] ${overdue ? "text-red-600" : "text-text-muted"}`}>
+            <CalendarDays size={12} aria-hidden="true" />
+            Deadline: {new Date(c.dueDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
           </p>
         )}
-      </article>
+      </Card>
     </Link>
   );
 }
@@ -224,49 +253,45 @@ export default function LmsPortalHomePage() {
   const primary = tenant?.primaryColor ?? "#0077A8";
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#F9FAFB", fontFamily: "inherit" }}>
+    <div className="flex min-h-screen bg-surface-page">
       {/* Sidebar */}
       <Sidebar slug={tenantSlug} tenant={tenant} />
 
       {/* Main */}
-      <main style={{ flex: 1, padding: "28px 32px", maxWidth: "calc(100% - 220px)" }}>
-        {/* Header greeting */}
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1D1D1F", marginBottom: 4 }}>
-            Selamat belajar! 👋
-          </h1>
-          <p style={{ fontSize: 14, color: "#6E6E73" }}>
-            {tenant ? `Portal belajar ${tenant.name}` : "Memuat portal…"}
-          </p>
-        </div>
-
+      <main className="min-w-0 flex-1 px-6 py-7 md:px-8">
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "60px 0" }}>
-            <span style={{ width: 36, height: 36, borderRadius: "50%", border: `3px solid ${primary}`, borderTopColor: "transparent", display: "inline-block", animation: "spin 0.8s linear infinite" }} />
-            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+          <div className="flex items-center justify-center py-16">
+            <span
+              className="inline-block h-9 w-9 animate-spin rounded-full border-[3px] border-t-transparent"
+              style={{ borderColor: primary, borderTopColor: "transparent" }}
+            />
           </div>
         ) : (
           <>
-            {/* Stats Bar */}
-            <StatsBar courses={courses} primary={primary} />
+            {/* Welcome banner + progress summary */}
+            <WelcomeBanner courses={courses} tenant={tenant} />
 
             {/* Course grid */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: "#1D1D1F" }}>Kursus Saya</h2>
-              <Link href={`/lms/${tenantSlug}/certificates`} style={{ fontSize: 13, color: primary, textDecoration: "none", fontWeight: 600 }}>
-                Sertifikat Saya →
+            <div className="mb-3.5 flex items-center justify-between">
+              <h2 className="text-base font-bold text-text-primary">Kursus Saya</h2>
+              <Link
+                href={`/lms/${tenantSlug}/certificates`}
+                className="flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong no-underline hover:underline"
+              >
+                Sertifikat Saya
+                <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
 
             {courses.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "60px 24px", background: "white", borderRadius: 20, border: "1px solid #E5E5EA" }}>
-                <div style={{ fontSize: 48, marginBottom: 14 }}>📚</div>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#1D1D1F", marginBottom: 8 }}>Belum ada kursus</p>
-                <p style={{ fontSize: 13, color: "#6E6E73" }}>Kamu belum terdaftar di kursus apapun.</p>
-                <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>Hubungi admin perusahaan untuk mendapatkan akses kursus.</p>
-              </div>
+              <Card className="px-6 py-16 text-center">
+                <BookOpen size={40} className="mx-auto mb-3.5 text-text-muted" aria-hidden="true" />
+                <p className="mb-2 text-base font-bold text-text-primary">Belum ada kursus</p>
+                <p className="text-[13px] text-text-secondary">Kamu belum terdaftar di kursus apapun.</p>
+                <p className="mt-1 text-xs text-text-muted">Hubungi admin perusahaan untuk mendapatkan akses kursus.</p>
+              </Card>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3.5">
                 {courses.map((c) => (
                   <CourseCard key={c.courseId} c={c} slug={tenantSlug} primary={primary} />
                 ))}

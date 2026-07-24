@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Users, BookOpen, GraduationCap, Mail, BarChart3, Settings, ArrowRight } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
+import { Card } from "@/components/ui/Card";
 
 type TenantStat = {
   id: string;
@@ -35,41 +37,57 @@ export default function LmsAdminDashboardPage() {
     fetchStat();
   }, [tenantSlug, router]);
 
-  if (loading) return <div className="p-6 text-center text-[#6E6E73]">Memuat...</div>;
-  if (!stat) return <div className="p-6 text-center text-red-500">Tidak ada akses atau tenant tidak ditemukan.</div>;
+  if (loading) return <div className="p-6 text-center text-text-secondary">Memuat...</div>;
+  if (!stat) return <div className="p-6 text-center text-red-600">Tidak ada akses atau tenant tidak ditemukan.</div>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-[#1D1D1F] mb-2">{stat.name} — Admin LMS</h1>
-      <p className="text-sm text-[#6E6E73] mb-8">Kelola pembelajaran, peserta, dan laporan organisasi Anda.</p>
+    <div className="mx-auto max-w-5xl p-6">
+      {/* Welcome hero */}
+      <div className="relative mb-8 overflow-hidden rounded-[var(--radius-xl)] bg-brand-gradient p-6 text-white shadow-e2 md:p-8">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+        <div className="relative">
+          <h1 className="font-display text-2xl font-bold">{stat.name} — Admin LMS</h1>
+          <p className="mt-2 max-w-xl text-sm text-white/90">Kelola pembelajaran, peserta, dan laporan organisasi Anda.</p>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: "Batch Aktif", value: stat._count.batches },
-          { label: "Kursus LMS", value: stat._count.courses },
-          { label: "Enrollment", value: stat._count.enrollments },
-          { label: "Undangan", value: stat._count.invites },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-white border border-[#E5E5EA] rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-[#1D1D1F]">{value}</div>
-            <div className="text-xs text-[#6E6E73] mt-1">{label}</div>
-          </div>
+          { label: "Batch Aktif", value: stat._count.batches, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
+          { label: "Kursus LMS", value: stat._count.courses, Icon: BookOpen, tint: "bg-accent-purple/10 text-accent-purple" },
+          { label: "Enrollment", value: stat._count.enrollments, Icon: GraduationCap, tint: "bg-green-600/10 text-green-700" },
+          { label: "Undangan", value: stat._count.invites, Icon: Mail, tint: "bg-amber-500/10 text-amber-700" },
+        ].map(({ label, value, Icon, tint }) => (
+          <Card key={label} className="p-4 text-center">
+            <span className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${tint}`}>
+              <Icon size={20} />
+            </span>
+            <div className="text-3xl font-bold text-text-primary">{value}</div>
+            <div className="mt-1 text-xs text-text-secondary">{label}</div>
+          </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[
-          { label: "Batch & Peserta", desc: "Buat batch, undang peserta via email, import CSV", href: `/lms/${tenantSlug}/admin/batches`, color: "bg-blue-50 border-blue-200", icon: "👥" },
-          { label: "Course Builder", desc: "Buat kursus, tambah pelajaran, dan kuis", href: `/lms/${tenantSlug}/admin/courses`, color: "bg-purple-50 border-purple-200", icon: "📚" },
-          { label: "Laporan Completion", desc: "Pantau progres peserta, unduh CSV & PDF", href: `/lms/${tenantSlug}/admin/reports`, color: "bg-green-50 border-green-200", icon: "📈" },
-          { label: "Pengaturan Workspace", desc: "Logo, warna brand, domain kustom", href: `/lms/${tenantSlug}/admin/settings`, color: "bg-amber-50 border-amber-200", icon: "⚙️" },
-        ].map(({ label, desc, href, color, icon }) => (
-          <Link key={href} href={href} className={`border rounded-2xl p-5 hover:shadow-md transition-all flex items-start gap-3 ${color}`}>
-            <span className="text-2xl mt-0.5">{icon}</span>
-            <div>
-              <h3 className="font-semibold text-[#1D1D1F] mb-1">{label}</h3>
-              <p className="text-xs text-[#6E6E73]">{desc}</p>
-            </div>
+          { label: "Batch & Peserta", desc: "Buat batch, undang peserta via email, import CSV", href: `/lms/${tenantSlug}/admin/batches`, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
+          { label: "Course Builder", desc: "Buat kursus, tambah pelajaran, dan kuis", href: `/lms/${tenantSlug}/admin/courses`, Icon: BookOpen, tint: "bg-accent-purple/10 text-accent-purple" },
+          { label: "Laporan Completion", desc: "Pantau progres peserta, unduh CSV & PDF", href: `/lms/${tenantSlug}/admin/reports`, Icon: BarChart3, tint: "bg-green-600/10 text-green-700" },
+          { label: "Pengaturan Workspace", desc: "Logo, warna brand, domain kustom", href: `/lms/${tenantSlug}/admin/settings`, Icon: Settings, tint: "bg-amber-500/10 text-amber-700" },
+        ].map(({ label, desc, href, Icon, tint }) => (
+          <Link key={href} href={href} className="group">
+            <Card hoverable className="flex items-start gap-4 p-5">
+              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tint}`}>
+                <Icon size={22} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="mb-1 flex items-center gap-1 font-semibold text-text-primary">
+                  {label}
+                  <ArrowRight size={16} className="text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-accent-cyan-strong" />
+                </h3>
+                <p className="text-xs text-text-secondary">{desc}</p>
+              </div>
+            </Card>
           </Link>
         ))}
       </div>

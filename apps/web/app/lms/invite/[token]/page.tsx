@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { PartyPopper, Mail, AlertCircle, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui";
 
 export default function LmsInviteAcceptPage() {
   const { token } = useParams<{ token: string }>();
@@ -36,14 +38,20 @@ export default function LmsInviteAcceptPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl border border-[#E5E5EA] p-10 max-w-sm w-full text-center">
-          <div className="text-5xl mb-4">🎉</div>
-          <h1 className="text-xl font-bold text-[#1D1D1F] mb-2">Undangan diterima!</h1>
-          <p className="text-sm text-[#6E6E73]">Kamu berhasil bergabung. Mengalihkan ke portal...</p>
+      <div className="flex min-h-screen items-center justify-center bg-surface-page p-6">
+        <div className="w-full max-w-sm rounded-2xl border border-border-default bg-surface-card p-10 text-center shadow-e1">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-600/10 text-green-600">
+            <PartyPopper size={30} aria-hidden="true" />
+          </div>
+          <h1 className="mb-2 font-display text-xl font-bold text-text-primary">Undangan diterima!</h1>
+          <p className="text-sm text-text-secondary">Kamu berhasil bergabung. Mengalihkan ke portal...</p>
           {tenantSlug && (
-            <Link href={`/lms/${tenantSlug}`} className="mt-4 inline-block text-sm text-[#0077A8] hover:underline">
-              Buka portal sekarang →
+            <Link
+              href={`/lms/${tenantSlug}`}
+              className="mt-4 inline-flex items-center gap-1 text-sm text-accent-cyan-strong hover:underline"
+            >
+              Buka portal sekarang
+              <ArrowRight size={14} aria-hidden="true" />
             </Link>
           )}
         </div>
@@ -52,29 +60,33 @@ export default function LmsInviteAcceptPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl border border-[#E5E5EA] p-10 max-w-sm w-full text-center">
-        <div className="text-5xl mb-4">📩</div>
-        <h1 className="text-xl font-bold text-[#1D1D1F] mb-2">Undangan LMS</h1>
-        <p className="text-sm text-[#6E6E73] mb-6">
+    <div className="flex min-h-screen items-center justify-center bg-surface-page p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-border-default bg-surface-card p-10 text-center shadow-e1">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-gradient text-white">
+          <Mail size={28} aria-hidden="true" />
+        </div>
+        <h1 className="mb-2 font-display text-xl font-bold text-text-primary">Undangan LMS</h1>
+        <p className="mb-6 text-sm text-text-secondary">
           Kamu telah diundang untuk bergabung ke program pembelajaran. Klik tombol di bawah untuk menerima undangan.
         </p>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-600/20 bg-red-600/10 p-3 text-left text-sm text-red-700">
+            <AlertCircle size={16} className="flex-shrink-0" aria-hidden="true" />
             {error}
           </div>
         )}
 
-        <button
+        <Button
+          variant="primary"
           onClick={handleAccept}
-          disabled={loading}
-          className="w-full py-2.5 bg-[#0077A8] text-white rounded-xl text-sm font-medium hover:bg-[#005f87] disabled:opacity-50 transition-colors"
+          loading={loading}
+          className="w-full"
         >
           {loading ? "Memproses..." : "Terima Undangan"}
-        </button>
+        </Button>
 
-        <p className="mt-4 text-xs text-[#6E6E73]">
+        <p className="mt-4 text-xs text-text-secondary">
           Pastikan kamu sudah masuk dengan akun yang menerima undangan ini.
         </p>
       </div>

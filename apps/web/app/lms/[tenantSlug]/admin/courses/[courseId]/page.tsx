@@ -3,7 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Select } from "@/components/ui/Select";
 
 type Lesson = {
   id: string;
@@ -97,71 +103,74 @@ export default function LmsAdminCourseBuilderPage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center gap-2 text-sm text-[#6E6E73] mb-4">
-        <Link href={`/lms/${tenantSlug}/admin/courses`} className="hover:text-[#0077A8]">Kursus</Link>
+    <div className="mx-auto max-w-4xl p-6">
+      <div className="mb-4 flex items-center gap-2 text-sm text-text-secondary">
+        <Link href={`/lms/${tenantSlug}/admin/courses`} className="transition-colors hover:text-accent-cyan-strong">Kursus</Link>
         <span>/</span>
-        <span className="text-[#1D1D1F]">Edit Materi</span>
+        <span className="text-text-primary">Edit Materi</span>
       </div>
 
-      <h1 className="text-xl font-bold text-[#1D1D1F] mb-6">Course Builder</h1>
+      <h1 className="mb-6 font-display text-xl font-bold text-text-primary">Course Builder</h1>
 
       {loading ? (
-        <div className="text-center py-8 text-[#6E6E73]">Memuat...</div>
+        <div className="py-8 text-center text-text-secondary">Memuat...</div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-white border border-[#E5E5EA] rounded-2xl p-5">
-            <h2 className="text-base font-semibold text-[#1D1D1F] mb-4">Daftar Pelajaran ({lessons.length})</h2>
+          <Card className="p-5">
+            <h2 className="mb-4 text-base font-semibold text-text-primary">Daftar Pelajaran ({lessons.length})</h2>
             {lessons.length === 0 ? (
-              <p className="text-sm text-[#6E6E73]">Belum ada pelajaran. Tambah pelajaran di bawah.</p>
+              <p className="text-sm text-text-secondary">Belum ada pelajaran. Tambah pelajaran di bawah.</p>
             ) : (
               <div className="space-y-2">
                 {lessons.map((l, i) => (
-                  <div key={l.id} className="flex items-center gap-3 p-3 bg-[#F5F5F7] rounded-xl">
-                    <span className="text-xs font-bold text-[#6E6E73] w-6 text-center">{i + 1}</span>
+                  <div key={l.id} className="flex items-center gap-3 rounded-[var(--radius-md)] bg-surface-sunken p-3">
+                    <span className="w-6 text-center text-xs font-bold text-text-secondary">{i + 1}</span>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-[#1D1D1F]">{l.title}</div>
-                      <div className="text-xs text-[#6E6E73]">
+                      <div className="text-sm font-medium text-text-primary">{l.title}</div>
+                      <div className="text-xs text-text-secondary">
                         {l.durationMins ? `${l.durationMins} menit · ` : ""}
                         {l._count.quizzes} kuis
                         {l.videoUrl && " · ada video"}
                       </div>
                     </div>
-                    <button onClick={() => deleteLesson(l.id)} className="text-xs text-red-500 hover:underline">Hapus</button>
+                    <button onClick={() => deleteLesson(l.id)} className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:underline">
+                      <Trash2 size={14} />
+                      Hapus
+                    </button>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-white border border-[#E5E5EA] rounded-2xl p-5">
-            <h2 className="text-base font-semibold text-[#1D1D1F] mb-4">Tambah Pelajaran</h2>
+          <Card className="p-5">
+            <h2 className="mb-4 text-base font-semibold text-text-primary">Tambah Pelajaran</h2>
             <form onSubmit={addLesson} className="space-y-3">
-              <input value={lessonForm.title} onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="Judul pelajaran" className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" required />
-              <textarea value={lessonForm.content} onChange={(e) => setLessonForm({ ...lessonForm, content: e.target.value })} placeholder="Konten teks (markdown/HTML)" rows={3} className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" />
+              <Input value={lessonForm.title} onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })} placeholder="Judul pelajaran" required />
+              <Textarea value={lessonForm.content} onChange={(e) => setLessonForm({ ...lessonForm, content: e.target.value })} placeholder="Konten teks (markdown/HTML)" rows={3} />
               <div className="grid grid-cols-2 gap-3">
-                <input value={lessonForm.videoUrl} onChange={(e) => setLessonForm({ ...lessonForm, videoUrl: e.target.value })} placeholder="URL video (opsional)" className="border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" />
-                <input type="number" value={lessonForm.durationMins} onChange={(e) => setLessonForm({ ...lessonForm, durationMins: e.target.value })} placeholder="Durasi (menit)" className="border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" />
+                <Input value={lessonForm.videoUrl} onChange={(e) => setLessonForm({ ...lessonForm, videoUrl: e.target.value })} placeholder="URL video (opsional)" />
+                <Input type="number" value={lessonForm.durationMins} onChange={(e) => setLessonForm({ ...lessonForm, durationMins: e.target.value })} placeholder="Durasi (menit)" />
               </div>
-              <button type="submit" className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87]">
+              <Button type="submit" variant="cyan" size="sm">
                 + Tambah Pelajaran
-              </button>
+              </Button>
             </form>
-          </div>
+          </Card>
 
           {batches.length > 0 && (
-            <div className="bg-white border border-[#E5E5EA] rounded-2xl p-5">
-              <h2 className="text-base font-semibold text-[#1D1D1F] mb-4">Tugaskan ke Batch</h2>
+            <Card className="p-5">
+              <h2 className="mb-4 text-base font-semibold text-text-primary">Tugaskan ke Batch</h2>
               <form onSubmit={assignToBatch} className="flex gap-3">
-                <select value={assignBatchId} onChange={(e) => setAssignBatchId(e.target.value)} className="flex-1 border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm" required>
+                <Select value={assignBatchId} onChange={(e) => setAssignBatchId(e.target.value)} containerClassName="flex-1" required>
                   <option value="">Pilih batch</option>
                   {batches.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
-                <button type="submit" disabled={assigning} className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87] disabled:opacity-50">
+                </Select>
+                <Button type="submit" variant="cyan" size="sm" disabled={assigning}>
                   {assigning ? "Menugaskan..." : "Tugaskan"}
-                </button>
+                </Button>
               </form>
-            </div>
+            </Card>
           )}
         </div>
       )}
