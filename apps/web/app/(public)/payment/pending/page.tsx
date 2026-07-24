@@ -236,14 +236,17 @@ function PendingContent() {
           style={{ animation: "fade-in-up 0.4s 1.2s ease forwards" }}
         >
           {isExpired ? (
-            <Link href="/e-course" className="btn btn-primary btn-lg flex-1 justify-center">
+            <Link
+              href="/e-course"
+              className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
+            >
               Lihat Kursus Lagi
             </Link>
           ) : (
             <Link
               id="pending-check-order-btn"
               href={orderId ? `/pesanan/${orderId}` : "/pesanan"}
-              className="btn btn-primary btn-lg flex-1 justify-center"
+              className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
             >
               Cek Status Pesanan
             </Link>

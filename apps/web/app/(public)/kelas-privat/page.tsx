@@ -147,7 +147,7 @@ function PackageCard({ course, featured }: { course: ApiCourse; featured: boolea
       className={`pc-plan-card ${featured ? "pc-plan-featured" : ""}`}
       style={
         {
-          "--plan-color": featured ? "var(--brand-pink-strong)" : "var(--brand-cyan)",
+          "--plan-color": featured ? "var(--brand-pink-strong)" : "var(--brand-cyan-strong)",
         } as React.CSSProperties
       }
     >
@@ -376,8 +376,8 @@ export default function KelasPrivatPage() {
       <style>{`
         .pc-root {
           min-height: 100vh;
-          background: var(--surface-page, #0a1628);
-          color: var(--text-primary, #fff);
+          background: var(--surface-page, #F5F5F7);
+          color: var(--text-primary, #1D1D1F);
           font-family: var(--font-body, 'Inter', sans-serif);
         }
 
@@ -387,22 +387,23 @@ export default function KelasPrivatPage() {
           overflow: hidden;
           padding: 96px 24px 64px;
           text-align: center;
-          background: linear-gradient(180deg, #050d1a 0%, #0a1628 100%);
+          background: linear-gradient(180deg, #FFFFFF 0%, var(--surface-page, #F5F5F7) 100%);
+          border-bottom: 1px solid var(--border-subtle, #EFEFEF);
         }
         .pc-hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
         .pc-hero-glow {
           position: absolute;
           top: -200px; left: 50%; transform: translateX(-50%);
           width: 800px; height: 600px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(204,0,82,0.14) 0%, transparent 70%);
+          background: radial-gradient(ellipse, rgba(204,0,82,0.10) 0%, transparent 70%);
           pointer-events: none;
         }
         .pc-eyebrow {
           display: inline-block;
           font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
-          color: var(--brand-cyan, #00d4ff);
-          background: rgba(0,212,255,0.08);
-          border: 1px solid rgba(0,212,255,0.2);
+          color: var(--brand-cyan-strong, #0077A8);
+          background: var(--surface-accent-soft, rgba(0,119,168,0.08));
+          border: 1px solid rgba(0,119,168,0.2);
           border-radius: 100px; padding: 4px 14px;
           margin-bottom: 20px;
         }
@@ -410,16 +411,16 @@ export default function KelasPrivatPage() {
           font-size: clamp(2rem, 5vw, 3.25rem);
           font-weight: 800; line-height: 1.15;
           letter-spacing: -0.03em;
-          color: #fff; margin-bottom: 20px;
+          color: var(--text-primary, #1D1D1F); margin-bottom: 20px;
         }
         .pc-hero-gradient {
-          background: linear-gradient(135deg, #00d4ff, #cc0052);
+          background: linear-gradient(135deg, #0077A8, #cc0052);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .pc-hero-desc {
           font-size: 1.05rem; line-height: 1.7;
-          color: rgba(255,255,255,0.62);
+          color: var(--text-secondary, #636366);
           max-width: 560px; margin: 0 auto 32px;
         }
         .pc-hero-btns { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
@@ -438,24 +439,24 @@ export default function KelasPrivatPage() {
         .pc-btn-outline {
           display: inline-flex; align-items: center; gap: 8px;
           padding: 13px 28px;
-          background: rgba(255,255,255,0.06);
-          color: rgba(255,255,255,0.8);
-          border: 1px solid rgba(255,255,255,0.12);
+          background: var(--surface-card, #FFFFFF);
+          color: var(--text-primary, #1D1D1F);
+          border: 1px solid var(--border-strong, #D2D2D7);
           font-size: 14px; font-weight: 600;
           border-radius: 12px; text-decoration: none;
           transition: all 0.2s;
         }
-        .pc-btn-outline:hover { background: rgba(255,255,255,0.1); }
+        .pc-btn-outline:hover { background: var(--surface-accent-soft, rgba(0,119,168,0.08)); border-color: var(--brand-cyan-strong, #0077A8); }
 
         /* Section headings */
         .pc-section-title {
-          font-size: 1.75rem; font-weight: 800; color: #fff;
+          font-size: 1.75rem; font-weight: 800; color: var(--text-primary, #1D1D1F);
           text-align: center; margin-bottom: 8px;
           letter-spacing: -0.02em;
         }
         .pc-section-sub {
           text-align: center; font-size: 14px;
-          color: rgba(255,255,255,0.5);
+          color: var(--text-muted, #6E6E73);
           max-width: 520px; margin: 0 auto 40px;
         }
 
@@ -468,21 +469,22 @@ export default function KelasPrivatPage() {
         }
         .pc-plan-card {
           position: relative;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px;
           padding: 28px;
           display: flex; flex-direction: column; gap: 20px;
+          box-shadow: var(--shadow-e1);
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .pc-plan-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          box-shadow: var(--shadow-e3);
         }
         .pc-plan-featured {
           border-color: var(--plan-color);
-          background: linear-gradient(135deg, rgba(204,0,82,0.08), rgba(0,119,168,0.05));
-          box-shadow: 0 0 0 1px var(--plan-color), 0 12px 40px rgba(204,0,82,0.15);
+          background: linear-gradient(135deg, rgba(204,0,82,0.05), rgba(0,119,168,0.04));
+          box-shadow: 0 0 0 1px var(--plan-color), var(--shadow-e2);
         }
         .pc-plan-badge {
           position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
@@ -495,32 +497,32 @@ export default function KelasPrivatPage() {
         .pc-plan-icon-wrap {
           width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(255,255,255,0.07);
+          background: var(--surface-sunken, #FAFAFA);
           color: var(--plan-color);
-          border: 1px solid rgba(255,255,255,0.08);
+          border: 1px solid var(--border-default, #E5E5E5);
         }
-        .pc-plan-name { font-size: 1.2rem; font-weight: 700; color: #fff; }
-        .pc-plan-desc { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+        .pc-plan-name { font-size: 1.2rem; font-weight: 700; color: var(--text-primary, #1D1D1F); }
+        .pc-plan-desc { font-size: 13px; color: var(--text-muted, #6E6E73); margin-top: 2px; }
 
         /* Price */
         .pc-price-wrap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
         .pc-price-num {
-          font-size: 1.75rem; font-weight: 800; color: #fff;
+          font-size: 1.75rem; font-weight: 800; color: var(--text-primary, #1D1D1F);
           font-variant-numeric: tabular-nums;
         }
         .pc-price-strike {
-          font-size: 14px; color: rgba(255,255,255,0.4);
+          font-size: 14px; color: var(--text-muted, #6E6E73);
           text-decoration: line-through;
           font-variant-numeric: tabular-nums;
         }
-        .pc-price-label { display: block; font-size: 1.5rem; font-weight: 800; color: #fff; }
-        .pc-price-sub { font-size: 13px; color: rgba(255,255,255,0.45); }
-        .pc-plan-meta { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 6px; }
+        .pc-price-label { display: block; font-size: 1.5rem; font-weight: 800; color: var(--text-primary, #1D1D1F); }
+        .pc-price-sub { font-size: 13px; color: var(--text-muted, #6E6E73); }
+        .pc-plan-meta { font-size: 12px; color: var(--text-muted, #6E6E73); margin-top: 6px; }
 
         /* Features */
         .pc-features { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
-        .pc-feature-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: rgba(255,255,255,0.75); }
-        .pc-feature-icon { flex-shrink: 0; margin-top: 1px; color: var(--plan-color, #00d4ff); }
+        .pc-feature-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--text-secondary, #636366); }
+        .pc-feature-icon { flex-shrink: 0; margin-top: 1px; color: var(--plan-color, #0077A8); }
 
         /* CTA buttons on cards */
         .pc-cta-btn {
@@ -531,11 +533,11 @@ export default function KelasPrivatPage() {
           transition: all 0.2s;
         }
         .pc-cta-default {
-          background: rgba(255,255,255,0.07);
-          color: #fff;
-          border: 1px solid rgba(255,255,255,0.12);
+          background: var(--surface-sunken, #FAFAFA);
+          color: var(--text-primary, #1D1D1F);
+          border: 1px solid var(--border-strong, #D2D2D7);
         }
-        .pc-cta-default:hover { background: rgba(255,255,255,0.12); }
+        .pc-cta-default:hover { background: var(--surface-accent-soft, rgba(0,119,168,0.08)); border-color: var(--brand-cyan-strong, #0077A8); }
         .pc-cta-featured {
           background: linear-gradient(135deg, #cc0052, #0077A8);
           color: #fff;
@@ -545,14 +547,14 @@ export default function KelasPrivatPage() {
 
         /* Skeleton */
         .pc-skeleton-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px; padding: 28px;
           display: flex; flex-direction: column; gap: 14px;
         }
         .pc-skeleton-line {
           height: 14px; border-radius: 6px;
-          background: rgba(255,255,255,0.06);
+          background: rgba(0,0,0,0.06);
           animation: pc-pulse 1.4s ease-in-out infinite;
         }
         .pc-skeleton-title { height: 20px; width: 60%; }
@@ -566,24 +568,25 @@ export default function KelasPrivatPage() {
         /* Empty state */
         .pc-empty {
           max-width: 520px; margin: 0 auto;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px;
           padding: 48px 32px; text-align: center;
+          box-shadow: var(--shadow-e1);
           display: flex; flex-direction: column; align-items: center; gap: 12px;
         }
         .pc-empty-icon { font-size: 2rem; }
-        .pc-empty-title { font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .pc-empty-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary, #1D1D1F); }
         .pc-empty-desc {
           font-size: 14px; line-height: 1.7;
-          color: rgba(255,255,255,0.55); margin-bottom: 12px;
+          color: var(--text-secondary, #636366); margin-bottom: 12px;
         }
 
         /* Flow */
         .pc-flow-section {
-          background: rgba(0,212,255,0.04);
-          border-top: 1px solid rgba(0,212,255,0.1);
-          border-bottom: 1px solid rgba(0,212,255,0.1);
+          background: var(--surface-accent-soft, rgba(0,119,168,0.05));
+          border-top: 1px solid rgba(0,119,168,0.12);
+          border-bottom: 1px solid rgba(0,119,168,0.12);
           padding: 64px 24px;
         }
         .pc-flow-inner { max-width: 680px; margin: 0 auto; }
@@ -594,9 +597,10 @@ export default function KelasPrivatPage() {
         .pc-flow-step {
           position: relative;
           display: flex; align-items: flex-start; gap: 14px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 16px; padding: 18px 20px;
+          box-shadow: var(--shadow-e1);
         }
         .pc-flow-num {
           position: absolute; top: -10px; left: -10px;
@@ -608,45 +612,45 @@ export default function KelasPrivatPage() {
         .pc-flow-icon {
           width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: rgba(0,212,255,0.08);
-          border: 1px solid rgba(0,212,255,0.15);
-          color: var(--brand-cyan, #00d4ff);
+          background: var(--surface-accent-soft, rgba(0,119,168,0.08));
+          border: 1px solid rgba(0,119,168,0.15);
+          color: var(--brand-cyan-strong, #0077A8);
         }
-        .pc-flow-title { font-size: 15px; font-weight: 700; color: #fff; }
-        .pc-flow-desc { font-size: 13px; line-height: 1.6; color: rgba(255,255,255,0.55); margin-top: 2px; }
+        .pc-flow-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #1D1D1F); }
+        .pc-flow-desc { font-size: 13px; line-height: 1.6; color: var(--text-secondary, #636366); margin-top: 2px; }
         .pc-flow-cta { text-align: center; margin-top: 28px; }
 
         /* FAQ */
         .pc-faq-section { padding: 72px 24px; }
         .pc-faq-inner { max-width: 720px; margin: 0 auto; }
         .pc-faq-title {
-          font-size: 1.75rem; font-weight: 700; color: #fff;
+          font-size: 1.75rem; font-weight: 700; color: var(--text-primary, #1D1D1F);
           text-align: center; margin-bottom: 40px;
         }
         .pc-faq-list { display: flex; flex-direction: column; gap: 12px; }
         .pc-faq-item {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 14px; overflow: hidden;
         }
-        .pc-faq-item[open] { border-color: rgba(0,212,255,0.2); }
+        .pc-faq-item[open] { border-color: rgba(0,119,168,0.3); }
         .pc-faq-q {
           display: flex; align-items: center; justify-content: space-between;
           padding: 18px 20px;
-          font-size: 14px; font-weight: 600; color: #fff;
+          font-size: 14px; font-weight: 600; color: var(--text-primary, #1D1D1F);
           cursor: pointer; list-style: none;
           gap: 12px;
         }
         .pc-faq-q::-webkit-details-marker { display: none; }
         .pc-faq-chevron {
-          flex-shrink: 0; color: rgba(255,255,255,0.4);
+          flex-shrink: 0; color: var(--text-muted, #6E6E73);
           transition: transform 0.25s;
         }
         .pc-faq-item[open] .pc-faq-chevron { transform: rotate(180deg); }
         .pc-faq-a {
           padding: 0 20px 18px;
           font-size: 13.5px; line-height: 1.7;
-          color: rgba(255,255,255,0.55);
+          color: var(--text-secondary, #636366);
         }
 
         @media (max-width: 640px) {

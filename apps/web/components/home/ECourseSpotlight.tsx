@@ -16,18 +16,25 @@ export function ECourseSpotlight() {
     <Section tone="sunken">
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16">
         <Reveal>
-          <MediaPlaceholder
-            type="video"
-            ratio="16:9"
-            label="PREVIEW KELAS"
-            className="!rounded-[var(--radius-xl)] bg-white shadow-e2"
-          />
+          <div className="relative">
+            {/* Soft brand-gradient glow behind the preview (Stitch flair). */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-5 rounded-full bg-brand-gradient opacity-[0.1] blur-3xl"
+            />
+            <MediaPlaceholder
+              type="video"
+              ratio="16:9"
+              label="PREVIEW KELAS"
+              className="relative !rounded-[var(--radius-xl)] bg-white shadow-e2"
+            />
+          </div>
         </Reveal>
 
         <Reveal delay={0.1}>
           <p className="eyebrow mb-4">E-Course</p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--text-primary)] text-balance md:text-4xl">
-            Sekali bayar, akses <span className="text-accent">selamanya</span>
+            Sekali bayar, akses <span className="bg-brand-gradient bg-clip-text text-transparent">selamanya</span>
           </h2>
           <p className="mt-4 max-w-lg text-base leading-relaxed text-[var(--text-secondary)]">
             Tanpa langganan bulanan. Pilih materi yang kamu butuhkan, selesaikan

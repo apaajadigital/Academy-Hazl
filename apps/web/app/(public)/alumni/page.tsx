@@ -185,8 +185,8 @@ export default function AlumniPage() {
       <style>{`
         .al-root {
           min-height: 100vh;
-          background: var(--surface-page, #0a1628);
-          color: var(--text-primary, #fff);
+          background: var(--surface-page, #F5F5F7);
+          color: var(--text-primary, #1D1D1F);
           font-family: var(--font-body, 'Inter', sans-serif);
         }
 
@@ -196,22 +196,23 @@ export default function AlumniPage() {
           overflow: hidden;
           padding: 96px 24px 64px;
           text-align: center;
-          background: linear-gradient(180deg, #050d1a 0%, #0a1628 100%);
+          background: linear-gradient(180deg, #FFFFFF 0%, var(--surface-page, #F5F5F7) 100%);
+          border-bottom: 1px solid var(--border-subtle, #EFEFEF);
         }
         .al-hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
         .al-hero-glow {
           position: absolute;
           top: -200px; left: 50%; transform: translateX(-50%);
           width: 800px; height: 600px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(0,212,255,0.12) 0%, transparent 70%);
+          background: radial-gradient(ellipse, rgba(0,119,168,0.10) 0%, transparent 70%);
           pointer-events: none;
         }
         .al-eyebrow {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
-          color: var(--brand-cyan, #00d4ff);
-          background: rgba(0,212,255,0.08);
-          border: 1px solid rgba(0,212,255,0.2);
+          color: var(--brand-cyan-strong, #0077A8);
+          background: var(--surface-accent-soft, rgba(0,119,168,0.08));
+          border: 1px solid rgba(0,119,168,0.2);
           border-radius: 100px; padding: 4px 14px;
           margin-bottom: 20px;
         }
@@ -219,16 +220,16 @@ export default function AlumniPage() {
           font-size: clamp(2rem, 5vw, 3.25rem);
           font-weight: 800; line-height: 1.15;
           letter-spacing: -0.03em;
-          color: #fff; margin-bottom: 20px;
+          color: var(--text-primary, #1D1D1F); margin-bottom: 20px;
         }
         .al-hero-gradient {
-          background: linear-gradient(135deg, #00d4ff, #cc0052);
+          background: linear-gradient(135deg, #0077A8, #CC0052);
           -webkit-background-clip: text; -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .al-hero-desc {
           font-size: 1.05rem; line-height: 1.7;
-          color: rgba(255,255,255,0.62);
+          color: var(--text-secondary, #636366);
           max-width: 560px; margin: 0 auto;
         }
 
@@ -243,26 +244,27 @@ export default function AlumniPage() {
         /* Card */
         .al-card {
           position: relative;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px;
           padding: 26px;
           display: flex; flex-direction: column; gap: 16px;
+          box-shadow: var(--shadow-e1);
           transition: transform 0.2s, box-shadow 0.2s;
         }
         .al-card:hover {
           transform: translateY(-4px);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          box-shadow: var(--shadow-e3);
         }
         .al-card-featured {
-          border-color: rgba(0,212,255,0.35);
-          background: linear-gradient(135deg, rgba(0,212,255,0.07), rgba(204,0,82,0.04));
-          box-shadow: 0 0 0 1px rgba(0,212,255,0.25), 0 12px 40px rgba(0,212,255,0.08);
+          border-color: rgba(0,119,168,0.35);
+          background: linear-gradient(135deg, rgba(0,119,168,0.06), rgba(204,0,82,0.03));
+          box-shadow: 0 0 0 1px rgba(0,119,168,0.2), var(--shadow-e2);
         }
         .al-badge {
           position: absolute; top: -11px; right: 20px;
           background: linear-gradient(135deg, #00d4ff, #0077A8);
-          color: #04121f; font-size: 11px; font-weight: 700;
+          color: #fff; font-size: 11px; font-weight: 700;
           padding: 3px 12px; border-radius: 100px;
           letter-spacing: 0.04em;
         }
@@ -271,24 +273,23 @@ export default function AlumniPage() {
         .al-avatar-img {
           width: 48px; height: 48px; border-radius: 50%;
           object-fit: cover; flex-shrink: 0;
-          border: 1px solid rgba(255,255,255,0.12);
+          border: 1px solid var(--border-default, #E5E5E5);
         }
         .al-avatar-initials {
           width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          background: linear-gradient(135deg, rgba(0,119,168,0.5), rgba(204,0,82,0.4));
+          background: linear-gradient(135deg, #0077A8, #CC0052);
           color: #fff; font-size: 15px; font-weight: 700;
-          border: 1px solid rgba(255,255,255,0.12);
         }
-        .al-name { font-size: 15px; font-weight: 700; color: #fff; }
-        .al-role { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+        .al-name { font-size: 15px; font-weight: 700; color: var(--text-primary, #1D1D1F); }
+        .al-role { font-size: 13px; color: var(--text-muted, #6E6E73); margin-top: 1px; }
 
         .al-outcome {
           display: flex; align-items: flex-start; gap: 7px;
           font-size: 13px; font-weight: 600; line-height: 1.5;
-          color: var(--brand-cyan, #00d4ff);
-          background: rgba(0,212,255,0.07);
-          border: 1px solid rgba(0,212,255,0.15);
+          color: var(--brand-cyan-strong, #0077A8);
+          background: var(--surface-accent-soft, rgba(0,119,168,0.07));
+          border: 1px solid rgba(0,119,168,0.15);
           border-radius: 10px; padding: 9px 12px;
         }
         .al-outcome svg { flex-shrink: 0; margin-top: 2px; }
@@ -296,29 +297,29 @@ export default function AlumniPage() {
         .al-quote {
           flex: 1;
           font-size: 14px; line-height: 1.7;
-          color: rgba(255,255,255,0.75);
+          color: var(--text-secondary, #636366);
         }
 
         .al-stars { display: flex; gap: 3px; }
-        .al-star-on { color: #ffc94d; fill: #ffc94d; }
-        .al-star-off { color: rgba(255,255,255,0.18); }
+        .al-star-on { color: #F59E0B; fill: #F59E0B; }
+        .al-star-off { color: var(--border-strong, #D2D2D7); }
 
         /* Skeleton */
         .al-skeleton-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px; padding: 26px;
           display: flex; flex-direction: column; gap: 14px;
         }
         .al-skeleton-row { display: flex; align-items: center; gap: 13px; }
         .al-skeleton-circle {
           width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
-          background: rgba(255,255,255,0.06);
+          background: rgba(0,0,0,0.06);
           animation: al-pulse 1.4s ease-in-out infinite;
         }
         .al-skeleton-line {
           height: 14px; border-radius: 6px;
-          background: rgba(255,255,255,0.06);
+          background: rgba(0,0,0,0.06);
           animation: al-pulse 1.4s ease-in-out infinite;
         }
         .al-skeleton-name { width: 55%; }
@@ -331,17 +332,18 @@ export default function AlumniPage() {
         /* Empty state */
         .al-empty {
           max-width: 520px; margin: 0 auto;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 20px;
           padding: 48px 32px; text-align: center;
+          box-shadow: var(--shadow-e1);
           display: flex; flex-direction: column; align-items: center; gap: 12px;
         }
         .al-empty-icon { font-size: 2rem; }
-        .al-empty-title { font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .al-empty-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary, #1D1D1F); }
         .al-empty-desc {
           font-size: 14px; line-height: 1.7;
-          color: rgba(255,255,255,0.55); margin-bottom: 12px;
+          color: var(--text-secondary, #636366); margin-bottom: 12px;
         }
         .al-btn-primary {
           display: inline-flex; align-items: center; gap: 8px;

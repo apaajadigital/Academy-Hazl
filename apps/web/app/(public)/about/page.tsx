@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Target, Handshake, Rocket, Lightbulb } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Tentang Kami",
@@ -16,22 +17,22 @@ const STATS = [
 
 const VALUES = [
   {
-    icon: "🎯",
+    icon: Target,
     title: "Relevan",
     desc: "Kurikulum dirancang bersama praktisi industri sehingga selalu relevan dengan kebutuhan dunia kerja.",
   },
   {
-    icon: "🤝",
+    icon: Handshake,
     title: "Terpercaya",
     desc: "Setiap trainer melewati proses seleksi ketat. Kami menjamin kualitas pembelajaran yang konsisten.",
   },
   {
-    icon: "🚀",
+    icon: Rocket,
     title: "Aksesibel",
     desc: "Belajar kapan saja, di mana saja. Platform kami dirancang untuk memaksimalkan fleksibilitas Anda.",
   },
   {
-    icon: "💡",
+    icon: Lightbulb,
     title: "Berdampak",
     desc: "Kami mengukur keberhasilan dari karier dan pertumbuhan nyata yang dialami pelajar kami.",
   },
@@ -41,12 +42,13 @@ export default function AboutPage() {
   return (
     <main id="main-content">
       {/* Hero */}
-      <section className="bg-[#F5F5F7] pt-20 pb-16 px-6">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1D1D1F] leading-tight">
-            Membangun Indonesia yang <span className="text-[#0077A8]">Lebih Kompeten</span>
+      <section className="border-b border-[var(--border-subtle)] bg-[var(--surface-card)] px-6 pb-16 pt-24">
+        <div className="mx-auto max-w-4xl space-y-6 text-center">
+          <p className="eyebrow eyebrow-center justify-center">Tentang Jago Akademi</p>
+          <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--text-primary)] text-balance md:text-5xl">
+            Membangun Indonesia yang <span className="text-accent">Lebih Kompeten</span>
           </h1>
-          <p className="text-lg text-[#6E6E73] max-w-2xl mx-auto">
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
             Jago Akademi hadir untuk menjembatani kesenjangan antara dunia pendidikan dan kebutuhan industri,
             melalui ekosistem belajar yang terintegrasi dan berorientasi pada hasil nyata.
           </p>
@@ -54,38 +56,38 @@ export default function AboutPage() {
       </section>
 
       {/* Stats */}
-      <section className="bg-white py-12 border-b border-[#E5E5EA]">
-        <div className="max-w-5xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <section className="border-b border-[var(--border-default)] bg-[var(--surface-card)] py-12">
+        <div className="mx-auto grid max-w-5xl grid-cols-2 gap-8 px-6 md:grid-cols-4">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <p className="text-3xl font-bold text-[#0077A8]">{s.value}</p>
-              <p className="text-sm text-[#6E6E73] mt-1">{s.label}</p>
+              <p className="font-display text-3xl font-extrabold text-[var(--brand-cyan-strong)]">{s.value}</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">{s.label}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Mission */}
-      <section className="py-20 px-6 bg-[#F5F5F7]">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+      <section className="bg-[var(--surface-sunken)] px-6 py-20">
+        <div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#CC0052]">Misi Kami</p>
-            <h2 className="text-3xl font-bold text-[#1D1D1F]">
+            <p className="eyebrow">Misi Kami</p>
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">
               Pendidikan Berkualitas untuk Semua Orang Indonesia
             </h2>
-            <p className="text-[#6E6E73] leading-relaxed">
+            <p className="leading-relaxed text-[var(--text-secondary)]">
               Kami percaya bahwa setiap orang berhak mendapat akses ke pendidikan berkualitas tinggi yang
               relevan dengan kebutuhan karier mereka. Jago Akademi menghadirkan pengalaman belajar yang
               terstruktur, praktis, dan didukung oleh komunitas yang solid.
             </p>
-            <p className="text-[#6E6E73] leading-relaxed">
+            <p className="leading-relaxed text-[var(--text-secondary)]">
               Dengan memadukan teknologi terkini dan keahlian para praktisi terbaik, kami membantu individu
               dan organisasi berkembang lebih cepat di era digital ini.
             </p>
           </div>
-          <div className="bg-gradient-to-br from-[#0077A8] to-[#CC0052] rounded-2xl p-8 text-white space-y-4">
-            <p className="text-2xl font-bold">Visi 2030</p>
-            <p className="text-white/90 leading-relaxed">
+          <div className="bg-brand-gradient space-y-4 rounded-[var(--radius-xl)] p-8 text-white shadow-e3">
+            <p className="font-display text-2xl font-extrabold">Visi 2030</p>
+            <p className="leading-relaxed text-white/90">
               Menjadi platform edukasi digital #1 di Indonesia yang menghasilkan 1 juta tenaga profesional
               kompeten dan berkontribusi pada pertumbuhan ekonomi digital nasional.
             </p>
@@ -94,36 +96,47 @@ export default function AboutPage() {
       </section>
 
       {/* Values */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#CC0052] mb-2">Nilai Kami</p>
-            <h2 className="text-3xl font-bold text-[#1D1D1F]">Apa yang Mendorong Kami</h2>
+      <section className="bg-[var(--surface-card)] px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-12 text-center">
+            <p className="eyebrow eyebrow-center mb-3 justify-center">Nilai Kami</p>
+            <h2 className="font-display text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">Apa yang Mendorong Kami</h2>
           </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {VALUES.map((v) => (
-              <div key={v.title} className="bg-[#F5F5F7] rounded-2xl p-6 space-y-3">
-                <span className="text-3xl" role="img" aria-label={v.title}>{v.icon}</span>
-                <h3 className="font-semibold text-[#1D1D1F]">{v.title}</h3>
-                <p className="text-sm text-[#6E6E73] leading-relaxed">{v.desc}</p>
-              </div>
-            ))}
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
+            {VALUES.map((v) => {
+              const Icon = v.icon;
+              return (
+                <div
+                  key={v.title}
+                  className="group flex h-full flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-sunken)] p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-e2"
+                >
+                  <span className="flex h-12 w-12 flex-none items-center justify-center rounded-[var(--radius-md)] border border-[rgba(0,119,168,0.15)] bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)] transition-colors duration-200 group-hover:bg-[var(--brand-cyan-strong)] group-hover:text-white">
+                    <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                  <h3 className="font-display font-bold text-[var(--text-primary)]">{v.title}</h3>
+                  <p className="text-sm leading-relaxed text-[var(--text-secondary)]">{v.desc}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 px-6 bg-[#1D1D1F] text-white text-center">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <h2 className="text-3xl font-bold">Bergabunglah Bersama Kami</h2>
-          <p className="text-[#A1A1A6]">
+      {/* CTA — editorial ink band */}
+      <section className="bg-[var(--text-primary)] px-6 py-20 text-center text-white">
+        <div className="mx-auto max-w-2xl space-y-6">
+          <h2 className="font-display text-3xl font-extrabold tracking-tight">Bergabunglah Bersama Kami</h2>
+          <p className="text-white/70">
             Mulai perjalanan belajar Anda hari ini dan jadilah bagian dari komunitas profesional yang terus berkembang.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="/daftar" className="btn-primary px-8 py-3">
+          <div className="flex flex-col justify-center gap-3 sm:flex-row">
+            <a href="/daftar" className="btn btn-lg bg-brand-gradient text-white shadow-e2 transition-opacity hover:opacity-90">
               Mulai Belajar Gratis
             </a>
-            <a href="/contact" className="px-8 py-3 border border-white/30 text-white rounded-xl hover:bg-white/10 transition-colors">
+            <a
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-9 py-4 font-display text-[1.0625rem] font-semibold text-white transition-colors hover:bg-white/10"
+            >
               Hubungi Kami
             </a>
           </div>

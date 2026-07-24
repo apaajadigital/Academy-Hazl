@@ -16,7 +16,7 @@ export function B2BSection() {
           <p className="eyebrow mb-4">Untuk Perusahaan & Institusi</p>
           <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--text-primary)] text-balance md:text-4xl">
             Kelola pelatihan tim dalam{" "}
-            <span className="text-[var(--brand-cyan-strong)]">satu platform terpadu</span>
+            <span className="bg-brand-gradient bg-clip-text text-transparent">satu platform terpadu</span>
           </h2>
           <p className="mt-4 max-w-lg text-base leading-relaxed text-[var(--text-secondary)]">
             Jago Akademi LMS B2B memungkinkan perusahaan mengelola program pelatihan karyawan, melacak progres, dan menerbitkan sertifikat — semua dalam satu workspace yang bisa dikustomisasi.
@@ -39,12 +39,17 @@ export function B2BSection() {
 
         {/* Right: CTA card */}
         <Reveal delay={0.1} className="lg:col-span-5">
-          <div className="rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-white p-8 shadow-e2">
+          <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-white p-8 shadow-e2">
+            {/* Gradient accent bar (Stitch flair) — decorative. */}
+            <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-brand-gradient" />
             <p className="text-sm font-semibold text-[var(--text-secondary)] mb-1">Mulai dari trial 14 hari</p>
             <p className="font-display text-2xl font-bold text-[var(--text-primary)] mb-6">
               Coba LMS B2B gratis — tanpa kartu kredit
             </p>
-            <Link href="/clients" className="btn btn-primary w-full justify-center mb-3">
+            <Link
+              href="/clients"
+              className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2 w-full justify-center mb-3"
+            >
               Lihat Paket LMS B2B
             </Link>
             <Link href="/contact" className="btn btn-ghost w-full justify-center text-[var(--text-secondary)]">

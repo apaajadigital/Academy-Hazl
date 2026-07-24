@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { Button, Card, Input, Select, Textarea } from "@/components/ui";
 
 const TOPICS = [
   "Pertanyaan umum",
@@ -54,96 +56,72 @@ export default function ContactForm() {
 
   if (sent) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-        <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
-          <svg aria-hidden="true" className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <Card className="flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
+          <CheckCircle2 size={32} aria-hidden="true" />
         </div>
-        <h3 className="text-lg font-semibold text-[#1D1D1F]">Pesan terkirim!</h3>
-        <p className="text-sm text-[#6E6E73]">
+        <h3 className="text-lg font-semibold text-text-primary">Pesan terkirim!</h3>
+        <p className="text-sm text-text-secondary">
           Terima kasih, {name}. Tim kami akan menghubungi Anda di <strong>{email}</strong> dalam 1–2 hari kerja.
         </p>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-5">
-      <h2 className="text-xl font-bold text-[#1D1D1F]">Kirim Pesan</h2>
+    <Card className="p-6 md:p-8">
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        <h2 className="text-xl font-bold text-text-primary">Kirim Pesan</h2>
 
-      {error && (
-        <div role="alert" className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
+        {error && (
+          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-[#1D1D1F] mb-1">Nama</label>
-          <input
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
             id="name"
             type="text"
+            label="Nama"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="input-dark w-full"
             placeholder="Nama Anda"
           />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#1D1D1F] mb-1">Email</label>
-          <input
+          <Input
             id="email"
             type="email"
+            label="Email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input-dark w-full"
             placeholder="nama@email.com"
           />
         </div>
-      </div>
 
-      <div>
-        <label htmlFor="topic" className="block text-sm font-medium text-[#1D1D1F] mb-1">Topik</label>
-        <select
-          id="topic"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          className="input-dark w-full"
-        >
-          {TOPICS.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
+        <Select id="topic" label="Topik" value={topic} onChange={(e) => setTopic(e.target.value)}>
+          {TOPICS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </Select>
 
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium text-[#1D1D1F] mb-1">Pesan</label>
-        <textarea
+        <Textarea
           id="message"
+          label="Pesan"
           required
           rows={5}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="input-dark w-full resize-none"
           placeholder="Tulis pesan Anda di sini…"
         />
-      </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        {loading ? (
-          <>
-            <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" aria-hidden="true" />
-            Mengirim…
-          </>
-        ) : (
-          "Kirim Pesan"
-        )}
-      </button>
-    </form>
+        <Button type="submit" variant="primary" loading={loading} className="w-full">
+          Kirim Pesan
+        </Button>
+      </form>
+    </Card>
   );
 }

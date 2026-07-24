@@ -196,7 +196,7 @@ function FailedContent() {
           <Link
             id="payment-failed-retry-btn"
             href={returnUrl}
-            className="btn btn-primary btn-lg flex-1 justify-center"
+            className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
           >
             Coba Lagi
           </Link>

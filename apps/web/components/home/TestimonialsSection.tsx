@@ -37,7 +37,7 @@ export async function TestimonialsSection() {
         eyebrow="Testimoni"
         title={
           <>
-            Kata mereka yang sudah <span className="text-accent">belajar</span>
+            Kata mereka yang sudah <span className="bg-brand-gradient bg-clip-text text-transparent">belajar</span>
           </>
         }
       />

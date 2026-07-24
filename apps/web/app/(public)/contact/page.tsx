@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Mail, MapPin, MessageCircle } from "lucide-react";
+import { Card } from "@/components/ui";
 import ContactForm from "./ContactForm";
 import { WA_NUMBER_DISPLAY, waLink } from "@/lib/config";
 
@@ -10,32 +12,19 @@ export const metadata: Metadata = {
 
 const CONTACTS = [
   {
-    icon: (
-      <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
+    icon: <Mail size={20} aria-hidden="true" />,
     label: "Email",
     value: "halo@jagoakademi.com",
     href: "mailto:halo@jagoakademi.com",
   },
   {
-    icon: (
-      <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-      </svg>
-    ),
+    icon: <MessageCircle size={20} aria-hidden="true" />,
     label: "WhatsApp",
     value: WA_NUMBER_DISPLAY,
     href: waLink(),
   },
   {
-    icon: (
-      <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    icon: <MapPin size={20} aria-hidden="true" />,
     label: "Alamat",
     value: "Jakarta Selatan, DKI Jakarta",
     href: null,
@@ -45,54 +34,85 @@ const CONTACTS = [
 export default function ContactPage() {
   return (
     <main id="main-content">
-      <section className="bg-[#F5F5F7] pt-20 pb-16 px-6 text-center">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#CC0052]">Kontak</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1D1D1F]">Hubungi Kami</h1>
-          <p className="text-[#6E6E73]">
-            Tim kami siap membantu Anda dari Senin–Jumat pukul 09.00–17.00 WIB.
-          </p>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-surface-page pt-20 pb-16">
+        {/* Decorative gradient orbs */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent-cyan-strong/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-accent-purple/10 blur-3xl"
+        />
+        <div className="container-pad relative text-center">
+          <div className="mx-auto max-w-2xl space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent-pink-strong">Kontak</p>
+            <h1 className="text-4xl font-bold text-text-primary md:text-5xl">Hubungi Kami</h1>
+            <p className="text-text-secondary">
+              Tim kami siap membantu Anda dari Senin–Jumat pukul 09.00–17.00 WIB.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="py-16 px-6 bg-white">
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
-          {/* Info */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xl font-bold text-[#1D1D1F] mb-6">Informasi Kontak</h2>
-              <ul className="space-y-5">
-                {CONTACTS.map((c) => (
-                  <li key={c.label} className="flex items-start gap-3">
-                    <span className="mt-0.5 p-2 bg-[#F5F5F7] rounded-lg text-[#0077A8]">{c.icon}</span>
-                    <div>
-                      <p className="text-xs text-[#6E6E73] font-medium uppercase tracking-wider">{c.label}</p>
-                      {c.href ? (
-                        <a href={c.href} className="text-[#1D1D1F] hover:text-[#0077A8] font-medium transition-colors">
-                          {c.value}
-                        </a>
-                      ) : (
-                        <p className="text-[#1D1D1F] font-medium">{c.value}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
+      {/* 2-column: contact info + message form */}
+      <section className="bg-surface-card section-sm">
+        <div className="container-pad">
+          <div className="mx-auto grid max-w-5xl items-start gap-12 md:grid-cols-2">
+            {/* Info */}
+            <div className="space-y-6">
+              <Card className="p-6 md:p-8">
+                <h2 className="mb-6 text-xl font-bold text-text-primary">Informasi Kontak</h2>
+                <ul className="space-y-5">
+                  {CONTACTS.map((c) => (
+                    <li key={c.label} className="flex items-start gap-4">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-accent-soft text-accent-cyan-strong">
+                        {c.icon}
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">{c.label}</p>
+                        {c.href ? (
+                          <a
+                            href={c.href}
+                            className="font-medium text-text-primary transition-colors hover:text-accent-cyan-strong"
+                          >
+                            {c.value}
+                          </a>
+                        ) : (
+                          <p className="font-medium text-text-primary">{c.value}</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Prominent WhatsApp CTA */}
+                <a
+                  href={waLink()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] px-5 py-3.5 font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+                >
+                  <MessageCircle size={18} aria-hidden="true" />
+                  Chat via WhatsApp
+                </a>
+              </Card>
+
+              <div className="space-y-3 rounded-2xl bg-surface-page p-6">
+                <h3 className="font-semibold text-text-primary">Butuh solusi korporat?</h3>
+                <p className="text-sm text-text-secondary">
+                  Tim sales kami siap membantu Anda merancang program pelatihan yang tepat untuk organisasi Anda.
+                </p>
+                <a href="/clients" className="text-sm font-medium text-accent-cyan-strong hover:underline">
+                  Lihat paket korporat →
+                </a>
+              </div>
             </div>
 
-            <div className="bg-[#F5F5F7] rounded-2xl p-6 space-y-3">
-              <h3 className="font-semibold text-[#1D1D1F]">Butuh solusi korporat?</h3>
-              <p className="text-sm text-[#6E6E73]">
-                Tim sales kami siap membantu Anda merancang program pelatihan yang tepat untuk organisasi Anda.
-              </p>
-              <a href="/clients" className="text-sm text-[#0077A8] font-medium hover:underline">
-                Lihat paket korporat →
-              </a>
-            </div>
+            {/* Form */}
+            <ContactForm />
           </div>
-
-          {/* Form */}
-          <ContactForm />
         </div>
       </section>
     </main>

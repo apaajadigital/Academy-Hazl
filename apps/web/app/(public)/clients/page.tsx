@@ -89,67 +89,49 @@ export default function ClientsPage() {
   return (
     <div style={{ background: "var(--surface-page)" }}>
 
-      {/* ── Hero ──────────────────────────────────────────────────────────────── */}
+      {/* ── Hero (light) ──────────────────────────────────────────────────────── */}
       <section
-        className="relative overflow-hidden pb-20 pt-24"
-        style={{
-          background: "linear-gradient(160deg, #0a1628 0%, #0d2040 60%, #0a1628 100%)",
-        }}
+        className="relative overflow-hidden border-b border-[var(--border-subtle)] pb-20 pt-24"
+        style={{ background: "var(--surface-card)" }}
       >
-        {/* Background grid decoration */}
+        {/* Background grid decoration — subtle brand tint on light */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(0,119,168,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,119,168,0.08) 1px, transparent 1px)",
+              "linear-gradient(rgba(0,119,168,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,119,168,0.05) 1px, transparent 1px)",
             backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%)",
           }}
         />
 
         <div className="relative mx-auto max-w-5xl px-4 text-center">
           <Reveal immediate>
-            <span
-              className="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest"
-              style={{
-                background: "rgba(0,119,168,0.15)",
-                color: "var(--brand-cyan)",
-                border: "1px solid rgba(0,119,168,0.3)",
-              }}
-            >
+            <span className="badge badge-cyan mb-4">
               🏢 Paket LMS B2B
             </span>
           </Reveal>
 
           <Reveal immediate delay={0.06}>
             <h1
-              className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-white md:text-5xl lg:text-6xl"
+              className="mb-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--text-primary)] text-balance md:text-5xl lg:text-6xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Pelatihan Karyawan,{" "}
-              <span
-                style={{
-                  background: "linear-gradient(90deg, var(--brand-cyan) 0%, #7C3AED 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                Terpusat & Terukur
-              </span>
+              <span className="text-accent">Terpusat &amp; Terukur</span>
             </h1>
           </Reveal>
 
           <Reveal immediate delay={0.12}>
-            <p
-              className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed"
-              style={{ color: "rgba(255,255,255,0.65)" }}
-            >
+            <p className="mx-auto mb-10 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
               Digitalkan program pengembangan SDM perusahaan Anda dalam satu platform.
               Workspace eksklusif, kursus terkurasi, laporan real-time — semuanya dalam satu ekosistem.
             </p>
           </Reveal>
 
-          {/* Stat pills */}
+          {/* Stat pills — light neutral chips */}
           <Reveal immediate delay={0.18}>
             <div className="mb-10 flex flex-wrap justify-center gap-3">
               {[
@@ -159,12 +141,7 @@ export default function ClientsPage() {
               ].map((s) => (
                 <span
                   key={s.text}
-                  className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium"
-                  style={{
-                    background: "rgba(255,255,255,0.07)",
-                    color: "rgba(255,255,255,0.8)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-default)] bg-[var(--surface-sunken)] px-4 py-1.5 text-sm font-medium text-[var(--text-secondary)]"
                 >
                   {s.icon} {s.text}
                 </span>
@@ -174,7 +151,7 @@ export default function ClientsPage() {
 
           {/* Scroll cue */}
           <Reveal immediate delay={0.22}>
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-sm text-[var(--text-muted)]">
               ↓ Konsultasi gratis di bawah
             </p>
           </Reveal>

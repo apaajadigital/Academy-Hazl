@@ -40,7 +40,7 @@ function AnimatedCheckmark() {
       <span
         className="absolute inset-0 rounded-full animate-ping"
         style={{
-          background: "rgba(0, 212, 255, 0.15)",
+          background: "rgba(22, 163, 74, 0.15)",
           animationDuration: "1.6s",
           animationIterationCount: 1,
         }}
@@ -48,13 +48,13 @@ function AnimatedCheckmark() {
       {/* Icon container */}
       <div
         className="relative flex h-20 w-20 items-center justify-center rounded-full"
-        style={{ background: "rgba(0, 212, 255, 0.12)", border: "2px solid rgba(0,212,255,0.35)" }}
+        style={{ background: "rgba(22, 163, 74, 0.12)", border: "2px solid rgba(22,163,74,0.35)" }}
       >
         <svg
           viewBox="0 0 52 52"
           className="h-10 w-10"
           fill="none"
-          stroke="var(--brand-cyan-strong)"
+          stroke="#16A34A"
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"

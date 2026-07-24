@@ -62,16 +62,16 @@ export function LandingTemplate({
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* Benefits — Stitch benefit grid (elevated cards, icon-tile hover fill) */}
       <Section tone="sunken">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {benefits.map((b, i) => {
             const Icon = b.icon;
             return (
               <Reveal key={b.title} delay={(i % 3) * 0.06}>
-                <article className="flex gap-4">
-                  <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[var(--radius-md)] border border-[rgba(0,119,168,0.15)] bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)]">
-                    <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
+                <article className="group flex h-full flex-col gap-4 rounded-[var(--radius-lg)] border border-[var(--border-default)] bg-[var(--surface-card)] p-6 shadow-e1 transition-all duration-200 hover:-translate-y-1 hover:shadow-e2">
+                  <span className="flex h-12 w-12 flex-none items-center justify-center rounded-[var(--radius-md)] border border-[rgba(0,119,168,0.15)] bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)] transition-colors duration-200 group-hover:bg-[var(--brand-cyan-strong)] group-hover:text-white">
+                    <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
                   </span>
                   <div>
                     <h3 className="font-display text-lg font-bold tracking-tight text-[var(--text-primary)]">{b.title}</h3>

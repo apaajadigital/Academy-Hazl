@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { verifyEmail } from "@/lib/auth/api";
 
 type Status = "verifying" | "success" | "error";
@@ -35,25 +36,33 @@ export default function VerifyEmailPanel() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
         <span
-          className="h-6 w-6 rounded-full border-2 border-[#0077A8] border-t-transparent animate-spin"
+          className="h-12 w-12 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent"
           aria-hidden="true"
         />
-        <p className="text-sm text-[#6E6E73]">Memverifikasi email Anda…</p>
+        <h2 className="text-lg font-semibold text-text-primary">Memverifikasi</h2>
+        <p className="text-sm text-text-secondary">Memverifikasi email Anda…</p>
       </div>
     );
   }
 
   if (status === "success") {
     return (
-      <div className="text-center space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-full bg-[var(--surface-accent-soft)] flex items-center justify-center">
-          <svg aria-hidden="true" className="w-6 h-6 text-[var(--brand-cyan-strong)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-accent-soft">
+          <CheckCircle2 size={34} className="text-accent" aria-hidden="true" />
         </div>
-        <h2 className="text-lg font-semibold text-[#1D1D1F]">Email berhasil diverifikasi!</h2>
-        <p className="text-sm text-[#6E6E73]">Terima kasih, akun Anda kini terverifikasi.</p>
-        <Link href="/masuk" className="btn-primary inline-block mt-2">
+        <h2 className="text-lg font-semibold text-text-primary">Email berhasil diverifikasi!</h2>
+        <p className="text-sm text-text-secondary">Terima kasih, akun Anda kini terverifikasi.</p>
+        {/*
+          Bug fix (Stitch source): the design's success CTA used `bg-brand-gradient`
+          without shipping the gradient rule, rendering white-on-white (invisible).
+          Here the CTA explicitly uses the app's defined `.bg-brand-gradient` with
+          white text so the primary action is always visible.
+        */}
+        <Link
+          href="/masuk"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3 text-[0.9375rem] font-semibold text-white shadow-e1 transition hover:opacity-90 hover:shadow-e2"
+        >
           Masuk sekarang
         </Link>
       </div>
@@ -61,11 +70,15 @@ export default function VerifyEmailPanel() {
   }
 
   return (
-    <div className="text-center space-y-3">
-      <p role="alert" className="text-sm text-red-600 font-medium">
+    <div className="space-y-3 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+        <AlertCircle size={34} className="text-red-600" aria-hidden="true" />
+      </div>
+      <h2 className="text-lg font-semibold text-text-primary">Tautan tidak valid</h2>
+      <p role="alert" className="text-sm font-medium text-red-600">
         {error}
       </p>
-      <Link href="/masuk" className="text-sm text-[#0077A8] hover:underline">
+      <Link href="/masuk" className="inline-block text-sm text-accent hover:underline">
         Kembali ke halaman masuk
       </Link>
     </div>

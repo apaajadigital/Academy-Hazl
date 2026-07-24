@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { List, MessageCircle } from "lucide-react";
+import { Card } from "@/components/ui";
+import { waLink } from "@/lib/config";
 import FaqAccordion from "./FaqAccordion";
 
 export const metadata: Metadata = {
@@ -103,25 +106,80 @@ export const FAQ_ITEMS = [
 export default function FaqPage() {
   return (
     <main id="main-content">
-      <section className="bg-[#F5F5F7] pt-20 pb-16 px-6 text-center">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#CC0052]">FAQ</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1D1D1F]">Pertanyaan yang Sering Ditanyakan</h1>
-          <p className="text-[#6E6E73]">
-            Tidak menemukan jawaban yang Anda cari?{" "}
-            <a href="/contact" className="text-[#0077A8] hover:underline">
-              Hubungi kami
-            </a>
-            .
-          </p>
+      {/* Hero */}
+      <section className="bg-surface-page pt-20 pb-16">
+        <div className="container-pad text-center">
+          <div className="max-w-2xl mx-auto space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent-pink-strong">FAQ</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary">Pertanyaan yang Sering Ditanyakan</h1>
+            <p className="text-text-secondary">
+              Tidak menemukan jawaban yang Anda cari?{" "}
+              <a href="/contact" className="text-accent-cyan-strong hover:underline">
+                Hubungi kami
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="py-16 px-6 bg-white">
-        <div className="max-w-3xl mx-auto space-y-10">
-          <FaqAccordion items={FAQ_ITEMS} />
+      {/* Article: in-page TOC + accordion */}
+      <section className="bg-surface-card section-sm">
+        <div className="container-pad">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+            {/* Sidebar TOC + support card */}
+            <aside className="hidden md:block md:col-span-4 lg:col-span-3">
+              <div className="sticky top-24 space-y-6">
+                <Card className="p-5">
+                  <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-text-primary">
+                    <List size={18} className="text-accent-cyan-strong" aria-hidden="true" />
+                    Navigasi
+                  </h2>
+                  <nav className="flex flex-col gap-1">
+                    {FAQ_ITEMS.map((group) => (
+                      <a
+                        key={group.category}
+                        href={`#${faqAnchorId(group.category)}`}
+                        className="rounded-lg border-l-2 border-transparent px-3 py-1.5 text-sm text-text-secondary transition-colors hover:border-accent-cyan-strong hover:bg-surface-sunken hover:text-accent-cyan-strong"
+                      >
+                        {group.category}
+                      </a>
+                    ))}
+                  </nav>
+                </Card>
+                <div className="bg-brand-gradient rounded-2xl p-6 text-white shadow-e2">
+                  <p className="mb-1 text-sm opacity-90">Butuh bantuan lebih lanjut?</p>
+                  <h3 className="font-display text-lg font-bold">Hubungi Tim Support</h3>
+                  <a
+                    href={waLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-accent-cyan-strong transition-opacity hover:opacity-90"
+                  >
+                    <MessageCircle size={16} aria-hidden="true" />
+                    WhatsApp Kami
+                  </a>
+                </div>
+              </div>
+            </aside>
+
+            {/* Accordion content */}
+            <div className="md:col-span-8 lg:col-span-9 space-y-10">
+              <FaqAccordion items={FAQ_ITEMS} />
+            </div>
+          </div>
         </div>
       </section>
     </main>
   );
+}
+
+/** Stable DOM id for a FAQ category — shared shape with the TOC anchors and the
+ * accordion section targets. Kept identical in FaqAccordion (no cross-module
+ * runtime import between the server page and the client accordion). */
+export function faqAnchorId(category: string): string {
+  return `faq-${category
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`;
 }

@@ -104,7 +104,11 @@ export function LeadCaptureForm({ source, withCompany = false, submitLabel = "Ki
         <label htmlFor="lead-message" className="mb-1 block text-sm font-medium text-[var(--text-primary)]">Pesan <span className="text-[var(--text-muted)]">(opsional)</span></label>
         <textarea id="lead-message" rows={3} value={message} onChange={(e) => setMessage(e.target.value)} className="input-dark resize-none" placeholder="Ceritakan kebutuhanmu…" />
       </div>
-      <button type="submit" disabled={loading} className="btn btn-primary btn-lg mt-1 w-full disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn btn-lg mt-1 w-full bg-brand-gradient text-white shadow-e2 transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
         {loading ? "Mengirim…" : (<>{submitLabel}<ArrowRight size={18} aria-hidden="true" /></>)}
       </button>
     </form>

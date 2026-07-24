@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Tag, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
 import { getStoredReferral, clearStoredReferral } from "@/lib/affiliate/referral";
 
@@ -260,7 +261,9 @@ function CheckoutContent() {
             border: "1px solid rgba(239,68,68,0.2)",
           }}
         >
-          <p className="mb-3 font-semibold" style={{ color: "#B91C1C" }}>⚠️ {error}</p>
+          <p className="mb-3 flex items-center justify-center gap-2 font-semibold" style={{ color: "#B91C1C" }}>
+            <AlertCircle size={18} aria-hidden="true" /> {error}
+          </p>
           <Link href={backHref} className="btn btn-outline btn-sm">
             {itemType === "event" ? "← Kembali ke Event" : itemType === "ebook" ? "← Kembali ke E-Book" : "← Kembali ke E-Course"}
           </Link>
@@ -383,19 +386,27 @@ function CheckoutContent() {
                 Kode Kupon
               </h2>
               <div className="flex gap-2">
-                <input
-                  id="coupon-input"
-                  type="text"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="Masukkan kode kupon"
-                  className="input-dark flex-1"
-                />
+                <div className="relative flex-1">
+                  <Tag
+                    size={18}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2"
+                    style={{ color: "var(--text-muted)" }}
+                  />
+                  <input
+                    id="coupon-input"
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Masukkan kode kupon"
+                    className="input-dark w-full pl-11"
+                  />
+                </div>
                 <button
                   id="coupon-apply-btn"
                   onClick={applyCoupon}
                   disabled={validatingCoupon || !couponCode.trim()}
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-primary btn-sm"
                   style={{ flexShrink: 0 }}
                 >
                   {validatingCoupon ? (
@@ -463,28 +474,31 @@ function CheckoutContent() {
                 id="checkout-pay-btn"
                 onClick={handleCheckout}
                 disabled={checkingOut}
-                className="btn btn-primary btn-lg w-full justify-center"
+                className="btn bg-brand-gradient btn-lg group w-full justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
                 style={{ opacity: checkingOut ? 0.7 : 1 }}
               >
                 {checkingOut ? (
                   <>
                     <span
                       className="h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"
-                      style={{ borderColor: "var(--text-on-accent)", borderTopColor: "transparent" }}
+                      style={{ borderColor: "#fff", borderTopColor: "transparent" }}
                     />
                     Memproses...
                   </>
                 ) : (
-                  "Bayar Sekarang"
+                  <>
+                    Bayar Sekarang
+                    <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
+                  </>
                 )}
               </button>
 
               {/* Security badge */}
               <p
-                className="mt-4 text-center text-xs"
+                className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs"
                 style={{ color: "var(--text-muted)" }}
               >
-                🔒 Pembayaran aman melalui DOKU
+                <Lock size={14} aria-hidden="true" /> Pembayaran aman melalui DOKU
               </p>
 
               {/* Terms */}

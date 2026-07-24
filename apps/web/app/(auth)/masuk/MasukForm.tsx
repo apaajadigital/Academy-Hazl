@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Mail, Lock, ShieldCheck } from "lucide-react";
+import { Button, Input } from "@/components/ui";
 import { login, buildGoogleLoginUrl } from "@/lib/auth/api";
 import { setToken } from "@/lib/auth/token";
 
@@ -74,86 +76,71 @@ export function MasukForm() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-[#1D1D1F] mb-1">Masuk</h1>
-      <p className="text-sm text-[#6E6E73] mb-6">
+      <h1 className="mb-1 text-2xl font-bold text-text-primary">Masuk</h1>
+      <p className="mb-6 text-sm text-text-secondary">
         Belum punya akun?{" "}
-        <Link href="/daftar" className="text-[#0077A8] hover:underline font-medium">
+        <Link href="/daftar" className="font-medium text-accent hover:underline">
           Daftar sekarang
         </Link>
       </p>
 
       {error && (
-        <div role="alert" className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#1D1D1F] mb-1">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-dark w-full"
-            placeholder="nama@email.com"
-          />
-        </div>
+        <Input
+          id="email"
+          type="email"
+          label="Email"
+          leftIcon={<Mail size={18} aria-hidden="true" />}
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="nama@email.com"
+        />
 
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label htmlFor="password" className="block text-sm font-medium text-[#1D1D1F]">
+          <div className="mb-1.5 flex items-center justify-between">
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary">
               Kata Sandi
             </label>
-            <Link href="/lupa-password" className="text-xs text-[#0077A8] hover:underline">
+            <Link href="/lupa-password" className="text-xs text-accent hover:underline">
               Lupa kata sandi?
             </Link>
           </div>
-          <input
+          <Input
             id="password"
             type="password"
+            leftIcon={<Lock size={18} aria-hidden="true" />}
             autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input-dark w-full"
             placeholder="Kata sandi Anda"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" aria-hidden="true" />
-              Memproses…
-            </>
-          ) : (
-            "Masuk"
-          )}
-        </button>
+        <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
+          {loading ? "Memproses…" : "Masuk"}
+        </Button>
       </form>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-[#E5E5EA]" />
+          <div className="w-full border-t border-border-default" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-[#6E6E73]">atau</span>
+          <span className="bg-transparent px-3 text-text-secondary">atau</span>
         </div>
       </div>
 
       <a
         href={buildGoogleLoginUrl()}
-        className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-[#E5E5EA] rounded-xl text-sm font-medium text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
+        className="flex w-full items-center justify-center gap-3 rounded-full border border-border-strong px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-accent-soft"
       >
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
@@ -163,6 +150,11 @@ export function MasukForm() {
         </svg>
         Masuk dengan Google
       </a>
+
+      <div className="mt-6 flex items-center justify-center gap-1.5 text-text-muted opacity-70">
+        <ShieldCheck size={16} aria-hidden="true" />
+        <span className="text-xs">Koneksi aman &amp; terenkripsi</span>
+      </div>
     </>
   );
 }

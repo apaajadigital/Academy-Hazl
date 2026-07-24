@@ -216,8 +216,8 @@ export default function EarlyAccessPage() {
       <style>{`
         .ea-root {
           min-height: 100vh;
-          background: var(--surface-page, #0a1628);
-          color: var(--text-primary, #fff);
+          background: var(--surface-page, #F5F5F7);
+          color: var(--text-primary, #1D1D1F);
           padding: 80px 20px;
           display: flex;
           align-items: center;
@@ -240,9 +240,9 @@ export default function EarlyAccessPage() {
           gap: 6px;
           font-size: 12px;
           font-weight: 700;
-          color: var(--brand-cyan, #00d4ff);
-          background: rgba(0, 212, 255, 0.08);
-          border: 1px solid rgba(0, 212, 255, 0.15);
+          color: var(--brand-cyan-strong, #0077A8);
+          background: var(--surface-accent-soft, rgba(0, 119, 168, 0.08));
+          border: 1px solid rgba(0, 119, 168, 0.2);
           padding: 4px 14px;
           border-radius: 100px;
         }
@@ -261,38 +261,40 @@ export default function EarlyAccessPage() {
           font-weight: 800;
           line-height: 1.2;
           letter-spacing: -0.02em;
+          color: var(--text-primary, #1D1D1F);
           margin-bottom: 16px;
         }
         .ea-title-gradient {
-          background: linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%);
+          background: linear-gradient(135deg, var(--brand-cyan-strong) 0%, var(--brand-pink-strong) 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         .ea-subtitle {
           font-size: 15px;
-          color: var(--text-secondary, rgba(255,255,255,0.65));
+          color: var(--text-secondary, #636366);
           max-width: 600px;
           margin: 0 auto;
           line-height: 1.6;
         }
-        
+
         /* Timer styles */
         .ea-timer-box {
           max-width: 320px;
           margin: 0 auto 48px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 16px;
           padding: 16px;
           text-align: center;
+          box-shadow: var(--shadow-e1);
         }
         .ea-timer-title {
           font-size: 11px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: var(--text-secondary, rgba(255,255,255,0.5));
+          color: var(--text-muted, #6E6E73);
           margin-bottom: 8px;
         }
         .ea-timer-digits {
@@ -309,19 +311,19 @@ export default function EarlyAccessPage() {
         .ea-time-val {
           font-size: 24px;
           font-weight: 800;
-          color: var(--brand-cyan);
+          color: var(--brand-cyan-strong, #0077A8);
           font-variant-numeric: tabular-nums;
         }
         .ea-time-lbl {
           font-size: 9px;
           text-transform: uppercase;
-          color: var(--text-muted, rgba(255,255,255,0.4));
+          color: var(--text-muted, #6E6E73);
           margin-top: 2px;
         }
         .ea-timer-colon {
           font-size: 20px;
           font-weight: 700;
-          color: var(--border-default, rgba(255,255,255,0.2));
+          color: var(--border-strong, #D2D2D7);
           margin-top: -8px;
         }
 
@@ -348,7 +350,7 @@ export default function EarlyAccessPage() {
         .ea-section-title {
           font-size: 18px;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-primary, #1D1D1F);
           margin-bottom: 8px;
         }
         .ea-perks-list {
@@ -359,57 +361,58 @@ export default function EarlyAccessPage() {
         .ea-perk-card {
           display: flex;
           gap: 16px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 16px;
           padding: 18px;
-          transition: transform 0.2s;
+          box-shadow: var(--shadow-e1);
+          transition: transform 0.2s, box-shadow 0.2s;
         }
         .ea-perk-card:hover {
           transform: translateX(4px);
-          background: rgba(255, 255, 255, 0.04);
+          box-shadow: var(--shadow-e2);
         }
         .ea-perk-icon-wrap {
           flex-shrink: 0;
           width: 32px;
           height: 32px;
           border-radius: 10px;
-          background: rgba(0, 212, 255, 0.06);
-          color: var(--brand-cyan);
+          background: var(--surface-accent-soft, rgba(0, 119, 168, 0.08));
+          color: var(--brand-cyan-strong, #0077A8);
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(0, 212, 255, 0.15);
+          border: 1px solid rgba(0, 119, 168, 0.15);
         }
         .ea-perk-title {
           font-size: 14px;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-primary, #1D1D1F);
           margin-bottom: 4px;
         }
         .ea-perk-desc {
           font-size: 13px;
-          color: var(--text-secondary, rgba(255,255,255,0.6));
+          color: var(--text-secondary, #636366);
           line-height: 1.5;
         }
 
         /* Action Panel */
         .ea-action-panel {
-          background: var(--surface-card, rgba(255, 255, 255, 0.03));
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+          background: var(--surface-card, #FFFFFF);
+          border: 1px solid var(--border-default, #E5E5E5);
           border-radius: 24px;
           padding: 32px;
-          box-shadow: var(--shadow-e2, 0 10px 30px rgba(0,0,0,0.2));
+          box-shadow: var(--shadow-e2);
         }
         .ea-form-title {
           font-size: 18px;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-primary, #1D1D1F);
           margin-bottom: 6px;
         }
         .ea-form-desc {
           font-size: 13px;
-          color: var(--text-secondary, rgba(255,255,255,0.5));
+          color: var(--text-muted, #6E6E73);
           margin-bottom: 24px;
         }
         .ea-form {
@@ -425,7 +428,7 @@ export default function EarlyAccessPage() {
         .ea-label {
           font-size: 12px;
           font-weight: 600;
-          color: var(--text-secondary, rgba(255,255,255,0.7));
+          color: var(--text-secondary, #636366);
         }
         .ea-input-wrapper {
           position: relative;
@@ -435,8 +438,9 @@ export default function EarlyAccessPage() {
           left: 14px;
           top: 50%;
           transform: translateY(-50%);
-          color: var(--text-muted, rgba(255,255,255,0.4));
+          color: var(--text-muted, #6E6E73);
           pointer-events: none;
+          z-index: 1;
         }
         .ea-field {
           padding-left: 40px !important;
@@ -444,9 +448,9 @@ export default function EarlyAccessPage() {
         }
         .ea-error-msg {
           font-size: 12px;
-          color: var(--brand-pink-strong, #ef4444);
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.15);
+          color: #B91C1C;
+          background: rgba(220, 38, 38, 0.08);
+          border: 1px solid rgba(220, 38, 38, 0.2);
           padding: 10px 14px;
           border-radius: 10px;
         }
@@ -454,9 +458,10 @@ export default function EarlyAccessPage() {
           height: 48px;
           font-weight: 700;
           font-size: 14px;
+          color: #fff;
           border-radius: 12px;
-          background: linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%);
-          box-shadow: 0 4px 15px rgba(0, 212, 255, 0.25);
+          background: linear-gradient(135deg, var(--brand-cyan-strong) 0%, var(--brand-pink-strong) 100%);
+          box-shadow: 0 4px 15px rgba(0, 119, 168, 0.25);
         }
         .ea-submit-btn:hover {
           opacity: 0.95;
@@ -467,10 +472,10 @@ export default function EarlyAccessPage() {
           justify-content: center;
           gap: 6px;
           font-size: 11px;
-          color: var(--text-muted, rgba(255,255,255,0.4));
+          color: var(--text-muted, #6E6E73);
         }
         .ea-shield-icon {
-          color: #22c55e;
+          color: #16A34A;
         }
 
         /* Success Card */
@@ -482,43 +487,43 @@ export default function EarlyAccessPage() {
           width: 64px;
           height: 64px;
           border-radius: 50%;
-          background: rgba(34, 197, 94, 0.1);
-          color: #22c55e;
+          background: rgba(22, 163, 74, 0.1);
+          color: #16A34A;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 1px solid rgba(34, 197, 94, 0.2);
+          border: 1px solid rgba(22, 163, 74, 0.2);
           margin: 0 auto 20px;
         }
         .ea-success-title {
           font-size: 20px;
           font-weight: 700;
-          color: #fff;
+          color: var(--text-primary, #1D1D1F);
           margin-bottom: 12px;
         }
         .ea-success-desc {
           font-size: 14px;
-          color: var(--text-secondary, rgba(255,255,255,0.65));
+          color: var(--text-secondary, #636366);
           line-height: 1.6;
         }
         .ea-success-benefits {
           margin: 20px 0 32px;
           padding: 16px;
-          background: rgba(34, 197, 94, 0.05);
-          border: 1px solid rgba(34, 197, 94, 0.1);
+          background: rgba(22, 163, 74, 0.06);
+          border: 1px solid rgba(22, 163, 74, 0.15);
           border-radius: 16px;
         }
         .ea-success-subtext {
           font-size: 12px;
-          color: #22c55e;
+          color: #15803D;
           font-weight: 600;
           line-height: 1.5;
         }
         .ea-success-btn {
           display: inline-block;
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          color: #fff;
+          background: var(--surface-sunken, #FAFAFA);
+          border: 1px solid var(--border-strong, #D2D2D7);
+          color: var(--text-primary, #1D1D1F);
           font-size: 14px;
           font-weight: 600;
           padding: 10px 24px;
@@ -527,7 +532,8 @@ export default function EarlyAccessPage() {
           transition: all 0.2s;
         }
         .ea-success-btn:hover {
-          background: rgba(255, 255, 255, 0.12);
+          background: var(--surface-accent-soft, rgba(0, 119, 168, 0.08));
+          border-color: var(--brand-cyan-strong, #0077A8);
         }
       `}</style>
     </main>

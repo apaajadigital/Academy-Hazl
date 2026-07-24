@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, Mail, MailCheck } from "lucide-react";
+import { Button, Input } from "@/components/ui";
 import { forgotPassword } from "@/lib/auth/api";
 
 export function LupaPasswordForm() {
@@ -25,17 +27,19 @@ export function LupaPasswordForm() {
 
   if (submitted) {
     return (
-      <div className="text-center space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 flex items-center justify-center">
-          <svg aria-hidden="true" className="w-6 h-6 text-[#0077A8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-surface-accent-soft">
+          <MailCheck size={30} className="text-accent" aria-hidden="true" />
         </div>
-        <h2 className="text-lg font-semibold text-[#1D1D1F]">Cek email Anda</h2>
-        <p className="text-sm text-[#6E6E73]">
-          Jika email <strong>{email}</strong> terdaftar, kami telah mengirimkan tautan reset kata sandi. Tautan berlaku selama 1 jam.
+        <h2 className="text-lg font-semibold text-text-primary">Cek email Anda</h2>
+        <p className="text-sm text-text-secondary">
+          Jika email <strong className="text-text-primary">{email}</strong> terdaftar, kami telah mengirimkan tautan reset kata sandi. Tautan berlaku selama 1 jam.
         </p>
-        <Link href="/masuk" className="text-sm text-[#0077A8] hover:underline font-medium">
+        <Link
+          href="/masuk"
+          className="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-accent hover:underline"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
           Kembali ke halaman masuk
         </Link>
       </div>
@@ -44,55 +48,48 @@ export function LupaPasswordForm() {
 
   return (
     <>
-      <Link href="/masuk" className="flex items-center gap-1.5 text-sm text-[#6E6E73] hover:text-[#1D1D1F] mb-6 transition-colors">
-        <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
+      <Link
+        href="/masuk"
+        className="mb-6 flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
         Kembali
       </Link>
 
-      <h1 className="text-2xl font-bold text-[#1D1D1F] mb-1">Lupa kata sandi?</h1>
-      <p className="text-sm text-[#6E6E73] mb-6">
+      <h1 className="mb-1 text-2xl font-bold text-text-primary">Lupa kata sandi?</h1>
+      <p className="mb-6 text-sm text-text-secondary">
         Masukkan email akun Anda dan kami akan mengirimkan tautan reset kata sandi.
       </p>
 
       {error && (
-        <div role="alert" className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#1D1D1F] mb-1">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-dark w-full"
-            placeholder="nama@email.com"
-          />
-        </div>
+        <Input
+          id="email"
+          type="email"
+          label="Email"
+          leftIcon={<Mail size={18} aria-hidden="true" />}
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="nama@email.com"
+        />
 
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          variant="primary"
+          size="md"
+          loading={loading}
+          rightIcon={<ArrowRight size={18} aria-hidden="true" />}
+          className="w-full"
         >
-          {loading ? (
-            <>
-              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" aria-hidden="true" />
-              Mengirim…
-            </>
-          ) : (
-            "Kirim tautan reset"
-          )}
-        </button>
+          {loading ? "Mengirim…" : "Kirim tautan reset"}
+        </Button>
       </form>
     </>
   );

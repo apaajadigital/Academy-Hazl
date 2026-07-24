@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { BadgeCheck, CircleX, X } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
@@ -51,18 +53,16 @@ export default async function VerifyCertPage({
 
   if (!cert) {
     return (
-      <main className="min-h-screen bg-[#F5F5F7] flex items-center justify-center p-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E5E5EA] p-8 max-w-md w-full text-center space-y-4">
-          <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-            <svg aria-hidden="true" className="w-7 h-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+      <main className="flex min-h-screen items-center justify-center bg-surface-page p-6">
+        <div className="w-full max-w-md space-y-4 rounded-2xl border border-border-default bg-surface-card p-8 text-center shadow-e1">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-600/10">
+            <X aria-hidden="true" size={28} className="text-red-600" />
           </div>
-          <h1 className="text-xl font-bold text-[#1D1D1F]">Sertifikat Tidak Ditemukan</h1>
-          <p className="text-sm text-[#6E6E73]">
+          <h1 className="text-xl font-bold text-text-primary">Sertifikat Tidak Ditemukan</h1>
+          <p className="text-sm text-text-secondary">
             Kode sertifikat <strong>{certId}</strong> tidak valid atau belum diterbitkan.
           </p>
-          <Link href="/" className="text-sm text-[#0077A8] hover:underline">
+          <Link href="/" className="text-sm text-accent-cyan-strong hover:underline">
             Kembali ke beranda
           </Link>
         </div>
@@ -78,64 +78,76 @@ export default async function VerifyCertPage({
   });
 
   return (
-    <main className="min-h-screen bg-[#F5F5F7] flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-[#E5E5EA] p-8 max-w-md w-full space-y-6">
-        {/* Status badge */}
-        <div className="flex justify-center">
-          {isValid ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-100 text-green-700 text-sm font-semibold">
-              <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Sertifikat Valid
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-sm font-semibold">
-              <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636" />
-              </svg>
-              Sertifikat Dicabut
-            </span>
-          )}
+    <main className="flex min-h-screen items-center justify-center bg-surface-page p-6">
+      <div className="w-full max-w-md">
+        {/* Header — Stitch verification lockup */}
+        <div className="mb-6 text-center">
+          <span className="eyebrow eyebrow-center mb-3 justify-center">Verifikasi Keaslian</span>
+          <h1 className="text-2xl font-extrabold tracking-tight text-text-primary">
+            Verifikasi Sertifikat
+          </h1>
         </div>
 
-        {/* Logo */}
-        <div className="text-center">
-          <Image src="/logo.png" alt="Jago Akademi" width={1037} height={190} className="h-8 w-auto mx-auto" />
-        </div>
-
-        {/* Detail */}
-        <dl className="space-y-3 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-[#6E6E73] shrink-0">Pemegang</dt>
-            <dd className="font-semibold text-[#1D1D1F] text-right">{cert.holderName}</dd>
+        <div className="space-y-6 rounded-2xl border border-border-default bg-surface-card p-8 shadow-e1">
+          {/* Status badge */}
+          <div className="flex justify-center">
+            {isValid ? (
+              <Badge variant="success" className="px-3 py-1 text-sm">
+                <BadgeCheck aria-hidden="true" size={16} />
+                Sertifikat Valid
+              </Badge>
+            ) : (
+              <Badge variant="danger" className="px-3 py-1 text-sm">
+                <CircleX aria-hidden="true" size={16} />
+                Sertifikat Dicabut
+              </Badge>
+            )}
           </div>
-          {cert.courseName && (
+
+          {/* Logo */}
+          <div className="text-center">
+            <Image
+              src="/logo.png"
+              alt="Jago Akademi"
+              width={1037}
+              height={190}
+              className="mx-auto h-8 w-auto"
+            />
+          </div>
+
+          {/* Detail */}
+          <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-[#6E6E73] shrink-0">Kursus</dt>
-              <dd className="font-medium text-[#1D1D1F] text-right">{cert.courseName}</dd>
+              <dt className="shrink-0 text-text-muted">Pemegang</dt>
+              <dd className="text-right font-semibold text-text-primary">{cert.holderName}</dd>
             </div>
-          )}
-          <div className="flex justify-between gap-4">
-            <dt className="text-[#6E6E73] shrink-0">Jenis</dt>
-            <dd className="text-[#1D1D1F] capitalize">{cert.type}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[#6E6E73] shrink-0">Diterbitkan</dt>
-            <dd className="text-[#1D1D1F]">{issuedDate}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[#6E6E73] shrink-0">Kode</dt>
-            <dd className="font-mono text-xs text-[#1D1D1F] break-all">{cert.code}</dd>
-          </div>
-        </dl>
+            {cert.courseName && (
+              <div className="flex justify-between gap-4">
+                <dt className="shrink-0 text-text-muted">Kursus</dt>
+                <dd className="text-right font-medium text-text-primary">{cert.courseName}</dd>
+              </div>
+            )}
+            <div className="flex justify-between gap-4">
+              <dt className="shrink-0 text-text-muted">Jenis</dt>
+              <dd className="capitalize text-text-primary">{cert.type}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="shrink-0 text-text-muted">Diterbitkan</dt>
+              <dd className="text-text-primary">{issuedDate}</dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="shrink-0 text-text-muted">Kode</dt>
+              <dd className="break-all font-mono text-xs text-text-primary">{cert.code}</dd>
+            </div>
+          </dl>
 
-        <p className="text-center text-xs text-[#6E6E73] border-t border-[#F2F2F7] pt-4">
-          Verifikasi resmi oleh{" "}
-          <Link href="/" className="text-[#0077A8] hover:underline">
-            Jago Akademi
-          </Link>
-        </p>
+          <p className="border-t border-border-subtle pt-4 text-center text-xs text-text-muted">
+            Verifikasi resmi oleh{" "}
+            <Link href="/" className="text-accent-cyan-strong hover:underline">
+              Jago Akademi
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   );

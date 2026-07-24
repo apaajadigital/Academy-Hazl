@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { CheckCircle2, Mail, Lock, User } from "lucide-react";
+import { Button, Input } from "@/components/ui";
 import { register, buildGoogleLoginUrl } from "@/lib/auth/api";
 
 export function DaftarForm() {
@@ -36,18 +38,19 @@ export function DaftarForm() {
 
   if (success) {
     return (
-      <div className="text-center space-y-3">
-        <div className="w-12 h-12 mx-auto rounded-full bg-[var(--surface-accent-soft)] flex items-center justify-center">
-          <svg aria-hidden="true" className="w-6 h-6 text-[var(--brand-cyan-strong)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-accent-soft">
+          <CheckCircle2 size={24} className="text-accent" aria-hidden="true" />
         </div>
-        <h2 className="text-lg font-semibold text-[#1D1D1F]">Registrasi berhasil!</h2>
-        <p className="text-sm text-[#6E6E73]">
+        <h2 className="text-lg font-semibold text-text-primary">Registrasi berhasil!</h2>
+        <p className="text-sm text-text-secondary">
           Akun untuk <strong>{email}</strong> berhasil dibuat. Silakan masuk untuk
           mulai menggunakan Jago Akademi.
         </p>
-        <Link href="/masuk" className="btn-primary inline-block mt-2">
+        <Link
+          href="/masuk"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3 text-[0.9375rem] font-semibold text-white shadow-e1 transition hover:opacity-90 hover:shadow-e2"
+        >
           Ke halaman masuk
         </Link>
       </div>
@@ -56,69 +59,57 @@ export function DaftarForm() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-[#1D1D1F] mb-1">Buat akun</h1>
-      <p className="text-sm text-[#6E6E73] mb-6">
+      <h1 className="mb-1 text-2xl font-bold text-text-primary">Buat akun</h1>
+      <p className="mb-6 text-sm text-text-secondary">
         Sudah punya akun?{" "}
-        <Link href="/masuk" className="text-[#0077A8] hover:underline font-medium">
+        <Link href="/masuk" className="font-medium text-accent hover:underline">
           Masuk di sini
         </Link>
       </p>
 
       {error && (
-        <div role="alert" className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-[#1D1D1F] mb-1">
-            Nama lengkap
-          </label>
-          <input
-            id="name"
-            type="text"
-            autoComplete="name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input-dark w-full"
-            placeholder="Nama Anda"
-          />
-        </div>
+        <Input
+          id="name"
+          type="text"
+          label="Nama lengkap"
+          leftIcon={<User size={18} aria-hidden="true" />}
+          autoComplete="name"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nama Anda"
+        />
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-[#1D1D1F] mb-1">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-dark w-full"
-            placeholder="nama@email.com"
-          />
-        </div>
+        <Input
+          id="email"
+          type="email"
+          label="Email"
+          leftIcon={<Mail size={18} aria-hidden="true" />}
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="nama@email.com"
+        />
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-medium text-[#1D1D1F] mb-1">
-            Kata Sandi
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-dark w-full"
-            placeholder="Minimal 8 karakter"
-          />
-        </div>
+        <Input
+          id="password"
+          type="password"
+          label="Kata Sandi"
+          leftIcon={<Lock size={18} aria-hidden="true" />}
+          autoComplete="new-password"
+          required
+          minLength={8}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Minimal 8 karakter"
+        />
 
         <div className="flex items-start gap-3">
           <input
@@ -127,49 +118,38 @@ export function DaftarForm() {
             required
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-[#C7C7CC] text-[#0077A8] focus:ring-[#0077A8] cursor-pointer"
+            className="mt-0.5 h-4 w-4 cursor-pointer rounded border-border-strong text-accent focus:ring-accent-cyan-strong"
           />
-          <label htmlFor="consent" className="text-sm text-[#3C3C43] cursor-pointer leading-snug">
+          <label htmlFor="consent" className="cursor-pointer text-sm leading-snug text-text-secondary">
             Saya menyetujui{" "}
-            <Link href="/privacy" className="text-[#0077A8] hover:underline" target="_blank">
+            <Link href="/privacy" className="text-accent hover:underline" target="_blank">
               Kebijakan Privasi
             </Link>{" "}
             dan{" "}
-            <Link href="/terms" className="text-[#0077A8] hover:underline" target="_blank">
+            <Link href="/terms" className="text-accent hover:underline" target="_blank">
               Syarat &amp; Ketentuan
             </Link>{" "}
             Jago Akademi, termasuk pemrosesan data pribadi saya sesuai UU PDP.
           </label>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <>
-              <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" aria-hidden="true" />
-              Mendaftarkan…
-            </>
-          ) : (
-            "Buat akun"
-          )}
-        </button>
+        <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
+          {loading ? "Mendaftarkan…" : "Buat akun"}
+        </Button>
       </form>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-[#E5E5EA]" />
+          <div className="w-full border-t border-border-default" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-[#6E6E73]">atau</span>
+          <span className="bg-transparent px-3 text-text-secondary">atau</span>
         </div>
       </div>
 
       <a
         href={buildGoogleLoginUrl()}
-        className="flex items-center justify-center gap-3 w-full px-4 py-2.5 border border-[#E5E5EA] rounded-xl text-sm font-medium text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
+        className="flex w-full items-center justify-center gap-3 rounded-full border border-border-strong px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-accent-soft"
       >
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />

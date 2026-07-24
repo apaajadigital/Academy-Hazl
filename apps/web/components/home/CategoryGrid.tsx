@@ -53,7 +53,7 @@ export function CategoryGrid() {
         eyebrow="Jelajahi"
         title={
           <>
-            Satu platform, <span className="text-accent">enam</span> cara belajar
+            Satu platform, <span className="bg-brand-gradient bg-clip-text text-transparent">enam</span> cara belajar
           </>
         }
         lede="Pilih jalur yang sesuai kebutuhanmu — belajar mandiri, hadir di event, atau melatih tim perusahaan."
