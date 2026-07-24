@@ -12,21 +12,20 @@ type BreadcrumbProps = {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-[#6E6E73] flex-wrap">
+    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-xs text-text-muted">
       {items.map((item, i) => {
         const isLast = i === items.length - 1;
         return (
           <span key={i} className="flex items-center gap-1">
-            {i > 0 && <ChevronRight size={12} className="flex-none text-[#AEAEB2]" />}
+            {i > 0 && (
+              <ChevronRight size={14} className="flex-none text-[var(--border-strong)]" aria-hidden="true" />
+            )}
             {item.href && !isLast ? (
-              <Link
-                href={item.href}
-                className="hover:text-[#0077A8] transition-colors"
-              >
+              <Link href={item.href} className="transition-colors hover:text-accent">
                 {item.label}
               </Link>
             ) : (
-              <span className={isLast ? "text-[#636366]" : ""}>{item.label}</span>
+              <span className={isLast ? "font-semibold text-text-secondary" : ""}>{item.label}</span>
             )}
           </span>
         );

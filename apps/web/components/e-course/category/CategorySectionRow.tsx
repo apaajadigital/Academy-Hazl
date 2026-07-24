@@ -14,22 +14,22 @@ export function CategorySectionRow({ topic, categorySlug }: CategorySectionRowPr
       {/* Section header */}
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h3 className="text-[#1D1D1F] font-semibold text-base">{topic.title}</h3>
-          <p className="text-[#6E6E73] text-xs mt-0.5">
+          <h3 className="text-base font-semibold text-text-primary">{topic.title}</h3>
+          <p className="mt-0.5 text-xs text-text-muted">
             {topic.lessonCount} Materi · {topic.videoCount} Video
           </p>
         </div>
         <Link
           href={`/e-course/${categorySlug}/${topic.slug}`}
-          className="flex-none flex items-center gap-1 text-xs text-[#0077A8] hover:text-[#005c7a] transition-colors"
+          className="link-arrow flex-none text-xs"
         >
           Selengkapnya
-          <ArrowRight size={12} />
+          <ArrowRight size={12} aria-hidden="true" />
         </Link>
       </div>
 
       {/* Horizontal scroll of lesson cards */}
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+      <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
         {topic.lessons.map((lesson) => (
           <LessonCard
             key={lesson.id}

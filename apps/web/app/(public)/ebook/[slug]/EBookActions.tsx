@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CheckCircle2, BookOpen, Download } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
 
 type Props = {
@@ -52,22 +53,28 @@ export default function EBookActions({ ebookSlug, price }: Props) {
       : `${getApiBase()}${fileUrl}`;
     return (
       <div className="space-y-3">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700 font-medium">
-          ✓ Anda sudah memiliki e-book ini
+        <div
+          className="flex items-center gap-2 rounded-xl border p-3 text-sm font-medium"
+          style={{ background: "rgba(22,163,74,0.08)", borderColor: "rgba(22,163,74,0.2)", color: "#15803D" }}
+        >
+          <CheckCircle2 size={16} aria-hidden="true" />
+          Anda sudah memiliki e-book ini
         </div>
         <a
           href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full text-center py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors"
+          className="btn btn-primary w-full justify-center"
         >
+          <BookOpen size={17} aria-hidden="true" />
           Baca E-Book
         </a>
         <a
           href={fullUrl}
           download
-          className="block w-full text-center py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+          className="btn btn-outline w-full justify-center"
         >
+          <Download size={17} aria-hidden="true" />
           Unduh PDF
         </a>
       </div>
@@ -77,23 +84,28 @@ export default function EBookActions({ ebookSlug, price }: Props) {
   return (
     <div className="space-y-3">
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>
+        <div
+          className="rounded-xl border p-3 text-sm"
+          style={{ background: "rgba(239,68,68,0.05)", borderColor: "rgba(239,68,68,0.2)", color: "#B91C1C" }}
+        >
+          {error}
+        </div>
       )}
       <button
         onClick={handleBuy}
         disabled={buying}
-        className="w-full py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+        className="btn btn-lg w-full justify-center bg-brand-gradient text-white shadow-e1 hover:opacity-90 disabled:opacity-60"
       >
         {buying ? (
           <>
-            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             Memproses...
           </>
         ) : (
           `Beli – Rp ${Number(price).toLocaleString("id-ID")}`
         )}
       </button>
-      <p className="text-xs text-gray-400 text-center">Akses seumur hidup setelah pembelian</p>
+      <p className="text-center text-xs text-[var(--text-muted)]">Akses seumur hidup setelah pembelian</p>
     </div>
   );
 }

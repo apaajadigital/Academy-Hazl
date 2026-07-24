@@ -43,10 +43,9 @@ export default async function KategoriPage({ params }: Props) {
 
       {/* Topic sections */}
       <section className="py-10">
-        <div className="max-w-[1152px] mx-auto px-8 flex flex-col gap-10">
-          <h2 className="text-lg font-bold font-display text-[#1D1D1F]">
-            Daftar Learning Path{" "}
-            <span className="text-gradient-brand">{category.title}</span>
+        <div className="mx-auto flex max-w-[1152px] flex-col gap-10 px-8">
+          <h2 className="font-display text-lg font-bold text-text-primary">
+            Daftar Learning Path <span className="text-accent">{category.title}</span>
           </h2>
           {category.topics.map((topic) => (
             <CategorySectionRow

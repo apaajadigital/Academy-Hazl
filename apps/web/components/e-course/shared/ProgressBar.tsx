@@ -9,10 +9,10 @@ export function ProgressBar({ percent, label, className = "" }: ProgressBarProps
 
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <p className="text-[#6E6E73] text-xs">{displayLabel}</p>
-      <div className="h-1.5 rounded-full bg-[#E5E5E5] overflow-hidden">
+      <p className="text-xs text-text-muted">{displayLabel}</p>
+      <div className="h-1.5 overflow-hidden rounded-full bg-[var(--border-default)]">
         <div
-          className="h-full rounded-full bg-[#0077A8] transition-all duration-500"
+          className="h-full rounded-full bg-brand-gradient transition-all duration-500"
           style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
         />
       </div>

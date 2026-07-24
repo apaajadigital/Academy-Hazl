@@ -9,33 +9,33 @@ type VideoChapterItemProps = {
 
 export function VideoChapterItem({ chapter, index }: VideoChapterItemProps) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-white border border-[#E5E5E5] hover:border-[rgba(0,119,168,0.2)] shadow-e1 transition-colors">
+    <div className="flex items-center gap-3 rounded-lg border border-border-default bg-surface-card p-3 shadow-e1 transition-colors hover:border-[var(--border-brand)]">
       {/* Index */}
-      <span className="flex-none w-6 text-center text-[#AEAEB2] text-xs font-mono">
+      <span className="w-6 flex-none text-center font-mono text-xs text-[#AEAEB2]">
         {(index + 1).toString().padStart(2, "0")}
       </span>
 
       {/* Thumbnail */}
-      <div className="flex-none w-20 aspect-video rounded-md bg-gradient-to-br from-[rgba(0,119,168,0.06)] to-[rgba(0,119,168,0.02)] border border-[#E5E5E5] flex items-center justify-center">
+      <div className="flex aspect-video w-20 flex-none items-center justify-center rounded-md border border-border-default bg-gradient-to-br from-[rgba(0,119,168,0.06)] to-[rgba(0,119,168,0.02)]">
         {chapter.isLocked ? (
-          <Lock size={12} className="text-[#AEAEB2]" />
+          <Lock size={12} className="text-[#AEAEB2]" aria-hidden="true" />
         ) : (
-          <Play size={12} className="text-[#0077A8]" />
+          <Play size={12} className="text-accent" aria-hidden="true" />
         )}
       </div>
 
       {/* Title */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[#636366] text-sm leading-snug line-clamp-1">{chapter.title}</p>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-1 text-sm leading-snug text-text-secondary">{chapter.title}</p>
       </div>
 
       {/* Duration + lock */}
-      <div className="flex-none flex items-center gap-2">
-        <span className="text-[#AEAEB2] text-xs font-mono">
+      <div className="flex flex-none items-center gap-2">
+        <span className="font-mono text-xs text-[#AEAEB2]">
           {formatDurationShort(chapter.durationMinutes)}
         </span>
         {chapter.isLocked && (
-          <Lock size={12} className="text-[#AEAEB2]" />
+          <Lock size={12} className="text-[#AEAEB2]" aria-hidden="true" />
         )}
       </div>
     </div>

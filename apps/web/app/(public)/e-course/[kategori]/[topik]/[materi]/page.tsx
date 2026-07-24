@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { Star } from "lucide-react";
 import {
   getCategoryBySlug,
   getTopicBySlug,
@@ -7,6 +8,7 @@ import {
   getAllLessonParams,
 } from "@/lib/e-course/utils";
 import { features } from "@/lib/features";
+import { Badge } from "@/components/ui/Badge";
 import { LessonHero } from "@/components/e-course/lesson/LessonHero";
 import { VideoChapterList } from "@/components/e-course/lesson/VideoChapterList";
 import { SubscriptionLock } from "@/components/e-course/shared/SubscriptionLock";
@@ -64,37 +66,40 @@ export default async function MateriPage({ params }: Props) {
             </div>
 
             {/* Sidebar: progress */}
-            <div className="flex flex-col gap-4">
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-5 flex flex-col gap-4 shadow-e1">
-                <h3 className="text-[#1D1D1F] font-semibold text-sm">Progress Belajar</h3>
+            <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start">
+              <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-surface-card p-5 shadow-e1">
+                <h3 className="text-sm font-semibold text-text-primary">Progress Belajar</h3>
                 <ProgressBar percent={0} />
-                <div className="text-[#6E6E73] text-xs flex flex-col gap-1">
+                <div className="flex flex-col gap-1 text-xs text-text-muted">
                   <span>0 dari {lesson.chapters.length} video selesai</span>
                   <span className="text-[#AEAEB2]">Berlangganan untuk mulai belajar</span>
                 </div>
               </div>
 
               {/* Lesson stats */}
-              <div className="bg-white border border-[#E5E5E5] rounded-xl p-5 shadow-e1">
-                <h3 className="text-[#1D1D1F] font-semibold text-sm mb-3">Statistik Materi</h3>
+              <div className="rounded-xl border border-border-default bg-surface-card p-5 shadow-e1">
+                <h3 className="mb-3 text-sm font-semibold text-text-primary">Statistik Materi</h3>
                 <div className="flex flex-col gap-2 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-[#6E6E73]">Total Bab</span>
-                    <span className="text-[#636366]">{lesson.chapterCount}</span>
+                    <span className="text-text-muted">Total Bab</span>
+                    <span className="text-text-secondary">{lesson.chapterCount}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#6E6E73]">Total Pelajar</span>
-                    <span className="text-[#636366]">{lesson.studentCount}</span>
+                    <span className="text-text-muted">Total Pelajar</span>
+                    <span className="text-text-secondary">{lesson.studentCount}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#6E6E73]">Rating</span>
-                    <span className="text-yellow-600">{lesson.rating.toFixed(2)} ★</span>
+                    <span className="text-text-muted">Rating</span>
+                    <span className="flex items-center gap-1 text-text-secondary">
+                      <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+                      {lesson.rating.toFixed(2)}
+                    </span>
                   </div>
                   {lesson.isPortfolioProject && (
-                    <div className="mt-2 pt-2 border-t border-[#EFEFEF]">
-                      <span className="text-[10px] font-semibold px-2 py-1 rounded bg-[rgba(204,0,82,0.08)] border border-[rgba(204,0,82,0.2)] text-[#CC0052]">
+                    <div className="mt-2 border-t border-border-subtle pt-2">
+                      <Badge variant="brand" className="border border-[rgba(204,0,82,0.2)] rounded px-2 py-1 text-[10px]">
                         Portfolio Project
-                      </span>
+                      </Badge>
                     </div>
                   )}
                 </div>

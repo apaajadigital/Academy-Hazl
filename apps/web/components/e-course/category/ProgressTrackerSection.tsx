@@ -25,57 +25,57 @@ export function ProgressTrackerSection({ category, totalLessons }: ProgressTrack
   ];
 
   return (
-    <section className="bg-[#FAFAFA] border-b border-[#E5E5E5] py-10">
-      <div className="max-w-[1152px] mx-auto px-8 flex flex-col gap-8">
+    <section className="border-b border-border-default bg-surface-sunken py-10">
+      <div className="mx-auto flex max-w-[1152px] flex-col gap-8 px-8">
         <header className="flex flex-col gap-1.5">
-          <h2 className="text-xl font-bold font-display text-[#1D1D1F]">
+          <h2 className="font-display text-xl font-bold text-text-primary">
             Progres Belajarmu
           </h2>
-          <p className="text-[#6E6E73] text-sm">
+          <p className="text-sm text-text-muted">
             Mulai belajar dan pantau perkembanganmu di sini
           </p>
         </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
               <div
                 key={stat.label}
-                className="bg-white border border-[#E5E5E5] rounded-2xl shadow-e1 p-5 flex items-center gap-4"
+                className="flex items-center gap-4 rounded-2xl border border-border-default bg-surface-card p-5 shadow-e1"
               >
-                <div className="w-11 h-11 rounded-xl bg-[rgba(0,212,255,0.08)] border border-[rgba(0,119,168,0.2)] flex items-center justify-center flex-none">
-                  <Icon size={18} className="text-[#0077A8]" />
+                <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl border border-[var(--border-brand)] bg-surface-accent-soft">
+                  <Icon size={18} className="text-accent" aria-hidden="true" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[#0077A8] font-bold text-xl leading-tight">
+                  <span className="text-xl font-bold leading-tight text-accent">
                     {stat.value}
                   </span>
-                  <span className="text-[#6E6E73] text-xs leading-snug">{stat.label}</span>
+                  <span className="text-xs leading-snug text-text-muted">{stat.label}</span>
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="bg-white border border-[#E5E5E5] rounded-2xl shadow-e1 overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1">
           {category.topics.map((topic, index) => (
             <div
               key={topic.id}
               className={`flex items-center gap-4 px-5 py-4 ${
-                index > 0 ? "border-t border-[#EFEFEF]" : ""
+                index > 0 ? "border-t border-border-subtle" : ""
               }`}
             >
-              <div className="w-9 h-9 rounded-lg bg-[#F5F5F7] border border-[#E5E5E5] flex items-center justify-center flex-none">
-                <Lock size={14} className="text-[#AEAEB2]" />
+              <div className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-border-default bg-surface-page">
+                <Lock size={14} className="text-[#AEAEB2]" aria-hidden="true" />
               </div>
 
-              <div className="flex flex-col flex-1 min-w-0 gap-1.5">
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <div className="flex items-baseline justify-between gap-3">
-                  <h3 className="text-[#1D1D1F] font-semibold text-sm truncate">
+                  <h3 className="truncate text-sm font-semibold text-text-primary">
                     {topic.title}
                   </h3>
-                  <span className="text-[#6E6E73] text-xs flex-none">
+                  <span className="flex-none text-xs text-text-muted">
                     {topic.lessonCount} materi
                   </span>
                 </div>
@@ -84,10 +84,10 @@ export function ProgressTrackerSection({ category, totalLessons }: ProgressTrack
 
               <Link
                 href={`/e-course/${category.slug}/${topic.slug}`}
-                className="flex-none inline-flex items-center gap-0.5 text-[#0077A8] text-sm font-semibold hover:gap-1.5 transition-all duration-200"
+                className="inline-flex flex-none items-center gap-0.5 text-sm font-semibold text-accent transition-all duration-200 hover:gap-1.5"
               >
                 Mulai
-                <ChevronRight size={15} />
+                <ChevronRight size={15} aria-hidden="true" />
               </Link>
             </div>
           ))}

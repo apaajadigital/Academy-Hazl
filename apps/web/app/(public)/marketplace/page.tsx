@@ -57,12 +57,12 @@ function getDiscount(price: string, salePrice: string | null): number | null {
 function SkeletonCard() {
   return (
     <div className="card overflow-hidden !p-0" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}>
-      <div className="skeleton animate-pulse" style={{ aspectRatio: "3/4", background: "rgba(255,255,255,0.05)" }} />
+      <div className="skeleton !rounded-none" style={{ aspectRatio: "3/4" }} />
       <div className="flex flex-col gap-2.5 p-4">
-        <div className="skeleton h-3 w-16 animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
-        <div className="skeleton h-4 w-full animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
-        <div className="skeleton h-4 w-2/3 animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
-        <div className="skeleton mt-1 h-5 w-24 animate-pulse" style={{ background: "rgba(255,255,255,0.05)" }} />
+        <div className="skeleton h-3 w-16" />
+        <div className="skeleton h-4 w-full" />
+        <div className="skeleton h-4 w-2/3" />
+        <div className="skeleton mt-1 h-5 w-24" />
       </div>
     </div>
   );
@@ -126,7 +126,7 @@ function ProductCard({ item }: { item: MarketplaceItem }) {
             className="flex h-full w-full flex-col items-center justify-center gap-3 p-4"
             style={{ background: getFallbackGradient() }}
           >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-e1)" }}>
               {getIcon()}
             </div>
             <p className="px-2 text-center text-xs font-semibold leading-normal text-[var(--text-secondary)] line-clamp-3">
@@ -388,8 +388,8 @@ function MarketplaceCatalog() {
           className="flex flex-col items-center gap-4 rounded-2xl py-16 text-center"
           style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(255,255,255,0.03)" }}>
-            <BookMarked size={32} style={{ color: "var(--brand-cyan)" }} />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--surface-accent-soft)" }}>
+            <BookMarked size={32} style={{ color: "var(--brand-cyan-strong)" }} />
           </div>
           <div>
             <h3 className="text-lg font-bold text-[var(--text-primary)]">
