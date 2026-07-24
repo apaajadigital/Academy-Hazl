@@ -3,7 +3,25 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  ArrowLeft,
+  ChevronRight,
+  CheckCircle2,
+  Clock,
+  CircleX,
+  AlertCircle,
+  RotateCcw,
+  Download,
+  CreditCard,
+  Tag,
+  Wallet,
+  GraduationCap,
+  Loader2,
+  type LucideIcon,
+} from "lucide-react";
 import { getToken } from "@/lib/auth/token";
+import { Card, CardHeader, CardTitle, CardContent, Button, Textarea } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 type OrderDetail = {
   id: string;
@@ -27,8 +45,27 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   refunded: { label: "Direfund", color: "text-purple-600 bg-purple-50" },
 };
 
+// Presentation-only tone map for the status banner (icon + colour per status).
+const STATUS_TONE: Record<string, { box: string; Icon: LucideIcon }> = {
+  paid: { box: "border-green-200 bg-green-50 text-green-700", Icon: CheckCircle2 },
+  pending: { box: "border-amber-200 bg-amber-50 text-amber-700", Icon: Clock },
+  failed: { box: "border-red-200 bg-red-50 text-red-700", Icon: CircleX },
+  expired: { box: "border-border-default bg-surface-sunken text-text-secondary", Icon: AlertCircle },
+  refunded: { box: "border-purple-200 bg-purple-50 text-accent-purple", Icon: RotateCcw },
+};
+
 function getApiBase() {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+}
+
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 
@@ -67,22 +104,23 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen items-center justify-center bg-surface-page">
+        <Loader2 className="size-8 animate-spin text-accent-cyan-strong" aria-hidden="true" />
       </div>
     );
   }
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface-page">
         <p className="text-red-600">{error}</p>
-        <Link href="/pesanan" className="text-blue-600 underline">Kembali ke Pesanan</Link>
+        <Link href="/pesanan" className="text-accent-cyan-strong underline">Kembali ke Pesanan</Link>
       </div>
     );
   }
 
   const status = STATUS_LABEL[order.status] ?? { label: order.status, color: "text-gray-500 bg-gray-50" };
+  const tone = STATUS_TONE[order.status] ?? { box: "border-border-default bg-surface-sunken text-text-secondary", Icon: AlertCircle };
 
   async function submitRefund(e: React.FormEvent) {
     e.preventDefault();
@@ -111,150 +149,193 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="flex items-center gap-3 mb-8">
-          <Link href="/pesanan" className="text-gray-400 hover:text-gray-600">← Pesanan</Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-gray-600 font-mono text-sm">#{order.id.slice(0, 8).toUpperCase()}</span>
+    <div className="min-h-screen bg-surface-page">
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+        {/* Breadcrumb */}
+        <nav className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
+          <Link href="/pesanan" className="inline-flex items-center gap-1 hover:text-accent-cyan-strong">
+            <ArrowLeft size={16} aria-hidden="true" /> Pesanan
+          </Link>
+          <ChevronRight size={16} aria-hidden="true" className="text-border-strong" />
+          <span className="font-mono text-text-primary">#{order.id.slice(0, 8).toUpperCase()}</span>
+        </nav>
+
+        {/* Header + status banner */}
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <h1 className="font-display text-2xl font-extrabold text-text-primary">Detail Pesanan</h1>
+            <p className="mt-1 text-sm text-text-secondary">{formatDateTime(order.createdAt)}</p>
+          </div>
+          <div className={cn("flex items-center gap-3 rounded-xl border px-5 py-3", tone.box)}>
+            <tone.Icon size={22} aria-hidden="true" />
+            <div className="flex flex-col">
+              <span className="text-[11px] font-semibold uppercase tracking-widest opacity-80">Status Pembayaran</span>
+              <span className="font-display text-base font-bold">{status.label}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Detail Pesanan</h1>
-              <p className="text-sm text-gray-400 mt-1">
-                {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(order.createdAt))}
-              </p>
-            </div>
-            <span className={`text-sm font-semibold px-3 py-1.5 rounded-full ${status.color}`}>
-              {status.label}
-            </span>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left column: items + payment breakdown */}
+          <div className="space-y-6 lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rincian Produk</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {order.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-surface-sunken"
+                  >
+                    <span className="text-sm text-text-primary">{item.itemTitle ?? "Item"}</span>
+                    <span className="whitespace-nowrap text-sm font-bold text-text-primary">
+                      Rp {Number(item.totalPrice).toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Rincian Pembayaran</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-sm text-text-secondary">
+                  <span>Subtotal</span>
+                  <span>Rp {Number(order.totalAmount).toLocaleString("id-ID")}</span>
+                </div>
+                {Number(order.discountAmount) > 0 && (
+                  <div className="flex items-center justify-between text-sm text-green-700">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Tag size={16} aria-hidden="true" /> Diskon{order.coupon ? ` (${order.coupon.code})` : ""}
+                    </span>
+                    <span>-Rp {Number(order.discountAmount).toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t border-border-default pt-3">
+                  <span className="font-display text-lg font-bold text-text-primary">Total</span>
+                  <span className="font-display text-lg font-bold text-accent-cyan-strong">
+                    Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Items */}
-          <div className="border-t border-gray-50 pt-4">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Item</h2>
+          {/* Right column: instruction + metadata + actions */}
+          <div className="space-y-6">
+            {order.status === "pending" && (
+              <div className="space-y-3 rounded-[var(--radius-lg)] border border-accent-cyan-strong/20 bg-surface-accent-soft p-6">
+                <div className="flex items-center gap-2">
+                  <Wallet size={20} className="text-accent-cyan-strong" aria-hidden="true" />
+                  <h4 className="text-sm font-bold uppercase tracking-wide text-text-primary">Instruksi Pembayaran</h4>
+                </div>
+                <p className="text-sm text-text-secondary">Menunggu konfirmasi pembayaran dari DOKU...</p>
+              </div>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm uppercase tracking-wide">Info Pembayaran</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {order.paymentMethod && (
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-surface-sunken text-accent-cyan-strong">
+                      <CreditCard size={22} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold uppercase text-text-primary">{order.paymentMethod}</p>
+                      <p className="text-sm text-text-secondary">
+                        {order.status === "paid" ? "Otomatis Terverifikasi" : "Menunggu pembayaran"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className={cn("space-y-2 text-sm", order.paymentMethod && "border-t border-border-default pt-3")}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-secondary">Waktu Transaksi</span>
+                    <span className="text-text-primary">{formatDateTime(order.createdAt)}</span>
+                  </div>
+                  {order.paidAt && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-secondary">Dibayar pada</span>
+                      <span className="text-text-primary">{formatDateTime(order.paidAt)}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Actions */}
             <div className="space-y-3">
-              {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span className="text-gray-700">{item.itemTitle ?? "Item"}</span>
-                  <span className="text-gray-900 font-medium">Rp {Number(item.totalPrice).toLocaleString("id-ID")}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="border-t border-gray-100 pt-4 space-y-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Subtotal</span>
-              <span>Rp {Number(order.totalAmount).toLocaleString("id-ID")}</span>
-            </div>
-            {Number(order.discountAmount) > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Diskon{order.coupon ? ` (${order.coupon.code})` : ""}</span>
-                <span>-Rp {Number(order.discountAmount).toLocaleString("id-ID")}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100">
-              <span>Total</span>
-              <span className="text-blue-600">Rp {Number(order.finalAmount).toLocaleString("id-ID")}</span>
-            </div>
-          </div>
-
-          {/* Payment info */}
-          {order.paidAt && (
-            <div className="border-t border-gray-100 pt-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Dibayar pada</span>
-                <span className="text-gray-700">
-                  {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(order.paidAt))}
-                </span>
-              </div>
-              {order.paymentMethod && (
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Metode</span>
-                  <span className="text-gray-700 uppercase">{order.paymentMethod}</span>
-                </div>
+              {refundMessage && (
+                <p
+                  className={cn(
+                    "rounded-xl p-3 text-center text-sm",
+                    refundMessage.includes("berhasil") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600",
+                  )}
+                >
+                  {refundMessage}
+                </p>
               )}
-            </div>
-          )}
 
-          {/* Actions */}
-          <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
-            {refundMessage && (
-              <p className={`text-sm rounded-xl p-3 text-center ${refundMessage.includes("berhasil") ? "text-green-700 bg-green-50" : "text-red-600 bg-red-50"}`}>
-                {refundMessage}
-              </p>
-            )}
-            <div className="flex gap-3">
               {order.status === "paid" && (
                 <>
                   <a
                     href={`${getApiBase()}/api/orders/${order.id}/invoice`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 text-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
                   >
-                    Unduh Invoice
+                    <Download size={18} aria-hidden="true" /> Unduh Invoice
                   </a>
                   <Link
                     href="/dashboard/kursus"
-                    className="flex-1 text-center px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-border-strong px-4 py-3 text-sm font-semibold text-accent-cyan-strong transition-colors hover:bg-surface-accent-soft"
                   >
-                    Mulai Belajar
+                    <GraduationCap size={18} aria-hidden="true" /> Mulai Belajar
                   </Link>
+                  <button
+                    onClick={() => setRefundOpen(true)}
+                    className="w-full text-center text-sm text-text-muted transition-colors hover:text-red-600"
+                  >
+                    Ajukan Refund
+                  </button>
                 </>
               )}
-              {order.status === "pending" && (
-                <p className="text-sm text-yellow-600 bg-yellow-50 rounded-xl p-3 w-full text-center">
-                  Menunggu konfirmasi pembayaran dari DOKU...
-                </p>
-              )}
             </div>
-            {order.status === "paid" && (
-              <button
-                onClick={() => setRefundOpen(true)}
-                className="text-sm text-gray-400 hover:text-red-500 text-center transition-colors"
-              >
-                Ajukan Refund
-              </button>
-            )}
           </div>
         </div>
       </div>
 
       {/* Refund Modal */}
       {refundOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6">
-            <h2 className="font-bold text-gray-900 text-lg mb-2">Ajukan Refund</h2>
-            <p className="text-sm text-gray-500 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-6 shadow-e3">
+            <h2 className="font-display text-lg font-bold text-text-primary">Ajukan Refund</h2>
+            <p className="mb-6 mt-2 text-sm text-text-secondary">
               Jelaskan alasan Anda mengajukan refund. Proses peninjauan membutuhkan 2–3 hari kerja.
             </p>
             <form onSubmit={submitRefund} className="space-y-4">
-              <textarea
+              <Textarea
                 required
                 rows={4}
                 minLength={10}
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
                 placeholder="Alasan refund (minimal 10 karakter)..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500"
               />
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRefundOpen(false)}
-                  className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
-                >
+                <Button type="button" variant="ghost" className="flex-1" onClick={() => setRefundOpen(false)}>
                   Batal
-                </button>
+                </Button>
                 <button
                   type="submit"
                   disabled={refundLoading}
-                  className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  className="flex-1 rounded-full bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
                   {refundLoading ? "Mengirim..." : "Kirim Permohonan"}
                 </button>

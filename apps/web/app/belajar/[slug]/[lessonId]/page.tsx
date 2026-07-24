@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, Star, Award, CircleCheck, BadgeCheck } from "lucide-react";
 import VideoPlayer from "../../../../components/player/VideoPlayer";
 import CourseSidebar, { type SidebarSection } from "../../../../components/player/CourseSidebar";
 import QuizInterface from "../../../../components/player/QuizInterface";
 import { getVideoUrl, getQuiz, updateProgress } from "../../../../lib/api/enrollment";
 import { getValidToken } from "@/lib/auth/token";
+import { Badge, Button } from "@/components/ui";
 
 type Lesson = {
   id: string;
@@ -191,16 +193,16 @@ export default function LessonPlayerPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center">
-        <span className="h-8 w-8 rounded-full border-2 border-[#0077A8] border-t-transparent animate-spin" aria-label="Memuat materi…" />
+      <div className="min-h-screen bg-surface-page flex items-center justify-center">
+        <span className="h-8 w-8 rounded-full border-2 border-accent-cyan-strong border-t-transparent animate-spin" aria-label="Memuat materi…" />
       </div>
     );
   }
 
   if (error || !course || !lesson) {
     return (
-      <div className="min-h-screen bg-[#F5F5F7] flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-[#1D1D1F] font-semibold">{error ?? "Materi tidak ditemukan."}</p>
+      <div className="min-h-screen bg-surface-page flex flex-col items-center justify-center gap-4 p-6">
+        <p className="text-text-primary font-semibold">{error ?? "Materi tidak ditemukan."}</p>
         <Link href="/dashboard" className="btn-primary px-4 py-2 text-sm">
           Kembali ke Dashboard
         </Link>
@@ -213,159 +215,184 @@ export default function LessonPlayerPage() {
   const hasNext = currentIdx >= 0 && currentIdx < allLessons.length - 1;
   const courseCompleted = allLessons.length > 0 && completedIds.size === allLessons.length;
 
+  // Presentation-only progress readout, derived from the existing ratchet state
+  // (completedIds / lesson list). No new tracking logic is introduced.
+  const totalLessons = allLessons.length;
+  const completedCount = completedIds.size;
+  const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F5F5F7]">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-72 xl:w-80 bg-white border-r border-[#E5E5EA] shrink-0">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E5E5EA]">
-          <Link
-            href="/dashboard"
-            aria-label="Kembali ke Dashboard"
-            className="text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
-          >
-            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <h1 className="text-sm font-semibold text-[#1D1D1F] truncate">{course.title}</h1>
-        </div>
-        <CourseSidebar
-          courseSlug={slug}
-          sections={course.sections}
-          currentLessonId={lessonId}
-          completedLessonIds={completedIds}
-        />
-      </aside>
+    <div className="flex h-screen flex-col overflow-hidden bg-surface-page">
+      {/* Focus-shell top bar — back-to-dashboard, course title, progress */}
+      <header className="flex items-center gap-3 border-b border-border-default bg-surface-card px-4 py-3 shrink-0">
+        <Link
+          href="/dashboard"
+          aria-label="Kembali ke Dashboard"
+          className="flex items-center gap-2 text-text-secondary transition-colors hover:text-text-primary"
+        >
+          <ArrowLeft aria-hidden="true" className="h-5 w-5 shrink-0" />
+          <span className="hidden text-sm font-medium sm:inline">Dashboard</span>
+        </Link>
+        <span aria-hidden="true" className="hidden h-6 w-px bg-border-default sm:block" />
+        <h1 className="min-w-0 flex-1 truncate text-sm font-semibold text-text-primary">{course.title}</h1>
+        <Badge variant="info" className="hidden shrink-0 sm:inline-flex">
+          <BadgeCheck aria-hidden="true" className="h-4 w-4" />
+          {progressPct}% Selesai
+        </Badge>
+      </header>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Mobile back bar */}
-        <div className="lg:hidden bg-white border-b border-[#E5E5EA] px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard" className="text-[#6E6E73]">
-            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <span className="text-sm font-semibold text-[#1D1D1F] truncate">{course.title}</span>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-          {/* Lesson title */}
-          <div>
-            <p className="text-xs uppercase tracking-widest text-[#6E6E73] font-semibold mb-1">
-              {lesson.type === "quiz" ? "Quiz" : "Video"}
-            </p>
-            <h2 className="text-2xl font-bold text-[#1D1D1F]">{lesson.title}</h2>
-          </div>
-
-          {/* Video player */}
-          {lesson.type === "video" && videoUrl && (
-            <VideoPlayer
-              src={videoUrl}
-              title={lesson.title}
-              onProgress={handleVideoProgress}
-            />
-          )}
-
-          {/* Text lesson */}
-          {lesson.type === "text" && lesson.contentText && (
-            <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6">
-              <div className="prose prose-sm max-w-none text-[#3C3C43] whitespace-pre-wrap">
-                {lesson.contentText}
-              </div>
+      <main className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* Content area */}
+        <section className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+            {/* Lesson title */}
+            <div>
+              <p className="eyebrow">
+                {lesson.type === "quiz" ? "Kuis" : lesson.type === "text" ? "Materi" : "Video"}
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-text-primary">{lesson.title}</h2>
             </div>
-          )}
 
-          {/* Quiz */}
-          {lesson.type === "quiz" && quiz && token && (
-            <div className="bg-white rounded-2xl border border-[#E5E5EA] p-6">
-              <QuizInterface
-                lessonId={lessonId}
-                passMark={quiz.passMark}
-                questions={quiz.questions}
-                token={token}
-                onPassed={handleQuizPassed}
+            {/* Video player */}
+            {lesson.type === "video" && videoUrl && (
+              <VideoPlayer
+                src={videoUrl}
+                title={lesson.title}
+                onProgress={handleVideoProgress}
               />
-            </div>
-          )}
+            )}
 
-          {/* Course completion review prompt */}
-          {courseCompleted && !reviewDone && (
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-6">
-              <div className="flex items-start gap-4">
-                <span className="text-3xl">🎉</span>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-[#1D1D1F] mb-1">Selamat! Anda telah menyelesaikan kursus ini</h3>
-                  <p className="text-sm text-[#6E6E73] mb-4">Bagikan pengalaman belajar Anda untuk membantu peserta lain.</p>
-                  <form onSubmit={submitReview} className="space-y-3">
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((r) => (
-                        <button key={r} type="button" onClick={() => setReviewRating(r)}
-                          className={`text-2xl transition-transform hover:scale-110 ${r <= reviewRating ? "text-amber-400" : "text-[#E5E5EA]"}`}>
-                          ⭐
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      value={reviewContent}
-                      onChange={(e) => setReviewContent(e.target.value)}
-                      placeholder="Ceritakan pengalaman belajar Anda di kursus ini..."
-                      rows={3}
-                      className="w-full border border-[#E5E5EA] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0077A8]"
-                    />
-                    {reviewError && (
-                      <p role="alert" className="text-sm text-red-600">{reviewError}</p>
-                    )}
-                    <div className="flex items-center gap-3">
-                      <button type="submit" disabled={reviewSubmitting} className="px-4 py-2 bg-[#0077A8] text-white text-sm rounded-xl hover:bg-[#005f87] disabled:opacity-50">
-                        {reviewSubmitting ? "Mengirim..." : "Kirim Ulasan"}
-                      </button>
-                      <button type="button" onClick={() => setReviewDone(true)} className="text-sm text-[#6E6E73] hover:text-[#1D1D1F]">
-                        Lewati
-                      </button>
-                    </div>
-                  </form>
+            {/* Text lesson */}
+            {lesson.type === "text" && lesson.contentText && (
+              <div className="bg-surface-card rounded-2xl border border-border-default p-6">
+                <div className="prose prose-sm max-w-none text-text-secondary whitespace-pre-wrap">
+                  {lesson.contentText}
                 </div>
               </div>
-            </div>
-          )}
-          {courseCompleted && reviewDone && (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-center gap-3">
-              <span className="text-2xl">✅</span>
-              <div>
-                <p className="font-medium text-green-800">Terima kasih atas ulasan Anda!</p>
-                <p className="text-sm text-green-700 mt-0.5">Ulasan Anda membantu peserta lain memilih kursus terbaik.</p>
+            )}
+
+            {/* Quiz */}
+            {lesson.type === "quiz" && quiz && token && (
+              <div className="bg-surface-card rounded-2xl border border-border-default p-6">
+                <QuizInterface
+                  lessonId={lessonId}
+                  passMark={quiz.passMark}
+                  questions={quiz.questions}
+                  token={token}
+                  onPassed={handleQuizPassed}
+                />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between pt-2">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-sm text-[#6E6E73] hover:text-[#1D1D1F] flex items-center gap-1 transition-colors"
-            >
-              <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Sebelumnya
-            </button>
+            {/* Course completion review prompt */}
+            {courseCompleted && !reviewDone && (
+              <div className="rounded-2xl border border-border-brand bg-surface-accent-soft p-6">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white">
+                    <Award aria-hidden="true" className="h-6 w-6" />
+                  </span>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-text-primary mb-1">Selamat! Anda telah menyelesaikan kursus ini</h3>
+                    <p className="text-sm text-text-secondary mb-4">Bagikan pengalaman belajar Anda untuk membantu peserta lain.</p>
+                    <form onSubmit={submitReview} className="space-y-3">
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((r) => (
+                          <button
+                            key={r}
+                            type="button"
+                            onClick={() => setReviewRating(r)}
+                            aria-label={`Beri ${r} bintang`}
+                            className="transition-transform hover:scale-110"
+                          >
+                            <Star
+                              aria-hidden="true"
+                              className={`h-6 w-6 ${r <= reviewRating ? "fill-amber-400 text-amber-400" : "fill-transparent text-border-strong"}`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={reviewContent}
+                        onChange={(e) => setReviewContent(e.target.value)}
+                        placeholder="Ceritakan pengalaman belajar Anda di kursus ini..."
+                        rows={3}
+                        className="w-full border border-border-default rounded-xl px-3 py-2 text-sm bg-surface-card focus:outline-none focus:ring-2 focus:ring-accent-cyan-strong"
+                      />
+                      {reviewError && (
+                        <p role="alert" className="text-sm text-red-600">{reviewError}</p>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <Button type="submit" variant="cyan" size="sm" loading={reviewSubmitting}>
+                          {reviewSubmitting ? "Mengirim..." : "Kirim Ulasan"}
+                        </Button>
+                        <button type="button" onClick={() => setReviewDone(true)} className="text-sm text-text-secondary hover:text-text-primary">
+                          Lewati
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+            {courseCompleted && reviewDone && (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-center gap-3">
+                <CircleCheck aria-hidden="true" className="h-6 w-6 shrink-0 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-800">Terima kasih atas ulasan Anda!</p>
+                  <p className="text-sm text-green-700 mt-0.5">Ulasan Anda membantu peserta lain memilih kursus terbaik.</p>
+                </div>
+              </div>
+            )}
 
-            {hasNext && (
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-2">
               <button
                 type="button"
-                onClick={goToNext}
-                className="btn-primary px-5 py-2 text-sm flex items-center gap-1"
+                onClick={() => router.back()}
+                className="text-sm text-text-secondary hover:text-text-primary flex items-center gap-1 transition-colors"
               >
-                Materi Berikutnya
-                <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <ArrowLeft aria-hidden="true" className="w-4 h-4" />
+                Sebelumnya
               </button>
-            )}
+
+              {hasNext && (
+                <Button
+                  type="button"
+                  variant="cyan"
+                  size="sm"
+                  onClick={goToNext}
+                  rightIcon={<ArrowRight aria-hidden="true" className="w-4 h-4" />}
+                >
+                  Materi Berikutnya
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* Right curriculum rail */}
+        <aside className="hidden w-full shrink-0 flex-col border-l border-border-default bg-surface-card lg:flex lg:w-80 xl:w-96">
+          <div className="space-y-3 border-b border-border-default px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-text-primary">Konten Kursus</h3>
+              <span className="text-xs font-bold text-accent-cyan-strong">
+                {completedCount}/{totalLessons} Selesai
+              </span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
+              <div
+                className="h-full rounded-full bg-brand-gradient transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+          <CourseSidebar
+            courseSlug={slug}
+            sections={course.sections}
+            currentLessonId={lessonId}
+            completedLessonIds={completedIds}
+          />
+        </aside>
       </main>
     </div>
   );

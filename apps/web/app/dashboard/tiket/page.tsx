@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import type { LucideIcon } from "lucide-react";
+import {
+  Ticket, CalendarDays, MapPin, Globe, Clock, CheckCircle2, XCircle, PartyPopper, Info, Check, Loader2,
+} from "lucide-react";
+import { Badge } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
 
 type EventInfo = {
@@ -37,14 +44,14 @@ function formatDate(dateStr: string) {
   });
 }
 
-const STATUS_INFO: Record<string, { label: string; class: string; icon: string }> = {
-  pending:   { label: "Menunggu",       class: "tk-status-pending",   icon: "⏳" },
-  confirmed: { label: "Terkonfirmasi",  class: "tk-status-confirmed", icon: "✅" },
-  cancelled: { label: "Dibatalkan",     class: "tk-status-cancelled", icon: "❌" },
-  attended:  { label: "Hadir",          class: "tk-status-attended",  icon: "🎉" },
+const STATUS_META: Record<string, { label: string; variant: "warning" | "success" | "danger" | "info" | "neutral"; Icon: LucideIcon }> = {
+  pending:   { label: "Menunggu",      variant: "warning", Icon: Clock },
+  confirmed: { label: "Terkonfirmasi", variant: "success", Icon: CheckCircle2 },
+  cancelled: { label: "Dibatalkan",    variant: "danger",  Icon: XCircle },
+  attended:  { label: "Hadir",         variant: "info",    Icon: PartyPopper },
 };
 
-const TYPE_LABEL: Record<string, string> = { online: "🌐 Online", offline: "📍 Offline", hybrid: "🔀 Hybrid" };
+const TYPE_LABEL: Record<string, string> = { online: "Online", offline: "Offline", hybrid: "Hybrid" };
 
 export default function TiketPage() {
   const router = useRouter();
@@ -67,74 +74,92 @@ export default function TiketPage() {
   }, [router]);
 
   if (loading) {
-    return <div className="tk-loading"><span className="tk-spinner" /></div>;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
+    );
   }
 
   return (
-    <div className="tk-page">
-      <div className="tk-header">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="tk-title">Tiket Event Saya</h1>
-          <p className="tk-subtitle">{tickets.length} tiket terdaftar</p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Tiket Event Saya</h1>
+          <p className="mt-1 text-sm text-text-secondary">{tickets.length} tiket terdaftar</p>
         </div>
-        <Link href="/event" className="tk-browse-btn">🗓 Jelajahi Event</Link>
+        <Link href="/event" className="btn btn-primary btn-sm">
+          <CalendarDays size={16} aria-hidden="true" /> Jelajahi Event
+        </Link>
       </div>
 
       {tickets.length === 0 ? (
-        <div className="tk-empty">
-          <div className="tk-empty-art">🎫</div>
-          <h2 className="tk-empty-title">Belum ada tiket</h2>
-          <p className="tk-empty-desc">Daftar event untuk mendapatkan tiket pertama Anda.</p>
-          <Link href="/event" className="tk-empty-cta">Lihat Event Tersedia</Link>
-        </div>
+        <EmptyState
+          icon={Ticket}
+          title="Belum ada tiket"
+          description="Daftar event untuk mendapatkan tiket pertama Anda."
+          action={<Link href="/event" className="btn btn-primary btn-sm">Lihat Event Tersedia</Link>}
+        />
       ) : (
-        <div className="tk-list">
+        <div className="flex flex-col gap-3">
           {tickets.map((ticket) => {
-            const statusInfo = STATUS_INFO[ticket.status] ?? { label: ticket.status, class: "tk-status-pending", icon: "ℹ️" };
+            const meta = STATUS_META[ticket.status] ?? { label: ticket.status, variant: "neutral" as const, Icon: Info };
+            const StatusIcon = meta.Icon;
             const isOnline = ticket.event.type === "online";
+            const isDone = ticket.status === "confirmed" || ticket.status === "attended";
 
             return (
-              <div key={ticket.id} className="tk-card">
+              <div
+                key={ticket.id}
+                className="flex items-stretch overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
+              >
                 {/* Left accent */}
-                <div className={`tk-accent ${ticket.status === "confirmed" || ticket.status === "attended" ? "tk-accent-green" : "tk-accent-blue"}`} />
+                <div className={cn("w-1.5 flex-shrink-0", isDone ? "bg-green-500" : "bg-accent-cyan-strong")} />
 
                 {/* Cover */}
-                <div className="tk-cover">
+                <div className="m-3.5 flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-accent-soft text-accent-cyan-strong max-[640px]:hidden">
                   {ticket.event.coverUrl ? (
-                    <Image src={ticket.event.coverUrl} alt="" width={80} height={80} className="tk-cover-img" />
+                    <Image src={ticket.event.coverUrl} alt="" width={80} height={80} className="h-full w-full object-cover" />
+                  ) : isOnline ? (
+                    <Globe size={28} aria-hidden="true" />
                   ) : (
-                    <div className="tk-cover-placeholder">
-                      <span>{isOnline ? "🌐" : "📍"}</span>
-                    </div>
+                    <MapPin size={28} aria-hidden="true" />
                   )}
                 </div>
 
                 {/* Info */}
-                <div className="tk-info">
-                  <div className="tk-info-top">
-                    <div>
-                      <Link href={`/event/${ticket.event.slug}`} className="tk-event-title">
+                <div className="flex flex-1 flex-col justify-between gap-2.5 py-3.5 pr-4 max-[640px]:pl-3.5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link href={`/event/${ticket.event.slug}`} className="block text-sm font-bold text-text-primary transition-colors hover:text-accent-cyan-strong">
                         {ticket.event.title}
                       </Link>
-                      <p className="tk-event-meta">
-                        {TYPE_LABEL[ticket.event.type]} · {formatDate(ticket.event.startDate)}
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                        <Badge variant="neutral">{TYPE_LABEL[ticket.event.type] ?? ticket.event.type}</Badge>
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDays size={13} aria-hidden="true" /> {formatDate(ticket.event.startDate)}
+                        </span>
+                      </div>
                       {!isOnline && ticket.event.venue && (
-                        <p className="tk-event-venue">📍 {ticket.event.venue}</p>
+                        <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-text-muted">
+                          <MapPin size={12} aria-hidden="true" /> {ticket.event.venue}
+                        </p>
                       )}
                     </div>
-                    <span className={`tk-status-badge ${statusInfo.class}`}>
-                      {statusInfo.icon} {statusInfo.label}
-                    </span>
+                    <Badge variant={meta.variant}>
+                      <StatusIcon size={13} aria-hidden="true" /> {meta.label}
+                    </Badge>
                   </div>
 
-                  <div className="tk-info-bottom">
-                    <div className="tk-ticket-code">
-                      <span className="tk-code-label">Kode Tiket</span>
-                      <code className="tk-code-val">{ticket.ticketCode.slice(0, 8).toUpperCase()}</code>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col gap-0.5 rounded-lg bg-surface-sunken px-3 py-1.5">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">Kode Tiket</span>
+                      <code className="font-mono text-[13px] font-extrabold tracking-wider text-text-primary">{ticket.ticketCode.slice(0, 8).toUpperCase()}</code>
                     </div>
                     {ticket.attendedAt && (
-                      <span className="tk-attended">✓ Hadir: {formatDate(ticket.attendedAt)}</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-cyan-strong">
+                        <Check size={13} aria-hidden="true" /> Hadir: {formatDate(ticket.attendedAt)}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -143,100 +168,6 @@ export default function TiketPage() {
           })}
         </div>
       )}
-
-      <style jsx>{`
-        .tk-page { display: flex; flex-direction: column; gap: 20px; }
-        .tk-loading { display: flex; justify-content: center; align-items: center; min-height: 50vh; }
-        .tk-spinner {
-          width: 36px; height: 36px; border-radius: 50%;
-          border: 3px solid #0077A8; border-top-color: transparent;
-          animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .tk-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .tk-title { font-size: 22px; font-weight: 800; color: #1D1D1F; }
-        .tk-subtitle { font-size: 13px; color: #6E6E73; margin-top: 3px; }
-        .tk-browse-btn {
-          padding: 10px 20px; background: linear-gradient(135deg, #7C3AED, #a855f7);
-          color: white; border-radius: 10px; font-size: 13px; font-weight: 600;
-          text-decoration: none; transition: opacity 0.2s;
-        }
-        .tk-browse-btn:hover { opacity: 0.85; }
-
-        .tk-empty {
-          background: white; border-radius: 20px; padding: 64px 32px;
-          text-align: center; border: 1px dashed #E5E5EA;
-        }
-        .tk-empty-art { font-size: 64px; margin-bottom: 20px; }
-        .tk-empty-title { font-size: 18px; font-weight: 700; color: #1D1D1F; margin-bottom: 10px; }
-        .tk-empty-desc { font-size: 14px; color: #6E6E73; margin-bottom: 24px; }
-        .tk-empty-cta {
-          display: inline-block; padding: 12px 28px;
-          background: linear-gradient(135deg, #7C3AED, #a855f7);
-          color: white; border-radius: 12px;
-          font-size: 14px; font-weight: 600; text-decoration: none;
-        }
-
-        .tk-list { display: flex; flex-direction: column; gap: 12px; }
-
-        .tk-card {
-          background: white; border-radius: 16px; overflow: hidden;
-          display: flex; align-items: stretch;
-          border: 1px solid rgba(0,0,0,0.06);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          transition: all 0.22s;
-        }
-        .tk-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-
-        .tk-accent { width: 5px; flex-shrink: 0; }
-        .tk-accent-green { background: linear-gradient(180deg, #22C55E, #16A34A); }
-        .tk-accent-blue  { background: linear-gradient(180deg, #0077A8, #00a8d9); }
-
-        .tk-cover {
-          width: 80px; height: 80px; flex-shrink: 0;
-          margin: 14px; border-radius: 12px; overflow: hidden;
-          background: linear-gradient(135deg, #7C3AED20, #a855f720);
-          display: flex; align-items: center; justify-content: center;
-        }
-        .tk-cover-img { width: 100%; height: 100%; object-fit: cover; }
-        .tk-cover-placeholder { font-size: 28px; }
-
-        .tk-info { flex: 1; padding: 14px 18px 14px 0; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
-        .tk-info-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-
-        .tk-event-title {
-          font-size: 14px; font-weight: 700; color: #1D1D1F;
-          text-decoration: none; display: block; margin-bottom: 4px;
-          transition: color 0.15s;
-        }
-        .tk-event-title:hover { color: #0077A8; }
-        .tk-event-meta { font-size: 12px; color: #6E6E73; }
-        .tk-event-venue { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
-
-        .tk-status-badge {
-          font-size: 11px; font-weight: 700; padding: 4px 12px;
-          border-radius: 999px; white-space: nowrap; flex-shrink: 0;
-        }
-        .tk-status-pending   { background: #FEF9C3; color: #CA8A04; }
-        .tk-status-confirmed { background: #DCFCE7; color: #16A34A; }
-        .tk-status-cancelled { background: #FEE2E2; color: #DC2626; }
-        .tk-status-attended  { background: #DBEAFE; color: #1D4ED8; }
-
-        .tk-info-bottom { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .tk-ticket-code {
-          background: #F5F5F7; border-radius: 8px;
-          padding: 6px 12px; display: flex; flex-direction: column; gap: 1px;
-        }
-        .tk-code-label { font-size: 9px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-        .tk-code-val { font-size: 13px; font-weight: 800; color: #1D1D1F; font-family: monospace; letter-spacing: 0.05em; }
-        .tk-attended { font-size: 11px; color: #1D4ED8; font-weight: 600; }
-
-        @media (max-width: 640px) {
-          .tk-cover { display: none; }
-          .tk-info { padding-left: 14px; }
-        }
-      `}</style>
     </div>
   );
 }

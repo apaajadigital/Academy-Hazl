@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { Button } from "@/components/ui";
 import { submitQuiz } from "../../lib/api/enrollment";
 
 type Question = {
@@ -59,64 +61,88 @@ export default function QuizInterface({ lessonId, passMark, questions, token, on
     return (
       <div className="text-center space-y-6 py-8">
         <div
-          className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl font-bold text-white ${result.isPassed ? "bg-green-500" : "bg-red-500"}`}
+          className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center text-3xl font-bold text-white ${result.isPassed ? "bg-green-600" : "bg-red-600"}`}
         >
           {Math.round(result.score)}
         </div>
 
-        <div>
-          <h3 className={`text-xl font-bold ${result.isPassed ? "text-green-700" : "text-red-700"}`}>
-            {result.isPassed ? "Selamat, Anda Lulus!" : "Belum Lulus"}
-          </h3>
-          <p className="text-[#6E6E73] text-sm mt-1">
+        <div className="space-y-1">
+          <div className="flex items-center justify-center gap-2">
+            {result.isPassed ? (
+              <CircleCheck aria-hidden="true" className="w-5 h-5 text-green-600" />
+            ) : (
+              <CircleX aria-hidden="true" className="w-5 h-5 text-red-600" />
+            )}
+            <h3 className={`text-xl font-bold ${result.isPassed ? "text-green-700" : "text-red-700"}`}>
+              {result.isPassed ? "Selamat, Anda Lulus!" : "Belum Lulus"}
+            </h3>
+          </div>
+          <p className="text-text-secondary text-sm">
             {result.correct} dari {result.total} jawaban benar · Nilai minimum {result.passMark}
           </p>
         </div>
 
         {!result.isPassed && (
-          <button
-            type="button"
-            onClick={reset}
-            className="btn-primary px-6 py-2"
-          >
+          <Button type="button" variant="cyan" onClick={reset}>
             Coba Lagi
-          </button>
+          </Button>
         )}
       </div>
     );
   }
 
+  const answeredCount = Object.keys(answers).length;
+  const answeredPct = questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0;
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-[#1D1D1F]">Quiz</h2>
-        <span className="text-xs text-[#6E6E73]">Nilai minimum: {passMark}</span>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-text-primary">Kuis</h2>
+          <span className="text-xs text-text-secondary">Nilai minimum: {passMark}</span>
+        </div>
+        {/* Answered-progress bar (derived from the existing `answers` state — no
+            new logic; mirrors the Stitch quiz progress affordance). */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs font-medium">
+            <span className="text-text-secondary uppercase tracking-wider">Progres</span>
+            <span className="text-accent-cyan-strong font-bold">
+              {answeredCount}/{questions.length} terjawab
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
+            <div
+              className="h-full rounded-full bg-brand-gradient transition-all duration-500 ease-out"
+              style={{ width: `${answeredPct}%` }}
+            />
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div role="alert" className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+        <div role="alert" className="px-4 py-3 rounded-xl bg-red-600/10 border border-red-200 text-red-700 text-sm">
           {error}
         </div>
       )}
 
       {questions.map((q, idx) => (
         <div key={q.id} className="space-y-3">
-          <p className="font-medium text-[#1D1D1F]">
-            <span className="text-[#0077A8] mr-2">{idx + 1}.</span>
+          <p className="font-medium text-text-primary">
+            <span className="text-accent-cyan-strong mr-2">{idx + 1}.</span>
             {q.question}
           </p>
           {/* Finding #8b: expose the option set as a radiogroup labelled by the
               question so screen readers tie the choices to their prompt. */}
-          <div className="space-y-2" role="radiogroup" aria-label={`${idx + 1}. ${q.question}`}>
+          <div className="space-y-3" role="radiogroup" aria-label={`${idx + 1}. ${q.question}`}>
             {(q.options as string[]).map((opt, optIdx) => {
               const selected = answers[q.id] === optIdx;
               return (
                 <label
                   key={optIdx}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
+                  className={`flex items-center gap-4 px-4 py-3.5 rounded-xl cursor-pointer transition-all ${
                     selected
-                      ? "border-[#0077A8] bg-[#E8F4FB] text-[#0077A8]"
-                      : "border-[#E5E5EA] hover:border-[#0077A8]/40 hover:bg-[#F5F5F7]"
+                      ? "border-2 border-accent-cyan-strong bg-surface-accent-soft text-text-primary font-semibold"
+                      : "border border-border-default hover:border-accent-cyan-strong hover:bg-surface-sunken text-text-primary"
                   }`}
                 >
                   <input
@@ -128,8 +154,8 @@ export default function QuizInterface({ lessonId, passMark, questions, token, on
                     className="sr-only"
                   />
                   <span
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      selected ? "border-[#0077A8] bg-[#0077A8]" : "border-[#C7C7CC]"
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      selected ? "border-accent-cyan-strong bg-accent-cyan-strong" : "border-border-strong"
                     }`}
                   >
                     {selected && <span className="w-2 h-2 rounded-full bg-white" />}
@@ -142,21 +168,16 @@ export default function QuizInterface({ lessonId, passMark, questions, token, on
         </div>
       ))}
 
-      <button
+      <Button
         type="button"
+        variant="cyan"
         onClick={handleSubmit}
         disabled={!allAnswered || loading}
-        className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        loading={loading}
+        className="w-full"
       >
-        {loading ? (
-          <>
-            <span className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" aria-hidden="true" />
-            Mengirim…
-          </>
-        ) : (
-          "Kirim Jawaban"
-        )}
-      </button>
+        {loading ? "Mengirim…" : "Kirim Jawaban"}
+      </Button>
     </div>
   );
 }

@@ -3,6 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
+import {
+  Plus, ShoppingBag, CheckCircle2, Clock, BookOpen, BookMarked, Ticket, Star, Loader2,
+} from "lucide-react";
+import { Badge, Table, THead, TBody, TR, TH, TD, Pagination } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { getToken } from "@/lib/auth/token";
 
 type OrderItem = { itemTitle: string | null; itemType: string };
@@ -14,19 +20,19 @@ type Order = {
   items: OrderItem[];
 };
 
-const STATUS_LABEL: Record<string, { label: string; className: string }> = {
-  paid:    { label: "Lunas",                className: "badge-paid" },
-  pending: { label: "Menunggu Pembayaran",  className: "badge-pending" },
-  failed:  { label: "Gagal",               className: "badge-failed" },
-  expired: { label: "Kedaluwarsa",          className: "badge-expired" },
-  cancelled: { label: "Dibatalkan",         className: "badge-expired" },
+const STATUS_LABEL: Record<string, { label: string; variant: "success" | "warning" | "danger" | "neutral" }> = {
+  paid:      { label: "Lunas",               variant: "success" },
+  pending:   { label: "Menunggu Pembayaran", variant: "warning" },
+  failed:    { label: "Gagal",               variant: "danger" },
+  expired:   { label: "Kedaluwarsa",         variant: "neutral" },
+  cancelled: { label: "Dibatalkan",          variant: "neutral" },
 };
 
-const TYPE_ICON: Record<string, string> = {
-  course: "📖",
-  ebook: "📚",
-  event: "🎫",
-  subscription: "⭐",
+const TYPE_ICON: Record<string, LucideIcon> = {
+  course: BookOpen,
+  ebook: BookMarked,
+  event: Ticket,
+  subscription: Star,
 };
 
 
@@ -85,210 +91,144 @@ export default function PesananDashboardPage() {
   }, [page, router]);
 
   const totalPages = Math.ceil(total / limit);
+  const paidCount = orders.filter((o) => o.status === "paid").length;
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
 
   if (loading) {
     return (
-      <div className="po-loading"><span className="po-spinner" /></div>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      </div>
     );
   }
 
   return (
-    <div className="po-page">
-      <div className="po-header">
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="po-title">Pesanan Saya</h1>
-          <p className="po-subtitle">{total} total transaksi</p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Pesanan Saya</h1>
+          <p className="mt-1 text-sm text-text-secondary">{total} total transaksi</p>
         </div>
-        <Link href="/e-course" className="po-shop-btn">+ Beli Kursus</Link>
+        <Link href="/e-course" className="btn btn-primary btn-sm">
+          <Plus size={16} aria-hidden="true" /> Beli Kursus
+        </Link>
       </div>
 
       {orders.length === 0 ? (
-        <div className="po-empty">
-          <span className="po-empty-emoji">🛒</span>
-          <h2 className="po-empty-title">Belum ada pesanan</h2>
-          <p className="po-empty-desc">Mulai belajar dengan membeli kursus pertama Anda.</p>
-          <Link href="/e-course" className="po-empty-cta">Jelajahi Kursus</Link>
-        </div>
+        <EmptyState
+          icon={ShoppingBag}
+          title="Belum ada pesanan"
+          description="Mulai belajar dengan membeli kursus pertama Anda."
+          action={<Link href="/e-course" className="btn btn-primary btn-sm">Jelajahi Kursus</Link>}
+        />
       ) : (
         <>
-          <div className="po-list">
-            {orders.map((order) => {
-              const status = STATUS_LABEL[order.status] ?? { label: order.status, className: "badge-expired" };
-              const title = order.items[0]?.itemTitle ?? "Produk";
-              const itemType = order.items[0]?.itemType ?? "";
-              const icon = TYPE_ICON[itemType] ?? "🛍️";
-
-              return (
-                <div key={order.id} className="po-card">
-                  <div className="po-card-left">
-                    <div className="po-type-icon">{icon}</div>
-                    <div className="po-card-info">
-                      <p className="po-card-title">{title}</p>
-                      <p className="po-card-meta">
-                        {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(order.createdAt))}
-                      </p>
-                      <p className="po-card-id">#{order.id.slice(0, 8).toUpperCase()}</p>
-                    </div>
-                  </div>
-
-                  <div className="po-card-right">
-                    <p className="po-card-amount">
-                      Rp {Number(order.finalAmount).toLocaleString("id-ID")}
-                    </p>
-                    <span className={`po-badge ${status.className}`}>{status.label}</span>
-                    <div className="po-card-actions" style={{ alignItems: "center" }}>
-                      <Link href={`/pesanan/${order.id}`} className="po-detail-link">
-                        Lihat Detail →
-                      </Link>
-                      {order.status === "pending" && (
-                        <button
-                          onClick={() => handleCancelOrder(order.id)}
-                          disabled={cancellingId === order.id}
-                          className="po-cancel-btn"
-                          style={{
-                            background: "none",
-                            border: "none",
-                            padding: 0,
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            color: "#DC2626",
-                            fontWeight: 600,
-                            opacity: cancellingId === order.id ? 0.5 : 1,
-                          }}
-                        >
-                          {cancellingId === order.id ? "Batal..." : "Batalkan"}
-                        </button>
-                      )}
-                      {order.status === "paid" && (
-                        <a
-                          href={`/api/orders/${order.id}/invoice`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="po-invoice-link"
-                        >
-                          Invoice
-                        </a>
-                      )}
-                    </div>
-                  </div>
+          {/* Stat summary */}
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+            {[
+              { label: "Total Pesanan", value: total, Icon: ShoppingBag, wrap: "bg-surface-accent-soft text-accent-cyan-strong" },
+              { label: "Pesanan Selesai", value: paidCount, Icon: CheckCircle2, wrap: "bg-green-600/10 text-green-600" },
+              { label: "Menunggu Pembayaran", value: pendingCount, Icon: Clock, wrap: "bg-amber-500/10 text-amber-600" },
+            ].map(({ label, value, Icon, wrap }) => (
+              <div key={label} className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-5 shadow-e1">
+                <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${wrap}`}>
+                  <Icon size={22} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-text-secondary">{label}</p>
+                  <p className="font-display text-lg font-extrabold text-text-primary">{value}</p>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="po-pagination">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="po-page-btn"
-              >
-                ← Sebelumnya
-              </button>
-              <span className="po-page-info">Halaman {page} dari {totalPages}</span>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="po-page-btn"
-              >
-                Berikutnya →
-              </button>
+          {/* Orders table */}
+          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
+            <div className="overflow-x-auto">
+              <Table>
+              <THead>
+                <tr>
+                  <TH>No. Pesanan</TH>
+                  <TH>Tanggal</TH>
+                  <TH>Item</TH>
+                  <TH className="text-right">Total</TH>
+                  <TH>Status</TH>
+                  <TH className="text-center">Aksi</TH>
+                </tr>
+              </THead>
+              <TBody>
+                {orders.map((order) => {
+                  const status = STATUS_LABEL[order.status] ?? { label: order.status, variant: "neutral" as const };
+                  const title = order.items[0]?.itemTitle ?? "Produk";
+                  const itemType = order.items[0]?.itemType ?? "";
+                  const Icon = TYPE_ICON[itemType] ?? ShoppingBag;
+
+                  return (
+                    <TR key={order.id}>
+                      <TD className="font-mono text-xs font-semibold text-text-primary">#{order.id.slice(0, 8).toUpperCase()}</TD>
+                      <TD className="whitespace-nowrap text-text-secondary">
+                        {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(order.createdAt))}
+                      </TD>
+                      <TD>
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-accent-cyan-strong">
+                            <Icon size={16} aria-hidden="true" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-text-primary">{title}</p>
+                            {itemType && <p className="text-xs capitalize text-text-muted">{itemType}</p>}
+                          </div>
+                        </div>
+                      </TD>
+                      <TD className="whitespace-nowrap text-right font-bold text-text-primary">
+                        Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                      </TD>
+                      <TD>
+                        <Badge variant={status.variant} dot>{status.label}</Badge>
+                      </TD>
+                      <TD>
+                        <div className="flex items-center justify-center gap-3">
+                          <Link href={`/pesanan/${order.id}`} className="whitespace-nowrap text-sm font-semibold text-accent-cyan-strong hover:underline">
+                            Lihat Detail
+                          </Link>
+                          {order.status === "pending" && (
+                            <button
+                              onClick={() => handleCancelOrder(order.id)}
+                              disabled={cancellingId === order.id}
+                              className="whitespace-nowrap text-sm font-semibold text-red-600 disabled:opacity-50"
+                            >
+                              {cancellingId === order.id ? "Batal..." : "Batalkan"}
+                            </button>
+                          )}
+                          {order.status === "paid" && (
+                            <a
+                              href={`/api/orders/${order.id}/invoice`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="whitespace-nowrap text-sm text-text-secondary hover:text-text-primary"
+                            >
+                              Invoice
+                            </a>
+                          )}
+                        </div>
+                      </TD>
+                    </TR>
+                  );
+                })}
+              </TBody>
+            </Table>
             </div>
-          )}
+
+            {/* Pagination footer */}
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+                <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+                <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+              </div>
+            )}
+          </div>
         </>
       )}
-
-      <style jsx>{`
-        .po-page { display: flex; flex-direction: column; gap: 20px; }
-        .po-loading { display: flex; justify-content: center; align-items: center; min-height: 50vh; }
-        .po-spinner {
-          width: 36px; height: 36px; border-radius: 50%;
-          border: 3px solid #0077A8; border-top-color: transparent;
-          animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .po-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-        .po-title { font-size: 22px; font-weight: 800; color: #1D1D1F; }
-        .po-subtitle { font-size: 13px; color: #6E6E73; margin-top: 3px; }
-        .po-shop-btn {
-          padding: 10px 20px; background: #0077A8; color: white;
-          border-radius: 10px; font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s;
-        }
-        .po-shop-btn:hover { background: #005f87; }
-
-        .po-empty {
-          background: white; border-radius: 20px; padding: 64px 32px;
-          text-align: center; border: 1px dashed #E5E5EA;
-        }
-        .po-empty-emoji { font-size: 56px; display: block; margin-bottom: 16px; }
-        .po-empty-title { font-size: 18px; font-weight: 700; color: #1D1D1F; margin-bottom: 8px; }
-        .po-empty-desc { font-size: 14px; color: #6E6E73; margin-bottom: 24px; }
-        .po-empty-cta {
-          display: inline-block; padding: 12px 28px;
-          background: #0077A8; color: white; border-radius: 12px;
-          font-size: 14px; font-weight: 600; text-decoration: none;
-          transition: background 0.2s;
-        }
-        .po-empty-cta:hover { background: #005f87; }
-
-        .po-list { display: flex; flex-direction: column; gap: 10px; }
-
-        .po-card {
-          background: white; border-radius: 16px; padding: 18px 20px;
-          display: flex; align-items: center; justify-content: space-between; gap: 16px;
-          border: 1px solid rgba(0,0,0,0.06);
-          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-          transition: box-shadow 0.2s;
-          flex-wrap: wrap;
-        }
-        .po-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); }
-
-        .po-card-left { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
-        .po-type-icon {
-          width: 44px; height: 44px; border-radius: 12px;
-          background: #F0F4F8; font-size: 22px;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .po-card-info { min-width: 0; }
-        .po-card-title { font-size: 14px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .po-card-meta { font-size: 12px; color: #6E6E73; margin-top: 2px; }
-        .po-card-id { font-size: 10px; color: #C0C0C7; font-family: monospace; margin-top: 2px; }
-
-        .po-card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-        .po-card-amount { font-size: 15px; font-weight: 700; color: #1D1D1F; }
-        .po-badge {
-          font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
-        }
-        .badge-paid    { background: #DCFCE7; color: #16A34A; }
-        .badge-pending { background: #FEF9C3; color: #CA8A04; }
-        .badge-failed  { background: #FEE2E2; color: #DC2626; }
-        .badge-expired { background: #F3F4F6; color: #6B7280; }
-
-        .po-card-actions { display: flex; gap: 10px; }
-        .po-detail-link { font-size: 12px; color: #0077A8; text-decoration: none; font-weight: 600; }
-        .po-detail-link:hover { text-decoration: underline; }
-        .po-invoice-link { font-size: 12px; color: #6E6E73; text-decoration: none; }
-        .po-invoice-link:hover { color: #1D1D1F; }
-
-        /* Pagination */
-        .po-pagination { display: flex; align-items: center; justify-content: center; gap: 16px; padding-top: 8px; }
-        .po-page-btn {
-          padding: 9px 18px; background: white;
-          border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
-          font-size: 13px; font-weight: 600; color: #1D1D1F;
-          cursor: pointer; transition: all 0.18s;
-        }
-        .po-page-btn:hover:not(:disabled) { background: #0077A8; color: white; border-color: #0077A8; }
-        .po-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .po-page-info { font-size: 13px; color: #6E6E73; }
-
-        @media (max-width: 640px) {
-          .po-card { flex-direction: column; align-items: flex-start; }
-          .po-card-right { align-items: flex-start; }
-        }
-      `}</style>
     </div>
   );
 }

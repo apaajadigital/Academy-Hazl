@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ChevronDown, CircleCheck, CirclePlay, Circle, HelpCircle } from "lucide-react";
 
 export type SidebarSection = {
   id: string;
@@ -51,65 +52,59 @@ export default function CourseSidebar({
     return `${m} mnt`;
   }
 
-  function getLessonIcon(type: string, isCompleted: boolean) {
+  // Lesson-status glyph (completed → playing → quiz → not-started). Status is
+  // derived from the same completed/current inputs as the styling below; the
+  // Material Symbols are swapped for lucide per the redesign icon map.
+  function getLessonIcon(type: string, isCompleted: boolean, isCurrent: boolean) {
     if (isCompleted) {
-      return (
-        <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-          <svg aria-hidden="true" className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
-        </span>
-      );
+      return <CircleCheck aria-hidden="true" className="w-5 h-5 shrink-0 text-green-600" />;
+    }
+    if (isCurrent) {
+      return <CirclePlay aria-hidden="true" className="w-5 h-5 shrink-0 text-accent-cyan-strong" />;
     }
     if (type === "quiz") {
-      return (
-        <span className="w-5 h-5 shrink-0 text-[#0077A8]">
-          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </span>
-      );
+      return <HelpCircle aria-hidden="true" className="w-5 h-5 shrink-0 text-text-secondary" />;
     }
-    return (
-      <span className="w-5 h-5 shrink-0 text-[#6E6E73]">
-        <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </span>
-    );
+    return <Circle aria-hidden="true" className="w-5 h-5 shrink-0 text-text-secondary" />;
   }
 
   return (
     <nav aria-label="Daftar materi kursus" className="h-full overflow-y-auto">
-      <div className="py-2 space-y-1">
-        {sections.map((section) => {
+      <div className="py-2">
+        {sections.map((section, sIdx) => {
           const isOpen = openSections.has(section.id);
           const doneInSection = section.lessons.filter((l) => completedLessonIds.has(l.id)).length;
+          const sectionActive = section.lessons.some((l) => l.id === currentLessonId);
 
           return (
-            <div key={section.id} className="border-b border-[#E5E5EA] last:border-0">
+            <div key={section.id} className="border-b border-border-default last:border-0">
               <button
                 type="button"
                 onClick={() => toggleSection(section.id)}
                 aria-expanded={isOpen}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#F5F5F7] transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-surface-sunken transition-colors"
               >
-                <div>
-                  <p className="font-semibold text-sm text-[#1D1D1F]">{section.title}</p>
-                  <p className="text-xs text-[#6E6E73]">
-                    {doneInSection}/{section.lessons.length} selesai
-                  </p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                      sectionActive
+                        ? "bg-accent-cyan-strong text-white"
+                        : "bg-surface-accent-soft text-accent-cyan-strong"
+                    }`}
+                  >
+                    {String(sIdx + 1).padStart(2, "0")}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-text-primary truncate">{section.title}</p>
+                    <p className="text-xs text-text-secondary">
+                      {doneInSection}/{section.lessons.length} selesai
+                    </p>
+                  </div>
                 </div>
-                <svg
+                <ChevronDown
                   aria-hidden="true"
-                  className={`w-4 h-4 text-[#6E6E73] shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                  className={`w-4 h-4 text-text-secondary shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {isOpen && (
@@ -122,18 +117,25 @@ export default function CourseSidebar({
                       <li key={lesson.id}>
                         <Link
                           href={`/belajar/${courseSlug}/${lesson.id}`}
-                          className={`flex items-start gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          className={`flex items-start gap-3 border-l-[3px] px-4 py-2.5 text-sm transition-colors ${
                             isCurrent
-                              ? "bg-[#E8F4FB] text-[#0077A8] font-medium"
-                              : "hover:bg-[#F5F5F7] text-[#3C3C43]"
+                              ? "border-accent-cyan-strong bg-surface-accent-soft font-medium text-accent-cyan-strong"
+                              : "border-transparent text-text-primary hover:bg-surface-sunken"
                           }`}
                           aria-current={isCurrent ? "page" : undefined}
                         >
-                          {getLessonIcon(lesson.type, isDone)}
+                          {getLessonIcon(lesson.type, isDone, isCurrent)}
                           <div className="flex-1 min-w-0">
                             <p className="leading-tight truncate">{lesson.title}</p>
-                            {lesson.duration > 0 && (
-                              <p className="text-xs text-[#6E6E73] mt-0.5">{formatDuration(lesson.duration)}</p>
+                            {isCurrent ? (
+                              <p className="text-xs text-accent-cyan-strong/80 mt-0.5">
+                                Sedang Dipelajari
+                                {lesson.duration > 0 ? ` • ${formatDuration(lesson.duration)}` : ""}
+                              </p>
+                            ) : (
+                              lesson.duration > 0 && (
+                                <p className="text-xs text-text-secondary mt-0.5">{formatDuration(lesson.duration)}</p>
+                              )
                             )}
                           </div>
                         </Link>

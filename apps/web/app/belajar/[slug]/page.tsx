@@ -35,8 +35,8 @@ export default function CoursePlayerEntryPage() {
   }, [slug, router]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] flex items-center justify-center">
-      <span className="h-8 w-8 rounded-full border-2 border-[#0077A8] border-t-transparent animate-spin" aria-label="Memuat kursus…" />
+    <div className="min-h-screen bg-surface-page flex items-center justify-center">
+      <span className="h-8 w-8 rounded-full border-2 border-accent-cyan-strong border-t-transparent animate-spin" aria-label="Memuat kursus…" />
     </div>
   );
 }

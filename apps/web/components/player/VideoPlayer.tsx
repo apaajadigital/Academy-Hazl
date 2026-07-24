@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
+import { Play, Pause, Maximize, Volume2 } from "lucide-react";
 
 type Props = {
   src: string;
@@ -83,7 +84,7 @@ export default function VideoPlayer({ src, title, onProgress }: Props) {
 
   return (
     <div
-      className="relative bg-black rounded-xl overflow-hidden group"
+      className="relative bg-black rounded-xl overflow-hidden group shadow-e3"
       onMouseMove={resetHideTimer}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
@@ -107,12 +108,10 @@ export default function VideoPlayer({ src, title, onProgress }: Props) {
           type="button"
           onClick={togglePlay}
           aria-label="Putar video"
-          className="absolute inset-0 flex items-center justify-center"
+          className="group/play absolute inset-0 flex items-center justify-center bg-black/30 transition-colors hover:bg-black/10"
         >
-          <span className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center hover:bg-white/30 transition">
-            <svg aria-hidden="true" className="w-8 h-8 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-gradient text-white shadow-e3 transition-transform group-hover/play:scale-110">
+            <Play aria-hidden="true" className="h-8 w-8 translate-x-0.5" fill="currentColor" />
           </span>
         </button>
       )}
@@ -142,30 +141,29 @@ export default function VideoPlayer({ src, title, onProgress }: Props) {
               className="text-white hover:text-[#0077A8] transition"
             >
               {isPlaying ? (
-                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 19h4V5H6zm8-14v14h4V5z" />
-                </svg>
+                <Pause aria-hidden="true" className="w-5 h-5" fill="currentColor" />
               ) : (
-                <svg aria-hidden="true" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+                <Play aria-hidden="true" className="w-5 h-5" fill="currentColor" />
               )}
             </button>
 
-            <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
-              value={volume}
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                setVolume(v);
-                if (videoRef.current) videoRef.current.volume = v;
-              }}
-              className="w-20 h-1 accent-[#0077A8]"
-              aria-label="Volume"
-            />
+            <div className="flex items-center gap-1.5">
+              <Volume2 aria-hidden="true" className="w-4 h-4 text-white/80" />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={volume}
+                onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setVolume(v);
+                  if (videoRef.current) videoRef.current.volume = v;
+                }}
+                className="w-20 h-1 accent-[#0077A8]"
+                aria-label="Volume"
+              />
+            </div>
 
             <span className="text-white text-xs tabular-nums">
               {formatTime(currentTime)} / {formatTime(duration)}
@@ -190,9 +188,7 @@ export default function VideoPlayer({ src, title, onProgress }: Props) {
               aria-label="Fullscreen"
               className="text-white hover:text-[#0077A8] transition"
             >
-              <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4h4M16 4h4v4M4 16v4h4M16 20h4v-4" />
-              </svg>
+              <Maximize aria-hidden="true" className="w-5 h-5" />
             </button>
           </div>
         </div>
