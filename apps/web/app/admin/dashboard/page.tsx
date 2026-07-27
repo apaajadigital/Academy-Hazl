@@ -25,7 +25,7 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
-import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
+import { Card, Table, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Stats = {
@@ -145,39 +145,35 @@ export default function AdminDashboardPage() {
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
       {/* ── Greeting & Top Header ── */}
-      <section className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-600" aria-hidden="true" /> Sistem Online
-            </span>
+      <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+          <div className="mb-1.5 flex items-center gap-2 text-green-700">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider">Sistem Online</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-text-primary md:text-4xl">{greeting}, Admin! 👋</h1>
-          <div className="flex items-center gap-2 text-text-secondary">
-            <CalendarDays size={18} aria-hidden="true" />
-            <span className="text-base">
-              {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </span>
-          </div>
+          <h1 className="font-display text-3xl font-bold leading-tight text-text-primary">{greeting}, Admin 👋</h1>
+          <p className="mt-1.5 text-sm text-text-secondary">
+            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • Overview performa akademi hari ini.
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Link
             href="/admin/kursus"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-solid border-border-default bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-solid border-border-default bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
           >
             + Tambah Kursus
           </Link>
           <Link
             href="/admin/pengguna"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent-cyan-strong px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
           >
             Kelola Pengguna
           </Link>
         </div>
       </section>
 
-      {/* ── 8 KPI Cards (Matching Member Dashboard styling) ── */}
+      {/* ── 8 KPI Cards — Lumina vertical layout (icon tile top-left, trend top-right, value, uppercase label) ── */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {KPI_CARDS.map(({ label, value, icon: Icon, accent, tint, trend }) => {
           const negative = typeof trend === "string" && trend.trim().startsWith("-");
@@ -185,103 +181,157 @@ export default function AdminDashboardPage() {
           return (
             <div
               key={label}
-              className="relative flex items-center gap-4 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
-              style={{ borderLeftWidth: 4, borderLeftColor: accent }}
+              className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
             >
-              <div
-                className="flex size-12 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: tint, color: accent }}
-              >
-                <Icon size={22} aria-hidden="true" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-                <p className="font-display text-2xl lg:text-3xl font-bold leading-tight text-text-primary truncate">{value}</p>
-              </div>
-              {trend ? (
+              <div className="mb-4 flex items-start justify-between gap-2">
                 <span
-                  className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    negative ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"
-                  }`}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: tint, color: accent }}
                 >
-                  <Trend size={12} aria-hidden="true" />
-                  {trend}
+                  <Icon size={20} aria-hidden="true" />
                 </span>
-              ) : null}
+                {trend ? (
+                  <Badge variant={negative ? "danger" : "success"} className="gap-1">
+                    <Trend size={12} aria-hidden="true" />
+                    {trend}
+                  </Badge>
+                ) : null}
+              </div>
+              <p className="font-display text-3xl font-bold leading-tight tracking-tight text-text-primary">{value}</p>
+              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
             </div>
           );
         })}
       </section>
 
-      {/* ── Quick Access / Akses Cepat Section (Identical format to Member Dashboard) ── */}
-      <section className="space-y-4">
-        <h2 className="font-display text-xl font-bold text-text-primary">Akses Cepat</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 text-center shadow-e1 transition-all hover:-translate-y-0.5 hover:border-accent-cyan-strong hover:shadow-e2"
-            >
-              <span className="flex size-11 items-center justify-center rounded-full bg-surface-accent-soft text-accent-cyan-strong transition-colors group-hover:bg-accent-cyan-strong group-hover:text-white">
-                <Icon size={20} aria-hidden="true" />
-              </span>
-              <span className="text-xs font-semibold text-text-primary">{label}</span>
-              <span className="text-[10px] text-text-muted">{desc}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Bento Grid: Leads & Popular Courses (Left) | Recent Orders Table (Right) ── */}
+      {/* ── Main 2-column layout: Transaksi table (wide) | Leads + Kursus Terpopuler (narrow) ── */}
       <section className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column */}
-        <div className="flex flex-col gap-6 lg:col-span-1">
-          {/* Leads Gradient Card */}
-          <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-brand-gradient p-6 text-white shadow-e3">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                <Mail size={20} aria-hidden="true" />
-              </span>
-              <span className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold backdrop-blur-sm">Real-time</span>
+        {/* Left / wide — Recent Orders table */}
+        <div className="lg:col-span-2">
+          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1">
+            <div className="flex items-center justify-between gap-3 border-b border-solid border-border-default px-6 py-5">
+              <div>
+                <h2 className="font-display text-lg font-bold text-text-primary">Transaksi Terbaru</h2>
+                <p className="mt-0.5 text-sm text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
+              </div>
+              <Link href="/admin/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-cyan-strong hover:underline">
+                Semua Pesanan <ArrowRight size={14} aria-hidden="true" />
+              </Link>
             </div>
-            <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
-            <p className="mt-1 text-xs text-white/80">
-              {newLeadsCount === null
-                ? "Memuat…"
-                : newLeadsCount === 0
-                ? "Tidak ada leads baru saat ini"
-                : "Leads baru menunggu follow-up"}
-            </p>
-            <p className="my-4 font-display text-4xl font-extrabold leading-none">{newLeadsCount ?? "—"}</p>
-            <div className="flex flex-col gap-2">
-              {newLeadsCount !== null && newLeadsCount > 0 ? (
-                <>
-                  <Link
-                    href="/admin/leads?status=new"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
-                  >
-                    Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
-                  </Link>
+
+            {orders.length === 0 ? (
+              <p className="py-12 text-center text-sm text-text-muted">Belum ada transaksi.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <THead>
+                    <TR className="hover:bg-surface-sunken">
+                      <TH>Pembeli</TH>
+                      <TH>Kursus</TH>
+                      <TH className="text-center">Status</TH>
+                      <TH className="text-right">Total</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {orders.map((order) => {
+                      const title = order.items[0]?.itemTitle ?? "—";
+                      const variant = STATUS_VARIANT[order.status] ?? "neutral";
+                      return (
+                        <TR key={order.id}>
+                          <TD>
+                            <div className="flex items-center gap-3">
+                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-extrabold text-white">
+                                {order.user.name.slice(0, 2).toUpperCase()}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-text-primary">{order.user.name}</p>
+                                <p className="mt-0.5 truncate text-xs text-text-secondary">{order.user.email}</p>
+                              </div>
+                            </div>
+                          </TD>
+                          <TD>
+                            <p className="max-w-[220px] truncate text-sm text-text-primary">{title}</p>
+                            <p className="mt-0.5 text-xs text-text-muted">
+                              {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </TD>
+                          <TD className="text-center">
+                            <Badge variant={variant} className="uppercase tracking-wide">{order.status}</Badge>
+                          </TD>
+                          <TD className="whitespace-nowrap text-right text-sm font-bold text-text-primary">
+                            Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                          </TD>
+                        </TR>
+                      );
+                    })}
+                  </TBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right / narrow — Leads gradient card + Kursus Terpopuler */}
+        <div className="flex flex-col gap-6 lg:col-span-1">
+          {/* Leads Baru — dark navy → teal professional gradient */}
+          <div
+            className="relative overflow-hidden rounded-[var(--radius-lg)] p-6 text-white shadow-e3"
+            style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
+          >
+            <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+              Real-time
+            </span>
+            <div className="relative z-10">
+              <div className="mb-4 flex items-start gap-3 pr-20">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+                  <Mail size={22} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
+                  <p className="mt-0.5 text-xs text-white/75">
+                    {newLeadsCount === null
+                      ? "Memuat…"
+                      : newLeadsCount === 0
+                      ? "Tidak ada leads baru saat ini"
+                      : "Leads baru menunggu follow-up"}
+                  </p>
+                </div>
+              </div>
+              <div className="mb-6 flex items-baseline gap-2">
+                <span className="font-display text-5xl font-extrabold leading-none">{newLeadsCount ?? "—"}</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Orang Terdeteksi</span>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {newLeadsCount !== null && newLeadsCount > 0 ? (
+                  <>
+                    <Link
+                      href="/admin/leads?status=new"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
+                    >
+                      Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
+                    </Link>
+                    <Link
+                      href="/admin/leads"
+                      className="flex items-center justify-center gap-1 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                    >
+                      Kelola Leads <ArrowRight size={14} aria-hidden="true" />
+                    </Link>
+                  </>
+                ) : (
                   <Link
                     href="/admin/leads"
-                    className="flex items-center justify-center gap-1 text-xs font-semibold text-white/90 transition hover:text-white"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
                   >
-                    Kelola Leads <ArrowRight size={14} aria-hidden="true" />
+                    Kelola Leads <ArrowRight size={16} aria-hidden="true" />
                   </Link>
-                </>
-              ) : (
-                <Link
-                  href="/admin/leads"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
-                >
-                  Kelola Leads <ArrowRight size={16} aria-hidden="true" />
-                </Link>
-              )}
+                )}
+              </div>
             </div>
+            {/* Decorative glow */}
+            <div className="pointer-events-none absolute -bottom-12 -right-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
           </div>
 
-          {/* Popular Courses */}
+          {/* Kursus Terpopuler */}
           <Card className="p-6">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-display text-base font-bold text-text-primary">
@@ -325,74 +375,27 @@ export default function AdminDashboardPage() {
             )}
           </Card>
         </div>
+      </section>
 
-        {/* Right Column — Recent Orders Table */}
-        <div className="lg:col-span-2">
-          <div className="rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1 overflow-hidden">
-            <div className="flex items-center justify-between border-b border-solid border-border-default px-6 py-4 bg-surface-card">
-              <div>
-                <h2 className="font-display text-base font-bold text-text-primary">Transaksi Terbaru</h2>
-                <p className="mt-0.5 text-xs text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
-              </div>
-              <Link href="/admin/transaksi" className="inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan-strong hover:underline">
-                Semua Pesanan <ChevronRight size={14} aria-hidden="true" />
-              </Link>
-            </div>
-
-            {orders.length === 0 ? (
-              <p className="py-10 text-center text-sm text-text-muted">Belum ada transaksi.</p>
-            ) : (
-              <TableContainer className="rounded-none border-0 shadow-none">
-                <Table>
-                  <THead>
-                    <TR className="bg-surface-sunken hover:bg-surface-sunken">
-                      <TH className="text-xs font-bold text-text-secondary uppercase tracking-wider">Pembeli</TH>
-                      <TH className="text-xs font-bold text-text-secondary uppercase tracking-wider">Kursus</TH>
-                      <TH className="text-xs font-bold text-text-secondary uppercase tracking-wider">Tanggal</TH>
-                      <TH className="text-xs font-bold text-text-secondary uppercase tracking-wider">Status</TH>
-                      <TH className="text-right text-xs font-bold text-text-secondary uppercase tracking-wider">Total</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {orders.map((order) => {
-                      const title = order.items[0]?.itemTitle ?? "—";
-                      const variant = STATUS_VARIANT[order.status] ?? "neutral";
-                      return (
-                        <TR key={order.id} className="transition-colors hover:bg-surface-sunken/60">
-                          <TD>
-                            <div className="flex items-center gap-3">
-                              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-extrabold text-white shadow-sm">
-                                {order.user.name.slice(0, 2).toUpperCase()}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-text-primary">{order.user.name}</p>
-                                <p className="mt-0.5 truncate text-xs text-text-secondary">{order.user.email}</p>
-                              </div>
-                            </div>
-                          </TD>
-                          <TD className="text-sm text-text-primary">
-                            <p className="max-w-[200px] truncate">{title}</p>
-                          </TD>
-                          <TD className="whitespace-nowrap text-sm text-text-secondary">
-                            {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                          </TD>
-                          <TD>
-                            <Badge variant={variant}>{order.status}</Badge>
-                          </TD>
-                          <TD className="whitespace-nowrap text-right text-sm font-bold text-text-primary">
-                            Rp {Number(order.finalAmount).toLocaleString("id-ID")}
-                          </TD>
-                        </TR>
-                      );
-                    })}
-                  </TBody>
-                </Table>
-              </TableContainer>
-            )}
-          </div>
+      {/* ── Akses Cepat / Quick Actions ── */}
+      <section className="space-y-4">
+        <h2 className="font-display text-xl font-bold text-text-primary">Akses Cepat</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
+            <Link
+              key={href}
+              href={href}
+              className="group flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 text-center shadow-e1 transition-all hover:-translate-y-0.5 hover:border-accent-cyan-strong hover:shadow-e2"
+            >
+              <span className="flex size-11 items-center justify-center rounded-xl bg-surface-accent-soft text-accent-cyan-strong transition-colors group-hover:bg-accent-cyan-strong group-hover:text-white">
+                <Icon size={20} aria-hidden="true" />
+              </span>
+              <span className="text-xs font-semibold text-text-primary">{label}</span>
+              <span className="text-[10px] text-text-muted">{desc}</span>
+            </Link>
+          ))}
         </div>
       </section>
     </div>
   );
 }
-
