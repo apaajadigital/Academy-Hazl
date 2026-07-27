@@ -147,7 +147,7 @@ export default function TiketPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] bg-surface-sunken px-3 py-1.5">
+                    <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] bg-surface-sunken px-3 py-2">
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">Kode Tiket</span>
                       <code className="font-mono text-[13px] font-extrabold tracking-wider text-text-primary">{ticket.ticketCode.slice(0, 8).toUpperCase()}</code>
                     </div>

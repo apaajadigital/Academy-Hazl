@@ -70,8 +70,8 @@ Ketiga dashboard (**User** `app/dashboard`, **Admin** `app/admin`, **Trainer** `
 
 ## 6. Kualitas & Metrik
 - `apps/web` **`tsc --noEmit`**: 0 error. · **ESLint `--max-warnings 0`**: 0 warning. · **`next build`**: sukses (seluruh route dashboard/admin/trainer ter‑compile).
-- **`npm run lint:spacing`** (guard baru): **217 → 32**. Sisa 32 adalah **micro‑padding pada pill/chip/tombol‑kecil/input** (`px-2.5`=10px, `py-1.5`=6px, `pr-9` offset ikon input) — sesuai pengecualian micro di spec; **ritme layout dominan** (gap section, padding card, gap grid) **100% on‑scale**. Guard bersifat advisory (exit 0); jalankan `--strict` bila ingin menuntaskan sisa pill.
-- **Performa/CLS:** skeleton/`DashboardLoading` konsisten mengurangi layout‑shift; `next/image` berdimensi pada thumbnail. **Rekomendasi lanjutan:** `dynamic()` untuk chart berat `admin/sistem-health` (belum di‑split — L2, lihat §8).
+- **`npm run lint:spacing`** (guard baru): **217 → 0** (bersih). Seluruh kelas spacing off‑scale disnap ke nilai 8‑step terdekat; ritme layout & micro‑padding kini konsisten pada skala kontrak.
+- **Performa/CLS:** skeleton/`DashboardLoading` konsisten mengurangi layout‑shift; `next/image` berdimensi pada thumbnail. **Code‑split:** 4 chart SVG `admin/sistem-health` diekstrak ke `./Charts.tsx` dan di‑`dynamic()` (`ssr:false` + skeleton fallback) → kode render chart keluar dari bundle awal halaman (chunk lazy). Build memverifikasi chunk terpisah.
 - **Lighthouse:** belum dijalankan di sesi ini (butuh server live) — rujuk §7 (reviewer‑gated).
 
 ## 7. Validasi yang Tersisa (reviewer‑gated, CLAUDE.md §9.6/§9.11)
@@ -81,8 +81,8 @@ Sesuai governance, langkah environment‑dependent diserahkan ke reviewer sebelu
 3. **Self‑review diff** akhir + **Go/No‑Go** merge → (jika disetujui) rebuild web `--no-cache` + redeploy dari `main` terkonsolidasi (tanpa migration — frontend only).
 
 ## 8. Rekomendasi Pengembangan Selanjutnya
-- **Perf L2:** `dynamic()` untuk komponen chart `admin/sistem-health` + `Modal` besar (code‑split; skeleton fallback).
-- **Spacing:** tuntaskan 32 sisa micro‑padding bila menginginkan `lint:spacing --strict` = 0 (kosmetik pill).
+- **Perf L2:** chart `admin/sistem-health` ✅ sudah di‑code‑split. Bila kelak memakai chart lebih berat / library chart, pola `dynamic()` yang sama bisa diperluas ke `Modal` besar.
+- **Spacing:** ✅ `lint:spacing` bersih (0); pertahankan dengan menjalankan guard di CI (`npm run lint:spacing -- --strict`).
 - **Shell extraction (masa depan):** bila drift shell kembali muncul, pertimbangkan ekstraksi `DashboardShell` bersama (ditunda sesuai D2 demi keamanan wiring auth).
 - **Fitur trainer yang belum ada** (disebut brief, tak ada di kode — **tidak** dibangun di reskin ini sesuai no‑new‑feature): editor modul/kurikulum, upload video, quiz, assignment, roster per‑siswa, sertifikat trainer. Dicatat ke `docs/BACKLOG.md`.
 - **`kupon` count:** verifikasi `meta.total` konsisten dipakai (sudah pada mayoritas).

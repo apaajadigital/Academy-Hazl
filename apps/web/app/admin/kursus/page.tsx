@@ -316,7 +316,7 @@ export default function AdminKursusPage() {
   const totalPages = Math.ceil(total / limit);
 
   const actionPill =
-    "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex items-center gap-1 rounded-lg px-2 py-2 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
 
   return (
     <div className="dash-container flex flex-col gap-6">
@@ -570,7 +570,7 @@ export default function AdminKursusPage() {
                     href={detailCourse.previewVideo}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-cyan-strong hover:underline"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-accent-cyan-strong hover:underline"
                   >
                     <PlayCircle size={16} aria-hidden="true" /> Putar Video Preview ({detailCourse.previewVideo})
                   </a>
@@ -585,15 +585,15 @@ export default function AdminKursusPage() {
                 {(!detailCourse.sections || detailCourse.sections.length === 0) ? (
                   <p className="text-sm italic text-text-muted">Belum ada materi kurikulum yang ditambahkan.</p>
                 ) : (
-                  <div className="flex max-h-60 flex-col gap-2.5 overflow-y-auto pr-1">
+                  <div className="flex max-h-60 flex-col gap-2 overflow-y-auto pr-1">
                     {detailCourse.sections.map((sec, idx) => (
                       <div key={sec.id} className="overflow-hidden rounded-[var(--radius-md)] border border-border-default bg-surface-sunken">
-                        <div className="border-b border-border-default bg-surface-page px-3.5 py-2 text-xs font-bold text-text-primary">
+                        <div className="border-b border-border-default bg-surface-page px-4 py-2 text-xs font-bold text-text-primary">
                           Bab {idx + 1}: {sec.title}
                         </div>
                         <ul className="m-0 list-none p-0">
                           {sec.lessons?.map((les) => (
-                            <li key={les.id} className="flex items-center gap-2 border-b border-border-default px-3.5 py-2 text-xs text-text-secondary last:border-0">
+                            <li key={les.id} className="flex items-center gap-2 border-b border-border-default px-4 py-2 text-xs text-text-secondary last:border-0">
                               {les.type === "video" ? <Video size={14} aria-hidden="true" /> : <FileText size={14} aria-hidden="true" />}
                               <span className="flex-1">{les.title}</span>
                               <span className="text-[11px] text-text-muted">{les.duration ? `${Math.round(les.duration / 60)} m` : ""}</span>
@@ -633,7 +633,7 @@ export default function AdminKursusPage() {
                   onChange={(e) => setPcContact(e.target.value)}
                 />
                 <button
-                  className="inline-flex items-center gap-1.5 self-start rounded-full bg-accent-purple px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 self-start rounded-full bg-accent-purple px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                   onClick={handleSavePrivateClass}
                   disabled={savingPrivate || savingApproval}
                 >

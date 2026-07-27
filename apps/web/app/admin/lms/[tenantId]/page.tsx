@@ -139,7 +139,7 @@ function InviteModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const SECTION_TAB = "border-b-[3px] px-4 py-2.5 text-sm font-semibold transition-colors -mb-0.5";
+const SECTION_TAB = "border-b-[3px] px-4 py-2 text-sm font-semibold transition-colors -mb-0.5";
 
 export default function AdminTenantDetailPage() {
   const { tenantId } = useParams<{ tenantId: string }>();

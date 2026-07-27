@@ -207,7 +207,7 @@ export default function AdminPenggunaPage() {
                             <span
                               key={r}
                               className={cn(
-                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
                                 ROLES_COLOR[r] ?? "bg-gray-100 text-gray-600",
                               )}
                             >

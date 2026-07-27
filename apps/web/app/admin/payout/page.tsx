@@ -216,7 +216,7 @@ export default function AdminPayoutPage() {
 
   // Semantic action-select button styling (money moderation controls).
   const actBtn = (active: boolean, tone: "approve" | "reject" | "paid") => {
-    const base = "rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-colors";
+    const base = "rounded-xl border-2 px-4 py-2 text-sm font-bold transition-colors";
     if (tone === "approve") return `${base} ${active ? "border-green-700 bg-green-600 text-white" : "border-transparent bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`;
     if (tone === "reject") return `${base} ${active ? "border-red-700 bg-red-600 text-white" : "border-transparent bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white"}`;
     return `${base} ${active ? "border-[#005f87] bg-accent-cyan-strong text-white" : "border-transparent bg-surface-accent-soft text-accent-cyan-strong hover:bg-accent-cyan-strong hover:text-white"}`;
@@ -303,7 +303,7 @@ export default function AdminPayoutPage() {
                     <TR key={p.id}>
                       <TD className="py-3">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
                             {(p.trainer.name ?? "?").slice(0, 2).toUpperCase()}
                           </span>
                           <div className="min-w-0">
@@ -357,7 +357,7 @@ export default function AdminPayoutPage() {
                     <TR key={w.id}>
                       <TD className="py-3">
                         <div className="flex items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
                             {(w.affiliate.user.name ?? "?").slice(0, 2).toUpperCase()}
                           </span>
                           <div className="min-w-0">

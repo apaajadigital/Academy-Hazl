@@ -129,10 +129,10 @@ export default function EbookPage() {
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-2">
                     <BookOpen size={40} className="text-accent-purple" aria-hidden="true" />
-                    <span className="rounded-full bg-accent-purple/10 px-2.5 py-0.5 text-[11px] font-extrabold tracking-widest text-accent-purple">PDF</span>
+                    <span className="rounded-full bg-accent-purple/10 px-2 py-0.5 text-[11px] font-extrabold tracking-widest text-accent-purple">PDF</span>
                   </div>
                 )}
-                <span className="absolute right-2.5 top-2.5 rounded-full bg-accent-purple px-2.5 py-1 text-[10px] font-bold text-white">E-Book</span>
+                <span className="absolute right-2.5 top-2.5 rounded-full bg-accent-purple px-2 py-1 text-[10px] font-bold text-white">E-Book</span>
               </div>
 
               {/* Info */}

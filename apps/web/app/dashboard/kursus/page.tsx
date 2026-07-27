@@ -252,7 +252,7 @@ export default function KursusSayaPage() {
                   {/* Status overlay */}
                   {e.isCompleted && (
                     <div className="absolute inset-0 flex items-center justify-center bg-green-500/15">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-green-500 px-3 py-1.5 text-[13px] font-bold text-white">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-500 px-3 py-2 text-[13px] font-bold text-white">
                         <CheckCircle2 size={14} aria-hidden="true" /> Selesai
                       </span>
                     </div>

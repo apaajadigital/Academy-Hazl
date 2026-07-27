@@ -291,7 +291,7 @@ export default function DashboardPage() {
                 <div className="flex shrink-0 items-center gap-2">
                   <Link
                     href={`/verify/${cert.code}`}
-                    className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-solid border-accent-cyan-strong px-3 py-1.5 text-xs font-semibold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white"
+                    className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-solid border-accent-cyan-strong px-3 py-2 text-xs font-semibold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white"
                   >
                     <ShieldCheck size={14} aria-hidden="true" /> Verifikasi
                   </Link>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     download
-                    className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-3 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+                    className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                   >
                     <Download size={14} aria-hidden="true" /> Unduh PDF
                   </a>

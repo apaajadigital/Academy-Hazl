@@ -315,7 +315,7 @@ export default function AdminLeadsPage() {
             placeholder="Cari nama / email / perusahaan…"
             aria-label="Cari lead"
             containerClassName="w-full"
-            className={query ? "pr-9" : undefined}
+            className={query ? "pr-10" : undefined}
           />
           {query && (
             <button

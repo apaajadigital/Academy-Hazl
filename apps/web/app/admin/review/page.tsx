@@ -236,7 +236,7 @@ export default function AdminReviewPage() {
                       {t.createdAt && <p className="mt-0.5 text-xs text-text-muted">{new Date(t.createdAt).toLocaleDateString("id-ID")}</p>}
                     </div>
                   </div>
-                  {t.quote && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2.5 text-sm leading-relaxed text-text-primary">{t.quote}</p>}
+                  {t.quote && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{t.quote}</p>}
                   <div className="mb-3 flex flex-wrap gap-3">
                     <Select
                       label="Kategori"
@@ -303,7 +303,7 @@ export default function AdminReviewPage() {
                   <p className="mt-0.5 text-xs text-text-muted">{new Date(r.createdAt).toLocaleDateString("id-ID")}</p>
                 </div>
               </div>
-              {r.comment && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2.5 text-sm leading-relaxed text-text-primary">{r.comment}</p>}
+              {r.comment && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{r.comment}</p>}
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={r.isApproved ? "success" : "warning"} className="mr-auto">
                   {r.isApproved ? "✓ Disetujui" : "⏳ Menunggu"}

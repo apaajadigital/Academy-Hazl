@@ -172,13 +172,13 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/kursus"
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-card px-4 py-2 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
           >
             + Tambah Kursus
           </Link>
           <Link
             href="/admin/pengguna"
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-4 py-2 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
           >
             Kelola Pengguna
           </Link>
@@ -281,7 +281,7 @@ export default function AdminDashboardPage() {
             className="relative overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e3"
             style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
           >
-            <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+            <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
               Real-time
             </span>
             <div className="relative z-10">
@@ -304,7 +304,7 @@ export default function AdminDashboardPage() {
                 <span className="font-display text-5xl font-extrabold leading-none">{newLeadsCount ?? "—"}</span>
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Orang Terdeteksi</span>
               </div>
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-2">
                 {newLeadsCount !== null && newLeadsCount > 0 ? (
                   <>
                     <Link

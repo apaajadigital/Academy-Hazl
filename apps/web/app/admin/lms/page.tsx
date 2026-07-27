@@ -104,7 +104,7 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void; onCrea
     <Modal open onOpenChange={(o) => { if (!o) onClose(); }}>
       <ModalContent title="Buat Tenant Baru" className="max-w-md">
         {error && (
-          <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2.5 text-sm text-red-700">{error}</div>
+          <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2 text-sm text-red-700">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -196,8 +196,8 @@ function WorkshopAssignPanel() {
       <Card className="p-6">
         <h3 className="mb-4 text-base font-bold text-text-primary">Assign Kursus ke Batch</h3>
 
-        {error && <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2.5 text-sm text-red-700">{error}</div>}
-        {success && <div className="mb-4 rounded-[var(--radius-md)] bg-green-600/10 px-4 py-2.5 text-sm text-green-700">{success}</div>}
+        {error && <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2 text-sm text-red-700">{error}</div>}
+        {success && <div className="mb-4 rounded-[var(--radius-md)] bg-green-600/10 px-4 py-2 text-sm text-green-700">{success}</div>}
 
         <form onSubmit={handleAssign} className="flex flex-col gap-4">
           <Select id="assign-tenant-select" label="1. Pilih Tenant" value={form.tenantId} onChange={(e) => handleTenantChange(e.target.value)} required>
@@ -409,14 +409,14 @@ export default function AdminLMSPage() {
                           <div className="flex items-center gap-2">
                             <Link
                               href={`/admin/lms/${t.id}`}
-                              className="inline-flex items-center gap-1 rounded-lg bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-primary transition-colors hover:bg-border-default"
+                              className="inline-flex items-center gap-1 rounded-lg bg-surface-sunken px-3 py-2 text-xs font-semibold text-text-primary transition-colors hover:bg-border-default"
                             >
                               Detail <ChevronRight size={12} aria-hidden="true" />
                             </Link>
                             <button
                               id={`lms-toggle-tenant-${t.id}-btn`}
                               onClick={() => toggleActive(t.id, t.isActive)}
-                              className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${t.isActive ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white" : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`}
+                              className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${t.isActive ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white" : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`}
                             >
                               {t.isActive ? "Nonaktifkan" : "Aktifkan"}
                             </button>
