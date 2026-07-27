@@ -4,8 +4,28 @@ import { successResponse } from "../../types/index.js";
 
 const router = Router();
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Period-over-period delta formatted as "+N%" / "-N%" (integer percent).
+ * Returns null when there is no baseline (prev <= 0) so the UI renders no trend
+ * pill instead of a misleading/fabricated number (no-data-fiktif rule).
+ */
+function pctTrend(curr: number, prev: number): string | null {
+  if (prev <= 0) return null;
+  const pct = Math.round(((curr - prev) / prev) * 100);
+  return `${pct >= 0 ? "+" : ""}${pct}%`;
+}
+
 router.get("/stats", async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    // Trend windows: current = last 30 days, previous = the 30 days before that.
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - THIRTY_DAYS_MS);
+    const sixtyDaysAgo = new Date(now.getTime() - 2 * THIRTY_DAYS_MS);
+    const currWindow = { gte: thirtyDaysAgo, lt: now };
+    const prevWindow = { gte: sixtyDaysAgo, lt: thirtyDaysAgo };
+
     const [
       totalUsers,
       totalCourses,
@@ -17,6 +37,17 @@ router.get("/stats", async (_req: Request, res: Response, next: NextFunction) =>
       totalPaidOrders,
       avgRatingAgg,
       retailOrders,
+      // Period-over-period inputs (createdAt/enrolledAt/paidAt/startedAt).
+      usersCurr,
+      usersPrev,
+      enrollCurr,
+      enrollPrev,
+      revenueCurrAgg,
+      revenuePrevAgg,
+      retailCurrOrders,
+      retailPrevOrders,
+      subsCurr,
+      subsPrev,
     ] = await Promise.all([
       prisma.user.count({ where: { deletedAt: null } }),
       prisma.course.count(),
@@ -41,12 +72,48 @@ router.get("/stats", async (_req: Request, res: Response, next: NextFunction) =>
         },
         select: { finalAmount: true }
       }),
+      // New-user growth (User.createdAt).
+      prisma.user.count({ where: { deletedAt: null, createdAt: currWindow } }),
+      prisma.user.count({ where: { deletedAt: null, createdAt: prevWindow } }),
+      // Enrollment growth (CourseEnrollment.enrolledAt).
+      prisma.courseEnrollment.count({ where: { enrolledAt: currWindow } }),
+      prisma.courseEnrollment.count({ where: { enrolledAt: prevWindow } }),
+      // Total revenue (paid orders, by paidAt).
+      prisma.order.aggregate({ _sum: { finalAmount: true }, where: { status: "paid", paidAt: currWindow } }),
+      prisma.order.aggregate({ _sum: { finalAmount: true }, where: { status: "paid", paidAt: prevWindow } }),
+      // Retail revenue (paid orders excluding subscription items, by paidAt).
+      prisma.order.findMany({
+        where: { status: "paid", paidAt: currWindow, items: { none: { itemType: "subscription" } } },
+        select: { finalAmount: true },
+      }),
+      prisma.order.findMany({
+        where: { status: "paid", paidAt: prevWindow, items: { none: { itemType: "subscription" } } },
+        select: { finalAmount: true },
+      }),
+      // Subscription growth (Subscription.startedAt).
+      prisma.subscription.count({ where: { startedAt: currWindow } }),
+      prisma.subscription.count({ where: { startedAt: prevWindow } }),
     ]);
 
     const totalRevenue = Number(totalRevenueAgg._sum.finalAmount ?? 0);
     const refundRate = totalPaidOrders > 0 ? Number(((totalRefundedOrders / totalPaidOrders) * 100).toFixed(2)) : 0;
     const avgRating = Number(avgRatingAgg._avg.rating ?? 0).toFixed(1);
     const retailRevenue = retailOrders.reduce((sum, o) => sum + Number(o.finalAmount), 0);
+
+    const revenueCurr = Number(revenueCurrAgg._sum.finalAmount ?? 0);
+    const revenuePrev = Number(revenuePrevAgg._sum.finalAmount ?? 0);
+    const retailCurr = retailCurrOrders.reduce((sum, o) => sum + Number(o.finalAmount), 0);
+    const retailPrev = retailPrevOrders.reduce((sum, o) => sum + Number(o.finalAmount), 0);
+
+    // Additive, backward-compatible: real deltas where meaningful, null when no
+    // baseline. Metrics without a meaningful period comparison are omitted.
+    const trends = {
+      totalUsers: pctTrend(usersCurr, usersPrev),
+      totalEnrollments: pctTrend(enrollCurr, enrollPrev),
+      totalRevenue: pctTrend(revenueCurr, revenuePrev),
+      retailRevenue: pctTrend(retailCurr, retailPrev),
+      activeSubscriptions: pctTrend(subsCurr, subsPrev),
+    };
 
     res.json(
       successResponse({
@@ -59,6 +126,7 @@ router.get("/stats", async (_req: Request, res: Response, next: NextFunction) =>
         refundRate,
         avgRating: Number(avgRating),
         retailRevenue,
+        trends,
       })
     );
   } catch (err) {

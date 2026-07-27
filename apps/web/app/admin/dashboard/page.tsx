@@ -12,10 +12,8 @@ import {
   Undo2,
   Star,
   TrendingUp,
-  TrendingDown,
   Mail,
   ArrowRight,
-  ChevronLeft,
   ChevronRight,
   CheckCircle2,
   ClipboardList,
@@ -26,8 +24,7 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
-import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge, StatCard } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Stats = {
@@ -40,6 +37,15 @@ type Stats = {
   refundRate: number;
   avgRating: number;
   retailRevenue: number;
+  // Additive: real period-over-period deltas from the API. Each is a formatted
+  // string ("+12%"/"-1%") or null when there is no baseline (no fake numbers).
+  trends?: {
+    totalUsers: string | null;
+    totalEnrollments: string | null;
+    totalRevenue: string | null;
+    retailRevenue: string | null;
+    activeSubscriptions: string | null;
+  };
 };
 
 type RecentOrder = {
@@ -118,16 +124,19 @@ export default function AdminDashboardPage() {
     })();
   }, []);
 
+  // KPI cards use real trends from the API (trends?.*). Metrics without a
+  // meaningful period-over-period delta (courses, refund rate, rating) pass a
+  // null trend so StatCard renders no pill — never a fabricated number.
   const KPI_CARDS = stats
     ? [
-        { label: "Total Pengguna",     value: stats.totalUsers,          icon: Users,        color: "#0077A8", bg: "#E8F4F9", change: "+12%" },
-        { label: "Kursus Aktif",       value: stats.totalCourses,        icon: BookOpen,     color: "#7C3AED", bg: "#EDE9FE", change: "+3%" },
-        { label: "Total Pendaftaran",  value: stats.totalEnrollments,    icon: GraduationCap, color: "#059669", bg: "#D1FAE5", change: "+8%" },
-        { label: "Total Pendapatan",   value: null, revenue: stats.totalRevenue, icon: Wallet, color: "#DC2626", bg: "#FEE2E2", change: "+22%" },
-        { label: "Omset Retail",       value: null, revenue: stats.retailRevenue, icon: ShoppingBag, color: "#059669", bg: "#D1FAE5", change: "+15%" },
-        { label: "Langganan Aktif",    value: stats.activeSubscriptions, icon: IdCard, color: "#F59E0B", bg: "#FEF3C7", change: "+5%" },
-        { label: "Tingkat Refund",     value: null, numValue: stats.refundRate, labelSuffix: "%", icon: Undo2, color: "#DC2626", bg: "#FEE2E2", change: "-1%" },
-        { label: "Rata-rata Rating",   value: null, numValue: stats.avgRating, labelSuffix: " / 5.0", icon: Star, color: "#F59E0B", bg: "#FEF3C7", change: "+0.1" },
+        { label: "Total Pengguna",    value: stats.totalUsers.toLocaleString("id-ID"),        icon: Users,        iconColor: "#0077A8", iconBg: "#E8F4F9", trend: stats.trends?.totalUsers ?? null },
+        { label: "Kursus Aktif",      value: stats.totalCourses.toLocaleString("id-ID"),      icon: BookOpen,     iconColor: "#7C3AED", iconBg: "#EDE9FE", trend: null },
+        { label: "Total Pendaftaran", value: stats.totalEnrollments.toLocaleString("id-ID"),  icon: GraduationCap, iconColor: "#059669", iconBg: "#D1FAE5", trend: stats.trends?.totalEnrollments ?? null },
+        { label: "Total Pendapatan",  value: `Rp ${stats.totalRevenue.toLocaleString("id-ID")}`, icon: Wallet, iconColor: "#DC2626", iconBg: "#FEE2E2", trend: stats.trends?.totalRevenue ?? null },
+        { label: "Omset Retail",      value: `Rp ${stats.retailRevenue.toLocaleString("id-ID")}`, icon: ShoppingBag, iconColor: "#059669", iconBg: "#D1FAE5", trend: stats.trends?.retailRevenue ?? null },
+        { label: "Langganan Aktif",   value: stats.activeSubscriptions.toLocaleString("id-ID"), icon: IdCard, iconColor: "#F59E0B", iconBg: "#FEF3C7", trend: stats.trends?.activeSubscriptions ?? null },
+        { label: "Tingkat Refund",    value: `${stats.refundRate}%`, icon: Undo2, iconColor: "#DC2626", iconBg: "#FEE2E2", trend: null },
+        { label: "Rata-rata Rating",  value: `${Number.isFinite(stats.avgRating) ? stats.avgRating.toFixed(1) : "0.0"} / 5.0`, icon: Star, iconColor: "#F59E0B", iconBg: "#FEF3C7", trend: null },
       ]
     : [];
 
@@ -162,35 +171,17 @@ export default function AdminDashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        {KPI_CARDS.map(({ label, value, revenue, numValue, labelSuffix, icon: Icon, color, bg, change }) => {
-          const isNeg = change.startsWith("-");
-          const Trend = isNeg ? TrendingDown : TrendingUp;
-          return (
-            <Card key={label} hoverable className="p-5">
-              <div className="mb-3 flex items-start justify-between">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: bg }}>
-                  <Icon size={18} style={{ color }} aria-hidden="true" />
-                </span>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold",
-                    isNeg ? "bg-red-600/10 text-red-700" : "bg-green-600/10 text-green-700",
-                  )}
-                >
-                  <Trend size={13} aria-hidden="true" /> {change}
-                </span>
-              </div>
-              <p className="text-[22px] font-extrabold leading-none" style={{ color }}>
-                {revenue !== undefined && revenue !== null
-                  ? `Rp ${revenue.toLocaleString("id-ID")}`
-                  : numValue !== undefined && numValue !== null
-                  ? `${numValue}${labelSuffix ?? ""}`
-                  : (value ?? 0).toLocaleString("id-ID")}
-              </p>
-              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{label}</p>
-            </Card>
-          );
-        })}
+        {KPI_CARDS.map(({ label, value, icon, iconColor, iconBg, trend }) => (
+          <StatCard
+            key={label}
+            label={label}
+            value={value}
+            icon={icon}
+            iconColor={iconColor}
+            iconBg={iconBg}
+            trend={trend}
+          />
+        ))}
       </div>
 
       {/* Bento: leads + popular courses (left) · recent orders table (right) */}
@@ -274,7 +265,7 @@ export default function AdminDashboardPage() {
                       </div>
                       <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-amber-600">
                         <Star size={12} className="fill-amber-500 text-amber-500" aria-hidden="true" />
-                        {parseFloat(course.avgRating).toFixed(1)}
+                        {Number.isFinite(parseFloat(course.avgRating)) ? parseFloat(course.avgRating).toFixed(1) : "0.0"}
                       </span>
                     </div>
                   );
@@ -300,63 +291,48 @@ export default function AdminDashboardPage() {
             {orders.length === 0 ? (
               <p className="py-10 text-center text-sm text-text-muted">Belum ada transaksi.</p>
             ) : (
-              <>
-                <Table>
-                  <THead>
-                    <TR className="hover:bg-transparent">
-                      <TH>Pembeli</TH>
-                      <TH>Kursus</TH>
-                      <TH>Tanggal</TH>
-                      <TH>Status</TH>
-                      <TH className="text-right">Total</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {orders.map((order) => {
-                      const title = order.items[0]?.itemTitle ?? "—";
-                      const variant = STATUS_VARIANT[order.status] ?? "neutral";
-                      return (
-                        <TR key={order.id}>
-                          <TD>
-                            <div className="flex items-center gap-2.5">
-                              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
-                                {order.user.name.slice(0, 2).toUpperCase()}
-                              </span>
-                              <div className="min-w-0">
-                                <p className="truncate text-[13px] font-semibold text-text-primary">{order.user.name}</p>
-                                <p className="truncate text-[11px] text-text-secondary">{order.user.email}</p>
-                              </div>
+              <Table>
+                <THead>
+                  <TR className="hover:bg-transparent">
+                    <TH>Pembeli</TH>
+                    <TH>Kursus</TH>
+                    <TH>Tanggal</TH>
+                    <TH>Status</TH>
+                    <TH className="text-right">Total</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {orders.map((order) => {
+                    const title = order.items[0]?.itemTitle ?? "—";
+                    const variant = STATUS_VARIANT[order.status] ?? "neutral";
+                    return (
+                      <TR key={order.id}>
+                        <TD>
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                              {order.user.name.slice(0, 2).toUpperCase()}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-[13px] font-semibold text-text-primary">{order.user.name}</p>
+                              <p className="truncate text-[11px] text-text-secondary">{order.user.email}</p>
                             </div>
-                          </TD>
-                          <TD className="text-[13px] text-text-primary">{title}</TD>
-                          <TD className="whitespace-nowrap text-[13px] text-text-secondary">
-                            {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                          </TD>
-                          <TD>
-                            <Badge variant={variant}>{order.status}</Badge>
-                          </TD>
-                          <TD className="whitespace-nowrap text-right text-[13px] font-bold text-text-primary">
-                            Rp {Number(order.finalAmount).toLocaleString("id-ID")}
-                          </TD>
-                        </TR>
-                      );
-                    })}
-                  </TBody>
-                </Table>
-
-                {/* Pagination (recent orders are a single page) */}
-                <div className="flex justify-center border-t border-solid border-border-default px-6 py-4">
-                  <nav aria-label="Paginasi" className="flex items-center gap-1">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-solid border-border-default text-border-strong opacity-50">
-                      <ChevronLeft size={18} aria-hidden="true" />
-                    </span>
-                    <span className="flex h-9 min-w-9 items-center justify-center rounded-lg bg-accent-cyan-strong px-2 text-sm font-semibold text-white">1</span>
-                    <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-solid border-border-default text-border-strong opacity-50">
-                      <ChevronRight size={18} aria-hidden="true" />
-                    </span>
-                  </nav>
-                </div>
-              </>
+                          </div>
+                        </TD>
+                        <TD className="text-[13px] text-text-primary">{title}</TD>
+                        <TD className="whitespace-nowrap text-[13px] text-text-secondary">
+                          {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                        </TD>
+                        <TD>
+                          <Badge variant={variant}>{order.status}</Badge>
+                        </TD>
+                        <TD className="whitespace-nowrap text-right text-[13px] font-bold text-text-primary">
+                          Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                        </TD>
+                      </TR>
+                    );
+                  })}
+                </TBody>
+              </Table>
             )}
           </TableContainer>
         </div>

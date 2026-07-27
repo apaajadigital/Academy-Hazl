@@ -69,6 +69,107 @@ describe("GET /api/admin/stats", () => {
     expect(res.body.data.totalUsers).toBe(42);
   });
 
+  it("returns real period-over-period trends when the previous period has data", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_ADMIN as never);
+    vi.mocked(prisma.course.count).mockResolvedValue(10);
+    vi.mocked(prisma.order.count).mockResolvedValue(3);
+    vi.mocked(prisma.review.aggregate).mockResolvedValue({ _avg: { rating: 4.8 } } as never);
+
+    // Distinguish base totals vs the two trend windows by the date filter:
+    // trend queries add a createdAt/enrolledAt/paidAt/startedAt range; the base
+    // totals do not. Within trend queries, the current window's lower bound is
+    // ~30d ago, the previous window's is ~60d ago.
+    const daysAgo = (d: Date) => (Date.now() - d.getTime()) / 86_400_000;
+    const isCurr = (range: { gte: Date } | undefined) => range != null && daysAgo(range.gte) < 45;
+
+    vi.mocked(prisma.user.count).mockImplementation((args) => {
+      const range = (args as { where?: { createdAt?: { gte: Date } } } | undefined)?.where?.createdAt;
+      if (!range) return Promise.resolve(42) as never; // base totalUsers
+      return Promise.resolve(isCurr(range) ? 12 : 10) as never; // +20%
+    });
+    vi.mocked(prisma.courseEnrollment.count).mockImplementation((args) => {
+      const range = (args as { where?: { enrolledAt?: { gte: Date } } } | undefined)?.where?.enrolledAt;
+      if (!range) return Promise.resolve(200) as never; // base totalEnrollments
+      return Promise.resolve(isCurr(range) ? 15 : 10) as never; // +50%
+    });
+    vi.mocked(prisma.subscription.count).mockImplementation((args) => {
+      const range = (args as { where?: { startedAt?: { gte: Date } } } | undefined)?.where?.startedAt;
+      if (!range) return Promise.resolve(15) as never; // base activeSubscriptions
+      return Promise.resolve(isCurr(range) ? 8 : 10) as never; // -20%
+    });
+    vi.mocked(prisma.order.aggregate).mockImplementation((args) => {
+      const range = (args as { where?: { paidAt?: { gte: Date } } } | undefined)?.where?.paidAt;
+      if (!range) return Promise.resolve({ _sum: { finalAmount: 5_000_000 } }) as never; // base totalRevenue
+      return Promise.resolve({ _sum: { finalAmount: isCurr(range) ? 2_000_000 : 1_000_000 } }) as never; // +100%
+    });
+    vi.mocked(prisma.order.findMany).mockImplementation((args) => {
+      const range = (args as { where?: { paidAt?: { gte: Date } } } | undefined)?.where?.paidAt;
+      if (!range) return Promise.resolve([]) as never; // base retail
+      return Promise.resolve(isCurr(range) ? [{ finalAmount: 300 }, { finalAmount: 300 }] : [{ finalAmount: 500 }]) as never; // 600 vs 500 → +20%
+    });
+
+    const res = await request(app).get("/api/admin/stats").set(ADMIN_AUTH);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    // Base totals stay backward-compatible.
+    expect(res.body.data.totalUsers).toBe(42);
+    // Additive trends object with real deltas.
+    expect(res.body.data.trends).toEqual({
+      totalUsers: "+20%",
+      totalEnrollments: "+50%",
+      totalRevenue: "+100%",
+      retailRevenue: "+20%",
+      activeSubscriptions: "-20%",
+    });
+  });
+
+  it("returns null trends when the previous period has no data", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_ADMIN as never);
+    vi.mocked(prisma.course.count).mockResolvedValue(10);
+    vi.mocked(prisma.order.count).mockResolvedValue(3);
+    vi.mocked(prisma.review.aggregate).mockResolvedValue({ _avg: { rating: 4.8 } } as never);
+
+    const daysAgo = (d: Date) => (Date.now() - d.getTime()) / 86_400_000;
+    const isCurr = (range: { gte: Date } | undefined) => range != null && daysAgo(range.gte) < 45;
+
+    // Current window has activity, previous window is empty → no baseline → null.
+    vi.mocked(prisma.user.count).mockImplementation((args) => {
+      const range = (args as { where?: { createdAt?: { gte: Date } } } | undefined)?.where?.createdAt;
+      if (!range) return Promise.resolve(42) as never;
+      return Promise.resolve(isCurr(range) ? 5 : 0) as never;
+    });
+    vi.mocked(prisma.courseEnrollment.count).mockImplementation((args) => {
+      const range = (args as { where?: { enrolledAt?: { gte: Date } } } | undefined)?.where?.enrolledAt;
+      if (!range) return Promise.resolve(200) as never;
+      return Promise.resolve(isCurr(range) ? 5 : 0) as never;
+    });
+    vi.mocked(prisma.subscription.count).mockImplementation((args) => {
+      const range = (args as { where?: { startedAt?: { gte: Date } } } | undefined)?.where?.startedAt;
+      if (!range) return Promise.resolve(15) as never;
+      return Promise.resolve(isCurr(range) ? 5 : 0) as never;
+    });
+    vi.mocked(prisma.order.aggregate).mockImplementation((args) => {
+      const range = (args as { where?: { paidAt?: { gte: Date } } } | undefined)?.where?.paidAt;
+      if (!range) return Promise.resolve({ _sum: { finalAmount: 5_000_000 } }) as never;
+      return Promise.resolve({ _sum: { finalAmount: isCurr(range) ? 1_000_000 : 0 } }) as never;
+    });
+    vi.mocked(prisma.order.findMany).mockImplementation((args) => {
+      const range = (args as { where?: { paidAt?: { gte: Date } } } | undefined)?.where?.paidAt;
+      if (!range) return Promise.resolve([]) as never;
+      return Promise.resolve(isCurr(range) ? [{ finalAmount: 100 }] : []) as never;
+    });
+
+    const res = await request(app).get("/api/admin/stats").set(ADMIN_AUTH);
+    expect(res.status).toBe(200);
+    expect(res.body.data.trends).toEqual({
+      totalUsers: null,
+      totalEnrollments: null,
+      totalRevenue: null,
+      retailRevenue: null,
+      activeSubscriptions: null,
+    });
+  });
+
   it("returns 403 for non-admin users", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(VALID_USER as never);
 
