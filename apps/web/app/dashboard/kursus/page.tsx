@@ -4,11 +4,31 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Search, X, Plus, ArrowRight, User, CheckCircle2, BookOpen, Loader2 } from "lucide-react";
+import {
+  Search,
+  X,
+  Plus,
+  ArrowRight,
+  User,
+  CheckCircle2,
+  BookOpen,
+  PlayCircle,
+  CircleDashed,
+} from "lucide-react";
 import { getMyEnrollments, type Enrollment } from "../../../lib/api/enrollment";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { cn } from "@/lib/utils";
+import {
+  StatCard,
+  ProgressBar,
+  EmptyState,
+  FilterBar,
+  Input,
+  Select,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  DashboardLoading,
+} from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type SortOption = "terbaru" | "terlama" | "progres-tinggi" | "progres-rendah" | "a-z";
@@ -85,17 +105,20 @@ export default function KursusSayaPage() {
   }), [enrollments]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading />;
   }
 
+  const kpis = [
+    { label: "Total", value: stats.total, icon: BookOpen, accent: "#0077A8", tint: "rgba(0,119,168,0.10)" },
+    { label: "Selesai", value: stats.selesai, icon: CheckCircle2, accent: "#22C55E", tint: "rgba(34,197,94,0.10)" },
+    { label: "Berlangsung", value: stats.belajar, icon: PlayCircle, accent: "#F59E0B", tint: "rgba(245,158,11,0.10)" },
+    { label: "Belum Mulai", value: stats.belumMulai, icon: CircleDashed, accent: "#9CA3AF", tint: "rgba(156,163,175,0.12)" },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Kursus Saya</h1>
           <p className="mt-1 text-sm text-text-secondary">{enrollments.length} kursus terdaftar</p>
@@ -106,86 +129,74 @@ export default function KursusSayaPage() {
       </div>
 
       {/* Mini stats */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { label: "Total", value: stats.total, color: "#0077A8" },
-          { label: "Selesai", value: stats.selesai, color: "#22C55E" },
-          { label: "Berlangsung", value: stats.belajar, color: "#F59E0B" },
-          { label: "Belum Mulai", value: stats.belumMulai, color: "#9CA3AF" },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="flex min-w-[80px] flex-col items-center rounded-[var(--radius-md)] border border-border-default bg-surface-card px-5 py-3 shadow-e1"
-          >
-            <span className="text-xl font-extrabold" style={{ color: s.color }}>{s.value}</span>
-            <span className="mt-0.5 text-[11px] font-medium text-text-secondary">{s.label}</span>
-          </div>
+      <section className="dash-grid">
+        {kpis.map(({ label, value, icon: Icon, accent, tint }) => (
+          <StatCard
+            key={label}
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={label}
+            value={value}
+            icon={Icon}
+            iconColor={accent}
+            iconBg={tint}
+          />
         ))}
-      </div>
+      </section>
 
       {/* Filter & Search bar */}
-      <div className="flex flex-wrap items-center gap-2.5">
-        {/* Search */}
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" size={16} aria-hidden="true" />
-          <input
-            type="text"
-            placeholder="Cari kursus atau mentor..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-[var(--radius-md)] border border-border-strong bg-surface-card py-2.5 pl-10 pr-9 text-sm text-text-primary outline-none transition-[border-color,box-shadow] focus:border-accent-cyan-strong focus:ring-2 focus:ring-accent-cyan-strong/20"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-              aria-label="Bersihkan pencarian"
-            >
-              <X size={15} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        {/* Sort */}
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortOption)}
-          className="rounded-[var(--radius-md)] border border-border-strong bg-surface-card px-3.5 py-2.5 text-sm text-text-primary outline-none focus:border-accent-cyan-strong"
-          aria-label="Urutkan"
-        >
-          <option value="terbaru">Terbaru Didaftar</option>
-          <option value="terlama">Terlama Didaftar</option>
-          <option value="progres-tinggi">Progres Tertinggi</option>
-          <option value="progres-rendah">Progres Terendah</option>
-          <option value="a-z">A → Z</option>
-        </select>
-      </div>
+      <FilterBar
+        search={
+          <div className="relative w-full">
+            <Input
+              type="text"
+              placeholder="Cari kursus atau mentor..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              leftIcon={<Search size={16} />}
+              aria-label="Cari kursus atau mentor"
+              className={search ? "pr-10" : undefined}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                aria-label="Bersihkan pencarian"
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        }
+        filters={
+          <Select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortOption)}
+            aria-label="Urutkan"
+            className="w-full sm:w-56"
+          >
+            <option value="terbaru">Terbaru Didaftar</option>
+            <option value="terlama">Terlama Didaftar</option>
+            <option value="progres-tinggi">Progres Tertinggi</option>
+            <option value="progres-rendah">Progres Terendah</option>
+            <option value="a-z">A → Z</option>
+          </Select>
+        }
+      />
 
       {/* Filter tabs */}
-      <div className="flex flex-wrap items-center gap-6 border-b border-border-default">
-        {(["semua", "belajar", "selesai", "belum-mulai"] as FilterStatus[]).map((f) => {
-          const labels = { semua: "Semua", belajar: "Berlangsung", selesai: "Selesai", "belum-mulai": "Belum Mulai" };
-          const active = filter === f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={cn(
-                "-mb-px border-b-2 pb-3 text-sm font-semibold transition-colors",
-                active
-                  ? "border-accent-cyan-strong text-accent-cyan-strong"
-                  : "border-transparent text-text-secondary hover:text-text-primary"
-              )}
-            >
-              {labels[f]}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterStatus)}>
+        <TabsList>
+          <TabsTrigger value="semua">Semua</TabsTrigger>
+          <TabsTrigger value="belajar">Berlangsung</TabsTrigger>
+          <TabsTrigger value="selesai">Selesai</TabsTrigger>
+          <TabsTrigger value="belum-mulai">Belum Mulai</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Error */}
       {error && (
-        <div className="rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-600">
+        <div className="rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
           {error}
         </div>
       )}
@@ -210,7 +221,7 @@ export default function KursusSayaPage() {
 
       {/* Course grid */}
       {filtered.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="dash-grid">
           {filtered.map((e) => {
             const pct = Number(e.progressPct);
             const levelColor = {
@@ -223,7 +234,7 @@ export default function KursusSayaPage() {
               <Link
                 key={e.id}
                 href={`/belajar/${e.course.slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e3"
+                className="group col-span-12 flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e3 md:col-span-6 xl:col-span-4"
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video overflow-hidden bg-surface-sunken">
@@ -234,7 +245,7 @@ export default function KursusSayaPage() {
                   )}
                   {/* Level badge */}
                   {e.course.level && (
-                    <span className="absolute left-2.5 top-2.5 rounded-full px-2 py-0.5 text-[10px] font-bold capitalize text-white" style={{ background: levelColor }}>
+                    <span className="absolute left-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-bold capitalize text-white" style={{ background: levelColor }}>
                       {e.course.level}
                     </span>
                   )}
@@ -248,10 +259,10 @@ export default function KursusSayaPage() {
                   )}
                 </div>
 
-                <div className="flex flex-1 flex-col gap-1.5 p-4">
-                  <p className="line-clamp-2 text-[13px] font-bold leading-snug text-text-primary transition-colors group-hover:text-accent-cyan-strong">
+                <div className="flex flex-1 flex-col gap-2 p-4">
+                  <h3 className="line-clamp-2 font-display text-base font-bold leading-snug text-text-primary transition-colors group-hover:text-accent-cyan-strong">
                     {e.course.title}
-                  </p>
+                  </h3>
                   {e.course.trainer && (
                     <p className="inline-flex items-center gap-1 text-[11px] text-text-secondary">
                       <User size={12} aria-hidden="true" /> {e.course.trainer.name}
@@ -262,29 +273,23 @@ export default function KursusSayaPage() {
                   <div className="mt-1">
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-[11px] text-text-muted">Progres Belajar</span>
-                      <span className="text-[11px] font-bold" style={{ color: pct === 100 ? "#22C55E" : "#0077A8" }}>
+                      <span className={`text-[11px] font-bold ${pct === 100 ? "text-green-600" : "text-accent-cyan-strong"}`}>
                         {pct}%
                       </span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#E5E5EA]">
-                      <div
-                        className="h-full rounded-full transition-[width] duration-500"
-                        style={{
-                          width: `${pct}%`,
-                          background: pct === 100
-                            ? "linear-gradient(90deg, #22C55E, #16a34a)"
-                            : "linear-gradient(90deg, #0077A8, #00a8d9)",
-                        }}
-                      />
-                    </div>
+                    <ProgressBar
+                      value={pct}
+                      label={`Progres belajar ${e.course.title}`}
+                      barClassName={pct === 100 ? "bg-green-500" : undefined}
+                    />
                   </div>
 
                   {/* Enrolled date */}
-                  <p className="mt-auto text-[10px] text-[#C0C0C7]">
+                  <p className="mt-auto text-[10px] text-text-muted">
                     Terdaftar {new Date(e.enrolledAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
 
-                  <div className="mt-2.5 inline-flex items-center gap-1 border-t border-border-subtle pt-2.5 text-xs font-semibold text-accent-cyan-strong">
+                  <div className="mt-2 inline-flex items-center gap-1 border-t border-border-subtle pt-2 text-xs font-semibold text-accent-cyan-strong">
                     {e.isCompleted ? "Lihat Kembali" : pct > 0 ? "Lanjut Belajar" : "Mulai Belajar"}
                     <ArrowRight size={14} aria-hidden="true" />
                   </div>

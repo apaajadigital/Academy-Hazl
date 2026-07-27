@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Award, Calendar, ShieldCheck, Download, Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Award, Calendar, ShieldCheck, Download } from "lucide-react";
+import { Badge, EmptyState, DashboardLoading } from "@/components/ui";
 import { getToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
 
@@ -46,17 +45,13 @@ export default function SertifikatPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading />;
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="dash-container flex flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Sertifikat Saya</h1>
           <p className="mt-1 text-sm text-text-secondary">{certs.length} sertifikat diperoleh</p>
@@ -65,7 +60,7 @@ export default function SertifikatPage() {
       </div>
 
       {error && (
-        <div className="rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-600">
+        <div className="rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-600">
           {error}
         </div>
       )}
@@ -82,17 +77,17 @@ export default function SertifikatPage() {
       {certs.length > 0 && (
         <>
           {/* Achievement banner */}
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="bg-brand-gradient relative flex flex-col justify-center overflow-hidden rounded-[var(--radius-lg)] p-6 text-white shadow-e2 md:col-span-2">
+          <section className="dash-grid">
+            <div className="bg-brand-gradient relative col-span-12 flex flex-col justify-center overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e2 lg:col-span-8">
               <div className="relative z-10">
                 <h2 className="font-display text-xl font-bold">Pencapaian Luar Biasa!</h2>
-                <p className="mt-1.5 max-w-md text-sm text-white/90">
+                <p className="mt-2 max-w-md text-sm text-white/90">
                   Kamu telah memperoleh {certs.length} sertifikat keahlian. Terus tingkatkan skill dan kumpulkan lebih banyak.
                 </p>
               </div>
               <Award className="pointer-events-none absolute -bottom-6 -right-4 text-white/20" size={160} aria-hidden="true" />
             </div>
-            <div className="flex flex-col justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-6 shadow-e1">
+            <div className="col-span-12 flex flex-col justify-center rounded-[var(--radius-card)] border border-border-default bg-surface-card p-6 shadow-e1 lg:col-span-4">
               <span className="text-sm text-text-secondary">Total Sertifikat</span>
               <span className="mt-1 font-display text-4xl font-extrabold text-accent-cyan-strong">
                 {String(certs.length).padStart(2, "0")}
@@ -102,11 +97,11 @@ export default function SertifikatPage() {
           </section>
 
           {/* Certificates grid */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="dash-grid">
             {certs.map((cert) => (
               <div
                 key={cert.id}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e3"
+                className="group col-span-12 flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e3 md:col-span-6 xl:col-span-4"
               >
                 {/* Certificate visual */}
                 <div className="relative flex aspect-[1.414/1] items-center justify-center overflow-hidden bg-surface-accent-soft">
@@ -116,15 +111,15 @@ export default function SertifikatPage() {
                 </div>
 
                 {/* Info */}
-                <div className="flex flex-1 flex-col gap-2.5 p-5">
-                  <h3 className="line-clamp-2 text-[15px] font-bold leading-snug text-text-primary">{cert.course.title}</h3>
-                  <p className="inline-flex items-center gap-1.5 text-sm text-text-secondary">
+                <div className="flex flex-1 flex-col gap-2 p-6">
+                  <h3 className="line-clamp-2 font-display text-base font-bold leading-snug text-text-primary">{cert.course.title}</h3>
+                  <p className="inline-flex items-center gap-2 text-sm text-text-secondary">
                     <Calendar size={16} aria-hidden="true" />
                     Diterbitkan: {new Date(cert.issuedAt).toLocaleDateString("id-ID", {
                       day: "numeric", month: "long", year: "numeric",
                     })}
                   </p>
-                  <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] bg-surface-sunken px-3.5 py-2.5">
+                  <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] bg-surface-sunken px-4 py-2">
                     <span className="text-[10px] font-medium uppercase tracking-wider text-text-muted">Kode Verifikasi</span>
                     <code className="font-mono text-[13px] font-bold tracking-wider text-text-primary">{cert.code.toUpperCase()}</code>
                   </div>
@@ -134,7 +129,7 @@ export default function SertifikatPage() {
                     <Link
                       href={`/verify/${cert.code}`}
                       target="_blank"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-cyan-strong hover:underline"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-accent-cyan-strong hover:underline"
                     >
                       <ShieldCheck size={18} aria-hidden="true" />
                       Verifikasi
@@ -147,7 +142,7 @@ export default function SertifikatPage() {
                           `sertifikat-${cert.code}.pdf`,
                         ).catch(() => setError("Gagal mengunduh sertifikat."))
                       }
-                      className="inline-flex items-center gap-1.5 rounded-full bg-surface-accent-soft px-4 py-2 text-sm font-semibold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white"
+                      className="inline-flex items-center gap-2 rounded-full bg-surface-accent-soft px-4 py-2 text-sm font-semibold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white"
                     >
                       <Download size={16} aria-hidden="true" />
                       Unduh PDF

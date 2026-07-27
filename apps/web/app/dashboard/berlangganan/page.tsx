@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  CheckCircle2, Lock, AlertTriangle, Check, ShieldCheck, ScrollText, Loader2,
+  CheckCircle2, Lock, AlertTriangle, Check, ShieldCheck, ScrollText,
   Infinity as InfinityIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button, Badge, DashboardLoading } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Plan = {
@@ -95,11 +96,7 @@ export default function BerlanggananDashboardPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading label="Memuat paket berlangganan…" />;
   }
 
   const guarantees = [
@@ -109,7 +106,7 @@ export default function BerlanggananDashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div>
         <h1 className="font-display text-2xl font-extrabold text-text-primary">Status Berlangganan</h1>
@@ -118,7 +115,7 @@ export default function BerlanggananDashboardPage() {
 
       {/* Current subscription status */}
       {currentSub?.isActive ? (
-        <div className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-green-200 bg-green-50 px-5 py-4">
+        <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-green-200 bg-green-50 px-5 py-4">
           <CheckCircle2 className="flex-shrink-0 text-green-600" size={28} aria-hidden="true" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-green-800">
@@ -133,10 +130,10 @@ export default function BerlanggananDashboardPage() {
               </strong>
             </p>
           </div>
-          <span className="flex-shrink-0 rounded-full bg-green-500 px-3 py-1 text-[11px] font-bold text-white">Aktif</span>
+          <Badge variant="success" dot className="shrink-0">Aktif</Badge>
         </div>
       ) : (
-        <div className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-border-default bg-surface-sunken px-5 py-4">
+        <div className="flex items-center gap-4 rounded-[var(--radius-card)] border border-border-default bg-surface-sunken px-5 py-4">
           <Lock className="flex-shrink-0 text-text-secondary" size={28} aria-hidden="true" />
           <div className="flex-1">
             <p className="text-sm font-bold text-text-primary">Belum Berlangganan Premium</p>
@@ -144,14 +141,17 @@ export default function BerlanggananDashboardPage() {
               Anda saat ini menggunakan akun gratis. Berlangganan untuk membuka semua fitur.
             </p>
           </div>
-          <Link href="/berlangganan" className="btn btn-primary btn-sm flex-shrink-0">
+          <Link
+            href="/berlangganan"
+            className="inline-flex shrink-0 items-center rounded-[var(--radius-md)] bg-accent-cyan px-5 py-2 text-sm font-semibold text-text-on-accent transition-colors hover:bg-accent-cyan-strong hover:text-white"
+          >
             Pelajari Paket
           </Link>
         </div>
       )}
 
       {currentSub?.isExpired && (
-        <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-3.5 text-sm text-amber-800">
+        <div className="flex items-center gap-3 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
           <AlertTriangle size={18} className="flex-shrink-0" aria-hidden="true" />
           <p>Langganan Anda telah berakhir. Perpanjang sekarang untuk melanjutkan akses.</p>
         </div>
@@ -161,7 +161,7 @@ export default function BerlanggananDashboardPage() {
       {msg && (
         <div
           className={cn(
-            "rounded-[var(--radius-md)] border px-4 py-3.5 text-sm font-medium",
+            "rounded-[var(--radius-md)] border px-4 py-4 text-sm font-medium",
             msgType === "error"
               ? "border-red-200 bg-red-50 text-red-700"
               : "border-green-200 bg-green-50 text-green-700"
@@ -172,7 +172,7 @@ export default function BerlanggananDashboardPage() {
       )}
 
       {/* Plans */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="dash-grid">
         {plans.map((plan) => {
           const isActive = currentSub?.isActive && currentSub.planType === plan.id;
           const isPopular = !!plan.badge;
@@ -181,7 +181,7 @@ export default function BerlanggananDashboardPage() {
             <div
               key={plan.id}
               className={cn(
-                "relative flex flex-col gap-4 overflow-hidden rounded-[var(--radius-xl)] border p-7 shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e2",
+                "relative col-span-12 flex flex-col gap-4 overflow-hidden rounded-[var(--radius-card)] border p-8 shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e2 md:col-span-6",
                 isPopular ? "border-accent-cyan-strong ring-1 ring-accent-cyan-strong/20" : "border-border-strong"
               )}
             >
@@ -192,8 +192,8 @@ export default function BerlanggananDashboardPage() {
               )}
 
               <div className="pt-2">
-                <h2 className="text-lg font-bold text-text-primary">Paket {plan.name}</h2>
-                <div className="mt-2.5 flex items-baseline gap-1">
+                <h2 className="font-display text-lg font-bold text-text-primary">Paket {plan.name}</h2>
+                <div className="mt-2 flex items-baseline gap-1">
                   <span className="font-display text-3xl font-extrabold text-text-primary">
                     Rp {plan.price.toLocaleString("id-ID")}
                   </span>
@@ -213,43 +213,38 @@ export default function BerlanggananDashboardPage() {
                 )}
               </div>
 
-              <ul className="flex flex-1 flex-col gap-2.5">
+              <ul className="flex flex-1 flex-col gap-3">
                 {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-text-primary">
+                  <li key={f} className="flex items-start gap-3 text-sm text-text-primary">
                     <Check size={16} className="mt-0.5 flex-shrink-0 text-green-500" aria-hidden="true" />
                     <span>{f}</span>
                   </li>
                 ))}
               </ul>
 
-              <button
+              <Button
                 onClick={() => subscribe(plan.id)}
                 disabled={!!subscribing || isActive}
-                className={cn(
-                  "btn w-full px-7 py-3 text-sm font-bold disabled:opacity-65",
-                  isActive
-                    ? "cursor-default bg-green-500 text-white"
-                    : isPopular
-                      ? "btn-primary"
-                      : "btn-outline"
-                )}
+                loading={subscribing === plan.id}
+                variant={isPopular ? "primary" : "secondary"}
+                className={cn("w-full", isActive && "cursor-default bg-green-500 text-white hover:bg-green-500 hover:opacity-100")}
               >
                 {subscribing === plan.id ? "Memproses..." : isActive ? "✓ Paket Aktif" : `Pilih Paket ${plan.name}`}
-              </button>
+              </Button>
             </div>
           );
         })}
       </div>
 
       {/* Guarantee */}
-      <div className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+      <div className="dash-grid">
         {guarantees.map(({ Icon, title, desc }) => (
-          <div key={title} className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-accent-soft text-accent-cyan-strong">
+          <div key={title} className="col-span-12 flex items-start gap-3 rounded-[var(--radius-card)] border border-border-default bg-surface-card p-4 shadow-e1 md:col-span-4">
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-accent-soft text-accent-cyan-strong">
               <Icon size={18} aria-hidden="true" />
             </span>
             <div>
-              <p className="text-[13px] font-bold text-text-primary">{title}</p>
+              <p className="text-sm font-bold text-text-primary">{title}</p>
               <p className="mt-1 text-[11px] leading-relaxed text-text-secondary">{desc}</p>
             </div>
           </div>

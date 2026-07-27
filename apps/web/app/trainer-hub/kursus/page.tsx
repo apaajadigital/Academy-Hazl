@@ -3,9 +3,20 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Loader2 } from "lucide-react";
-import { Badge, Table, TableContainer, THead, TBody, TR, TH, TD } from "@/components/ui";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { BookOpen } from "lucide-react";
+import {
+  Badge,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  EmptyState,
+  PageHeader,
+  DashboardLoading,
+} from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Course = {
@@ -45,64 +56,63 @@ export default function TrainerCoursesPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-surface-page">
-      <div className="border-b border-border-default bg-surface-card px-6 py-4">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div className="flex items-center gap-2 text-sm">
+    <div className="dash-container flex flex-col gap-8">
+      <PageHeader
+        title="Kursus Saya"
+        breadcrumb={
+          <span className="flex items-center gap-2">
             <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
             <span className="text-text-secondary">/</span>
             <span className="font-medium text-text-primary">Kursus Saya</span>
-          </div>
-        </div>
-      </div>
+          </span>
+        }
+      />
 
-      <div className="mx-auto max-w-5xl p-6">
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin text-accent-cyan-strong" size={28} aria-hidden="true" />
-          </div>
-        ) : courses.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="Belum ada kursus"
-            description="Hubungi admin untuk menambahkan kursus Anda."
-          />
-        ) : (
-          <TableContainer>
-            <Table>
-              <THead>
-                <tr>
-                  <TH>Judul Kursus</TH>
-                  <TH className="text-center">Peserta</TH>
-                  <TH className="text-right">Harga</TH>
-                  <TH className="text-center">Status</TH>
-                  <TH className="text-center">Aksi</TH>
-                </tr>
-              </THead>
-              <TBody>
-                {courses.map((c) => {
-                  const meta = STATUS_META[c.status] ?? { label: "Draft", variant: "neutral" as const };
-                  return (
-                    <TR key={c.id}>
-                      <TD className="font-medium text-text-primary">{c.title}</TD>
-                      <TD className="text-center text-text-secondary">{c.enrollments.toLocaleString("id-ID")}</TD>
-                      <TD className="text-right text-text-primary">Rp {c.price.toLocaleString("id-ID")}</TD>
-                      <TD className="text-center">
-                        <Badge variant={meta.variant} dot>{meta.label}</Badge>
-                      </TD>
-                      <TD className="text-center">
-                        <Link href={`/trainer-hub/kursus/${c.id}`} className="text-xs font-medium text-accent-cyan-strong hover:underline">
-                          Lihat Analitik →
-                        </Link>
-                      </TD>
-                    </TR>
-                  );
-                })}
-              </TBody>
-            </Table>
-          </TableContainer>
-        )}
-      </div>
+      {loading ? (
+        <DashboardLoading />
+      ) : courses.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title="Belum ada kursus"
+          description="Hubungi admin untuk menambahkan kursus Anda."
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <THead>
+              <TR>
+                <TH>Judul Kursus</TH>
+                <TH className="text-center">Peserta</TH>
+                <TH className="text-right">Harga</TH>
+                <TH className="text-center">Status</TH>
+                <TH className="text-center">Aksi</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {courses.map((c) => {
+                const meta = STATUS_META[c.status] ?? { label: "Draft", variant: "neutral" as const };
+                return (
+                  <TR key={c.id}>
+                    <TD className="font-medium text-text-primary">{c.title}</TD>
+                    <TD className="text-center text-text-secondary">{c.enrollments.toLocaleString("id-ID")}</TD>
+                    <TD className="text-right text-text-primary">
+                      Rp {Number.isFinite(c.price) ? c.price.toLocaleString("id-ID") : "0"}
+                    </TD>
+                    <TD className="text-center">
+                      <Badge variant={meta.variant} dot>{meta.label}</Badge>
+                    </TD>
+                    <TD className="text-center">
+                      <Link href={`/trainer-hub/kursus/${c.id}`} className="text-xs font-medium text-accent-cyan-strong hover:underline">
+                        Lihat Analitik →
+                      </Link>
+                    </TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableContainer>
+      )}
     </div>
   );
 }

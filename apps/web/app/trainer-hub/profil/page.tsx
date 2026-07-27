@@ -3,8 +3,8 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { Button, Card, Input, Textarea } from "@/components/ui";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { Button, Card, Input, Textarea, PageHeader, DashboardLoading } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type UserProfile = {
@@ -97,8 +97,8 @@ export default function TrainerProfilPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-page">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      <div className="dash-container flex flex-col gap-8">
+        <DashboardLoading />
       </div>
     );
   }
@@ -106,19 +106,21 @@ export default function TrainerProfilPage() {
   const initials = (user?.name ?? "T").charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-surface-page">
-      <div className="border-b border-border-default bg-surface-card px-6 py-4">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 text-sm">
-          <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
-          <span className="text-text-secondary">/</span>
-          <span className="font-medium text-text-primary">Profil Saya</span>
-        </div>
-      </div>
+    <div className="dash-container flex flex-col gap-8">
+      <PageHeader
+        breadcrumb={
+          <span className="flex flex-wrap items-center gap-2">
+            <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+            <span>/</span>
+            <span className="font-medium text-text-primary">Profil Saya</span>
+          </span>
+        }
+        title="Profil Saya"
+      />
 
-      <div className="mx-auto max-w-2xl p-6">
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Avatar preview */}
-          <Card className="p-6">
+      <form onSubmit={handleSave} className="flex flex-col gap-6">
+        {/* Avatar preview */}
+        <Card className="rounded-[var(--radius-card)] p-6">
             <div className="mb-6 flex items-center gap-4">
               <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full">
                 {form.avatarUrl ? (
@@ -177,8 +179,8 @@ export default function TrainerProfilPage() {
             </div>
           </Card>
 
-          <Card className="space-y-4 p-6">
-            <h2 className="font-display text-sm font-semibold text-text-primary">Bio & Media Sosial</h2>
+          <Card className="space-y-4 rounded-[var(--radius-card)] p-6">
+            <h2 className="font-display text-sm font-semibold text-text-primary">Bio &amp; Media Sosial</h2>
             <div>
               <Textarea
                 label="Bio"
@@ -190,18 +192,13 @@ export default function TrainerProfilPage() {
               />
               <p className="mt-1 text-right text-xs text-text-muted">{form.bio.length}/1000</p>
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-text-primary">LinkedIn</label>
-              <div className="flex items-center">
-                <span className="whitespace-nowrap rounded-l-[var(--radius-md)] border border-r-0 border-border-strong bg-surface-sunken px-3 py-2.5 text-sm text-text-secondary">linkedin.com/in/</span>
-                <input
-                  value={form.linkedin.replace(/^.*linkedin\.com\/in\//i, "")}
-                  onChange={(e) => setForm({ ...form, linkedin: `https://linkedin.com/in/${e.target.value}` })}
-                  className="w-full rounded-r-[var(--radius-md)] border border-border-strong bg-surface-card px-4 py-2.5 text-[0.9375rem] text-text-primary outline-none transition-[border-color,box-shadow] placeholder:text-text-muted focus:border-accent-cyan-strong focus:ring-2 focus:ring-accent-cyan-strong/20"
-                  placeholder="username-anda"
-                />
-              </div>
-            </div>
+            <Input
+              label="LinkedIn"
+              value={form.linkedin.replace(/^.*linkedin\.com\/in\//i, "")}
+              onChange={(e) => setForm({ ...form, linkedin: `https://linkedin.com/in/${e.target.value}` })}
+              placeholder="username-anda"
+              hint="linkedin.com/in/username-anda"
+            />
           </Card>
 
           {error && (
@@ -220,8 +217,7 @@ export default function TrainerProfilPage() {
           <Button type="submit" variant="cyan" disabled={saving} loading={saving} className="w-full">
             {saving ? "Menyimpan..." : "Simpan Profil"}
           </Button>
-        </form>
-      </div>
+      </form>
     </div>
   );
 }
