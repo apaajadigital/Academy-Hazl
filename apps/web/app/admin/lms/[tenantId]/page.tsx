@@ -23,7 +23,6 @@ import {
   TR,
   TH,
   TD,
-  StatCard,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -262,17 +261,22 @@ export default function AdminTenantDetailPage() {
         </div>
       </Card>
 
-      {/* Stats row */}
+      {/* Stats row — Lumina KPI cards: icon tile top-left, value, uppercase label below */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map(({ label, value, icon, color }) => (
-          <StatCard
+        {stats.map(({ label, value, icon: Icon, color }) => (
+          <div
             key={label}
-            label={label}
-            value={value}
-            icon={icon}
-            iconColor={color}
-            iconBg={`${color}18`}
-          />
+            className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
+          >
+            <span
+              className="mb-4 flex size-11 items-center justify-center rounded-xl"
+              style={{ backgroundColor: `${color}18`, color }}
+            >
+              <Icon size={20} aria-hidden="true" />
+            </span>
+            <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{value}</p>
+            <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
+          </div>
         ))}
       </div>
 

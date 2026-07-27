@@ -384,7 +384,7 @@ export default function SystemHealthPage() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-text-primary">Kesehatan Sistem</h1>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-text-primary">Kesehatan Sistem</h1>
           <p className="mt-1 text-[13px] text-text-secondary">
             Visualisasi data real-time platform Jago Akademi
             {lastRefresh && (
@@ -401,87 +401,103 @@ export default function SystemHealthPage() {
         </button>
       </div>
 
-      {/* KPI Summary */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3.5">
+      {/* KPI Summary — Lumina vertical cards: icon tile top-left, value, uppercase label below */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
         {kpiCards.map((k) => {
           const Icon = k.icon;
           return (
-            <Card key={k.label} hoverable className="flex items-center gap-3.5 p-4">
-              <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: k.bg }}>
-                <Icon size={20} style={{ color: k.color }} aria-hidden="true" />
+            <div
+              key={k.label}
+              className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
+            >
+              <span
+                className="mb-4 flex size-11 items-center justify-center rounded-xl"
+                style={{ background: k.bg, color: k.color }}
+              >
+                <Icon size={20} aria-hidden="true" />
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-lg font-extrabold" style={{ color: k.color }}>{k.value}</p>
-                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary">{k.label}</p>
-              </div>
-            </Card>
+              <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{k.value}</p>
+              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{k.label}</p>
+            </div>
           );
         })}
       </div>
 
-      {/* Charts Row 1: Revenue + User Growth */}
+      {/* Charts Row 1: Revenue + User Growth — framed layered-white cards with header rule */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-6">
-          <div className="mb-4 flex items-center gap-2">
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
             <TrendingUp size={18} className="text-accent-cyan-strong" aria-hidden="true" />
             <h2 className="text-[15px] font-bold text-text-primary">Tren Revenue (12 Bulan)</h2>
           </div>
-          <LineChart data={data.revenue.chart} valueKey="amount" color="#0077A8" gradientId="revGrad" prefix="Rp " />
+          <div className="p-6">
+            <LineChart data={data.revenue.chart} valueKey="amount" color="#0077A8" gradientId="revGrad" prefix="Rp " />
+          </div>
         </Card>
-        <Card className="p-6">
-          <div className="mb-4 flex items-center gap-2">
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
             <Users size={18} className="text-accent-purple" aria-hidden="true" />
             <h2 className="text-[15px] font-bold text-text-primary">Pertumbuhan User (12 Bulan)</h2>
           </div>
-          <BarChart data={data.users.chart} valueKey="count" color="#7C3AED" />
+          <div className="p-6">
+            <BarChart data={data.users.chart} valueKey="count" color="#7C3AED" />
+          </div>
         </Card>
       </div>
 
       {/* Charts Row 2: Enrollment + Order Distribution */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="p-6">
-          <div className="mb-4 flex items-center gap-2">
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
             <GraduationCap size={18} className="text-green-600" aria-hidden="true" />
             <h2 className="text-[15px] font-bold text-text-primary">Tren Enrollment (12 Bulan)</h2>
           </div>
-          <LineChart data={data.enrollments.chart} valueKey="count" color="#059669" gradientId="enrGrad" />
+          <div className="p-6">
+            <LineChart data={data.enrollments.chart} valueKey="count" color="#059669" gradientId="enrGrad" />
+          </div>
         </Card>
-        <Card className="p-6">
-          <div className="mb-4 flex items-center gap-2">
+        <Card className="overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
             <PieChart size={18} className="text-accent-cyan-strong" aria-hidden="true" />
             <h2 className="text-[15px] font-bold text-text-primary">Distribusi Status Order</h2>
           </div>
-          <DonutChart data={data.orders.distribution} />
+          <div className="p-6">
+            <DonutChart data={data.orders.distribution} />
+          </div>
         </Card>
       </div>
 
       {/* Top Courses */}
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-2">
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
           <Trophy size={18} className="text-amber-500" aria-hidden="true" />
           <h2 className="text-[15px] font-bold text-text-primary">Top 5 Kursus Terpopuler</h2>
         </div>
-        <HorizontalBarChart data={data.topCourses} />
+        <div className="p-6">
+          <HorizontalBarChart data={data.topCourses} />
+        </div>
       </Card>
 
       {/* Database Overview */}
-      <Card className="p-6">
-        <div className="mb-4 flex items-center gap-2">
+      <Card className="overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
           <Database size={18} className="text-accent-cyan-strong" aria-hidden="true" />
           <h2 className="text-[15px] font-bold text-text-primary">Database Overview</h2>
         </div>
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
-          {Object.entries(data.dbOverview).map(([key, count]) => {
-            const meta = DB_LABELS[key] ?? { label: key, icon: Database, color: "#6B7280" };
-            const Icon = meta.icon;
-            return (
-              <div key={key} className="rounded-xl bg-surface-sunken p-4 text-center transition hover:-translate-y-0.5">
-                <Icon size={22} className="mx-auto mb-1.5" style={{ color: meta.color }} aria-hidden="true" />
-                <div className="text-xl font-extrabold" style={{ color: meta.color }}>{count.toLocaleString("id-ID")}</div>
-                <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{meta.label}</div>
-              </div>
-            );
-          })}
+        <div className="p-6">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
+            {Object.entries(data.dbOverview).map(([key, count]) => {
+              const meta = DB_LABELS[key] ?? { label: key, icon: Database, color: "#6B7280" };
+              const Icon = meta.icon;
+              return (
+                <div key={key} className="rounded-xl border border-solid border-border-default bg-surface-card p-4 text-center transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-e1">
+                  <Icon size={22} className="mx-auto mb-1.5" style={{ color: meta.color }} aria-hidden="true" />
+                  <div className="text-xl font-extrabold" style={{ color: meta.color }}>{count.toLocaleString("id-ID")}</div>
+                  <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">{meta.label}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </Card>
 

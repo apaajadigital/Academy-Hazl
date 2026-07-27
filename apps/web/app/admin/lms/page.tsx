@@ -20,7 +20,6 @@ import {
   TR,
   TH,
   TD,
-  StatCard,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -319,7 +318,7 @@ export default function AdminLMSPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">LMS B2B</h1>
+          <h1 className="font-display text-3xl font-bold text-text-primary">LMS B2B</h1>
           <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} perusahaan / institusi</p>
         </div>
         {activeTab === "tenants" && (
@@ -329,17 +328,22 @@ export default function AdminLMSPage() {
         )}
       </div>
 
-      {/* Metrics */}
+      {/* Metrics — Lumina KPI cards: icon tile top-left, value, uppercase label below */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {metrics.map(({ label, value, color, icon }) => (
-          <StatCard
+        {metrics.map(({ label, value, color, icon: Icon }) => (
+          <div
             key={label}
-            label={label}
-            value={value.toLocaleString("id-ID")}
-            icon={icon}
-            iconColor={color}
-            iconBg={`${color}18`}
-          />
+            className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
+          >
+            <span
+              className="mb-4 flex size-11 items-center justify-center rounded-xl"
+              style={{ backgroundColor: `${color}18`, color }}
+            >
+              <Icon size={20} aria-hidden="true" />
+            </span>
+            <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{value.toLocaleString("id-ID")}</p>
+            <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
+          </div>
         ))}
       </div>
 

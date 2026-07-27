@@ -231,7 +231,7 @@ export default function AdminPayoutPage() {
 
       {/* KPI Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {kpiCards.map((k) => (
             <StatCard
               key={k.label}
@@ -294,8 +294,15 @@ export default function AdminPayoutPage() {
                   return (
                     <TR key={p.id}>
                       <TD className="py-3">
-                        <p className="text-sm font-semibold text-text-primary">{p.trainer.name}</p>
-                        <p className="text-xs text-text-muted">{p.trainer.email}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                            {(p.trainer.name ?? "?").slice(0, 2).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-text-primary">{p.trainer.name}</p>
+                            <p className="truncate text-xs text-text-muted">{p.trainer.email}</p>
+                          </div>
+                        </div>
                       </TD>
                       <TD className="py-3">
                         <p className="text-sm text-text-primary">{p.bankName}</p>
@@ -341,9 +348,16 @@ export default function AdminPayoutPage() {
                   return (
                     <TR key={w.id}>
                       <TD className="py-3">
-                        <p className="text-sm font-semibold text-text-primary">{w.affiliate.user.name}</p>
-                        <p className="text-xs text-text-muted">{w.affiliate.user.email}</p>
-                        <p className="mt-0.5 text-[10px] font-semibold text-accent-cyan-strong">Kode: {w.affiliate.code}</p>
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                            {(w.affiliate.user.name ?? "?").slice(0, 2).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-text-primary">{w.affiliate.user.name}</p>
+                            <p className="truncate text-xs text-text-muted">{w.affiliate.user.email}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-accent-cyan-strong">Kode: {w.affiliate.code}</p>
+                          </div>
+                        </div>
                       </TD>
                       <TD className="py-3">
                         <p className="text-sm text-text-primary">{w.bankName}</p>

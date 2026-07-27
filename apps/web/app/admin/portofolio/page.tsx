@@ -13,13 +13,6 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-  TableContainer,
-  Table,
-  THead,
-  TBody,
-  TR,
-  TH,
-  TD,
   Pagination,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -269,8 +262,9 @@ export default function AdminPortofolioPage() {
         <Button onClick={handleOpenCreate} variant="primary" size="sm" leftIcon={<Plus size={16} />}>Tambah Member</Button>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="flex flex-wrap items-center justify-end gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+      {/* Status filter — framed Lumina filter card */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Status</span>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
             {["all", "published", "draft"].map((st) => (
@@ -282,67 +276,73 @@ export default function AdminPortofolioPage() {
         </Tabs>
       </div>
 
-      {/* Table */}
+      {/* Card grid */}
       {loading ? (
         <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
       ) : members.length === 0 ? (
-        <EmptyState icon={ImageIcon} title="Tidak ada member ditemukan" />
+        <EmptyState
+          icon={ImageIcon}
+          title="Tidak ada member ditemukan"
+          description="Tambahkan member untuk menampilkan portofolio komunitas Jago Akademi di sini."
+        />
       ) : (
-        <TableContainer>
-          <Table>
-            <THead>
-              <TR className="hover:bg-transparent">
-                <TH>Member</TH><TH>Role</TH><TH>Karya</TH><TH>Status</TH><TH>Featured</TH><TH>Dibuat</TH><TH>Aksi</TH>
-              </TR>
-            </THead>
-            <TBody>
-              {members.map((member) => (
-                <TR key={member.id}>
-                  <TD className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-brand-gradient flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] text-xs font-extrabold text-white">
-                        {member.photoUrl ? (
-                          <img src={member.photoUrl} alt={member.name} className="size-full object-cover" />
-                        ) : (
-                          <span>{(member.name ?? "?").slice(0, 2).toUpperCase()}</span>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-text-primary">{member.name}</p>
-                        {member.headline && <p className="mt-0.5 max-w-[320px] truncate text-xs text-text-muted">{member.headline}</p>}
-                      </div>
-                    </div>
-                  </TD>
-                  <TD className="py-3">
-                    <span className="rounded-md bg-surface-accent-soft px-2 py-1 text-xs font-semibold text-accent-cyan-strong">{member.role}</span>
-                  </TD>
-                  <TD className="py-3 text-sm text-text-secondary">{member.portfolioItems?.length ?? 0} item</TD>
-                  <TD className="py-3">
-                    <Badge variant={member.status === "published" ? "success" : "neutral"}>
-                      {member.status === "published" ? "Published" : "Draft"}
-                    </Badge>
-                  </TD>
-                  <TD className="py-3">
-                    <Star size={16} className={member.featured ? "text-amber-400" : "text-border-strong"} fill={member.featured ? "currentColor" : "none"} />
-                  </TD>
-                  <TD className="py-3 text-sm text-text-secondary">
-                    {member.createdAt ? new Date(member.createdAt).toLocaleDateString("id-ID") : "—"}
-                  </TD>
-                  <TD className="py-3">
-                    <div className="flex gap-1.5">
-                      <button onClick={() => handleOpenEdit(member)} className="rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white">
-                        Edit
-                      </button>
-                      <button onClick={() => handleDelete(member.id, member.name)} className="rounded-lg bg-red-600/10 px-3 py-1.5 text-xs font-bold text-red-700 transition-colors hover:bg-red-600 hover:text-white">
-                        Hapus
-                      </button>
-                    </div>
-                  </TD>
-                </TR>
-              ))}
-            </TBody>
-          </Table>
-        </TableContainer>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {members.map((member) => (
+            <div
+              key={member.id}
+              className="group flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
+            >
+              {/* Banner + avatar */}
+              <div className="relative h-20 bg-brand-gradient">
+                <div className="absolute left-3 top-3">
+                  <Badge variant={member.status === "published" ? "success" : "neutral"} className="shadow-e1">
+                    {member.status === "published" ? "Published" : "Draft"}
+                  </Badge>
+                </div>
+                {member.featured && (
+                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-600 shadow-e1 backdrop-blur-sm">
+                    <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" /> Featured
+                  </span>
+                )}
+                <div className="absolute -bottom-8 left-5">
+                  <div className="flex size-16 items-center justify-center overflow-hidden rounded-full border-4 border-surface-card bg-brand-gradient text-base font-extrabold text-white shadow-e1">
+                    {member.photoUrl ? (
+                      <img src={member.photoUrl} alt={member.name} className="size-full object-cover" />
+                    ) : (
+                      <span>{(member.name ?? "?").slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="flex flex-1 flex-col px-5 pb-5 pt-10">
+                <h3 className="truncate font-display text-base font-bold text-text-primary">{member.name}</h3>
+                <span className="mt-1.5 inline-block w-fit rounded-md bg-surface-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-cyan-strong">{member.role}</span>
+                {member.headline && (
+                  <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-text-secondary">{member.headline}</p>
+                )}
+
+                <div className="mt-4 flex items-center gap-2 border-t border-solid border-border-default pt-3 text-xs text-text-muted">
+                  <span className="inline-flex items-center gap-1.5 font-semibold text-text-secondary">
+                    <ImageIcon size={13} aria-hidden="true" /> {member.portfolioItems?.length ?? 0} karya
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>{member.createdAt ? new Date(member.createdAt).toLocaleDateString("id-ID") : "—"}</span>
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <button onClick={() => handleOpenEdit(member)} className="flex-1 rounded-lg bg-surface-accent-soft px-3 py-2 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(member.id, member.name)} className="flex-1 rounded-lg bg-red-600/10 px-3 py-2 text-xs font-bold text-red-700 transition-colors hover:bg-red-600 hover:text-white">
+                    Hapus
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Pagination */}

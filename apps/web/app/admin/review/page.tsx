@@ -170,7 +170,7 @@ export default function AdminReviewPage() {
       {/* Header — title + mode switch on their own row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">{mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}</h1>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">{mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}</h1>
           <p className="mt-1 text-sm text-text-secondary">
             {mode === "review"
               ? `${total.toLocaleString("id-ID")} review total`
@@ -223,7 +223,7 @@ export default function AdminReviewPage() {
                 <Card key={t.id} className={`p-[18px] ${t.status === "pending" ? "border-l-[3px] border-l-amber-500" : ""}`}>
                   <div className="mb-2.5 flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[11px] font-extrabold text-white">{(t.name ?? "?").slice(0, 2).toUpperCase()}</div>
+                      <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{(t.name ?? "?").slice(0, 2).toUpperCase()}</div>
                       <div>
                         <p className="text-sm font-bold text-text-primary">{t.name}</p>
                         <p className="text-xs text-text-secondary">{[t.role, t.company].filter(Boolean).join(" · ") || "—"}</p>
@@ -292,7 +292,7 @@ export default function AdminReviewPage() {
             <Card key={r.id} className={`p-[18px] ${!r.isApproved ? "border-l-[3px] border-l-amber-500" : ""}`}>
               <div className="mb-2.5 flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-[10px] text-[11px] font-extrabold text-white">{r.user.name.slice(0, 2).toUpperCase()}</div>
+                  <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{r.user.name.slice(0, 2).toUpperCase()}</div>
                   <div>
                     <p className="text-sm font-bold text-text-primary">{r.user.name}</p>
                     <p className="text-xs text-text-secondary">{r.course?.title ?? "—"}</p>
