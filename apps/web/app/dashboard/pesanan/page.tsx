@@ -5,10 +5,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
-  Plus, ShoppingBag, CheckCircle2, Clock, BookOpen, BookMarked, Ticket, Star, Loader2,
+  Plus, ShoppingBag, CheckCircle2, Clock, BookOpen, BookMarked, Ticket, Star,
 } from "lucide-react";
-import { Badge, Table, THead, TBody, TR, TH, TD, Pagination } from "@/components/ui";
-import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  Badge,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Pagination,
+  StatCard,
+  DashboardLoading,
+  EmptyState,
+} from "@/components/ui";
 import { getToken } from "@/lib/auth/token";
 
 type OrderItem = { itemTitle: string | null; itemType: string };
@@ -95,16 +107,18 @@ export default function PesananDashboardPage() {
   const pendingCount = orders.filter((o) => o.status === "pending").length;
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading label="Memuat pesanan…" />;
   }
 
+  const stats = [
+    { label: "Total Pesanan", value: total, icon: ShoppingBag, iconColor: "#0077A8", iconBg: "rgba(0,119,168,0.10)" },
+    { label: "Pesanan Selesai", value: paidCount, icon: CheckCircle2, iconColor: "#16A34A", iconBg: "rgba(22,163,74,0.10)" },
+    { label: "Menunggu Pembayaran", value: pendingCount, icon: Clock, iconColor: "#D97706", iconBg: "rgba(217,119,6,0.10)" },
+  ];
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="dash-container flex flex-col gap-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Pesanan Saya</h1>
           <p className="mt-1 text-sm text-text-secondary">{total} total transaksi</p>
@@ -124,37 +138,32 @@ export default function PesananDashboardPage() {
       ) : (
         <>
           {/* Stat summary */}
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-            {[
-              { label: "Total Pesanan", value: total, Icon: ShoppingBag, wrap: "bg-surface-accent-soft text-accent-cyan-strong" },
-              { label: "Pesanan Selesai", value: paidCount, Icon: CheckCircle2, wrap: "bg-green-600/10 text-green-600" },
-              { label: "Menunggu Pembayaran", value: pendingCount, Icon: Clock, wrap: "bg-amber-500/10 text-amber-600" },
-            ].map(({ label, value, Icon, wrap }) => (
-              <div key={label} className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-5 shadow-e1">
-                <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${wrap}`}>
-                  <Icon size={22} aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wider text-text-secondary">{label}</p>
-                  <p className="font-display text-lg font-extrabold text-text-primary">{value}</p>
-                </div>
-              </div>
+          <section className="dash-grid">
+            {stats.map((s) => (
+              <StatCard
+                key={s.label}
+                className="col-span-12 sm:col-span-6 xl:col-span-4"
+                label={s.label}
+                value={s.value}
+                icon={s.icon}
+                iconColor={s.iconColor}
+                iconBg={s.iconBg}
+              />
             ))}
-          </div>
+          </section>
 
           {/* Orders table */}
-          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-            <div className="overflow-x-auto">
-              <Table>
+          <TableContainer>
+            <Table>
               <THead>
-                <tr>
+                <TR>
                   <TH>No. Pesanan</TH>
                   <TH>Tanggal</TH>
                   <TH>Item</TH>
                   <TH className="text-right">Total</TH>
                   <TH>Status</TH>
                   <TH className="text-center">Aksi</TH>
-                </tr>
+                </TR>
               </THead>
               <TBody>
                 {orders.map((order) => {
@@ -162,6 +171,7 @@ export default function PesananDashboardPage() {
                   const title = order.items[0]?.itemTitle ?? "Produk";
                   const itemType = order.items[0]?.itemType ?? "";
                   const Icon = TYPE_ICON[itemType] ?? ShoppingBag;
+                  const amount = Number(order.finalAmount);
 
                   return (
                     <TR key={order.id}>
@@ -170,8 +180,8 @@ export default function PesananDashboardPage() {
                         {new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "long", year: "numeric" }).format(new Date(order.createdAt))}
                       </TD>
                       <TD>
-                        <div className="flex items-center gap-2.5">
-                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-accent-cyan-strong">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-surface-sunken text-accent-cyan-strong">
                             <Icon size={16} aria-hidden="true" />
                           </span>
                           <div className="min-w-0">
@@ -181,7 +191,7 @@ export default function PesananDashboardPage() {
                         </div>
                       </TD>
                       <TD className="whitespace-nowrap text-right font-bold text-text-primary">
-                        Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                        {Number.isFinite(amount) ? `Rp ${amount.toLocaleString("id-ID")}` : "Rp 0"}
                       </TD>
                       <TD>
                         <Badge variant={status.variant} dot>{status.label}</Badge>
@@ -217,16 +227,15 @@ export default function PesananDashboardPage() {
                 })}
               </TBody>
             </Table>
-            </div>
 
             {/* Pagination footer */}
             {totalPages > 1 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default bg-surface-sunken px-6 py-4">
                 <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
                 <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
               </div>
             )}
-          </div>
+          </TableContainer>
         </>
       )}
     </div>

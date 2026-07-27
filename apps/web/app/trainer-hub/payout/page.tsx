@@ -3,8 +3,23 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Info } from "lucide-react";
-import { Badge, Button, Card, Input, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
+import { Info, Wallet } from "lucide-react";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  EmptyState,
+  PageHeader,
+  DashboardLoading,
+} from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Payout = {
@@ -79,84 +94,92 @@ export default function TrainerPayoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-page">
-      <div className="border-b border-border-default bg-surface-card px-6 py-4">
-        <div className="mx-auto flex max-w-4xl items-center gap-2 text-sm">
-          <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
-          <span className="text-text-secondary">/</span>
-          <span className="font-medium text-text-primary">Penarikan Saldo</span>
-        </div>
-      </div>
+    <div className="dash-container flex flex-col gap-8">
+      <PageHeader
+        title="Penarikan Saldo"
+        breadcrumb={
+          <span className="flex items-center gap-2">
+            <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+            <span className="text-text-secondary">/</span>
+            <span className="font-medium text-text-primary">Penarikan Saldo</span>
+          </span>
+        }
+      />
 
-      <div className="mx-auto max-w-4xl space-y-6 p-6">
-        <Card className="p-6">
-          <h2 className="mb-4 font-display text-base font-semibold text-text-primary">Ajukan Penarikan</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                label="Jumlah (Rp)"
-                type="number" min="100000" step="1000" required
-                value={form.amount}
-                onChange={(e) => setForm({ ...form, amount: e.target.value })}
-                placeholder="Minimal Rp 100.000"
-              />
-              <Input
-                label="Nama Bank"
-                type="text" required
-                value={form.bankName}
-                onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-                placeholder="Contoh: BCA, BNI, Mandiri"
-              />
-              <Input
-                label="Nomor Rekening"
-                type="text" required
-                value={form.accountNo}
-                onChange={(e) => setForm({ ...form, accountNo: e.target.value })}
-              />
-              <Input
-                label="Nama Pemilik Rekening"
-                type="text" required
-                value={form.accountName}
-                onChange={(e) => setForm({ ...form, accountName: e.target.value })}
-              />
-            </div>
-            <p className="flex items-start gap-2 text-xs text-text-secondary">
-              <Info size={14} className="mt-0.5 flex-shrink-0 text-text-muted" aria-hidden="true" />
-              Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 100.000.
-            </p>
-            <div className="flex items-center gap-3">
-              <Button type="submit" variant="cyan" size="sm" disabled={submitting} loading={submitting}>
-                {submitting ? "Mengirim..." : "Ajukan Penarikan"}
-              </Button>
-              {msg && <p className="text-sm text-accent-cyan-strong">{msg}</p>}
-            </div>
-          </form>
-        </Card>
-
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="border-b border-border-default px-6 py-4">
-            <h2 className="font-display font-semibold text-text-primary">Riwayat Penarikan</h2>
+      <Card className="p-6">
+        <h3 className="mb-4 font-display text-base font-bold text-text-primary">Ajukan Penarikan</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Jumlah (Rp)"
+              type="number" min="100000" step="1000" required
+              value={form.amount}
+              onChange={(e) => setForm({ ...form, amount: e.target.value })}
+              placeholder="Minimal Rp 100.000"
+            />
+            <Input
+              label="Nama Bank"
+              type="text" required
+              value={form.bankName}
+              onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+              placeholder="Contoh: BCA, BNI, Mandiri"
+            />
+            <Input
+              label="Nomor Rekening"
+              type="text" required
+              value={form.accountNo}
+              onChange={(e) => setForm({ ...form, accountNo: e.target.value })}
+            />
+            <Input
+              label="Nama Pemilik Rekening"
+              type="text" required
+              value={form.accountName}
+              onChange={(e) => setForm({ ...form, accountName: e.target.value })}
+            />
           </div>
-          {loading ? (
-            <div className="py-8 text-center text-text-secondary">Memuat...</div>
-          ) : payouts.length === 0 ? (
-            <div className="py-10 text-center text-text-secondary">Belum ada riwayat penarikan.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>Jumlah</TH>
-                    <TH>Bank</TH>
-                    <TH>Tanggal</TH>
-                    <TH>Status</TH>
-                    <TH>Catatan</TH>
-                  </tr>
-                </THead>
-                <TBody>
-                  {payouts.map((p) => (
+          <p className="flex items-start gap-2 text-xs text-text-secondary">
+            <Info size={14} className="mt-0.5 flex-shrink-0 text-text-muted" aria-hidden="true" />
+            Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 100.000.
+          </p>
+          <div className="flex items-center gap-3">
+            <Button type="submit" variant="cyan" size="sm" disabled={submitting} loading={submitting}>
+              {submitting ? "Mengirim..." : "Ajukan Penarikan"}
+            </Button>
+            {msg && <p className="text-sm text-accent-cyan-strong">{msg}</p>}
+          </div>
+        </form>
+      </Card>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-lg font-bold text-text-primary">Riwayat Penarikan</h2>
+        {loading ? (
+          <DashboardLoading />
+        ) : payouts.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="Belum ada riwayat penarikan"
+            description="Permintaan penarikan yang Anda ajukan akan muncul di sini."
+          />
+        ) : (
+          <TableContainer>
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Jumlah</TH>
+                  <TH>Bank</TH>
+                  <TH>Tanggal</TH>
+                  <TH>Status</TH>
+                  <TH>Catatan</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {payouts.map((p) => {
+                  const amount = parseFloat(p.amount);
+                  return (
                     <TR key={p.id}>
-                      <TD className="font-semibold text-text-primary">Rp {parseFloat(p.amount).toLocaleString("id-ID")}</TD>
+                      <TD className="font-semibold text-text-primary">
+                        Rp {Number.isFinite(amount) ? amount.toLocaleString("id-ID") : "0"}
+                      </TD>
                       <TD className="text-text-secondary">{p.bankName} · {p.accountNo}</TD>
                       <TD className="text-xs text-text-secondary">{new Date(p.requestedAt).toLocaleDateString("id-ID")}</TD>
                       <TD>
@@ -166,13 +189,13 @@ export default function TrainerPayoutPage() {
                       </TD>
                       <TD className="text-xs text-text-secondary">{p.note ?? "—"}</TD>
                     </TR>
-                  ))}
-                </TBody>
-              </Table>
-            </div>
-          )}
-        </div>
-      </div>
+                  );
+                })}
+              </TBody>
+            </Table>
+          </TableContainer>
+        )}
+      </section>
     </div>
   );
 }

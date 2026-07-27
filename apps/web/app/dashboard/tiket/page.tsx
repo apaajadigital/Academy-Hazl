@@ -6,10 +6,9 @@ import Link from "next/link";
 import Image from "next/image";
 import type { LucideIcon } from "lucide-react";
 import {
-  Ticket, CalendarDays, MapPin, Globe, Clock, CheckCircle2, XCircle, PartyPopper, Info, Check, Loader2,
+  Ticket, CalendarDays, MapPin, Globe, Clock, CheckCircle2, XCircle, PartyPopper, Info, Check,
 } from "lucide-react";
-import { Badge } from "@/components/ui";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Badge, DashboardLoading, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
 
@@ -74,16 +73,12 @@ export default function TiketPage() {
   }, [router]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading label="Memuat tiket…" />;
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="dash-container flex flex-col gap-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Tiket Event Saya</h1>
           <p className="mt-1 text-sm text-text-secondary">{tickets.length} tiket terdaftar</p>
@@ -111,13 +106,13 @@ export default function TiketPage() {
             return (
               <div
                 key={ticket.id}
-                className="flex items-stretch overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
+                className="flex items-stretch overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
               >
                 {/* Left accent */}
                 <div className={cn("w-1.5 flex-shrink-0", isDone ? "bg-green-500" : "bg-accent-cyan-strong")} />
 
                 {/* Cover */}
-                <div className="m-3.5 flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-surface-accent-soft text-accent-cyan-strong max-[640px]:hidden">
+                <div className="m-4 flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-md)] bg-surface-accent-soft text-accent-cyan-strong max-[640px]:hidden">
                   {ticket.event.coverUrl ? (
                     <Image src={ticket.event.coverUrl} alt="" width={80} height={80} className="h-full w-full object-cover" />
                   ) : isOnline ? (
@@ -128,7 +123,7 @@ export default function TiketPage() {
                 </div>
 
                 {/* Info */}
-                <div className="flex flex-1 flex-col justify-between gap-2.5 py-3.5 pr-4 max-[640px]:pl-3.5">
+                <div className="flex flex-1 flex-col justify-between gap-3 py-4 pr-4 max-[640px]:pl-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link href={`/event/${ticket.event.slug}`} className="block text-sm font-bold text-text-primary transition-colors hover:text-accent-cyan-strong">
@@ -152,7 +147,7 @@ export default function TiketPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex flex-col gap-0.5 rounded-lg bg-surface-sunken px-3 py-1.5">
+                    <div className="flex flex-col gap-0.5 rounded-[var(--radius-md)] bg-surface-sunken px-3 py-2">
                       <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted">Kode Tiket</span>
                       <code className="font-mono text-[13px] font-extrabold tracking-wider text-text-primary">{ticket.ticketCode.slice(0, 8).toUpperCase()}</code>
                     </div>

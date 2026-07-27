@@ -13,6 +13,10 @@ import {
   TabsList,
   TabsTrigger,
   Pagination,
+  FilterBar,
+  TableActionButton,
+  DashboardLoading,
+  ProgressBar,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -43,8 +47,6 @@ const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"]
 const TYPE_LABEL: Record<string, string> = {
   seminar: "🎤 Seminar", webinar: "💻 Webinar", workshop: "🔧 Workshop", bootcamp: "⚡ Bootcamp",
 };
-
-const ACTION_BTN = "rounded-lg px-3.5 py-1.5 text-xs font-bold transition-colors";
 
 
 export default function AdminEventPage() {
@@ -90,25 +92,24 @@ export default function AdminEventPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">Manajemen Event</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Event</h1>
           <p className="mt-1 text-sm text-text-secondary">Kelola jadwal pelatihan, webinar, dan workshop &middot; {total.toLocaleString("id-ID")} event total</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+      <FilterBar>
         <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 items-end gap-2">
           <Input
-            className="py-2"
             placeholder="Cari event..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             leftIcon={<Search size={16} />}
             containerClassName="flex-1"
           />
-          <Button type="submit" variant="cyan" size="sm" leftIcon={<Search size={16} />}>Cari</Button>
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -119,37 +120,35 @@ export default function AdminEventPage() {
             ))}
           </TabsList>
         </Tabs>
-      </div>
+      </FilterBar>
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
-        </div>
+        <DashboardLoading />
       ) : events.length === 0 ? (
         <EmptyState icon={Ticket} title="Tidak ada event ditemukan" />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="dash-grid">
           {events.map((ev) => {
             const s = STATUS_MAP[ev.status] ?? STATUS_MAP["draft"]!;
             const regRate = ev.maxAttendees ? Math.round((ev.registeredCount / ev.maxAttendees) * 100) : null;
             return (
-              <Card key={ev.id} hoverable className="flex flex-col p-5">
-                <div className="mb-3 flex items-start justify-between gap-2">
+              <Card key={ev.id} hoverable className="col-span-12 flex flex-col p-6 md:col-span-6 xl:col-span-4">
+                <div className="mb-4 flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <span className="mb-2 inline-block rounded-full bg-surface-accent-soft px-2.5 py-0.5 text-[11px] font-semibold text-accent-cyan-strong">{TYPE_LABEL[ev.type] ?? ev.type}</span>
+                    <Badge variant="info" className="mb-2">{TYPE_LABEL[ev.type] ?? ev.type}</Badge>
                     <p className="text-sm font-bold leading-tight text-text-primary">{ev.title}</p>
                     {ev.organizer && <p className="mt-0.5 text-xs text-text-muted">oleh {ev.organizer.name}</p>}
                   </div>
                   <Badge variant={s.variant} className="shrink-0">{s.label}</Badge>
                 </div>
 
-                <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-text-secondary">
+                <div className="mb-4 flex flex-wrap gap-x-3 gap-y-2 text-xs text-text-secondary">
                   <span className="inline-flex items-center gap-1"><Calendar size={13} /> {new Date(ev.startDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</span>
                   {ev.location && <span className="inline-flex items-center gap-1"><MapPin size={13} /> {ev.location}</span>}
                   <span className="inline-flex items-center gap-1"><Wallet size={13} /> {Number(ev.price) === 0 ? "Gratis" : `Rp ${Number(ev.price).toLocaleString("id-ID")}`}</span>
                 </div>
 
-                <div className="mb-1.5 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
                     <Users size={13} /> {ev.registeredCount}{ev.maxAttendees ? `/${ev.maxAttendees}` : ""} peserta
                   </span>
@@ -158,26 +157,29 @@ export default function AdminEventPage() {
                   )}
                 </div>
                 {regRate !== null && (
-                  <div className="mb-3.5 h-1 overflow-hidden rounded-full bg-surface-sunken">
-                    <div className="bg-brand-gradient h-full rounded-full" style={{ width: `${Math.min(100, regRate)}%` }} />
-                  </div>
+                  <ProgressBar
+                    className="mb-4 h-1"
+                    value={Math.min(100, regRate)}
+                    gradient
+                    label={`Pendaftaran ${ev.title}`}
+                  />
                 )}
 
-                <div className="mt-auto flex flex-wrap gap-1.5">
+                <div className="mt-auto flex flex-wrap gap-2">
                   {ev.status === "draft" && (
-                    <button className={`${ACTION_BTN} bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white`} onClick={() => updateStatus(ev.id, "published")}>Publikasi</button>
+                    <TableActionButton variant="ok" onClick={() => updateStatus(ev.id, "published")}>Publikasi</TableActionButton>
                   )}
                   {ev.status === "published" && (
                     <>
-                      <button className={`${ACTION_BTN} bg-blue-500/10 text-blue-700 hover:bg-blue-600 hover:text-white`} onClick={() => updateStatus(ev.id, "ongoing")}>Mulai</button>
-                      <button className={`${ACTION_BTN} bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white`} onClick={() => updateStatus(ev.id, "cancelled")}>Batalkan</button>
+                      <TableActionButton variant="neutral" className="bg-blue-500/10 text-blue-700 hover:bg-blue-600 hover:text-white" onClick={() => updateStatus(ev.id, "ongoing")}>Mulai</TableActionButton>
+                      <TableActionButton variant="danger" onClick={() => updateStatus(ev.id, "cancelled")}>Batalkan</TableActionButton>
                     </>
                   )}
                   {ev.status === "ongoing" && (
-                    <button className={`${ACTION_BTN} bg-accent-purple/10 text-accent-purple hover:bg-accent-purple hover:text-white`} onClick={() => updateStatus(ev.id, "ended")}>Selesai</button>
+                    <TableActionButton variant="neutral" className="bg-accent-purple/10 text-accent-purple hover:bg-accent-purple hover:text-white" onClick={() => updateStatus(ev.id, "ended")}>Selesai</TableActionButton>
                   )}
                   {ev.status === "cancelled" && (
-                    <button className={`${ACTION_BTN} bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white`} onClick={() => updateStatus(ev.id, "published")}>Aktifkan Lagi</button>
+                    <TableActionButton variant="ok" onClick={() => updateStatus(ev.id, "published")}>Aktifkan Lagi</TableActionButton>
                   )}
                 </div>
               </Card>

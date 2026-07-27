@@ -31,3 +31,12 @@ export { Pagination, type PaginationProps } from "./Pagination";
 export { Skeleton } from "./Skeleton";
 export { Avatar, type AvatarProps } from "./Avatar";
 export { StatCard, type StatCardProps } from "./StatCard";
+
+// Dashboard standardization primitives (Jul 2026)
+export { EmptyState } from "./EmptyState";
+export { PageHeader } from "./PageHeader";
+export { FilterBar } from "./FilterBar";
+export { QuickActionCard } from "./QuickActionCard";
+export { TableActionButton } from "./TableActionButton";
+export { ProgressBar } from "./ProgressBar";
+export { DashboardLoading, DashboardError } from "./DashboardState";

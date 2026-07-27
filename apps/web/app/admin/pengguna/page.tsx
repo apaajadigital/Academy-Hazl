@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Download, Users, Loader2 } from "lucide-react";
+import { Search, Download, Users } from "lucide-react";
 import {
   Avatar,
   Badge,
   Button,
   Input,
   Pagination,
+  TableContainer,
   Table,
   THead,
   TBody,
@@ -17,6 +18,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  FilterBar,
+  TableActionButton,
+  DashboardLoading,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -122,7 +126,7 @@ export default function AdminPenggunaPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -141,8 +145,8 @@ export default function AdminPenggunaPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
+      <FilterBar>
+        <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 items-end gap-2">
           <Input
             containerClassName="flex-1"
             leftIcon={<Search size={16} aria-hidden="true" />}
@@ -151,7 +155,7 @@ export default function AdminPenggunaPage() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari pengguna"
           />
-          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
         <Tabs value={selectedRole} onValueChange={(v) => { setSelectedRole(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -162,21 +166,18 @@ export default function AdminPenggunaPage() {
             ))}
           </TabsList>
         </Tabs>
-      </div>
+      </FilterBar>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : users.length === 0 ? (
         <EmptyState icon={Users} title="Tidak ada pengguna ditemukan" description="Coba ubah kata kunci pencarian atau filter role." />
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="overflow-x-auto">
+        <TableContainer>
             <Table>
               <THead>
-                <tr>
+                <TR className="hover:bg-transparent">
                   <TH>Pengguna</TH>
                   <TH>Role</TH>
                   <TH>Status</TH>
@@ -184,7 +185,7 @@ export default function AdminPenggunaPage() {
                   <TH>Kursus</TH>
                   <TH>Bergabung</TH>
                   <TH>Aksi</TH>
-                </tr>
+                </TR>
               </THead>
               <TBody>
                 {users.map((user) => {
@@ -192,7 +193,7 @@ export default function AdminPenggunaPage() {
                   return (
                     <TR key={user.id}>
                       <TD>
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2">
                           <Avatar name={user.name} size="md" />
                           <div className="min-w-0">
                             <p className="font-semibold text-text-primary">{user.name}</p>
@@ -206,7 +207,7 @@ export default function AdminPenggunaPage() {
                             <span
                               key={r}
                               className={cn(
-                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
                                 ROLES_COLOR[r] ?? "bg-gray-100 text-gray-600",
                               )}
                             >
@@ -232,34 +233,29 @@ export default function AdminPenggunaPage() {
                         {new Date(user.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                       </TD>
                       <TD>
-                        <button
+                        <TableActionButton
+                          variant={user.isVerified ? "warn" : "ok"}
                           onClick={() => toggleVerify(user.id, user.isVerified)}
                           title={user.isVerified ? "Cabut verifikasi" : "Verifikasi email"}
-                          className={cn(
-                            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                            user.isVerified
-                              ? "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20"
-                              : "bg-green-600/10 text-green-700 hover:bg-green-600/20",
-                          )}
+                          aria-label={user.isVerified ? "Cabut verifikasi" : "Verifikasi email"}
                         >
                           {user.isVerified ? "Cabut" : "Verifikasi"}
-                        </button>
+                        </TableActionButton>
                       </TD>
                     </TR>
                   );
                 })}
               </TBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default bg-surface-sunken px-6 py-4">
               <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
               <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
             </div>
           )}
-        </div>
+        </TableContainer>
       )}
     </div>
   );

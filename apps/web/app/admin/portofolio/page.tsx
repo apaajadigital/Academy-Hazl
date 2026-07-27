@@ -8,11 +8,13 @@ import {
   Input,
   Select,
   Badge,
+  DashboardLoading,
   Modal,
   ModalContent,
   Tabs,
   TabsList,
   TabsTrigger,
+  TableActionButton,
   Pagination,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -252,7 +254,7 @@ export default function AdminPortofolioPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -262,8 +264,8 @@ export default function AdminPortofolioPage() {
         <Button onClick={handleOpenCreate} variant="primary" size="sm" leftIcon={<Plus size={16} />}>Tambah Member</Button>
       </div>
 
-      {/* Status filter — framed Lumina filter card */}
-      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+      {/* Status filter — framed filter card */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">Status</span>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -278,7 +280,7 @@ export default function AdminPortofolioPage() {
 
       {/* Card grid */}
       {loading ? (
-        <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+        <DashboardLoading />
       ) : members.length === 0 ? (
         <EmptyState
           icon={ImageIcon}
@@ -286,11 +288,11 @@ export default function AdminPortofolioPage() {
           description="Tambahkan member untuk menampilkan portofolio komunitas Jago Akademi di sini."
         />
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="dash-grid">
           {members.map((member) => (
             <div
               key={member.id}
-              className="group flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2"
+              className="group col-span-12 flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-0.5 hover:shadow-e2 md:col-span-6 xl:col-span-4"
             >
               {/* Banner + avatar */}
               <div className="relative h-20 bg-brand-gradient">
@@ -318,13 +320,13 @@ export default function AdminPortofolioPage() {
               {/* Body */}
               <div className="flex flex-1 flex-col px-5 pb-5 pt-10">
                 <h3 className="truncate font-display text-base font-bold text-text-primary">{member.name}</h3>
-                <span className="mt-1.5 inline-block w-fit rounded-md bg-surface-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-cyan-strong">{member.role}</span>
+                <span className="mt-2 inline-block w-fit rounded-md bg-surface-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-cyan-strong">{member.role}</span>
                 {member.headline && (
-                  <p className="mt-2.5 line-clamp-2 text-sm leading-relaxed text-text-secondary">{member.headline}</p>
+                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-text-secondary">{member.headline}</p>
                 )}
 
                 <div className="mt-4 flex items-center gap-2 border-t border-solid border-border-default pt-3 text-xs text-text-muted">
-                  <span className="inline-flex items-center gap-1.5 font-semibold text-text-secondary">
+                  <span className="inline-flex items-center gap-2 font-semibold text-text-secondary">
                     <ImageIcon size={13} aria-hidden="true" /> {member.portfolioItems?.length ?? 0} karya
                   </span>
                   <span aria-hidden="true">·</span>
@@ -332,12 +334,12 @@ export default function AdminPortofolioPage() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  <button onClick={() => handleOpenEdit(member)} className="flex-1 rounded-lg bg-surface-accent-soft px-3 py-2 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white">
+                  <TableActionButton variant="neutral" onClick={() => handleOpenEdit(member)} className="flex-1">
                     Edit
-                  </button>
-                  <button onClick={() => handleDelete(member.id, member.name)} className="flex-1 rounded-lg bg-red-600/10 px-3 py-2 text-xs font-bold text-red-700 transition-colors hover:bg-red-600 hover:text-white">
+                  </TableActionButton>
+                  <TableActionButton variant="danger" onClick={() => handleDelete(member.id, member.name)} className="flex-1">
                     Hapus
-                  </button>
+                  </TableActionButton>
                 </div>
               </div>
             </div>
@@ -359,7 +361,7 @@ export default function AdminPortofolioPage() {
           className="max-w-2xl"
         >
           <form onSubmit={handleSave} className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Input
                 label="Nama Member"
                 type="text"
@@ -415,7 +417,7 @@ export default function AdminPortofolioPage() {
             </div>
 
             {/* Dynamic portfolio items editor */}
-            <div className="flex flex-col gap-2.5 border-t border-solid border-border-default pt-4">
+            <div className="flex flex-col gap-3 border-t border-solid border-border-default pt-4">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-text-primary">
                   Item Portofolio ({formItems.length}/{MAX_ITEMS})
@@ -432,7 +434,11 @@ export default function AdminPortofolioPage() {
                 </Button>
               </div>
               {formItems.length === 0 && (
-                <p className="py-2 text-xs text-text-muted">Belum ada item. Klik &quot;Tambah Item&quot; untuk menambahkan karya.</p>
+                <EmptyState
+                  icon={ImageIcon}
+                  title="Belum ada item"
+                  description={`Klik "Tambah Item" untuk menambahkan karya.`}
+                />
               )}
               {formItems.map((item, index) => (
                 <div key={index} className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken p-3">
@@ -449,21 +455,21 @@ export default function AdminPortofolioPage() {
                       value={item.title ?? ""}
                       onChange={(e) => handleItemChange(index, "title", e.target.value)}
                       placeholder="Judul karya (wajib, maks 160)"
-                      className="py-2 text-sm"
+                      className="text-sm"
                     />
                     <Input
                       type="text"
                       value={item.url ?? ""}
                       onChange={(e) => handleItemChange(index, "url", e.target.value)}
                       placeholder="URL karya https:// (opsional)"
-                      className="py-2 text-sm"
+                      className="text-sm"
                     />
                     <Input
                       type="text"
                       value={item.imageUrl ?? ""}
                       onChange={(e) => handleItemChange(index, "imageUrl", e.target.value)}
                       placeholder="URL gambar https:// (opsional)"
-                      className="py-2 text-sm"
+                      className="text-sm"
                     />
                     <Input
                       type="text"
@@ -471,14 +477,14 @@ export default function AdminPortofolioPage() {
                       value={item.description ?? ""}
                       onChange={(e) => handleItemChange(index, "description", e.target.value)}
                       placeholder="Deskripsi singkat (opsional, maks 300)"
-                      className="py-2 text-sm"
+                      className="text-sm"
                     />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end gap-2.5">
+            <div className="flex justify-end gap-3">
               <Button type="button" onClick={() => setShowModal(false)} variant="ghost" size="sm">
                 Batal
               </Button>

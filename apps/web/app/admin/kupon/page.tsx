@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, Check, Tag, Clock, Loader2, Percent, Wallet } from "lucide-react";
+import { Plus, X, Check, Tag, Clock, Percent, Wallet } from "lucide-react";
 import {
   Badge,
   Button,
@@ -15,6 +15,8 @@ import {
   TR,
   TH,
   TD,
+  TableActionButton,
+  DashboardLoading,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -99,10 +101,10 @@ export default function AdminKuponPage() {
   }
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">Manajemen Kupon</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Kupon</h1>
           <p className="mt-1 text-sm text-text-secondary">Kelola kode promosi dan diskon &middot; {total.toLocaleString("id-ID")} kupon terdaftar</p>
         </div>
         <Button
@@ -120,9 +122,9 @@ export default function AdminKuponPage() {
         <Card className="p-6">
           <h2 className="mb-4 font-display text-base font-bold text-text-primary">Buat Kupon Baru</h2>
           {error && (
-            <div className="mb-3 rounded-[var(--radius-md)] bg-red-600/10 px-3.5 py-2.5 text-sm text-red-700">{error}</div>
+            <div className="mb-3 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2 text-sm text-red-700">{error}</div>
           )}
-          <form onSubmit={handleCreate} className="flex flex-col gap-3.5">
+          <form onSubmit={handleCreate} className="flex flex-col gap-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
               <Input
                 label="Kode Kupon *"
@@ -182,9 +184,7 @@ export default function AdminKuponPage() {
 
       {/* Coupon Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : coupons.length === 0 ? (
         <EmptyState icon={Tag} title="Belum ada kupon" description="Buat kupon pertama Anda untuk memberikan diskon." />
       ) : (
@@ -215,7 +215,7 @@ export default function AdminKuponPage() {
                       )}
                     </TD>
                     <TD className="py-4">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-3">
                         <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-accent-soft text-accent-cyan-strong">
                           {isPct ? <Percent size={15} aria-hidden="true" /> : <Wallet size={15} aria-hidden="true" />}
                         </span>
@@ -237,7 +237,7 @@ export default function AdminKuponPage() {
                       )}
                     </TD>
                     <TD className="py-4">
-                      <div className="flex w-28 flex-col gap-1.5">
+                      <div className="flex w-28 flex-col gap-2">
                         <span className="text-xs font-bold text-text-secondary">
                           {c.usedCount}
                           {c.maxUses ? `/${c.maxUses}` : " / ∞"}
@@ -255,17 +255,13 @@ export default function AdminKuponPage() {
                       </Badge>
                     </TD>
                     <TD className="py-4 text-right">
-                      <button
+                      <TableActionButton
+                        variant={c.isActive ? "danger" : "ok"}
                         onClick={() => toggleActive(c.id, c.isActive)}
-                        className={cn(
-                          "whitespace-nowrap rounded-[var(--radius-md)] px-3 py-1.5 text-xs font-bold transition-colors",
-                          c.isActive
-                            ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white"
-                            : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white",
-                        )}
+                        className="whitespace-nowrap"
                       >
                         {c.isActive ? "Non-aktifkan" : "Aktifkan"}
-                      </button>
+                      </TableActionButton>
                     </TD>
                   </TR>
                 );

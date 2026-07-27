@@ -12,6 +12,10 @@ import {
   TabsList,
   TabsTrigger,
   Pagination,
+  PageHeader,
+  FilterBar,
+  TableActionButton,
+  DashboardLoading,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -41,12 +45,6 @@ type Testimonial = {
 };
 
 type ModerationDraft = { category: string; outcome: string };
-
-const ACTION_BTN = "rounded-lg px-3 py-1.5 text-xs font-bold transition-colors";
-const BTN_OK = `${ACTION_BTN} bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white`;
-const BTN_WARN = `${ACTION_BTN} bg-amber-500/10 text-amber-700 hover:bg-amber-600 hover:text-white`;
-const BTN_DEL = `${ACTION_BTN} inline-flex items-center gap-1 bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white`;
-
 
 export default function AdminReviewPage() {
   const [mode, setMode] = useState<"review" | "testimoni">("review");
@@ -166,53 +164,55 @@ export default function AdminReviewPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
-      {/* Header — title + mode switch on their own row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">{mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {mode === "review"
-              ? `${total.toLocaleString("id-ID")} review total`
-              : `${testimonials.length.toLocaleString("id-ID")} testimoni ditampilkan`}
-          </p>
-        </div>
-        <Tabs value={mode} onValueChange={(v) => setMode(v as "review" | "testimoni")}>
-          <TabsList>
-            <TabsTrigger value="review">⭐ Review Kursus</TabsTrigger>
-            <TabsTrigger value="testimoni">💬 Testimoni</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
+    <div className="dash-container flex flex-col gap-6">
+      {/* Header — title + subtitle; mode switch as its own actions slot */}
+      <PageHeader
+        title={mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}
+        subtitle={
+          mode === "review"
+            ? `${total.toLocaleString("id-ID")} review total`
+            : `${testimonials.length.toLocaleString("id-ID")} testimoni ditampilkan`
+        }
+        actions={
+          <Tabs value={mode} onValueChange={(v) => setMode(v as "review" | "testimoni")}>
+            <TabsList>
+              <TabsTrigger value="review">⭐ Review Kursus</TabsTrigger>
+              <TabsTrigger value="testimoni">💬 Testimoni</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        }
+      />
 
-      {/* Filter card — status filter on its own framed row (no tablet collision) */}
-      <div className="flex flex-wrap items-center justify-end gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
-        {mode === "review" ? (
-          <Tabs value={filter} onValueChange={(v) => { setFilter(v as "all" | "pending" | "approved"); setPage(1); }}>
-            <TabsList className="flex-wrap">
-              {(["all", "pending", "approved"] as const).map((f) => (
-                <TabsTrigger key={f} value={f}>
-                  {f === "all" ? "Semua" : f === "pending" ? "⏳ Menunggu" : "✅ Disetujui"}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        ) : (
-          <Tabs value={tFilter} onValueChange={(v) => setTFilter(v as "all" | "pending" | "approved" | "rejected")}>
-            <TabsList className="flex-wrap">
-              {(["all", "pending", "approved", "rejected"] as const).map((f) => (
-                <TabsTrigger key={f} value={f}>
-                  {f === "all" ? "Semua" : f === "pending" ? "⏳ Menunggu" : f === "approved" ? "✅ Disetujui" : "🚫 Ditolak"}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
-      </div>
+      {/* Status filter on its own framed row (no tablet collision) */}
+      <FilterBar
+        filters={
+          mode === "review" ? (
+            <Tabs value={filter} onValueChange={(v) => { setFilter(v as "all" | "pending" | "approved"); setPage(1); }}>
+              <TabsList className="flex-wrap">
+                {(["all", "pending", "approved"] as const).map((f) => (
+                  <TabsTrigger key={f} value={f}>
+                    {f === "all" ? "Semua" : f === "pending" ? "⏳ Menunggu" : "✅ Disetujui"}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          ) : (
+            <Tabs value={tFilter} onValueChange={(v) => setTFilter(v as "all" | "pending" | "approved" | "rejected")}>
+              <TabsList className="flex-wrap">
+                {(["all", "pending", "approved", "rejected"] as const).map((f) => (
+                  <TabsTrigger key={f} value={f}>
+                    {f === "all" ? "Semua" : f === "pending" ? "⏳ Menunggu" : f === "approved" ? "✅ Disetujui" : "🚫 Ditolak"}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          )
+        }
+      />
 
       {mode === "testimoni" ? (
         tLoading ? (
-          <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+          <DashboardLoading />
         ) : testimonials.length === 0 ? (
           <EmptyState icon={MessageSquare} title="Tidak ada testimoni ditemukan" />
         ) : (
@@ -220,10 +220,10 @@ export default function AdminReviewPage() {
             {testimonials.map((t) => {
               const draft = drafts[t.id] ?? { category: t.category ?? "general", outcome: t.outcome ?? "" };
               return (
-                <Card key={t.id} className={`p-[18px] ${t.status === "pending" ? "border-l-[3px] border-l-amber-500" : ""}`}>
-                  <div className="mb-2.5 flex items-start justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{(t.name ?? "?").slice(0, 2).toUpperCase()}</div>
+                <Card key={t.id} className={`p-4 ${t.status === "pending" ? "border-l-[3px] border-l-amber-500" : ""}`}>
+                  <div className="mb-2 flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-brand-gradient flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{(t.name ?? "?").slice(0, 2).toUpperCase()}</div>
                       <div>
                         <p className="text-sm font-bold text-text-primary">{t.name}</p>
                         <p className="text-xs text-text-secondary">{[t.role, t.company].filter(Boolean).join(" · ") || "—"}</p>
@@ -236,8 +236,8 @@ export default function AdminReviewPage() {
                       {t.createdAt && <p className="mt-0.5 text-xs text-text-muted">{new Date(t.createdAt).toLocaleDateString("id-ID")}</p>}
                     </div>
                   </div>
-                  {t.quote && <p className="mb-3 rounded-lg bg-surface-sunken px-3 py-2.5 text-sm leading-relaxed text-text-primary">{t.quote}</p>}
-                  <div className="mb-3 flex flex-wrap gap-2.5">
+                  {t.quote && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{t.quote}</p>}
+                  <div className="mb-3 flex flex-wrap gap-3">
                     <Select
                       label="Kategori"
                       className="py-2 text-sm"
@@ -265,16 +265,16 @@ export default function AdminReviewPage() {
                     </Badge>
                     {t.featured && <Badge variant="warning"><Star size={11} fill="currentColor" /> Featured</Badge>}
                     {t.status !== "approved" && (
-                      <button className={BTN_OK} onClick={() => moderateTestimonial(t.id, "approved")}>Setujui</button>
+                      <TableActionButton variant="ok" onClick={() => moderateTestimonial(t.id, "approved")}>Setujui</TableActionButton>
                     )}
                     {t.status === "approved" && (
-                      <button className={BTN_OK} onClick={() => moderateTestimonial(t.id, "approved")}>Simpan</button>
+                      <TableActionButton variant="ok" onClick={() => moderateTestimonial(t.id, "approved")}>Simpan</TableActionButton>
                     )}
                     {t.status !== "rejected" && (
-                      <button className={BTN_DEL} onClick={() => moderateTestimonial(t.id, "rejected")}>Tolak</button>
+                      <TableActionButton variant="danger" onClick={() => moderateTestimonial(t.id, "rejected")}>Tolak</TableActionButton>
                     )}
                     {t.status !== "pending" && (
-                      <button className={BTN_WARN} onClick={() => moderateTestimonial(t.id, "pending")}>Kembalikan ke Menunggu</button>
+                      <TableActionButton variant="warn" onClick={() => moderateTestimonial(t.id, "pending")}>Kembalikan ke Menunggu</TableActionButton>
                     )}
                   </div>
                 </Card>
@@ -283,16 +283,16 @@ export default function AdminReviewPage() {
           </div>
         )
       ) : loading ? (
-        <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+        <DashboardLoading />
       ) : reviews.length === 0 ? (
         <EmptyState icon={Star} title="Tidak ada review ditemukan" />
       ) : (
         <div className="flex flex-col gap-3">
           {reviews.map((r) => (
-            <Card key={r.id} className={`p-[18px] ${!r.isApproved ? "border-l-[3px] border-l-amber-500" : ""}`}>
-              <div className="mb-2.5 flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="bg-brand-gradient flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{r.user.name.slice(0, 2).toUpperCase()}</div>
+            <Card key={r.id} className={`p-4 ${!r.isApproved ? "border-l-[3px] border-l-amber-500" : ""}`}>
+              <div className="mb-2 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-brand-gradient flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{r.user.name.slice(0, 2).toUpperCase()}</div>
                   <div>
                     <p className="text-sm font-bold text-text-primary">{r.user.name}</p>
                     <p className="text-xs text-text-secondary">{r.course?.title ?? "—"}</p>
@@ -303,15 +303,15 @@ export default function AdminReviewPage() {
                   <p className="mt-0.5 text-xs text-text-muted">{new Date(r.createdAt).toLocaleDateString("id-ID")}</p>
                 </div>
               </div>
-              {r.comment && <p className="mb-3 rounded-lg bg-surface-sunken px-3 py-2.5 text-sm leading-relaxed text-text-primary">{r.comment}</p>}
+              {r.comment && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{r.comment}</p>}
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={r.isApproved ? "success" : "warning"} className="mr-auto">
                   {r.isApproved ? "✓ Disetujui" : "⏳ Menunggu"}
                 </Badge>
-                <button className={r.isApproved ? BTN_WARN : BTN_OK} onClick={() => toggleApprove(r.id, r.isApproved)}>
+                <TableActionButton variant={r.isApproved ? "warn" : "ok"} onClick={() => toggleApprove(r.id, r.isApproved)}>
                   {r.isApproved ? "Cabut" : "Setujui"}
-                </button>
-                <button className={BTN_DEL} onClick={() => deleteReview(r.id)}><Trash2 size={12} /> Hapus</button>
+                </TableActionButton>
+                <TableActionButton variant="danger" leftIcon={<Trash2 size={12} />} onClick={() => deleteReview(r.id)}>Hapus</TableActionButton>
               </div>
             </Card>
           ))}

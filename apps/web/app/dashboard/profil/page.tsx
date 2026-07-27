@@ -2,19 +2,31 @@
 
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   Camera,
   Save,
   Lock,
   User as UserIcon,
   BadgeCheck,
-  Loader2,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
-import { Button, Input, Textarea, Badge, Card, CardHeader, CardContent } from "@/components/ui";
+import {
+  Button,
+  Input,
+  Textarea,
+  Badge,
+  Card,
+  CardHeader,
+  CardContent,
+  Avatar,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  DashboardLoading,
+} from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type UserProfile = {
@@ -168,16 +180,8 @@ export default function ProfilPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="size-9 animate-spin text-accent-cyan-strong" aria-hidden="true" />
-      </div>
-    );
+    return <DashboardLoading />;
   }
-
-  const initials = user?.name
-    ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
-    : "?";
 
   const currentAvatar = avatarPreview || user?.avatarUrl;
 
@@ -188,38 +192,32 @@ export default function ProfilPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="dash-container flex flex-col gap-8">
       {/* Page heading */}
       <div>
         <h1 className="font-display text-2xl font-extrabold text-text-primary">Profil Member</h1>
         <p className="mt-1 text-sm text-text-secondary">Kelola informasi pribadi dan keamanan akun Anda.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="dash-grid">
         {/* Profile ID card */}
-        <Card className="relative overflow-hidden lg:col-span-4">
+        <Card className="relative col-span-12 overflow-hidden lg:col-span-4">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-accent-cyan-strong/10 blur-2xl"
           />
           <div className="relative flex flex-col items-center p-8 text-center">
             <div className="relative mb-5">
-              <div className="h-28 w-28 overflow-hidden rounded-full shadow-e3 ring-4 ring-white">
-                {currentAvatar ? (
-                  <Image
-                    src={currentAvatar}
-                    alt={user?.name ?? "Avatar"}
-                    width={112}
-                    height={112}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-brand-gradient text-3xl font-extrabold text-white">
-                    {initials}
-                  </div>
-                )}
-              </div>
+              <Avatar
+                size="xl"
+                src={currentAvatar ?? undefined}
+                name={user?.name}
+                alt={user?.name ?? "Avatar"}
+                className="h-28 w-28 text-3xl shadow-e3 ring-4 ring-white"
+              />
               <button
+                type="button"
+                aria-label="Ganti foto profil"
                 className="absolute bottom-0 right-0 flex h-10 w-10 items-center justify-center rounded-full bg-accent-cyan-strong text-white shadow-e2 transition-transform hover:scale-110 active:scale-95"
                 onClick={() => fileRef.current?.click()}
                 title="Ganti foto profil"
@@ -236,7 +234,7 @@ export default function ProfilPage() {
               onChange={handleAvatarChange}
             />
 
-            <h2 className="font-display text-xl font-extrabold text-text-primary">{user?.name}</h2>
+            <h2 className="font-display text-lg font-bold text-text-primary">{user?.name}</h2>
             <p className="mt-1 text-sm text-text-secondary">{user?.email}</p>
 
             {user?.isVerified && (
@@ -276,45 +274,34 @@ export default function ProfilPage() {
         </Card>
 
         {/* Forms column */}
-        <div className="space-y-6 lg:col-span-8">
-          {/* Tabs */}
-          <div className="inline-flex gap-1 rounded-xl border border-border-default bg-surface-card p-1 shadow-e1">
-            <button
-              type="button"
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold transition-colors",
-                activeTab === "profil" ? "bg-accent-cyan-strong text-white" : "text-text-secondary hover:text-accent-cyan-strong",
-              )}
-              onClick={() => setActiveTab("profil")}
-            >
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "profil" | "keamanan")}
+          className="col-span-12 lg:col-span-8"
+        >
+          <TabsList>
+            <TabsTrigger value="profil">
               <UserIcon size={16} aria-hidden="true" /> Data Profil
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-semibold transition-colors",
-                activeTab === "keamanan" ? "bg-accent-cyan-strong text-white" : "text-text-secondary hover:text-accent-cyan-strong",
-              )}
-              onClick={() => setActiveTab("keamanan")}
-            >
+            </TabsTrigger>
+            <TabsTrigger value="keamanan">
               <Lock size={16} aria-hidden="true" /> Keamanan
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
           {/* Profil tab */}
-          {activeTab === "profil" && (
+          <TabsContent value="profil">
             <Card>
               <CardHeader>
                 <h3 className="font-display text-lg font-bold text-text-primary">Informasi Profil</h3>
               </CardHeader>
               <CardContent className="space-y-4">
                 {success && (
-                  <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                  <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
                     <CheckCircle2 size={16} aria-hidden="true" /> Profil berhasil disimpan.
                   </div>
                 )}
                 {error && (
-                  <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                     <AlertCircle size={16} aria-hidden="true" /> {error}
                   </div>
                 )}
@@ -361,14 +348,14 @@ export default function ProfilPage() {
                 </form>
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
           {/* Keamanan tab */}
-          {activeTab === "keamanan" && (
+          <TabsContent value="keamanan">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-purple/10 text-accent-purple">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-accent-purple/10 text-accent-purple">
                     <Lock size={18} aria-hidden="true" />
                   </span>
                   <div>
@@ -383,7 +370,7 @@ export default function ProfilPage() {
                 {passMsg && (
                   <div
                     className={cn(
-                      "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium",
+                      "flex items-center gap-2 rounded-[var(--radius-md)] border px-4 py-3 text-sm font-medium",
                       passMsgType === "error"
                         ? "border-red-200 bg-red-50 text-red-700"
                         : "border-green-200 bg-green-50 text-green-700",
@@ -414,8 +401,8 @@ export default function ProfilPage() {
                 </form>
               </CardContent>
             </Card>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

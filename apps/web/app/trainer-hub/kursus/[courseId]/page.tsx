@@ -3,9 +3,36 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, Rocket, Loader2 } from "lucide-react";
-import { Badge, Button, Card, Input, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
-import { cn } from "@/lib/utils";
+import {
+  AlertTriangle,
+  Rocket,
+  BookOpen,
+  Users,
+  CheckCircle2,
+  Star,
+  Wallet,
+  Coins,
+  BarChart3,
+} from "lucide-react";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  StatCard,
+  ProgressBar,
+  EmptyState,
+  PageHeader,
+  DashboardLoading,
+  DashboardError,
+} from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type LessonStat = {
@@ -141,20 +168,26 @@ export default function CourseAnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-surface-page">
-        <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
+      <div className="dash-container flex flex-col gap-8">
+        <DashboardLoading />
       </div>
     );
   }
-  if (error || !data) return <div className="flex min-h-screen items-center justify-center bg-surface-page text-red-600">{error || "Data tidak ditemukan."}</div>;
+  if (error || !data) {
+    return (
+      <div className="dash-container flex flex-col gap-8">
+        <DashboardError message={error || "Data tidak ditemukan."} onRetry={loadData} />
+      </div>
+    );
+  }
 
   const metrics = [
-    { label: "Total Pelajaran", value: data.totalLessons },
-    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID") },
-    { label: "Completion Rate", value: `${data.completionRate}%` },
-    { label: "Rating Rata-rata", value: data.avgRating > 0 ? `⭐ ${data.avgRating.toFixed(1)} (${data.reviewCount})` : "Belum ada" },
-    { label: "Pendapatan Kotor", value: `Rp ${data.grossRevenue.toLocaleString("id-ID")}` },
-    { label: "Pendapatan Bersih (70%)", value: `Rp ${data.netRevenue.toLocaleString("id-ID")}`, highlight: true },
+    { label: "Total Pelajaran", value: data.totalLessons, icon: BookOpen, accent: "#0077A8", tint: "rgba(0,119,168,0.10)" },
+    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, accent: "#7C3AED", tint: "rgba(124,58,237,0.10)" },
+    { label: "Completion Rate", value: `${data.completionRate}%`, icon: CheckCircle2, accent: "#16A34A", tint: "rgba(22,163,74,0.10)" },
+    { label: "Rating Rata-rata", value: data.avgRating > 0 ? `⭐ ${data.avgRating.toFixed(1)} (${data.reviewCount})` : "Belum ada", icon: Star, accent: "#D97706", tint: "rgba(217,119,6,0.10)" },
+    { label: "Pendapatan Kotor", value: `Rp ${data.grossRevenue.toLocaleString("id-ID")}`, icon: Wallet, accent: "#0891B2", tint: "rgba(8,145,178,0.10)" },
+    { label: "Pendapatan Bersih (70%)", value: `Rp ${data.netRevenue.toLocaleString("id-ID")}`, icon: Coins, accent: "#0077A8", tint: "rgba(0,119,168,0.10)" },
   ];
 
   const statusVariant: "success" | "danger" | "warning" | "neutral" =
@@ -171,21 +204,20 @@ export default function CourseAnalyticsPage() {
     "Draft";
 
   return (
-    <div className="min-h-screen bg-surface-page pb-12">
-      <div className="border-b border-border-default bg-surface-card px-6 py-4">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="mb-1 flex items-center gap-2 text-sm">
-              <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
-              <span className="text-text-secondary">/</span>
-              <Link href="/trainer-hub/kursus" className="text-accent-cyan-strong hover:underline">Kursus</Link>
-              <span className="text-text-secondary">/</span>
-              <span className="font-medium text-text-primary">Analitik</span>
-            </div>
-            <h1 className="mt-1 font-display text-xl font-bold text-text-primary">{data.title}</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
+    <div className="dash-container flex flex-col gap-8">
+      <PageHeader
+        breadcrumb={
+          <span className="flex flex-wrap items-center gap-2">
+            <Link href="/trainer-hub" className="text-accent-cyan-strong hover:underline">Trainer Hub</Link>
+            <span>/</span>
+            <Link href="/trainer-hub/kursus" className="text-accent-cyan-strong hover:underline">Kursus</Link>
+            <span>/</span>
+            <span className="font-medium text-text-primary">Analitik</span>
+          </span>
+        }
+        title={data.title}
+        actions={
+          <>
             <Badge variant={statusVariant} dot>{statusLabel}</Badge>
             {(status === "draft" || status === "rejected") && (
               <Button
@@ -233,124 +265,123 @@ export default function CourseAnalyticsPage() {
             >
               {savingStatus ? "Memproses..." : status === "archived" ? "Aktifkan Penjualan" : "Nonaktifkan (Archive)"}
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <div className="mx-auto max-w-5xl p-6">
-        {/* Rejection Alert Warning */}
-        {(data.status === "draft" || data.status === "rejected") && data.adminFeedback && (
-          <div className="mb-6 rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 p-5">
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={20} className="mt-0.5 flex-shrink-0 text-amber-600" aria-hidden="true" />
-              <div>
-                <p className="text-sm font-semibold text-amber-800">Umpan Balik Penolakan Kelas dari Admin:</p>
-                <p className="mt-1 whitespace-pre-wrap text-sm text-amber-700">{data.adminFeedback}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Metrics Grid */}
-        <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-3">
-          {metrics.map(({ label, value, highlight }) => (
-            <div
-              key={label}
-              className={cn(
-                "rounded-[var(--radius-lg)] border p-5 shadow-e1",
-                highlight ? "border-transparent bg-brand-gradient" : "border-border-default bg-surface-card",
-              )}
-            >
-              <div className={cn("text-xs font-medium", highlight ? "text-white/80" : "text-text-secondary")}>{label}</div>
-              <div className={cn("mt-2 font-display text-xl font-bold", highlight ? "text-white" : "text-text-primary")}>{value}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* 2-col Grid: Completion Info + Zoom Live Session Setup */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Progress Completion */}
-          <Card className="flex flex-col justify-between p-6">
+      {/* Rejection Alert Warning */}
+      {(data.status === "draft" || data.status === "rejected") && data.adminFeedback && (
+        <div className="rounded-[var(--radius-card)] border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="mt-0.5 flex-shrink-0 text-amber-600" aria-hidden="true" />
             <div>
-              <h2 className="mb-4 font-display font-semibold text-text-primary">Progress Completion</h2>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-text-secondary">{data.completedCount} dari {data.totalEnrollments} peserta menyelesaikan kursus</span>
-                <span className="font-semibold text-text-primary">{data.completionRate}%</span>
-              </div>
+              <p className="text-sm font-semibold text-amber-800">Umpan Balik Penolakan Kelas dari Admin:</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-amber-700">{data.adminFeedback}</p>
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-surface-sunken">
-              <div className="h-3 rounded-full bg-accent-cyan-strong transition-all" style={{ width: `${data.completionRate}%` }} />
-            </div>
-          </Card>
-
-          {/* Zoom Schedule Module */}
-          <Card className="p-6">
-            <h2 className="mb-4 font-display font-semibold text-text-primary">Sesi Live (Zoom)</h2>
-            <div className="space-y-4">
-              <Input
-                label="Link URL Zoom Sesi Live"
-                type="text"
-                placeholder="https://zoom.us/j/..."
-                value={zoomLink}
-                onChange={(e) => setZoomLink(e.target.value)}
-              />
-              <Input
-                label="Jadwal Sesi Live"
-                type="datetime-local"
-                value={schedule}
-                onChange={(e) => setSchedule(e.target.value)}
-              />
-              <Button
-                variant="cyan"
-                onClick={handleSaveLive}
-                disabled={savingLive}
-                loading={savingLive}
-                className="w-full"
-              >
-                {savingLive ? "Menyimpan..." : "Simpan Sesi Live"}
-              </Button>
-            </div>
-          </Card>
+          </div>
         </div>
+      )}
 
-        {/* Watch Time & Drop-off Stats per Lesson */}
-        <Card className="p-6">
-          <h2 className="mb-4 font-display font-semibold text-text-primary">Analitik Drop-Off & Durasi Tontonan Pelajaran</h2>
+      {/* Metrics Grid */}
+      <section className="dash-grid">
+        {metrics.map(({ label, value, icon, accent, tint }) => (
+          <StatCard
+            key={label}
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={label}
+            value={value}
+            icon={icon}
+            iconColor={accent}
+            iconBg={tint}
+          />
+        ))}
+      </section>
 
-          {data.lessons.length === 0 ? (
-            <p className="py-4 text-center text-sm text-text-secondary">Belum ada data materi untuk kursus ini.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <THead>
-                  <tr>
-                    <TH>Materi Pelajaran</TH>
-                    <TH>Modul / Seksi</TH>
-                    <TH className="text-center">Avg Watch Time</TH>
-                    <TH className="text-center">Selesai (User)</TH>
-                    <TH className="text-center">Tingkat Drop-off</TH>
-                  </tr>
-                </THead>
-                <TBody>
-                  {data.lessons.map((les) => (
-                    <TR key={les.lessonId}>
-                      <TD className="font-medium text-text-primary">{les.title}</TD>
-                      <TD className="text-text-secondary">{les.sectionTitle}</TD>
-                      <TD className="text-center font-semibold text-accent-cyan-strong">{Math.round(les.avgWatchPct)}%</TD>
-                      <TD className="text-center text-text-primary">{les.completedCount}</TD>
-                      <TD className="text-center">
-                        <Badge variant={les.dropOffRate > 50 ? "danger" : les.dropOffRate > 25 ? "warning" : "success"}>
-                          {les.dropOffRate}%
-                        </Badge>
-                      </TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
+      {/* Completion + Zoom Live Session */}
+      <section className="dash-grid">
+        {/* Progress Completion */}
+        <Card className="col-span-12 flex flex-col justify-between rounded-[var(--radius-card)] p-6 md:col-span-6">
+          <div>
+            <h2 className="mb-4 font-display text-base font-bold text-text-primary">Progress Completion</h2>
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="text-text-secondary">{data.completedCount} dari {data.totalEnrollments} peserta menyelesaikan kursus</span>
+              <span className="font-semibold text-text-primary">{data.completionRate}%</span>
             </div>
-          )}
+          </div>
+          <ProgressBar value={data.completionRate} label="Progress completion kursus" className="mt-4 h-3" />
         </Card>
-      </div>
+
+        {/* Zoom Schedule Module */}
+        <Card className="col-span-12 rounded-[var(--radius-card)] p-6 md:col-span-6">
+          <h2 className="mb-4 font-display text-base font-bold text-text-primary">Sesi Live (Zoom)</h2>
+          <div className="space-y-4">
+            <Input
+              label="Link URL Zoom Sesi Live"
+              type="text"
+              placeholder="https://zoom.us/j/..."
+              value={zoomLink}
+              onChange={(e) => setZoomLink(e.target.value)}
+            />
+            <Input
+              label="Jadwal Sesi Live"
+              type="datetime-local"
+              value={schedule}
+              onChange={(e) => setSchedule(e.target.value)}
+            />
+            <Button
+              variant="cyan"
+              onClick={handleSaveLive}
+              disabled={savingLive}
+              loading={savingLive}
+              className="w-full"
+            >
+              {savingLive ? "Menyimpan..." : "Simpan Sesi Live"}
+            </Button>
+          </div>
+        </Card>
+      </section>
+
+      {/* Watch Time & Drop-off Stats per Lesson */}
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-lg font-bold text-text-primary">Analitik Drop-Off &amp; Durasi Tontonan Pelajaran</h2>
+
+        {data.lessons.length === 0 ? (
+          <EmptyState
+            icon={BarChart3}
+            title="Belum ada data materi"
+            description="Data analitik akan muncul setelah ada aktivitas peserta pada kursus ini."
+          />
+        ) : (
+          <TableContainer>
+            <Table>
+              <THead>
+                <TR>
+                  <TH>Materi Pelajaran</TH>
+                  <TH>Modul / Seksi</TH>
+                  <TH className="text-center">Avg Watch Time</TH>
+                  <TH className="text-center">Selesai (User)</TH>
+                  <TH className="text-center">Tingkat Drop-off</TH>
+                </TR>
+              </THead>
+              <TBody>
+                {data.lessons.map((les) => (
+                  <TR key={les.lessonId}>
+                    <TD className="font-medium text-text-primary">{les.title}</TD>
+                    <TD className="text-text-secondary">{les.sectionTitle}</TD>
+                    <TD className="text-center font-semibold text-accent-cyan-strong">{Math.round(les.avgWatchPct)}%</TD>
+                    <TD className="text-center text-text-primary">{les.completedCount}</TD>
+                    <TD className="text-center">
+                      <Badge variant={les.dropOffRate > 50 ? "danger" : les.dropOffRate > 25 ? "warning" : "success"}>
+                        {les.dropOffRate}%
+                      </Badge>
+                    </TD>
+                  </TR>
+                ))}
+              </TBody>
+            </Table>
+          </TableContainer>
+        )}
+      </section>
     </div>
   );
 }

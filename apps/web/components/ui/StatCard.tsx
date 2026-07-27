@@ -36,13 +36,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1",
+        // Dashboard contract: card radius 20px (--radius-card), p-6, shadow-e1.
+        "rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-6 shadow-e1",
         className,
       )}
     >
-      <div className="mb-3 flex items-start justify-between">
+      <div className="mb-4 flex items-start justify-between">
         <span
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
+          className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)]"
           style={{ background: iconBg }}
         >
           <Icon size={18} style={{ color: iconColor }} aria-hidden="true" />
@@ -60,7 +61,7 @@ export function StatCard({
         ) : null}
       </div>
       <p className="font-display text-2xl font-extrabold text-text-primary">{value}</p>
-      <p className="mt-0.5 text-[13px] text-text-secondary">{label}</p>
+      <p className="mt-1 text-sm text-text-secondary">{label}</p>
     </div>
   );
 }

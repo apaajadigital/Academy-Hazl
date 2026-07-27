@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Search, Download, Wallet, CheckCircle2, Clock, CreditCard, Loader2 } from "lucide-react";
+import { Search, Download, Wallet, CheckCircle2, Clock, CreditCard } from "lucide-react";
 import {
   Avatar,
   Badge,
@@ -10,6 +10,9 @@ import {
   Button,
   Input,
   Pagination,
+  FilterBar,
+  DashboardLoading,
+  TableContainer,
   Table,
   THead,
   TBody,
@@ -134,7 +137,7 @@ export default function AdminTransaksiPage() {
   ];
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Laporan Transaksi</h1>
@@ -152,49 +155,50 @@ export default function AdminTransaksiPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+      <div className="dash-grid">
         {summaryCards.map(({ label, value, icon, iconColor, iconBg }) => (
-          <StatCard key={label} label={label} value={value} icon={icon} iconColor={iconColor} iconBg={iconBg} />
+          <StatCard key={label} className="col-span-12 sm:col-span-6 xl:col-span-3" label={label} value={value} icon={icon} iconColor={iconColor} iconBg={iconBg} />
         ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
-          <Input
-            containerClassName="flex-1"
-            leftIcon={<Search size={16} aria-hidden="true" />}
-            placeholder="Cari nama pelanggan atau email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Cari transaksi"
-          />
-          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
-        </form>
-        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <TabsList className="flex-wrap">
-            {["all", "paid", "pending", "failed", "expired", "refunded"].map((s) => (
-              <TabsTrigger key={s} value={s}>
-                {s === "all" ? "Semua" : STATUS_LABEL[s] ?? s}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      <FilterBar
+        search={
+          <form onSubmit={handleSearch} className="flex w-full items-end gap-2">
+            <Input
+              containerClassName="flex-1"
+              leftIcon={<Search size={16} aria-hidden="true" />}
+              placeholder="Cari nama pelanggan atau email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Cari transaksi"
+            />
+            <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
+          </form>
+        }
+        filters={
+          <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <TabsList className="flex-wrap">
+              {["all", "paid", "pending", "failed", "expired", "refunded"].map((s) => (
+                <TabsTrigger key={s} value={s}>
+                  {s === "all" ? "Semua" : STATUS_LABEL[s] ?? s}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
+      />
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : orders.length === 0 ? (
         <EmptyState icon={CreditCard} title="Tidak ada transaksi ditemukan" description="Coba ubah kata kunci pencarian atau filter status." />
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="overflow-x-auto">
+        <TableContainer>
             <Table className="min-w-[800px]">
               <THead>
-                <tr>
+                <TR className="hover:bg-transparent">
                   <TH>ID</TH>
                   <TH>Pelanggan</TH>
                   <TH>Produk</TH>
@@ -202,7 +206,7 @@ export default function AdminTransaksiPage() {
                   <TH>Status</TH>
                   <TH>Jumlah</TH>
                   <TH>Tanggal</TH>
-                </tr>
+                </TR>
               </THead>
               <TBody>
                 {orders.map((order) => {
@@ -216,7 +220,7 @@ export default function AdminTransaksiPage() {
                         <span className="whitespace-nowrap font-mono text-xs font-semibold text-accent-cyan-strong">#{order.id.slice(0, 8).toUpperCase()}</span>
                       </TD>
                       <TD>
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-3">
                           <Avatar name={order.user.name} size="sm" />
                           <div className="min-w-0">
                             <p className="font-semibold text-text-primary">{order.user.name}</p>
@@ -226,9 +230,9 @@ export default function AdminTransaksiPage() {
                       </TD>
                       <TD>
                         <p className="max-w-[180px] truncate">{title}</p>
-                        <div className="mt-1 flex items-center gap-1.5">
+                        <div className="mt-1 flex items-center gap-2">
                           {typePill && (
-                            <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", typePill.className)}>
+                            <span className={cn("inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide", typePill.className)}>
                               {typePill.label}
                             </span>
                           )}
@@ -255,15 +259,14 @@ export default function AdminTransaksiPage() {
                 })}
               </TBody>
             </Table>
-          </div>
 
           {totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default bg-surface-sunken px-6 py-4">
               <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
               <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
             </div>
           )}
-        </div>
+        </TableContainer>
       )}
     </div>
   );
