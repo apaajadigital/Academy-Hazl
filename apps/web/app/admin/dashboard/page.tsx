@@ -152,17 +152,20 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <span className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-green-700">
             <span className="h-1.5 w-1.5 rounded-full bg-green-600" aria-hidden="true" /> Sistem Online
           </span>
-          <h1 className="text-[22px] font-extrabold text-text-primary">{greeting}, Admin 👋</h1>
-          <p className="mt-1 text-[13px] text-text-secondary">
-            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">{greeting}, Admin 👋</h1>
+          <div className="flex items-center gap-2 text-text-secondary">
+            <CalendarDays size={16} aria-hidden="true" />
+            <span className="text-sm">
+              {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </span>
+          </div>
         </div>
         <div className="flex gap-2.5">
           <Link href="/admin/kursus" className="btn btn-outline btn-sm">+ Tambah Kursus</Link>
@@ -173,7 +176,7 @@ export default function AdminDashboardPage() {
       {/* KPI Cards — member-style: colored left border, round icon tile,
           uppercase label above a big value. Real trend pill (when present)
           sits in the top-right so the member layout stays intact. */}
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {KPI_CARDS.map(({ label, value, icon: Icon, iconColor, iconBg, trend }) => {
           const negative = typeof trend === "string" && trend.trim().startsWith("-");
           const Trend = negative ? TrendingDown : TrendingUp;
@@ -190,8 +193,8 @@ export default function AdminDashboardPage() {
                 <Icon size={22} aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-                <p className="font-display text-2xl font-bold leading-tight text-text-primary">{value}</p>
+                <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
+                <p className="font-display text-3xl font-bold leading-tight text-text-primary">{value}</p>
               </div>
               {trend ? (
                 <span
@@ -209,11 +212,11 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Bento: leads + popular courses (left) · recent orders table (right) */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Left column */}
-        <div className="flex flex-col gap-5 lg:col-span-1">
+        <div className="flex flex-col gap-6 lg:col-span-1">
           {/* Leads gradient card */}
-          <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-brand-gradient p-5 text-white shadow-e3">
+          <div className="relative overflow-hidden rounded-[var(--radius-lg)] bg-brand-gradient p-6 text-white shadow-e3">
             <div className="mb-4 flex items-center justify-between">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20">
                 <Mail size={20} aria-hidden="true" />
@@ -228,7 +231,7 @@ export default function AdminDashboardPage() {
                 ? "Tidak ada leads baru saat ini"
                 : "Leads baru menunggu follow-up"}
             </p>
-            <p className="my-3 text-4xl font-extrabold leading-none">{newLeadsCount ?? "—"}</p>
+            <p className="my-4 text-4xl font-extrabold leading-none">{newLeadsCount ?? "—"}</p>
             <div className="flex flex-col gap-2">
               {newLeadsCount !== null && newLeadsCount > 0 ? (
                 <>
@@ -257,9 +260,9 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Popular courses */}
-          <Card className="p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-sm font-bold text-text-primary">
+          <Card className="p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-base font-bold text-text-primary">
                 <TrendingUp size={18} className="text-accent-purple" aria-hidden="true" /> Kursus Terpopuler
               </h2>
               <Link href="/admin/kursus" className="text-xs font-semibold text-accent-cyan-strong hover:underline">
@@ -269,16 +272,16 @@ export default function AdminDashboardPage() {
             {courses.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-muted">Belum ada kursus.</p>
             ) : (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-5">
                 {courses.map((course, i) => {
                   const pct = Math.max((course.totalEnrolled / maxEnrolled) * 100, 4);
                   return (
-                    <div key={course.id} className="flex items-center gap-3">
-                      <span className="w-5 flex-shrink-0 text-center text-sm font-extrabold text-border-strong">#{i + 1}</span>
+                    <div key={course.id} className="flex items-start gap-3.5">
+                      <span className="mt-0.5 w-6 flex-shrink-0 text-center text-sm font-extrabold text-border-strong">#{i + 1}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-semibold text-text-primary">{course.title}</p>
-                        <p className="text-[11px] text-text-secondary">{course.trainer.name}</p>
-                        <div className="mt-1.5 flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-text-primary">{course.title}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary">{course.trainer.name}</p>
+                        <div className="mt-2.5 flex items-center gap-2.5">
                           <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
                             <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${pct}%` }} />
                           </div>
@@ -287,7 +290,7 @@ export default function AdminDashboardPage() {
                           </span>
                         </div>
                       </div>
-                      <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-semibold text-amber-600">
+                      <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-xs font-semibold text-amber-600">
                         <Star size={12} className="fill-amber-500 text-amber-500" aria-hidden="true" />
                         {Number.isFinite(parseFloat(course.avgRating)) ? parseFloat(course.avgRating).toFixed(1) : "0.0"}
                       </span>
@@ -305,7 +308,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between border-b border-solid border-border-default px-6 py-5">
               <div>
                 <h2 className="text-base font-bold text-text-primary">Transaksi Terbaru</h2>
-                <p className="mt-0.5 text-xs text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
+                <p className="mt-1 text-xs text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
               </div>
               <Link href="/admin/transaksi" className="whitespace-nowrap text-xs font-semibold text-accent-cyan-strong hover:underline">
                 Semua Pesanan →
@@ -332,24 +335,24 @@ export default function AdminDashboardPage() {
                     return (
                       <TR key={order.id}>
                         <TD>
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-extrabold text-white">
                               {order.user.name.slice(0, 2).toUpperCase()}
                             </span>
                             <div className="min-w-0">
-                              <p className="truncate text-[13px] font-semibold text-text-primary">{order.user.name}</p>
-                              <p className="truncate text-[11px] text-text-secondary">{order.user.email}</p>
+                              <p className="truncate text-sm font-semibold text-text-primary">{order.user.name}</p>
+                              <p className="mt-0.5 truncate text-xs text-text-secondary">{order.user.email}</p>
                             </div>
                           </div>
                         </TD>
-                        <TD className="text-[13px] text-text-primary">{title}</TD>
-                        <TD className="whitespace-nowrap text-[13px] text-text-secondary">
+                        <TD className="text-sm text-text-primary">{title}</TD>
+                        <TD className="whitespace-nowrap text-sm text-text-secondary">
                           {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                         </TD>
                         <TD>
                           <Badge variant={variant}>{order.status}</Badge>
                         </TD>
-                        <TD className="whitespace-nowrap text-right text-[13px] font-bold text-text-primary">
+                        <TD className="whitespace-nowrap text-right text-sm font-bold text-text-primary">
                           Rp {Number(order.finalAmount).toLocaleString("id-ID")}
                         </TD>
                       </TR>
@@ -363,7 +366,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
           <Link
             key={href}
