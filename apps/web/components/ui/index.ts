@@ -30,3 +30,4 @@ export {
 export { Pagination, type PaginationProps } from "./Pagination";
 export { Skeleton } from "./Skeleton";
 export { Avatar, type AvatarProps } from "./Avatar";
+export { StatCard, type StatCardProps } from "./StatCard";
