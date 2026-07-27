@@ -35,11 +35,12 @@ type User = {
 };
 
 
+// Lumina role chips — tinted, uppercase micro-label per role.
 const ROLES_COLOR: Record<string, string> = {
-  super_admin: "bg-purple-100 text-purple-700",
-  affiliate: "bg-blue-100 text-blue-700",
-  trainer: "bg-orange-100 text-orange-700",
-  student: "bg-green-100 text-green-700",
+  super_admin: "bg-slate-100 text-slate-600",
+  affiliate: "bg-emerald-50 text-emerald-700",
+  trainer: "bg-indigo-50 text-indigo-700",
+  student: "bg-teal-50 text-teal-700",
 };
 
 export default function AdminPenggunaPage() {
@@ -205,7 +206,7 @@ export default function AdminPenggunaPage() {
                             <span
                               key={r}
                               className={cn(
-                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize",
+                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
                                 ROLES_COLOR[r] ?? "bg-gray-100 text-gray-600",
                               )}
                             >

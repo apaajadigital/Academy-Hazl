@@ -8,6 +8,7 @@ import {
   Input,
   Badge,
   type BadgeProps,
+  Avatar,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -89,8 +90,8 @@ export default function AdminBlogPage() {
     <div className="flex max-w-[1200px] flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Blog</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} artikel</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">Manajemen Blog</h1>
+          <p className="mt-1 text-sm text-text-secondary">Kelola konten dan artikel edukasi &middot; {total.toLocaleString("id-ID")} artikel</p>
         </div>
       </div>
 
@@ -140,9 +141,14 @@ export default function AdminBlogPage() {
                       <p className="max-w-[220px] text-sm font-semibold text-text-primary">{p.title}</p>
                       {p.excerpt && <p className="mt-0.5 text-xs text-text-muted">{p.excerpt.slice(0, 80)}…</p>}
                     </TD>
-                    <TD className="py-3 text-sm">{p.author?.name ?? "—"}</TD>
+                    <TD className="py-3 text-sm">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar size="sm" name={p.author?.name ?? undefined} className="border-transparent bg-brand-gradient text-white" />
+                        <span className="text-text-primary">{p.author?.name ?? "—"}</span>
+                      </div>
+                    </TD>
                     <TD className="py-3">
-                      <span className="rounded-md bg-surface-sunken px-2 py-1 text-xs text-text-secondary">{p.category?.name ?? "Umum"}</span>
+                      <span className="inline-block rounded-full bg-surface-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent-cyan-strong">{p.category?.name ?? "Umum"}</span>
                     </TD>
                     <TD className="py-3"><Badge variant={s.variant} dot>{s.label}</Badge></TD>
                     <TD className="py-3 text-xs text-text-secondary">

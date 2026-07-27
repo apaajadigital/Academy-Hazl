@@ -1,7 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, X, Download, ClipboardList, Loader2 } from "lucide-react";
+import {
+  Search,
+  X,
+  Download,
+  ClipboardList,
+  Loader2,
+  Sparkles,
+  PhoneCall,
+  UserCheck,
+  CheckCircle2,
+  Archive,
+  type LucideIcon,
+} from "lucide-react";
 import { Button, Input, Pagination, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -58,6 +70,14 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> 
   qualified: { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Qualified" },
   converted: { bg: "rgba(22,163,74,0.1)",    text: "#15803D", label: "Konversi" },
   archived:  { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Arsip" },
+};
+
+const STATUS_ICON: Record<string, LucideIcon> = {
+  new: Sparkles,
+  contacted: PhoneCall,
+  qualified: UserCheck,
+  converted: CheckCircle2,
+  archived: Archive,
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -228,33 +248,43 @@ export default function AdminLeadsPage() {
         </Button>
       </div>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Metrics — Lumina KPI cards that double as status filters */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {STATUSES.filter((s) => s.value).map((s) => {
           const st = STATUS_STYLE[s.value]!;
+          const Icon = STATUS_ICON[s.value] ?? Sparkles;
           const active = status === s.value;
           return (
             <button
               id={`leads-filter-status-${s.value}-btn`}
               key={s.value}
               onClick={() => handleStatus(active ? "" : s.value)}
+              aria-pressed={active}
               className={cn(
-                "rounded-[var(--radius-lg)] border p-3.5 text-left transition-colors",
-                active ? "" : "border-border-default bg-surface-card hover:bg-surface-sunken",
+                "flex flex-col gap-3 rounded-[var(--radius-lg)] border p-4 text-left transition-all",
+                active ? "shadow-e1" : "border-border-default bg-surface-card hover:-translate-y-0.5 hover:shadow-e2",
               )}
               style={active ? { background: st.bg, borderColor: st.text } : undefined}
             >
-              <p className="text-xl font-extrabold" style={{ color: st.text }}>
-                {counts[s.value] ?? 0}
-              </p>
-              <p className="mt-0.5 text-xs text-text-secondary">{s.label}</p>
+              <span
+                className="flex size-9 items-center justify-center rounded-xl"
+                style={{ background: active ? "rgba(255,255,255,0.65)" : st.bg, color: st.text }}
+              >
+                <Icon size={16} aria-hidden="true" />
+              </span>
+              <div>
+                <p className="font-display text-2xl font-extrabold leading-none" style={{ color: st.text }}>
+                  {counts[s.value] ?? 0}
+                </p>
+                <p className="mt-1 text-xs text-text-secondary">{s.label}</p>
+              </div>
             </button>
           );
         })}
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-2.5">
+      {/* Filters — framed Lumina filter card */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
         {/* Search */}
         <div className="relative min-w-[200px] max-w-[320px] flex-1">
           <Input
@@ -336,11 +366,18 @@ export default function AdminLeadsPage() {
                   return (
                     <TR key={lead.id}>
                       <TD>
-                        <p className="font-semibold text-text-primary">{lead.name}</p>
-                        <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
-                        {lead.message && (
-                          <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
-                        )}
+                        <div className="flex items-center gap-3">
+                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                            {(lead.name ?? "?").slice(0, 2).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-text-primary">{lead.name}</p>
+                            <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
+                            {lead.message && (
+                              <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
+                            )}
+                          </div>
+                        </div>
                       </TD>
                       <TD className="text-text-secondary">{lead.company ?? "—"}</TD>
                       <TD className="font-mono text-xs text-text-secondary">{lead.phone ?? "—"}</TD>

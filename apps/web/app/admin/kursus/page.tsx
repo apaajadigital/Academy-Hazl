@@ -18,6 +18,7 @@ import {
   Loader2,
 } from "lucide-react";
 import {
+  Avatar,
   Badge,
   Button,
   Input,
@@ -392,13 +393,24 @@ export default function AdminKursusPage() {
                         </div>
                       </TD>
                       <TD>
-                        <p className="font-medium text-text-primary">{c.trainer.name}</p>
-                        <p className="text-xs text-text-muted">{c.trainer.email}</p>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={c.trainer.name} size="sm" />
+                          <div className="min-w-0">
+                            <p className="font-medium text-text-primary">{c.trainer.name}</p>
+                            <p className="text-xs text-text-muted">{c.trainer.email}</p>
+                          </div>
+                        </div>
                       </TD>
                       <TD>
-                        <Badge variant={status.variant}>{status.label}</Badge>
+                        <Badge variant={status.variant} dot>{status.label}</Badge>
                       </TD>
-                      <TD className="whitespace-nowrap text-text-secondary">{LEVEL_LABEL[c.level ?? ""] ?? "—"}</TD>
+                      <TD className="whitespace-nowrap">
+                        {LEVEL_LABEL[c.level ?? ""] ? (
+                          <Badge variant="neutral">{LEVEL_LABEL[c.level ?? ""]}</Badge>
+                        ) : (
+                          <span className="text-text-muted">—</span>
+                        )}
+                      </TD>
                       <TD>
                         {c.salePrice && Number(c.salePrice) < Number(c.price) ? (
                           <>

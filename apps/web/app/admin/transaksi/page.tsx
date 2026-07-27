@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Search, Download, Wallet, CheckCircle2, Clock, CreditCard, Loader2 } from "lucide-react";
 import {
+  Avatar,
   Badge,
   type BadgeProps,
   Button,
@@ -21,6 +22,7 @@ import {
   StatCard,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
 
 type Order = {
@@ -44,6 +46,14 @@ const STATUS_VARIANT: Record<string, NonNullable<BadgeProps["variant"]>> = {
 
 const STATUS_LABEL: Record<string, string> = {
   paid: "Lunas", pending: "Menunggu", failed: "Gagal", expired: "Kadaluarsa", refunded: "Refund",
+};
+
+// Product-type accent pill (Lumina): tinted, uppercase micro-label per item type.
+const ITEM_TYPE_PILL: Record<string, { label: string; className: string }> = {
+  course:       { label: "Kursus",    className: "bg-surface-accent-soft text-accent-cyan-strong" },
+  ebook:        { label: "E-Book",    className: "bg-accent-purple/10 text-accent-purple" },
+  event:        { label: "Event",     className: "bg-amber-500/10 text-amber-700" },
+  subscription: { label: "Langganan", className: "bg-surface-pink-soft text-accent-pink-strong" },
 };
 
 
@@ -199,24 +209,37 @@ export default function AdminTransaksiPage() {
                   const title = order.items[0]?.itemTitle ?? "—";
                   const orig = Number(order.totalAmount);
                   const fin = Number(order.finalAmount);
+                  const typePill = ITEM_TYPE_PILL[order.items[0]?.itemType ?? ""];
                   return (
                     <TR key={order.id}>
                       <TD>
-                        <code className="rounded bg-surface-sunken px-1.5 py-0.5 font-mono text-xs text-text-secondary">{order.id.slice(0, 8)}…</code>
+                        <span className="whitespace-nowrap font-mono text-xs font-semibold text-accent-cyan-strong">#{order.id.slice(0, 8).toUpperCase()}</span>
                       </TD>
                       <TD>
-                        <p className="font-semibold text-text-primary">{order.user.name}</p>
-                        <p className="text-xs text-text-muted">{order.user.email}</p>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={order.user.name} size="sm" />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-text-primary">{order.user.name}</p>
+                            <p className="text-xs text-text-muted">{order.user.email}</p>
+                          </div>
+                        </div>
                       </TD>
                       <TD>
                         <p className="max-w-[180px] truncate">{title}</p>
-                        {order.items.length > 1 && <p className="text-xs text-text-muted">+{order.items.length - 1} item</p>}
+                        <div className="mt-1 flex items-center gap-1.5">
+                          {typePill && (
+                            <span className={cn("inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide", typePill.className)}>
+                              {typePill.label}
+                            </span>
+                          )}
+                          {order.items.length > 1 && <span className="text-xs text-text-muted">+{order.items.length - 1} item</span>}
+                        </div>
                       </TD>
                       <TD>
                         <span className="rounded-md bg-surface-sunken px-2 py-0.5 text-xs uppercase text-text-secondary">{order.paymentMethod ?? "—"}</span>
                       </TD>
                       <TD>
-                        <Badge variant={STATUS_VARIANT[order.status] ?? "neutral"}>{STATUS_LABEL[order.status] ?? order.status}</Badge>
+                        <Badge variant={STATUS_VARIANT[order.status] ?? "neutral"} dot>{STATUS_LABEL[order.status] ?? order.status}</Badge>
                       </TD>
                       <TD>
                         <p className="font-bold text-text-primary">Rp {(Number.isFinite(fin) ? fin : 0).toLocaleString("id-ID")}</p>

@@ -289,9 +289,11 @@ export default function AdminEbookPage() {
                       </div>
                     </TD>
                     <TD>
-                      <span className="rounded-md bg-surface-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-cyan-strong">
-                        {ebook.category ?? "—"}
-                      </span>
+                      {ebook.category ? (
+                        <span className="text-sm font-semibold text-accent-cyan-strong">{ebook.category}</span>
+                      ) : (
+                        <span className="text-text-muted">—</span>
+                      )}
                     </TD>
                     <TD className="text-text-secondary">{ebook.author ?? "—"}</TD>
                     <TD className="text-text-secondary">{ebook.pages ?? "—"}</TD>
@@ -302,7 +304,7 @@ export default function AdminEbookPage() {
                       )}
                     </TD>
                     <TD>
-                      <Badge variant={ebook.status === "published" ? "success" : "neutral"}>
+                      <Badge variant={ebook.status === "published" ? "success" : "neutral"} dot>
                         {ebook.status === "published" ? "Published" : "Draft"}
                       </Badge>
                     </TD>

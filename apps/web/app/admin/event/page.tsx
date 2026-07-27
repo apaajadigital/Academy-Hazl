@@ -93,8 +93,8 @@ export default function AdminEventPage() {
     <div className="flex max-w-[1200px] flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Event</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} event total</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">Manajemen Event</h1>
+          <p className="mt-1 text-sm text-text-secondary">Kelola jadwal pelatihan, webinar, dan workshop &middot; {total.toLocaleString("id-ID")} event total</p>
         </div>
       </div>
 
@@ -128,15 +128,15 @@ export default function AdminEventPage() {
       ) : events.length === 0 ? (
         <EmptyState icon={Ticket} title="Tidak ada event ditemukan" />
       ) : (
-        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((ev) => {
             const s = STATUS_MAP[ev.status] ?? STATUS_MAP["draft"]!;
             const regRate = ev.maxAttendees ? Math.round((ev.registeredCount / ev.maxAttendees) * 100) : null;
             return (
-              <Card key={ev.id} hoverable className="p-5">
-                <div className="mb-3 flex items-start justify-between">
-                  <div>
-                    <p className="mb-1 text-xs font-bold text-accent-cyan-strong">{TYPE_LABEL[ev.type] ?? ev.type}</p>
+              <Card key={ev.id} hoverable className="flex flex-col p-5">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="mb-2 inline-block rounded-full bg-surface-accent-soft px-2.5 py-0.5 text-[11px] font-semibold text-accent-cyan-strong">{TYPE_LABEL[ev.type] ?? ev.type}</span>
                     <p className="text-sm font-bold leading-tight text-text-primary">{ev.title}</p>
                     {ev.organizer && <p className="mt-0.5 text-xs text-text-muted">oleh {ev.organizer.name}</p>}
                   </div>
@@ -163,7 +163,7 @@ export default function AdminEventPage() {
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-1.5">
+                <div className="mt-auto flex flex-wrap gap-1.5">
                   {ev.status === "draft" && (
                     <button className={`${ACTION_BTN} bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white`} onClick={() => updateStatus(ev.id, "published")}>Publikasi</button>
                   )}

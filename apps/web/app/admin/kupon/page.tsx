@@ -1,8 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, Check, Tag, BarChart3, Clock, Loader2 } from "lucide-react";
-import { Badge, Button, Card, Input, Select } from "@/components/ui";
+import { Plus, X, Check, Tag, Clock, Loader2, Percent, Wallet } from "lucide-react";
+import {
+  Badge,
+  Button,
+  Card,
+  Input,
+  Select,
+  TableContainer,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+} from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
@@ -89,8 +102,8 @@ export default function AdminKuponPage() {
     <div className="flex max-w-[1200px] flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Kupon</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} kupon terdaftar</p>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-text-primary">Manajemen Kupon</h1>
+          <p className="mt-1 text-sm text-text-secondary">Kelola kode promosi dan diskon &middot; {total.toLocaleString("id-ID")} kupon terdaftar</p>
         </div>
         <Button
           variant={showForm ? "ghost" : "primary"}
@@ -167,7 +180,7 @@ export default function AdminKuponPage() {
         </Card>
       )}
 
-      {/* Coupon Cards */}
+      {/* Coupon Table */}
       {loading ? (
         <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
           <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
@@ -175,55 +188,91 @@ export default function AdminKuponPage() {
       ) : coupons.length === 0 ? (
         <EmptyState icon={Tag} title="Belum ada kupon" description="Buat kupon pertama Anda untuk memberikan diskon." />
       ) : (
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-          {coupons.map((c) => {
-            const expired = c.expiresAt && new Date(c.expiresAt) < new Date();
-            const usageRate = c.maxUses ? Math.round((c.usedCount / c.maxUses) * 100) : null;
-            const inactive = !c.isActive || expired;
-            return (
-              <Card key={c.id} hoverable className={cn("flex flex-col gap-3 p-5", inactive && "opacity-65")}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-mono text-lg font-black tracking-wider text-text-primary">{c.code}</p>
-                    <p className="mt-0.5 text-xs text-text-secondary">
-                      {c.type === "percentage" ? `${c.value}% off` : `Rp ${Number(c.value).toLocaleString("id-ID")} off`}
-                      {c.minPurchase > 0 && ` · min. Rp ${Number(c.minPurchase).toLocaleString("id-ID")}`}
-                    </p>
-                  </div>
-                  <Badge variant={c.isActive && !expired ? "success" : "neutral"}>
-                    {expired ? "Kadaluarsa" : c.isActive ? "Aktif" : "Non-aktif"}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-2.5 text-xs text-text-secondary">
-                  <span className="inline-flex items-center gap-1">
-                    <BarChart3 size={13} aria-hidden="true" /> {c.usedCount}{c.maxUses ? `/${c.maxUses}` : ""} digunakan
-                  </span>
-                  {c.expiresAt && (
-                    <span className="inline-flex items-center gap-1">
-                      <Clock size={13} aria-hidden="true" /> {new Date(c.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
-                  )}
-                </div>
-                {usageRate !== null && (
-                  <div className="h-1 overflow-hidden rounded-full bg-surface-sunken">
-                    <div className="bg-brand-gradient h-full rounded-full transition-[width]" style={{ width: `${Math.min(100, usageRate)}%` }} />
-                  </div>
-                )}
-                <button
-                  onClick={() => toggleActive(c.id, c.isActive)}
-                  className={cn(
-                    "w-full rounded-[var(--radius-md)] px-3 py-2 text-xs font-bold transition-colors",
-                    c.isActive
-                      ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white"
-                      : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white",
-                  )}
-                >
-                  {c.isActive ? "Non-aktifkan" : "Aktifkan"}
-                </button>
-              </Card>
-            );
-          })}
-        </div>
+        <TableContainer>
+          <Table>
+            <THead>
+              <TR className="hover:bg-transparent">
+                <TH>Kode Kupon</TH>
+                <TH>Tipe Diskon</TH>
+                <TH>Masa Berlaku</TH>
+                <TH>Limit</TH>
+                <TH>Status</TH>
+                <TH className="text-right">Aksi</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {coupons.map((c) => {
+                const expired = c.expiresAt && new Date(c.expiresAt) < new Date();
+                const usageRate = c.maxUses ? Math.round((c.usedCount / c.maxUses) * 100) : null;
+                const inactive = !c.isActive || expired;
+                const isPct = c.type === "percentage";
+                return (
+                  <TR key={c.id} className={cn(inactive && "opacity-60")}>
+                    <TD className="py-4">
+                      <p className={cn("font-mono text-sm font-black tracking-wider text-text-primary", inactive && "line-through")}>{c.code}</p>
+                      {c.minPurchase > 0 && (
+                        <p className="mt-0.5 text-xs text-text-muted">min. Rp {Number(c.minPurchase).toLocaleString("id-ID")}</p>
+                      )}
+                    </TD>
+                    <TD className="py-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-accent-soft text-accent-cyan-strong">
+                          {isPct ? <Percent size={15} aria-hidden="true" /> : <Wallet size={15} aria-hidden="true" />}
+                        </span>
+                        <span className="whitespace-nowrap text-sm font-semibold text-text-primary">
+                          {isPct ? `${c.value}% Off` : `Rp ${Number(c.value).toLocaleString("id-ID")}`}
+                        </span>
+                      </div>
+                    </TD>
+                    <TD className="py-4">
+                      {c.expiresAt ? (
+                        <div className="flex flex-col">
+                          <span className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-text-primary">
+                            <Clock size={13} aria-hidden="true" /> {new Date(c.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                          {expired && <span className="mt-0.5 text-xs font-medium text-red-600">Sudah berakhir</span>}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-text-muted">Tanpa batas</span>
+                      )}
+                    </TD>
+                    <TD className="py-4">
+                      <div className="flex w-28 flex-col gap-1.5">
+                        <span className="text-xs font-bold text-text-secondary">
+                          {c.usedCount}
+                          {c.maxUses ? `/${c.maxUses}` : " / ∞"}
+                        </span>
+                        {usageRate !== null && (
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken">
+                            <div className="bg-brand-gradient h-full rounded-full transition-[width]" style={{ width: `${Math.min(100, usageRate)}%` }} />
+                          </div>
+                        )}
+                      </div>
+                    </TD>
+                    <TD className="py-4">
+                      <Badge variant={c.isActive && !expired ? "success" : "neutral"}>
+                        {expired ? "Kadaluarsa" : c.isActive ? "Aktif" : "Non-aktif"}
+                      </Badge>
+                    </TD>
+                    <TD className="py-4 text-right">
+                      <button
+                        onClick={() => toggleActive(c.id, c.isActive)}
+                        className={cn(
+                          "whitespace-nowrap rounded-[var(--radius-md)] px-3 py-1.5 text-xs font-bold transition-colors",
+                          c.isActive
+                            ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white"
+                            : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white",
+                        )}
+                      >
+                        {c.isActive ? "Non-aktifkan" : "Aktifkan"}
+                      </button>
+                    </TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableContainer>
       )}
     </div>
   );
