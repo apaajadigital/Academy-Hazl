@@ -22,6 +22,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  LogOut,
 } from "lucide-react";
 import { getToken, clearToken, refreshAccessToken } from "@/lib/auth/token";
 
@@ -58,6 +59,34 @@ const NAV_GROUPS = [
 ];
 
 type AdminUser = { name: string; email: string; avatarUrl: string | null };
+
+// Friendly Indonesian labels for breadcrumb slugs (P2 polish). Slugs not listed
+// fall back to Title-Case. A dynamic UUID segment (tenantId) renders as a static
+// label instead of the raw id.
+const BREADCRUMB_LABELS: Record<string, string> = {
+  admin: "Admin",
+  dashboard: "Dashboard",
+  "sistem-health": "Sistem Kesehatan",
+  kursus: "Kursus",
+  blog: "Blog",
+  event: "Event",
+  review: "Review",
+  ebook: "E-Book",
+  portofolio: "Portofolio",
+  pengguna: "Pengguna",
+  transaksi: "Transaksi",
+  payout: "Payout",
+  leads: "Leads",
+  kupon: "Kupon",
+  lms: "LMS B2B",
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function crumbLabel(seg: string): string {
+  if (UUID_RE.test(seg)) return "Detail Tenant";
+  return BREADCRUMB_LABELS[seg] ?? seg.charAt(0).toUpperCase() + seg.slice(1);
+}
 
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -109,6 +138,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     initAuth();
   }, [router]);
+
+  function logout() {
+    clearToken();
+    router.replace("/masuk");
+  }
 
   if (!ready) {
     return (
@@ -174,6 +208,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             )}
           </div>
+          <button
+            onClick={logout}
+            className={`al-logout-btn ${collapsed ? "al-logout-btn-sm" : ""}`}
+            title="Keluar"
+          >
+            <LogOut size={15} aria-hidden="true" />
+            {!collapsed && <span>Keluar</span>}
+          </button>
           <Link href="/" className={`al-back-btn ${collapsed ? "al-back-btn-sm" : ""}`} title="Kembali ke situs">
             <ArrowLeft size={15} aria-hidden="true" />
             {!collapsed && <span>Situs Utama</span>}
@@ -187,14 +229,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="al-topbar">
           <div className="al-topbar-left">
             <p className="al-breadcrumb">
-              {pathname.split("/").filter(Boolean).map((seg, i, arr) => (
-                <span key={seg}>
-                  {i > 0 && <span className="al-bc-sep">/</span>}
-                  <span className={i === arr.length - 1 ? "al-bc-active" : "al-bc-item"}>
-                    {seg.charAt(0).toUpperCase() + seg.slice(1)}
+              {pathname.split("/").filter(Boolean).map((seg, i, arr) => {
+                const href = "/" + arr.slice(0, i + 1).join("/");
+                const isLast = i === arr.length - 1;
+                return (
+                  <span key={href}>
+                    {i > 0 && <span className="al-bc-sep">/</span>}
+                    {isLast ? (
+                      <span className="al-bc-active">{crumbLabel(seg)}</span>
+                    ) : (
+                      <Link href={href} className="al-bc-link">{crumbLabel(seg)}</Link>
+                    )}
                   </span>
-                </span>
-              ))}
+                );
+              })}
             </p>
           </div>
           <div className="al-topbar-right">
@@ -312,6 +360,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .al-back-btn:hover { background: #EBECEF; color: #1D1D1F; }
         .al-back-btn-sm { justify-content: center; }
 
+        /* Logout — red treatment mirrors the member dashboard (#DC2626) */
+        .al-logout-btn {
+          display: flex; align-items: center; gap: 8px;
+          padding: 8px 10px; border-radius: 10px;
+          color: #DC2626; font-size: 12px; font-weight: 600;
+          text-decoration: none; cursor: pointer; width: 100%;
+          background: rgba(220, 38, 38, 0.08);
+          border: 1px solid rgba(220, 38, 38, 0.15);
+          transition: all 0.18s;
+        }
+        .al-logout-btn:hover { background: rgba(220, 38, 38, 0.14); color: #B91C1C; }
+        .al-logout-btn-sm { justify-content: center; }
+
         /* ── Main ── */
         .al-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 
@@ -325,6 +386,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .al-breadcrumb { font-size: 13px; color: #6E6E73; }
         .al-bc-sep { margin: 0 6px; color: #C0C0C7; }
         .al-bc-item { color: #6E6E73; }
+        .al-bc-link { color: #6E6E73; text-decoration: none; transition: color 0.15s; }
+        .al-bc-link:hover { color: #0077A8; text-decoration: underline; }
         .al-bc-active { color: #1D1D1F; font-weight: 600; }
         .al-topbar-right { display: flex; align-items: center; }
         .al-topbar-avatar {

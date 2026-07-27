@@ -70,12 +70,6 @@ export default function TrainerHubPage() {
             <h1 className="font-display text-xl font-bold text-text-primary">Trainer Hub</h1>
             <p className="mt-0.5 text-sm text-text-secondary">Kelola kursus, pantau penjualan, tarik saldo</p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/trainer-hub/profil" className="btn btn-ghost btn-sm">Edit Profil</Link>
-            <Link href="/trainer-hub/ulasan" className="btn btn-ghost btn-sm">Ulasan Siswa</Link>
-            <Link href="/trainer-hub/payout" className="btn btn-outline btn-sm">Tarik Saldo</Link>
-            <Link href="/trainer-hub/kursus" className="btn btn-primary btn-sm">Kelola Kursus</Link>
-          </div>
         </div>
       </div>
 
