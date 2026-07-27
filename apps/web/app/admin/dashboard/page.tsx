@@ -12,6 +12,7 @@ import {
   Undo2,
   Star,
   TrendingUp,
+  TrendingDown,
   Mail,
   ArrowRight,
   ChevronRight,
@@ -24,7 +25,7 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
-import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge, StatCard } from "@/components/ui";
+import { Card, Table, TableContainer, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Stats = {
@@ -126,7 +127,7 @@ export default function AdminDashboardPage() {
 
   // KPI cards use real trends from the API (trends?.*). Metrics without a
   // meaningful period-over-period delta (courses, refund rate, rating) pass a
-  // null trend so StatCard renders no pill — never a fabricated number.
+  // null trend so the card renders no pill — never a fabricated number.
   const KPI_CARDS = stats
     ? [
         { label: "Total Pengguna",    value: stats.totalUsers.toLocaleString("id-ID"),        icon: Users,        iconColor: "#0077A8", iconBg: "#E8F4F9", trend: stats.trends?.totalUsers ?? null },
@@ -169,19 +170,42 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards — member-style: colored left border, round icon tile,
+          uppercase label above a big value. Real trend pill (when present)
+          sits in the top-right so the member layout stays intact. */}
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        {KPI_CARDS.map(({ label, value, icon, iconColor, iconBg, trend }) => (
-          <StatCard
-            key={label}
-            label={label}
-            value={value}
-            icon={icon}
-            iconColor={iconColor}
-            iconBg={iconBg}
-            trend={trend}
-          />
-        ))}
+        {KPI_CARDS.map(({ label, value, icon: Icon, iconColor, iconBg, trend }) => {
+          const negative = typeof trend === "string" && trend.trim().startsWith("-");
+          const Trend = negative ? TrendingDown : TrendingUp;
+          return (
+            <div
+              key={label}
+              className="relative flex items-center gap-4 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1"
+              style={{ borderLeftWidth: 4, borderLeftColor: iconColor }}
+            >
+              <div
+                className="flex size-12 shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: iconBg, color: iconColor }}
+              >
+                <Icon size={22} aria-hidden="true" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
+                <p className="font-display text-2xl font-bold leading-tight text-text-primary">{value}</p>
+              </div>
+              {trend ? (
+                <span
+                  className={`absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    negative ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"
+                  }`}
+                >
+                  <Trend size={12} aria-hidden="true" />
+                  {trend}
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
       </div>
 
       {/* Bento: leads + popular courses (left) · recent orders table (right) */}

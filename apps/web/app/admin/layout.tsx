@@ -163,20 +163,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className={`al-root ${collapsed ? "al-collapsed" : ""}`}>
       {/* Sidebar */}
       <aside className="al-sidebar">
-        {/* Logo */}
+        {/* Logo — branded Jago Akademi mark (matches member shell) */}
         <div className="al-logo-row">
           {!collapsed && (
             <div className="al-logo-wrap">
-              <Image src="/logo.png" alt="Jago Akademi" width={32} height={32} className="al-logo-img" />
-              <div className="al-logo-text">
-                <span className="al-logo-name">Jago Admin</span>
-                <span className="al-logo-sub">Control Panel</span>
-              </div>
+              <Link href="/" className="al-logo-link">
+                <Image src="/logo.png" alt="Jago Akademi" width={120} height={32} className="al-logo-img" />
+              </Link>
+              <span className="al-logo-sub">Control Panel</span>
             </div>
           )}
           <button className="al-collapse-btn" onClick={() => setCollapsed(!collapsed)} title="Toggle sidebar" aria-label="Toggle sidebar">
             {collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
           </button>
+        </div>
+
+        {/* User card — mirrors the member shell (avatar + name + role badge + email) */}
+        <div className="al-user-card">
+          <div className="al-user-avatar">{initials}</div>
+          {!collapsed && (
+            <div className="al-user-info">
+              <p className="al-user-name">
+                <span>{admin?.name}</span>
+                <span className="al-role-badge">Super Admin</span>
+              </p>
+              <p className="al-user-email">{admin?.email}</p>
+            </div>
+          )}
         </div>
 
         {/* Nav groups */}
@@ -197,17 +210,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </nav>
 
-        {/* Admin user bottom */}
+        {/* Bottom — "Situs Utama" link + red logout pinned at the very bottom (member shell) */}
         <div className="al-bottom">
-          <div className="al-admin-row">
-            <div className="al-admin-avatar">{initials}</div>
-            {!collapsed && (
-              <div className="al-admin-info">
-                <p className="al-admin-name">{admin?.name}</p>
-                <p className="al-admin-role">Super Admin</p>
-              </div>
-            )}
-          </div>
+          <Link href="/" className={`al-back-btn ${collapsed ? "al-back-btn-sm" : ""}`} title="Kembali ke situs">
+            <ArrowLeft size={15} aria-hidden="true" />
+            {!collapsed && <span>Situs Utama</span>}
+          </Link>
           <button
             onClick={logout}
             className={`al-logout-btn ${collapsed ? "al-logout-btn-sm" : ""}`}
@@ -216,10 +224,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LogOut size={15} aria-hidden="true" />
             {!collapsed && <span>Keluar</span>}
           </button>
-          <Link href="/" className={`al-back-btn ${collapsed ? "al-back-btn-sm" : ""}`} title="Kembali ke situs">
-            <ArrowLeft size={15} aria-hidden="true" />
-            {!collapsed && <span>Situs Utama</span>}
-          </Link>
         </div>
       </aside>
 
@@ -290,11 +294,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           min-height: 68px;
           flex-shrink: 0;
         }
-        .al-logo-wrap { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .al-logo-img { border-radius: 8px; flex-shrink: 0; }
-        .al-logo-text { display: flex; flex-direction: column; white-space: nowrap; }
-        .al-logo-name { font-size: 14px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.01em; }
-        .al-logo-sub { font-size: 10px; color: #6E6E73; font-weight: 500; margin-top: 1px; }
+        .al-logo-wrap { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        .al-logo-link { display: flex; align-items: center; }
+        .al-logo-img { height: 26px; width: auto; }
+        .al-logo-sub { font-size: 10px; color: #6E6E73; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 
         .al-collapse-btn {
           width: 28px; height: 28px; border-radius: 8px;
@@ -304,6 +307,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           flex-shrink: 0; transition: all 0.18s;
         }
         .al-collapse-btn:hover { background: #EBECEF; color: #1D1D1F; }
+
+        /* ── User card (top) — mirrors member .sidebar-user-card ── */
+        .al-user-card {
+          display: flex; align-items: center; gap: 12px;
+          padding: 16px 14px; border-bottom: 1px solid #E5E5E5;
+          background: #FAFAFA; flex-shrink: 0;
+        }
+        .al-collapsed .al-user-card { justify-content: center; padding: 16px 8px; }
+        .al-user-avatar {
+          width: 40px; height: 40px; border-radius: 50%;
+          background: linear-gradient(135deg, #0077A8, #CC0052);
+          color: white; font-size: 14px; font-weight: 700;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; border: 2px solid #FFFFFF;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .al-user-info { min-width: 0; }
+        .al-user-name {
+          display: flex; align-items: center; gap: 6px;
+          color: #1D1D1F; font-size: 13px; font-weight: 600;
+        }
+        .al-user-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .al-user-email {
+          color: #6E6E73; font-size: 11px; margin-top: 2px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .al-role-badge {
+          background: #EBE5FC; color: #7C3AED;
+          font-size: 9px; font-weight: 800; line-height: 1;
+          padding: 1.5px 5px; border-radius: 4px; letter-spacing: 0.05em;
+          border: 1px solid rgba(124, 58, 237, 0.2); flex-shrink: 0;
+        }
 
         .al-nav { flex: 1; min-height: 0; padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
         .al-nav::-webkit-scrollbar { width: 4px; }
@@ -316,12 +351,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           padding: 6px 10px 4px;
         }
         .al-nav-item {
-          display: flex; align-items: center; gap: 10px;
-          padding: 9px 10px; border-radius: 10px;
-          color: #636366; font-size: 13px; font-weight: 500;
+          display: flex; align-items: center; gap: 11px;
+          padding: 10px 12px; border-radius: 10px;
+          color: #636366; font-size: 13.5px; font-weight: 500;
           text-decoration: none; transition: all 0.18s;
           position: relative; white-space: nowrap;
         }
+        .al-collapsed .al-nav-item { justify-content: center; gap: 0; }
         .al-nav-item:hover { background: #F5F5F7; color: #1D1D1F; }
         .al-nav-active {
           background: rgba(0, 212, 255, 0.08) !important;
@@ -338,17 +374,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           display: flex; flex-direction: column; gap: 8px;
           flex-shrink: 0;
         }
-        .al-admin-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; }
-        .al-admin-avatar {
-          width: 32px; height: 32px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 11px; font-weight: 800;
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-        .al-admin-info { overflow: hidden; }
-        .al-admin-name { font-size: 12px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .al-admin-role { font-size: 10px; color: #6E6E73; margin-top: 1px; }
 
         .al-back-btn {
           display: flex; align-items: center; gap: 8px;
