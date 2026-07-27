@@ -25,6 +25,7 @@ const EMPTY_FORM = { code: "", type: "percentage", value: 0, minPurchase: 0, max
 
 export default function AdminKuponPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -37,7 +38,13 @@ export default function AdminKuponPage() {
     setLoading(true);
     fetch("/api/admin/coupons?limit=50", { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
-      .then((body) => { if (body.success) setCoupons(body.data?.coupons ?? body.data ?? []); })
+      .then((body) => {
+        if (body.success) {
+          const list: Coupon[] = body.data?.coupons ?? body.data ?? [];
+          setCoupons(list);
+          setTotal(body.meta?.total ?? list.length);
+        }
+      })
       .finally(() => setLoading(false));
   }
 
@@ -79,11 +86,11 @@ export default function AdminKuponPage() {
   }
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-5">
+    <div className="flex max-w-[1200px] flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Kupon</h1>
-          <p className="mt-1 text-sm text-text-secondary">{coupons.length} kupon terdaftar</p>
+          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} kupon terdaftar</p>
         </div>
         <Button
           variant={showForm ? "ghost" : "primary"}
@@ -153,7 +160,7 @@ export default function AdminKuponPage() {
                 onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
               />
             </div>
-            <Button type="submit" variant="cyan" size="sm" disabled={saving} className="self-start" leftIcon={<Check size={16} aria-hidden="true" />}>
+            <Button type="submit" variant="cyan" size="sm" disabled={saving} className="self-start bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong" leftIcon={<Check size={16} aria-hidden="true" />}>
               {saving ? "Menyimpan…" : "Buat Kupon"}
             </Button>
           </form>

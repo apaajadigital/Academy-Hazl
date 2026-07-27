@@ -325,7 +325,7 @@ export default function AdminKursusPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
           <Input
             containerClassName="flex-1"
             leftIcon={<Search size={16} aria-hidden="true" />}
@@ -334,7 +334,7 @@ export default function AdminKursusPage() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari kursus"
           />
-          <Button type="submit" variant="cyan" size="sm">Cari</Button>
+          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
         </form>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -518,7 +518,7 @@ export default function AdminKursusPage() {
                     <X size={15} aria-hidden="true" />
                     {savingApproval ? "Memproses..." : "Tolak & Kirim Feedback"}
                   </button>
-                  <Button variant="cyan" size="sm" onClick={handleApproveDetail} disabled={savingApproval} leftIcon={<Check size={15} aria-hidden="true" />}>
+                  <Button variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong" onClick={handleApproveDetail} disabled={savingApproval} leftIcon={<Check size={15} aria-hidden="true" />}>
                     {savingApproval ? "Memproses..." : "Setujui & Publikasikan"}
                   </Button>
                 </div>

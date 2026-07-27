@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   ArrowLeft, Building2, Users, Layers, BarChart3,
-  ChevronRight, ToggleLeft, ToggleRight, Mail,
+  ToggleLeft, ToggleRight, Mail, BookOpen,
 } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
 import {
@@ -24,7 +23,9 @@ import {
   TR,
   TH,
   TD,
+  StatCard,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -213,16 +214,7 @@ export default function AdminTenantDetailPage() {
   ];
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-5">
-
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2">
-        <Link href="/admin/lms" className="flex items-center gap-1.5 text-sm text-text-secondary transition-colors hover:text-text-primary">
-          <ArrowLeft size={14} aria-hidden="true" /> LMS B2B
-        </Link>
-        <ChevronRight size={12} className="text-text-muted" aria-hidden="true" />
-        <span className="text-sm font-semibold text-text-primary">{tenant.name}</span>
-      </div>
+    <div className="flex max-w-[1200px] flex-col gap-5">
 
       {/* Tenant header card (light) */}
       <Card className="p-7">
@@ -233,7 +225,7 @@ export default function AdminTenantDetailPage() {
             </div>
             <div>
               <div className="mb-1 flex flex-wrap items-center gap-2.5">
-                <h1 className="font-display text-xl font-extrabold text-text-primary">{tenant.name}</h1>
+                <h1 className="font-display text-2xl font-extrabold text-text-primary">{tenant.name}</h1>
                 <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: plan.bg, color: plan.text }}>{tenant.planType.toUpperCase()}</span>
                 <Badge variant={statusVariant} dot>{expired ? "KADALUARSA" : tenant.isActive ? "AKTIF" : "NON-AKTIF"}</Badge>
               </div>
@@ -272,16 +264,15 @@ export default function AdminTenantDetailPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="flex items-center gap-3 p-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px]" style={{ background: `${color}18` }}>
-              <Icon size={16} strokeWidth={1.75} style={{ color }} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-xl font-extrabold" style={{ color }}>{value}</p>
-              <p className="text-[10px] text-text-secondary">{label}</p>
-            </div>
-          </Card>
+        {stats.map(({ label, value, icon, color }) => (
+          <StatCard
+            key={label}
+            label={label}
+            value={value}
+            icon={icon}
+            iconColor={color}
+            iconBg={`${color}18`}
+          />
         ))}
       </div>
 
@@ -348,7 +339,7 @@ export default function AdminTenantDetailPage() {
       {activeSection === "batches" && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {batches.length === 0
-            ? <div className="col-span-full rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada batch.</p></div>
+            ? <EmptyState icon={Layers} title="Belum ada batch." className="col-span-full" />
             : batches.map((b) => (
               <Card key={b.id} className="p-[18px]">
                 <div className="mb-2.5 flex items-center justify-between">
@@ -371,7 +362,7 @@ export default function AdminTenantDetailPage() {
       {activeSection === "courses" && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {courses.length === 0
-            ? <div className="col-span-full rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada kursus.</p></div>
+            ? <EmptyState icon={BookOpen} title="Belum ada kursus." className="col-span-full" />
             : courses.map((c) => (
               <Card key={c.id} className="p-[18px]">
                 <div className="mb-2.5 flex items-center justify-between">
@@ -392,7 +383,7 @@ export default function AdminTenantDetailPage() {
       {/* Section: Members */}
       {activeSection === "members" && (
         members.length === 0
-          ? <div className="rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center"><p className="text-text-secondary">Belum ada anggota. Gunakan tombol &quot;Undang&quot; untuk mengundang pengguna.</p></div>
+          ? <EmptyState icon={Users} title="Belum ada anggota" description={`Gunakan tombol "Undang" untuk mengundang pengguna.`} />
           : (
             <TableContainer>
               <Table>

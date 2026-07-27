@@ -20,6 +20,7 @@ import {
   TD,
   Pagination,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type BlogPost = {
   id: string;
@@ -85,16 +86,16 @@ export default function AdminBlogPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-5">
+    <div className="flex max-w-[1200px] flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-xl font-extrabold text-text-primary">Manajemen Blog</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Blog</h1>
           <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} artikel</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 gap-2">
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+        <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 items-end gap-2">
           <Input
             className="py-2"
             placeholder="Cari artikel..."
@@ -121,10 +122,7 @@ export default function AdminBlogPage() {
           <span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-          <PenLine size={32} className="text-border-strong" />
-          <p className="text-sm">Tidak ada artikel ditemukan</p>
-        </div>
+        <EmptyState icon={PenLine} title="Tidak ada artikel ditemukan" />
       ) : (
         <TableContainer>
           <Table>

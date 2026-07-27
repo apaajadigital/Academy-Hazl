@@ -13,6 +13,7 @@ import {
   TabsTrigger,
   Pagination,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type Review = {
   id: string;
@@ -165,10 +166,11 @@ export default function AdminReviewPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[900px] flex-col gap-5">
+    <div className="flex max-w-[1200px] flex-col gap-5">
+      {/* Header — title + mode switch on their own row */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-xl font-extrabold text-text-primary">{mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">{mode === "review" ? "Moderasi Review" : "Moderasi Testimoni"}</h1>
           <p className="mt-1 text-sm text-text-secondary">
             {mode === "review"
               ? `${total.toLocaleString("id-ID")} review total`
@@ -181,6 +183,10 @@ export default function AdminReviewPage() {
             <TabsTrigger value="testimoni">💬 Testimoni</TabsTrigger>
           </TabsList>
         </Tabs>
+      </div>
+
+      {/* Filter card — status filter on its own framed row (no tablet collision) */}
+      <div className="flex flex-wrap items-center justify-end gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
         {mode === "review" ? (
           <Tabs value={filter} onValueChange={(v) => { setFilter(v as "all" | "pending" | "approved"); setPage(1); }}>
             <TabsList className="flex-wrap">
@@ -208,10 +214,7 @@ export default function AdminReviewPage() {
         tLoading ? (
           <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
         ) : testimonials.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-            <MessageSquare size={32} className="text-border-strong" />
-            <p className="text-sm">Tidak ada testimoni ditemukan</p>
-          </div>
+          <EmptyState icon={MessageSquare} title="Tidak ada testimoni ditemukan" />
         ) : (
           <div className="flex flex-col gap-3">
             {testimonials.map((t) => {
@@ -282,10 +285,7 @@ export default function AdminReviewPage() {
       ) : loading ? (
         <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
       ) : reviews.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-          <Star size={32} className="text-border-strong" />
-          <p className="text-sm">Tidak ada review ditemukan</p>
-        </div>
+        <EmptyState icon={Star} title="Tidak ada review ditemukan" />
       ) : (
         <div className="flex flex-col gap-3">
           {reviews.map((r) => (

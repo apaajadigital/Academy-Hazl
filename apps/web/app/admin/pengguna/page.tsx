@@ -141,7 +141,7 @@ export default function AdminPenggunaPage() {
 
       {/* Filters */}
       <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
           <Input
             containerClassName="flex-1"
             leftIcon={<Search size={16} aria-hidden="true" />}
@@ -150,7 +150,7 @@ export default function AdminPenggunaPage() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari pengguna"
           />
-          <Button type="submit" variant="cyan" size="sm">Cari</Button>
+          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
         </form>
         <Tabs value={selectedRole} onValueChange={(v) => { setSelectedRole(v); setPage(1); }}>
           <TabsList className="flex-wrap">

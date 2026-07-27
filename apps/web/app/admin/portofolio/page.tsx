@@ -22,6 +22,7 @@ import {
   TD,
   Pagination,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type PortfolioItem = {
   title: string;
@@ -262,31 +263,30 @@ export default function AdminPortofolioPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-xl font-extrabold text-text-primary">Portofolio Member</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Portofolio Member</h1>
           <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} member terdaftar</p>
         </div>
         <Button onClick={handleOpenCreate} variant="primary" size="sm" leftIcon={<Plus size={16} />}>Tambah Member</Button>
       </div>
 
       {/* Status filter tabs */}
-      <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-        <TabsList className="flex-wrap">
-          {["all", "published", "draft"].map((st) => (
-            <TabsTrigger key={st} value={st}>
-              {st === "all" ? "Semua" : st === "published" ? "Published" : "Draft"}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-end gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+          <TabsList className="flex-wrap">
+            {["all", "published", "draft"].map((st) => (
+              <TabsTrigger key={st} value={st}>
+                {st === "all" ? "Semua" : st === "published" ? "Published" : "Draft"}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* Table */}
       {loading ? (
         <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
       ) : members.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-          <ImageIcon size={32} className="text-border-strong" />
-          <p className="text-sm">Tidak ada member ditemukan</p>
-        </div>
+        <EmptyState icon={ImageIcon} title="Tidak ada member ditemukan" />
       ) : (
         <TableContainer>
           <Table>

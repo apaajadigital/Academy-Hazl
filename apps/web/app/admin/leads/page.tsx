@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Search, X, Download, ClipboardList, Loader2 } from "lucide-react";
-import { Button, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
+import { Button, Input, Pagination, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
@@ -206,7 +206,7 @@ export default function AdminLeadsPage() {
   }, {});
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-5">
+    <div className="flex max-w-[1200px] flex-col gap-5">
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -257,15 +257,16 @@ export default function AdminLeadsPage() {
       <div className="flex flex-wrap items-center gap-2.5">
         {/* Search */}
         <div className="relative min-w-[200px] max-w-[320px] flex-1">
-          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-          <input
+          <Input
             id="leads-search-input"
             type="search"
+            leftIcon={<Search size={15} aria-hidden="true" />}
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Cari nama / email / perusahaan…"
-            className="w-full rounded-[var(--radius-md)] border border-solid border-border-strong bg-surface-card py-2 pl-9 pr-9 text-sm text-text-primary outline-none transition-[border-color,box-shadow] focus:border-accent-cyan-strong focus:ring-2 focus:ring-accent-cyan-strong/20"
             aria-label="Cari lead"
+            containerClassName="w-full"
+            className={query ? "pr-9" : undefined}
           />
           {query && (
             <button
@@ -366,26 +367,11 @@ export default function AdminLeadsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <button
-            id="leads-prev-page-btn"
-            onClick={() => handlePage(page - 1)}
-            disabled={page <= 1}
-            className="rounded-[var(--radius-md)] border border-border-strong bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40"
-          >
-            ← Prev
-          </button>
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <span className="text-sm text-text-secondary">
             {page} / {totalPages} ({meta.total.toLocaleString("id-ID")} leads)
           </span>
-          <button
-            id="leads-next-page-btn"
-            onClick={() => handlePage(page + 1)}
-            disabled={page >= totalPages}
-            className="rounded-[var(--radius-md)] border border-border-strong bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40"
-          >
-            Next →
-          </button>
+          <Pagination page={page} pageCount={totalPages} onPageChange={handlePage} />
         </div>
       )}
     </div>

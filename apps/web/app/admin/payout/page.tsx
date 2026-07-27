@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Settings, Check, Inbox } from "lucide-react";
+import { Search, Settings, Check, Inbox, Clock, Users, CheckCircle2, Wallet } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
 import {
   Button,
   Input,
   Textarea,
-  Card,
   Badge,
   type BadgeProps,
   Modal,
@@ -23,7 +22,9 @@ import {
   TH,
   TD,
   Pagination,
+  StatCard,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 type TrainerPayout = {
   id: string;
@@ -204,10 +205,10 @@ export default function AdminPayoutPage() {
   const affPages = Math.ceil(affTotal / limit);
 
   const kpiCards = stats ? [
-    { label: "Trainer Pending", value: stats.trainer.pending, color: "#B45309" },
-    { label: "Afiliator Pending", value: stats.affiliate.pending, color: "#B45309" },
-    { label: "Total Sudah Dibayar", value: stats.trainer.paid + stats.affiliate.paid, color: "#16A34A" },
-    { label: "Nominal Pending", value: `Rp ${(stats.trainer.pendingAmount + stats.affiliate.pendingAmount).toLocaleString("id-ID")}`, color: "#0077A8" },
+    { label: "Trainer Pending", value: stats.trainer.pending, color: "#B45309", icon: Clock },
+    { label: "Afiliator Pending", value: stats.affiliate.pending, color: "#B45309", icon: Users },
+    { label: "Total Sudah Dibayar", value: stats.trainer.paid + stats.affiliate.paid, color: "#16A34A", icon: CheckCircle2 },
+    { label: "Nominal Pending", value: `Rp ${(stats.trainer.pendingAmount + stats.affiliate.pendingAmount).toLocaleString("id-ID")}`, color: "#0077A8", icon: Wallet },
   ] : [];
 
   // Semantic action-select button styling (money moderation controls).
@@ -223,7 +224,7 @@ export default function AdminPayoutPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-xl font-extrabold text-text-primary">Pencatatan Payout</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Pencatatan Payout</h1>
           <p className="mt-1 text-sm text-text-secondary">Kelola penarikan saldo Trainer &amp; Afiliator</p>
         </div>
       </div>
@@ -232,10 +233,14 @@ export default function AdminPayoutPage() {
       {stats && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {kpiCards.map((k) => (
-            <Card key={k.label} className="flex flex-col gap-1.5 p-4">
-              <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{k.label}</span>
-              <span className="text-2xl font-extrabold" style={{ color: k.color }}>{k.value}</span>
-            </Card>
+            <StatCard
+              key={k.label}
+              label={k.label}
+              value={k.value}
+              icon={k.icon}
+              iconColor={k.color}
+              iconBg={`${k.color}18`}
+            />
           ))}
         </div>
       )}
@@ -249,9 +254,9 @@ export default function AdminPayoutPage() {
           </TabsList>
         </Tabs>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <Input className="min-w-[200px] py-2" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search size={16} />} />
+        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+          <form onSubmit={handleSearch} className="flex flex-1 items-end gap-2">
+            <Input className="min-w-[200px] py-2" containerClassName="flex-1" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search size={16} />} />
             <Button type="submit" variant="cyan" size="sm" aria-label="Cari"><Search size={16} /></Button>
           </form>
           <Tabs
@@ -274,10 +279,7 @@ export default function AdminPayoutPage() {
         trainerLoading ? (
           <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
         ) : trainerPayouts.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-            <Inbox size={32} className="text-border-strong" />
-            <p className="text-sm">Tidak ada data payout trainer.</p>
-          </div>
+          <EmptyState icon={Inbox} title="Tidak ada data payout trainer." />
         ) : (
           <TableContainer>
             <Table className="min-w-[800px]">
@@ -324,10 +326,7 @@ export default function AdminPayoutPage() {
         affLoading ? (
           <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
         ) : affWithdrawals.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card py-12 text-text-muted">
-            <Inbox size={32} className="text-border-strong" />
-            <p className="text-sm">Tidak ada data withdrawal afiliator.</p>
-          </div>
+          <EmptyState icon={Inbox} title="Tidak ada data withdrawal afiliator." />
         ) : (
           <TableContainer>
             <Table className="min-w-[800px]">

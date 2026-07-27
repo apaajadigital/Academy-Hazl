@@ -20,7 +20,9 @@ import {
   TR,
   TH,
   TD,
+  StatCard,
 } from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -312,12 +314,12 @@ export default function AdminLMSPage() {
   ];
 
   return (
-    <div className="flex max-w-[1100px] flex-col gap-5">
+    <div className="flex max-w-[1200px] flex-col gap-5">
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-xl font-extrabold text-text-primary">LMS B2B</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">LMS B2B</h1>
           <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} perusahaan / institusi</p>
         </div>
         {activeTab === "tenants" && (
@@ -329,16 +331,15 @@ export default function AdminLMSPage() {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {metrics.map(({ label, value, color, icon: Icon }) => (
-          <Card key={label} className="flex items-center gap-3.5 p-4">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl" style={{ background: `${color}18` }}>
-              <Icon size={18} strokeWidth={1.75} style={{ color }} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-2xl font-extrabold" style={{ color }}>{value.toLocaleString("id-ID")}</p>
-              <p className="mt-0.5 text-xs text-text-secondary">{label}</p>
-            </div>
-          </Card>
+        {metrics.map(({ label, value, color, icon }) => (
+          <StatCard
+            key={label}
+            label={label}
+            value={value.toLocaleString("id-ID")}
+            icon={icon}
+            iconColor={color}
+            iconBg={`${color}18`}
+          />
         ))}
       </div>
 
@@ -363,11 +364,11 @@ export default function AdminLMSPage() {
           {loading ? (
             <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
           ) : tenants.length === 0 ? (
-            <div className="flex flex-col items-center gap-1.5 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card px-6 py-12 text-center">
-              <Building2 size={32} className="mb-1 text-border-strong" />
-              <p className="text-[15px] font-semibold text-text-primary">Belum ada tenant</p>
-              <p className="text-sm text-text-secondary">Klik &quot;Buat Tenant Baru&quot; untuk menambahkan perusahaan pertama.</p>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="Belum ada tenant"
+              description={`Klik "Buat Tenant Baru" untuk menambahkan perusahaan pertama.`}
+            />
           ) : (
             <TableContainer>
               <Table className="min-w-[820px]">

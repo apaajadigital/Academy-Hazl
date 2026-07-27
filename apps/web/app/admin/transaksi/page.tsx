@@ -18,6 +18,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  StatCard,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getToken } from "@/lib/auth/token";
@@ -25,7 +26,7 @@ import { getToken } from "@/lib/auth/token";
 type Order = {
   id: string;
   finalAmount: number;
-  originalAmount: number;
+  totalAmount: number;
   status: string;
   paymentMethod: string | null;
   createdAt: string;
@@ -116,10 +117,10 @@ export default function AdminTransaksiPage() {
 
   const totalPages = Math.ceil(total / limit);
 
-  const summaryCards: { label: string; value: string | number; Icon: LucideIcon; wrap: string }[] = [
-    { label: "Pendapatan (halaman ini)", value: `Rp ${summary.totalRevenue.toLocaleString("id-ID")}`, Icon: Wallet, wrap: "bg-green-600/10 text-green-600" },
-    { label: "Transaksi Lunas", value: summary.paidCount, Icon: CheckCircle2, wrap: "bg-surface-accent-soft text-accent-cyan-strong" },
-    { label: "Menunggu Pembayaran", value: summary.pendingCount, Icon: Clock, wrap: "bg-amber-500/10 text-amber-600" },
+  const summaryCards: { label: string; value: string | number; icon: LucideIcon; iconColor?: string; iconBg?: string }[] = [
+    { label: "Pendapatan (halaman ini)", value: `Rp ${summary.totalRevenue.toLocaleString("id-ID")}`, icon: Wallet, iconColor: "#16a34a", iconBg: "rgba(22,163,74,0.1)" },
+    { label: "Transaksi Lunas", value: summary.paidCount, icon: CheckCircle2 },
+    { label: "Menunggu Pembayaran", value: summary.pendingCount, icon: Clock, iconColor: "#d97706", iconBg: "rgba(245,158,11,0.1)" },
   ];
 
   return (
@@ -142,22 +143,14 @@ export default function AdminTransaksiPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
-        {summaryCards.map(({ label, value, Icon, wrap }) => (
-          <div key={label} className="flex items-center gap-3.5 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-5 shadow-e1">
-            <span className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${wrap}`}>
-              <Icon size={22} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="font-display text-lg font-extrabold text-text-primary">{value}</p>
-              <p className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-text-secondary">{label}</p>
-            </div>
-          </div>
+        {summaryCards.map(({ label, value, icon, iconColor, iconBg }) => (
+          <StatCard key={label} label={label} value={value} icon={icon} iconColor={iconColor} iconBg={iconBg} />
         ))}
       </div>
 
       {/* Filters */}
       <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full gap-2 lg:max-w-sm">
+        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
           <Input
             containerClassName="flex-1"
             leftIcon={<Search size={16} aria-hidden="true" />}
@@ -166,7 +159,7 @@ export default function AdminTransaksiPage() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari transaksi"
           />
-          <Button type="submit" variant="cyan" size="sm">Cari</Button>
+          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
         </form>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -204,6 +197,8 @@ export default function AdminTransaksiPage() {
               <TBody>
                 {orders.map((order) => {
                   const title = order.items[0]?.itemTitle ?? "—";
+                  const orig = Number(order.totalAmount);
+                  const fin = Number(order.finalAmount);
                   return (
                     <TR key={order.id}>
                       <TD>
@@ -224,9 +219,9 @@ export default function AdminTransaksiPage() {
                         <Badge variant={STATUS_VARIANT[order.status] ?? "neutral"}>{STATUS_LABEL[order.status] ?? order.status}</Badge>
                       </TD>
                       <TD>
-                        <p className="font-bold text-text-primary">Rp {Number(order.finalAmount).toLocaleString("id-ID")}</p>
-                        {Number(order.originalAmount) !== Number(order.finalAmount) && (
-                          <p className="text-xs text-text-muted line-through">Rp {Number(order.originalAmount).toLocaleString("id-ID")}</p>
+                        <p className="font-bold text-text-primary">Rp {(Number.isFinite(fin) ? fin : 0).toLocaleString("id-ID")}</p>
+                        {Number.isFinite(orig) && orig > fin && (
+                          <p className="text-xs text-text-muted line-through">Rp {orig.toLocaleString("id-ID")}</p>
                         )}
                       </TD>
                       <TD className="whitespace-nowrap text-text-secondary">
