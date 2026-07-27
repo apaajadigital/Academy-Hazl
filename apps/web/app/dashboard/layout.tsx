@@ -171,6 +171,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={`sidebar-nav-item ${isActive ? "sidebar-nav-active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => setSidebarOpen(false)}
               >
                 <item.icon className="sidebar-nav-icon" size={18} aria-hidden="true" />
@@ -242,13 +243,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       <style jsx global>{`
+        /* Dashboard shell — token-driven (standardization Jul 2026). Colors
+           reference design tokens (app/globals.css) so the three dashboard
+           shells share one source of truth. Content wrapper provides vertical
+           rhythm only; horizontal width/padding is owned by .dash-container. */
+
         /* ── Pro Badge ── */
         .pro-badge {
           background: #EBE5FC;
-          color: #7C3AED;
+          color: var(--brand-purple);
           font-size: 9px;
           font-weight: 800;
-          padding: 1.5px 5px;
+          padding: 2px 5px;
           border-radius: 4px;
           letter-spacing: 0.05em;
           border: 1px solid rgba(124, 58, 237, 0.2);
@@ -260,16 +266,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .dashboard-root {
           display: flex;
           min-height: 100vh;
-          background: #F5F5F7;
-          font-family: 'Inter', sans-serif;
+          background: var(--surface-page);
+          font-family: var(--font-body);
         }
 
         /* ── Sidebar (light) ── */
         .dashboard-sidebar {
           width: 260px;
           min-height: 100vh;
-          background: #FFFFFF;
-          border-right: 1px solid #E5E5E5;
+          background: var(--surface-card);
+          border-right: 1px solid var(--border-default);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -295,7 +301,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #E5E5E5;
+          border-bottom: 1px solid var(--border-default);
         }
 
         .sidebar-logo-link { display: flex; align-items: center; }
@@ -303,7 +309,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         .sidebar-close-btn {
           display: none;
-          color: #6E6E73;
+          color: var(--text-muted);
           background: none;
           border: none;
           cursor: pointer;
@@ -311,37 +317,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           align-items: center;
           justify-content: center;
         }
-        .sidebar-close-btn:hover { color: #1D1D1F; }
+        .sidebar-close-btn:hover { color: var(--text-primary); }
 
         .sidebar-user-card {
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 16px 20px;
-          border-bottom: 1px solid #E5E5E5;
-          background: #FAFAFA;
+          border-bottom: 1px solid var(--border-default);
+          background: var(--surface-sunken);
         }
 
         .sidebar-avatar {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
           flex-shrink: 0;
-          border: 2px solid #FFFFFF;
+          border: 2px solid var(--surface-card);
           box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         .sidebar-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-        .sidebar-avatar-initials { color: white; font-size: 14px; font-weight: 700; }
+        .sidebar-avatar-initials { color: #fff; font-size: 14px; font-weight: 700; }
 
         .sidebar-user-info { min-width: 0; }
         .sidebar-user-name {
-          color: #1D1D1F;
+          color: var(--text-primary);
           font-size: 13px;
           font-weight: 600;
           white-space: nowrap;
@@ -349,7 +355,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           text-overflow: ellipsis;
         }
         .sidebar-user-email {
-          color: #6E6E73;
+          color: var(--text-muted);
           font-size: 11px;
           white-space: nowrap;
           overflow: hidden;
@@ -369,10 +375,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .sidebar-nav-item {
           display: flex;
           align-items: center;
-          gap: 11px;
+          gap: 12px;
           padding: 10px 12px;
           border-radius: 10px;
-          color: #636366;
+          color: var(--text-secondary);
           font-size: 13.5px;
           font-weight: 500;
           text-decoration: none;
@@ -380,22 +386,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
 
         .sidebar-nav-item:hover {
-          background: #F5F5F7;
-          color: #1D1D1F;
+          background: var(--surface-page);
+          color: var(--text-primary);
         }
 
         .sidebar-nav-active {
-          background: rgba(0, 212, 255, 0.08);
-          color: #0077A8 !important;
+          background: var(--surface-accent-soft);
+          color: var(--brand-cyan-strong) !important;
           font-weight: 600;
-          box-shadow: inset 3px 0 0 #0077A8;
+          box-shadow: inset 3px 0 0 var(--brand-cyan-strong);
         }
 
         .sidebar-nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
 
         .sidebar-admin-wrap {
           padding: 8px 12px;
-          border-top: 1px solid #E5E5E5;
+          border-top: 1px solid var(--border-default);
         }
         .sidebar-admin-link {
           display: flex;
@@ -417,13 +423,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         .sidebar-footer {
           padding: 12px 12px 20px;
-          border-top: 1px solid #E5E5E5;
+          border-top: 1px solid var(--border-default);
         }
 
         .sidebar-logout-btn {
           display: flex;
           align-items: center;
-          gap: 11px;
+          gap: 12px;
           padding: 10px 12px;
           border-radius: 10px;
           color: #DC2626;
@@ -443,6 +449,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         /* ── Main area ── */
         .dashboard-main {
           flex: 1;
+          min-width: 0;
           margin-left: 260px;
           display: flex;
           flex-direction: column;
@@ -455,17 +462,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           align-items: center;
           justify-content: space-between;
           padding: 12px 16px;
-          background: #FFFFFF;
+          background: var(--surface-card);
           position: sticky;
           top: 0;
           z-index: 30;
-          border-bottom: 1px solid #E5E5E5;
+          border-bottom: 1px solid var(--border-default);
         }
 
         .topbar-hamburger {
           background: none;
           border: none;
-          color: #1D1D1F;
+          color: var(--text-primary);
           cursor: pointer;
           padding: 4px;
           display: flex;
@@ -477,18 +484,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           width: 32px;
           height: 32px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
           display: flex;
           align-items: center;
           justify-content: center;
           overflow: hidden;
         }
         .topbar-avatar-img { width: 100%; height: 100%; object-fit: cover; }
-        .topbar-avatar-initials { color: white; font-size: 12px; font-weight: 700; }
+        .topbar-avatar-initials { color: #fff; font-size: 12px; font-weight: 700; }
 
+        /* Vertical rhythm only — horizontal width/padding via .dash-container. */
         .dashboard-content {
           flex: 1;
-          padding: 28px 32px;
+          padding: 32px 0;
         }
 
         /* ── Responsive ── */
@@ -512,7 +520,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             display: flex;
           }
           .dashboard-content {
-            padding: 20px 16px;
+            padding: 24px 0;
           }
         }
       `}</style>

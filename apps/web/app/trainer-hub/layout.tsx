@@ -98,8 +98,8 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
       <div className="th-loading">
         <span className="th-spinner" />
         <style jsx>{`
-          .th-loading { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#F5F5F7; }
-          .th-spinner { width:36px; height:36px; border-radius:50%; border:3px solid #0077A8; border-top-color:transparent; animation:spin 0.8s linear infinite; }
+          .th-loading { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--surface-page); }
+          .th-spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--brand-cyan-strong); border-top-color:transparent; animation:spin 0.8s linear infinite; }
           @keyframes spin { to { transform:rotate(360deg); } }
         `}</style>
       </div>
@@ -159,6 +159,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
                 href={item.href}
                 className={`th-nav-item ${isActive ? "th-nav-active" : ""}`}
                 title={collapsed ? item.label : ""}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => setSidebarOpen(false)}
               >
                 <item.icon className="th-nav-icon" size={18} aria-hidden="true" />
@@ -229,19 +230,22 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
       </div>
 
       <style jsx global>{`
+        /* Trainer shell — token-driven (standardization Jul 2026). Shares the
+           same color source of truth as the member & admin shells. Content
+           wrapper is vertical rhythm only; width/padding via .dash-container. */
         .th-root {
           display: flex;
           min-height: 100vh;
-          background: #F5F5F7;
-          font-family: 'Inter', sans-serif;
+          background: var(--surface-page);
+          font-family: var(--font-body);
         }
 
         /* ── Sidebar (light) ── */
         .th-sidebar {
           width: 260px;
           min-height: 100vh;
-          background: #FFFFFF;
-          border-right: 1px solid #E5E5E5;
+          background: var(--surface-card);
+          border-right: 1px solid var(--border-default);
           display: flex;
           flex-direction: column;
           position: fixed;
@@ -269,28 +273,28 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid #E5E5E5;
+          border-bottom: 1px solid var(--border-default);
           min-height: 68px;
           flex-shrink: 0;
         }
         .th-logo-wrap { display: flex; align-items: center; gap: 10px; overflow: hidden; text-decoration: none; }
         .th-logo-img { height: 28px; width: auto; border-radius: 8px; flex-shrink: 0; }
         .th-brand { display: flex; flex-direction: column; white-space: nowrap; }
-        .th-brand-name { font-size: 14px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.01em; }
-        .th-brand-sub { font-size: 10px; color: #6E6E73; font-weight: 500; margin-top: 1px; }
+        .th-brand-name { font-size: 14px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.01em; }
+        .th-brand-sub { font-size: 10px; color: var(--text-muted); font-weight: 500; margin-top: 1px; }
 
         .th-collapse-btn {
           width: 28px; height: 28px; border-radius: 8px;
-          background: #F5F5F7; border: 1px solid #E5E5E5;
-          color: #6E6E73;
+          background: var(--surface-page); border: 1px solid var(--border-default);
+          color: var(--text-muted);
           cursor: pointer; display: flex; align-items: center; justify-content: center;
           flex-shrink: 0; transition: all 0.18s;
         }
-        .th-collapse-btn:hover { background: #EBECEF; color: #1D1D1F; }
+        .th-collapse-btn:hover { background: #EBECEF; color: var(--text-primary); }
 
         .th-close-btn {
           display: none;
-          color: #6E6E73;
+          color: var(--text-muted);
           background: none;
           border: none;
           cursor: pointer;
@@ -298,7 +302,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
           align-items: center;
           justify-content: center;
         }
-        .th-close-btn:hover { color: #1D1D1F; }
+        .th-close-btn:hover { color: var(--text-primary); }
 
         .th-nav {
           flex: 1;
@@ -312,22 +316,22 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
         .th-nav-item {
           display: flex;
           align-items: center;
-          gap: 11px;
+          gap: 12px;
           padding: 10px 12px;
           border-radius: 10px;
-          color: #636366;
+          color: var(--text-secondary);
           font-size: 13.5px;
           font-weight: 500;
           text-decoration: none;
           white-space: nowrap;
           transition: all 0.18s ease;
         }
-        .th-nav-item:hover { background: #F5F5F7; color: #1D1D1F; }
+        .th-nav-item:hover { background: var(--surface-page); color: var(--text-primary); }
         .th-nav-active {
-          background: rgba(0, 212, 255, 0.08) !important;
-          color: #0077A8 !important;
+          background: var(--surface-accent-soft) !important;
+          color: var(--brand-cyan-strong) !important;
           font-weight: 600;
-          box-shadow: inset 3px 0 0 #0077A8;
+          box-shadow: inset 3px 0 0 var(--brand-cyan-strong);
         }
         .th-nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
         .th-nav-label { flex: 1; }
@@ -335,7 +339,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
 
         .th-bottom {
           padding: 12px 12px 20px;
-          border-top: 1px solid #E5E5E5;
+          border-top: 1px solid var(--border-default);
           display: flex;
           flex-direction: column;
           gap: 8px;
@@ -344,15 +348,15 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
         .th-user-row { display: flex; align-items: center; gap: 10px; padding: 4px 4px; }
         .th-user-avatar {
           width: 32px; height: 32px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 11px; font-weight: 800;
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
+          color: #fff; font-size: 11px; font-weight: 800;
           display: flex; align-items: center; justify-content: center;
           overflow: hidden; flex-shrink: 0;
         }
         .th-user-avatar-img { width: 100%; height: 100%; object-fit: cover; }
         .th-user-info { overflow: hidden; min-width: 0; }
-        .th-user-name { font-size: 12px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .th-user-role { font-size: 10px; color: #6E6E73; margin-top: 1px; }
+        .th-user-name { font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .th-user-role { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
 
         /* Logout — red treatment mirrors the member dashboard (#DC2626) */
         .th-logout-btn {
@@ -369,11 +373,11 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
         .th-back-btn {
           display: flex; align-items: center; gap: 8px;
           padding: 8px 10px; border-radius: 10px;
-          color: #636366; font-size: 12.5px; font-weight: 500;
+          color: var(--text-secondary); font-size: 12.5px; font-weight: 500;
           text-decoration: none; transition: all 0.18s;
-          background: #F5F5F7; border: 1px solid #E5E5E5;
+          background: var(--surface-page); border: 1px solid var(--border-default);
         }
-        .th-back-btn:hover { background: #EBECEF; color: #1D1D1F; }
+        .th-back-btn:hover { background: #EBECEF; color: var(--text-primary); }
         .th-back-btn-sm { justify-content: center; }
 
         /* ── Main area ── */
@@ -394,26 +398,27 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
           align-items: center;
           justify-content: space-between;
           padding: 12px 16px;
-          background: #FFFFFF;
+          background: var(--surface-card);
           position: sticky;
           top: 0;
           z-index: 30;
-          border-bottom: 1px solid #E5E5E5;
+          border-bottom: 1px solid var(--border-default);
         }
         .th-hamburger {
-          background: none; border: none; color: #1D1D1F;
+          background: none; border: none; color: var(--text-primary);
           cursor: pointer; padding: 4px; display: flex; align-items: center;
         }
         .th-topbar-logo { display: flex; align-items: center; }
         .th-topbar-avatar {
           width: 32px; height: 32px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 12px; font-weight: 800;
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
+          color: #fff; font-size: 12px; font-weight: 800;
           display: flex; align-items: center; justify-content: center;
           overflow: hidden;
         }
 
-        .th-content { flex: 1; min-width: 0; }
+        /* Vertical rhythm only — horizontal width/padding via .dash-container. */
+        .th-content { flex: 1; min-width: 0; padding: 32px 0; }
 
         /* ── Responsive ── */
         @media (max-width: 768px) {
@@ -425,6 +430,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
           .th-close-btn { display: flex; }
           .th-main, .th-collapsed .th-main { margin-left: 0; }
           .th-topbar { display: flex; }
+          .th-content { padding: 24px 0; }
         }
       `}</style>
     </div>

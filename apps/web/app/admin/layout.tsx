@@ -23,6 +23,8 @@ import {
   ChevronRight,
   ArrowLeft,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import { getToken, clearToken, refreshAccessToken } from "@/lib/auth/token";
 
@@ -95,6 +97,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [ready, setReady] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Real role label (fix B1: no longer hardcoded "Super Admin").
+  const [roleLabel, setRoleLabel] = useState("Admin");
 
   useEffect(() => {
     async function initAuth() {
@@ -133,6 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         router.replace("/dashboard");
         return;
       }
+      setRoleLabel(roleNames.includes("super_admin") ? "Super Admin" : "Admin");
       setAdmin(body.data);
       setReady(true);
     }
@@ -149,8 +155,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="al-loading">
         <span className="al-spinner" />
         <style jsx>{`
-          .al-loading { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#F5F5F7; }
-          .al-spinner { width:36px; height:36px; border-radius:50%; border:3px solid #0077A8; border-top-color:transparent; animation:spin 0.8s linear infinite; }
+          .al-loading { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--surface-page); }
+          .al-spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--brand-cyan-strong); border-top-color:transparent; animation:spin 0.8s linear infinite; }
           @keyframes spin { to { transform:rotate(360deg); } }
         `}</style>
       </div>
@@ -160,7 +166,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const initials = admin?.name?.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) ?? "A";
 
   return (
-    <div className={`al-root ${collapsed ? "al-collapsed" : ""}`}>
+    <div className={`al-root ${collapsed ? "al-collapsed" : ""} ${sidebarOpen ? "al-drawer-open" : ""}`}>
+      {/* Mobile overlay */}
+      <div className="al-overlay" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+
       {/* Sidebar */}
       <aside className="al-sidebar">
         {/* Logo — branded Jago Akademi mark (matches member shell) */}
@@ -176,6 +185,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <button className="al-collapse-btn" onClick={() => setCollapsed(!collapsed)} title="Toggle sidebar" aria-label="Toggle sidebar">
             {collapsed ? <ChevronRight size={16} aria-hidden="true" /> : <ChevronLeft size={16} aria-hidden="true" />}
           </button>
+          <button className="al-close-btn" onClick={() => setSidebarOpen(false)} aria-label="Tutup menu">
+            <X size={18} aria-hidden="true" />
+          </button>
         </div>
 
         {/* User card — mirrors the member shell (avatar + name + role badge + email) */}
@@ -185,7 +197,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="al-user-info">
               <p className="al-user-name">
                 <span>{admin?.name}</span>
-                <span className="al-role-badge">Super Admin</span>
+                <span className="al-role-badge">{roleLabel}</span>
               </p>
               <p className="al-user-email">{admin?.email}</p>
             </div>
@@ -200,7 +212,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {group.items.map((item) => {
                 const isActive = ("exact" in item && item.exact) ? pathname === item.href : pathname.startsWith(item.href);
                 return (
-                  <Link key={item.href} href={item.href} className={`al-nav-item ${isActive ? "al-nav-active" : ""}`} title={collapsed ? item.label : ""}>
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`al-nav-item ${isActive ? "al-nav-active" : ""}`}
+                    title={collapsed ? item.label : ""}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => setSidebarOpen(false)}
+                  >
                     <item.icon className="al-nav-icon" size={18} aria-hidden="true" />
                     {!collapsed && <span className="al-nav-label">{item.label}</span>}
                   </Link>
@@ -232,6 +251,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Topbar */}
         <header className="al-topbar">
           <div className="al-topbar-left">
+            <button className="al-hamburger" onClick={() => setSidebarOpen(true)} aria-label="Buka menu">
+              <Menu size={20} aria-hidden="true" />
+            </button>
             <p className="al-breadcrumb">
               {pathname.split("/").filter(Boolean).map((seg, i, arr) => {
                 const href = "/" + arr.slice(0, i + 1).join("/");
@@ -260,28 +282,40 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <style jsx global>{`
+        /* Admin shell — token-driven (standardization Jul 2026). Shares the
+           same color source of truth as the member & trainer shells. Content
+           wrapper is vertical rhythm only; width/padding via .dash-container. */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        body { font-family: var(--font-body); }
 
         .al-root {
           display: flex;
           min-height: 100vh;
-          background: #F5F5F7;
+          background: var(--surface-page);
+        }
+
+        /* Mobile overlay (hidden on desktop) */
+        .al-overlay {
+          position: fixed; inset: 0;
+          background: rgba(29,29,31,0.4);
+          backdrop-filter: blur(2px);
+          z-index: 40; display: none;
         }
 
         /* ── Sidebar (light) ── */
         .al-sidebar {
           width: 240px;
-          background: #FFFFFF;
-          border-right: 1px solid #E5E5E5;
+          background: var(--surface-card);
+          border-right: 1px solid var(--border-default);
           display: flex;
           flex-direction: column;
           flex-shrink: 0;
-          transition: width 0.25s ease;
+          transition: width 0.25s ease, transform 0.3s ease;
           position: sticky;
           top: 0;
           height: 100vh;
           overflow: hidden;
+          z-index: 50;
         }
         .al-collapsed .al-sidebar { width: 64px; }
 
@@ -290,59 +324,69 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           align-items: center;
           justify-content: space-between;
           padding: 18px 14px;
-          border-bottom: 1px solid #E5E5E5;
+          border-bottom: 1px solid var(--border-default);
           min-height: 68px;
           flex-shrink: 0;
         }
         .al-logo-wrap { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
         .al-logo-link { display: flex; align-items: center; }
         .al-logo-img { height: 26px; width: auto; }
-        .al-logo-sub { font-size: 10px; color: #6E6E73; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+        .al-logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 
         .al-collapse-btn {
           width: 28px; height: 28px; border-radius: 8px;
-          background: #F5F5F7; border: 1px solid #E5E5E5;
-          color: #6E6E73;
+          background: var(--surface-page); border: 1px solid var(--border-default);
+          color: var(--text-muted);
           cursor: pointer; display: flex; align-items: center; justify-content: center;
           flex-shrink: 0; transition: all 0.18s;
         }
-        .al-collapse-btn:hover { background: #EBECEF; color: #1D1D1F; }
+        .al-collapse-btn:hover { background: #EBECEF; color: var(--text-primary); }
+
+        /* Close button — mobile drawer only */
+        .al-close-btn {
+          display: none;
+          width: 32px; height: 32px;
+          background: none; border: none; color: var(--text-muted);
+          cursor: pointer; align-items: center; justify-content: center;
+          flex-shrink: 0;
+        }
+        .al-close-btn:hover { color: var(--text-primary); }
 
         /* ── User card (top) — mirrors member .sidebar-user-card ── */
         .al-user-card {
           display: flex; align-items: center; gap: 12px;
-          padding: 16px 14px; border-bottom: 1px solid #E5E5E5;
-          background: #FAFAFA; flex-shrink: 0;
+          padding: 16px 14px; border-bottom: 1px solid var(--border-default);
+          background: var(--surface-sunken); flex-shrink: 0;
         }
         .al-collapsed .al-user-card { justify-content: center; padding: 16px 8px; }
         .al-user-avatar {
           width: 40px; height: 40px; border-radius: 50%;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 14px; font-weight: 700;
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
+          color: #fff; font-size: 14px; font-weight: 700;
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; border: 2px solid #FFFFFF;
+          flex-shrink: 0; border: 2px solid var(--surface-card);
           box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         .al-user-info { min-width: 0; }
         .al-user-name {
           display: flex; align-items: center; gap: 6px;
-          color: #1D1D1F; font-size: 13px; font-weight: 600;
+          color: var(--text-primary); font-size: 13px; font-weight: 600;
         }
         .al-user-name > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .al-user-email {
-          color: #6E6E73; font-size: 11px; margin-top: 2px;
+          color: var(--text-muted); font-size: 11px; margin-top: 2px;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .al-role-badge {
-          background: #EBE5FC; color: #7C3AED;
+          background: #EBE5FC; color: var(--brand-purple);
           font-size: 9px; font-weight: 800; line-height: 1;
-          padding: 1.5px 5px; border-radius: 4px; letter-spacing: 0.05em;
+          padding: 2px 5px; border-radius: 4px; letter-spacing: 0.05em;
           border: 1px solid rgba(124, 58, 237, 0.2); flex-shrink: 0;
         }
 
         .al-nav { flex: 1; min-height: 0; padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
         .al-nav::-webkit-scrollbar { width: 4px; }
-        .al-nav::-webkit-scrollbar-thumb { background: #D2D2D7; border-radius: 4px; }
+        .al-nav::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
         .al-nav::-webkit-scrollbar-track { background: transparent; }
         .al-nav-group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
         .al-group-label {
@@ -351,26 +395,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           padding: 6px 10px 4px;
         }
         .al-nav-item {
-          display: flex; align-items: center; gap: 11px;
+          display: flex; align-items: center; gap: 12px;
           padding: 10px 12px; border-radius: 10px;
-          color: #636366; font-size: 13.5px; font-weight: 500;
+          color: var(--text-secondary); font-size: 13.5px; font-weight: 500;
           text-decoration: none; transition: all 0.18s;
           position: relative; white-space: nowrap;
         }
         .al-collapsed .al-nav-item { justify-content: center; gap: 0; }
-        .al-nav-item:hover { background: #F5F5F7; color: #1D1D1F; }
+        .al-nav-item:hover { background: var(--surface-page); color: var(--text-primary); }
         .al-nav-active {
-          background: rgba(0, 212, 255, 0.08) !important;
-          color: #0077A8 !important;
+          background: var(--surface-accent-soft) !important;
+          color: var(--brand-cyan-strong) !important;
           font-weight: 600;
-          box-shadow: inset 3px 0 0 #0077A8;
+          box-shadow: inset 3px 0 0 var(--brand-cyan-strong);
         }
         .al-nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
         .al-nav-label { flex: 1; }
 
         .al-bottom {
           padding: 12px 8px 16px;
-          border-top: 1px solid #E5E5E5;
+          border-top: 1px solid var(--border-default);
           display: flex; flex-direction: column; gap: 8px;
           flex-shrink: 0;
         }
@@ -378,11 +422,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .al-back-btn {
           display: flex; align-items: center; gap: 8px;
           padding: 8px 10px; border-radius: 10px;
-          color: #636366; font-size: 12px; font-weight: 500;
+          color: var(--text-secondary); font-size: 12px; font-weight: 500;
           text-decoration: none; transition: all 0.18s;
-          background: #F5F5F7; border: 1px solid #E5E5E5;
+          background: var(--surface-page); border: 1px solid var(--border-default);
         }
-        .al-back-btn:hover { background: #EBECEF; color: #1D1D1F; }
+        .al-back-btn:hover { background: #EBECEF; color: var(--text-primary); }
         .al-back-btn-sm { justify-content: center; }
 
         /* Logout — red treatment mirrors the member dashboard (#DC2626) */
@@ -402,28 +446,51 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .al-main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 
         .al-topbar {
-          height: 56px; background: white;
-          border-bottom: 1px solid #E5E5E5;
+          height: 56px; background: var(--surface-card);
+          border-bottom: 1px solid var(--border-default);
           display: flex; align-items: center; justify-content: space-between;
           padding: 0 24px; flex-shrink: 0;
           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .al-breadcrumb { font-size: 13px; color: #6E6E73; }
+        .al-topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .al-hamburger {
+          display: none;
+          background: none; border: none; color: var(--text-primary);
+          cursor: pointer; padding: 4px; align-items: center;
+        }
+        .al-breadcrumb { font-size: 13px; color: var(--text-muted); }
         .al-bc-sep { margin: 0 6px; color: #C0C0C7; }
-        .al-bc-item { color: #6E6E73; }
-        .al-bc-link { color: #6E6E73; text-decoration: none; transition: color 0.15s; }
-        .al-bc-link:hover { color: #0077A8; text-decoration: underline; }
-        .al-bc-active { color: #1D1D1F; font-weight: 600; }
+        .al-bc-item { color: var(--text-muted); }
+        .al-bc-link { color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+        .al-bc-link:hover { color: var(--brand-cyan-strong); text-decoration: underline; }
+        .al-bc-active { color: var(--text-primary); font-weight: 600; }
         .al-topbar-right { display: flex; align-items: center; }
         .al-topbar-avatar {
           width: 32px; height: 32px; border-radius: 10px;
-          background: linear-gradient(135deg, #0077A8, #CC0052);
-          color: white; font-size: 12px; font-weight: 800;
+          background: linear-gradient(135deg, var(--brand-cyan-strong), var(--brand-pink-strong));
+          color: #fff; font-size: 12px; font-weight: 800;
           display: flex; align-items: center; justify-content: center;
         }
 
+        /* Vertical rhythm only — horizontal width/padding via .dash-container. */
         .al-content {
-          flex: 1; overflow-y: auto; padding: 24px;
+          flex: 1; overflow-y: auto; padding: 32px 0;
+        }
+
+        /* ── Responsive: off-canvas drawer ≤768px ── */
+        @media (max-width: 768px) {
+          .al-sidebar {
+            position: fixed; left: 0; top: 0; bottom: 0;
+            height: 100vh; width: 260px;
+            transform: translateX(-100%);
+          }
+          .al-collapsed .al-sidebar { width: 260px; }
+          .al-drawer-open .al-sidebar { transform: translateX(0); }
+          .al-drawer-open .al-overlay { display: block; }
+          .al-collapse-btn { display: none; }
+          .al-close-btn { display: flex; }
+          .al-hamburger { display: flex; }
+          .al-content { padding: 24px 0; }
         }
       `}</style>
     </div>
