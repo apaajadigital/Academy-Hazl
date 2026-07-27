@@ -6,7 +6,6 @@ import {
   X,
   Download,
   ClipboardList,
-  Loader2,
   Sparkles,
   PhoneCall,
   UserCheck,
@@ -14,7 +13,24 @@ import {
   Archive,
   type LucideIcon,
 } from "lucide-react";
-import { Button, Input, Pagination, Table, THead, TBody, TR, TH, TD } from "@/components/ui";
+import {
+  Badge,
+  Button,
+  DashboardLoading,
+  Input,
+  Pagination,
+  StatCard,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { getToken } from "@/lib/auth/token";
@@ -70,6 +86,15 @@ const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> 
   qualified: { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Qualified" },
   converted: { bg: "rgba(22,163,74,0.1)",    text: "#15803D", label: "Konversi" },
   archived:  { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Arsip" },
+};
+
+// Maps a lead source to the closest kit Badge variant (kit has no per-source hue).
+const SOURCE_BADGE: Record<string, "info" | "brand" | "warning" | "success" | "neutral"> = {
+  lms: "info",
+  affiliate: "brand",
+  trainer: "warning",
+  "free-class": "success",
+  other: "neutral",
 };
 
 const STATUS_ICON: Record<string, LucideIcon> = {
@@ -226,7 +251,7 @@ export default function AdminLeadsPage() {
   }, {});
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -248,8 +273,8 @@ export default function AdminLeadsPage() {
         </Button>
       </div>
 
-      {/* Metrics — Lumina KPI cards that double as status filters */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Metrics — StatCards that double as status filters */}
+      <section className="dash-grid">
         {STATUSES.filter((s) => s.value).map((s) => {
           const st = STATUS_STYLE[s.value]!;
           const Icon = STATUS_ICON[s.value] ?? Sparkles;
@@ -261,30 +286,24 @@ export default function AdminLeadsPage() {
               onClick={() => handleStatus(active ? "" : s.value)}
               aria-pressed={active}
               className={cn(
-                "flex flex-col gap-3 rounded-[var(--radius-lg)] border p-4 text-left transition-all",
-                active ? "shadow-e1" : "border-border-default bg-surface-card hover:-translate-y-0.5 hover:shadow-e2",
+                "col-span-6 block w-full rounded-[var(--radius-card)] p-0 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40 sm:col-span-4 xl:col-span-2",
+                active ? "ring-2 ring-accent-cyan-strong" : "hover:-translate-y-0.5 hover:shadow-e2",
               )}
-              style={active ? { background: st.bg, borderColor: st.text } : undefined}
             >
-              <span
-                className="flex size-9 items-center justify-center rounded-xl"
-                style={{ background: active ? "rgba(255,255,255,0.65)" : st.bg, color: st.text }}
-              >
-                <Icon size={16} aria-hidden="true" />
-              </span>
-              <div>
-                <p className="font-display text-2xl font-extrabold leading-none" style={{ color: st.text }}>
-                  {counts[s.value] ?? 0}
-                </p>
-                <p className="mt-1 text-xs text-text-secondary">{s.label}</p>
-              </div>
+              <StatCard
+                label={s.label}
+                value={counts[s.value] ?? 0}
+                icon={Icon}
+                iconColor={st.text}
+                iconBg={st.bg}
+              />
             </button>
           );
         })}
-      </div>
+      </section>
 
-      {/* Filters — framed Lumina filter card */}
-      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+      {/* Filters — framed filter card */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
         {/* Search */}
         <div className="relative min-w-[200px] max-w-[320px] flex-1">
           <Input
@@ -310,35 +329,25 @@ export default function AdminLeadsPage() {
           )}
         </div>
 
-        {/* Source pills */}
-        <div className="flex flex-wrap gap-1.5">
-          {SOURCES.map((s) => {
-            const active = source === s.value;
-            const style = s.value ? SOURCE_STYLE[s.value] : null;
-            return (
-              <button
-                id={`leads-source-${s.value || "all"}-btn`}
+        {/* Source filter tabs */}
+        <Tabs value={source} onValueChange={handleSource}>
+          <TabsList className="flex-wrap">
+            {SOURCES.map((s) => (
+              <TabsTrigger
                 key={s.value}
-                onClick={() => handleSource(s.value)}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
-                  !active && "bg-surface-sunken text-text-secondary hover:bg-surface-page",
-                )}
-                style={active ? { background: style?.bg ?? "var(--surface-sunken)", color: style?.text ?? "var(--text-primary)" } : undefined}
-                aria-pressed={active}
+                id={`leads-source-${s.value || "all"}-btn`}
+                value={s.value}
               >
                 {s.label}
-              </button>
-            );
-          })}
-        </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : leads.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
@@ -350,56 +359,49 @@ export default function AdminLeadsPage() {
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="overflow-x-auto">
-            <Table>
-              <THead>
-                <tr>
-                  {["Nama & Email", "Perusahaan", "Telepon", "Sumber", "Status", "Tanggal"].map((h) => (
-                    <TH key={h}>{h}</TH>
-                  ))}
-                </tr>
-              </THead>
-              <TBody>
-                {leads.map((lead) => {
-                  const src = SOURCE_STYLE[lead.source] ?? SOURCE_STYLE["other"]!;
-                  return (
-                    <TR key={lead.id}>
-                      <TD>
-                        <div className="flex items-center gap-3">
-                          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
-                            {(lead.name ?? "?").slice(0, 2).toUpperCase()}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-text-primary">{lead.name}</p>
-                            <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
-                            {lead.message && (
-                              <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
-                            )}
-                          </div>
-                        </div>
-                      </TD>
-                      <TD className="text-text-secondary">{lead.company ?? "—"}</TD>
-                      <TD className="font-mono text-xs text-text-secondary">{lead.phone ?? "—"}</TD>
-                      <TD>
-                        <span
-                          className="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold"
-                          style={{ background: src.bg, color: src.text }}
-                        >
-                          {src.label}
+        <TableContainer>
+          <Table>
+            <THead>
+              <TR>
+                {["Nama & Email", "Perusahaan", "Telepon", "Sumber", "Status", "Tanggal"].map((h) => (
+                  <TH key={h}>{h}</TH>
+                ))}
+              </TR>
+            </THead>
+            <TBody>
+              {leads.map((lead) => {
+                const src = SOURCE_STYLE[lead.source] ?? SOURCE_STYLE["other"]!;
+                return (
+                  <TR key={lead.id}>
+                    <TD>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                          {(lead.name ?? "?").slice(0, 2).toUpperCase()}
                         </span>
-                      </TD>
-                      <TD>
-                        <StatusSelect id={lead.id} value={lead.status} onChange={(v) => handleStatusChange(lead.id, v)} />
-                      </TD>
-                      <TD className="whitespace-nowrap text-xs text-text-muted">{fmtDate(lead.createdAt)}</TD>
-                    </TR>
-                  );
-                })}
-              </TBody>
-            </Table>
-          </div>
-        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-text-primary">{lead.name}</p>
+                          <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
+                          {lead.message && (
+                            <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
+                          )}
+                        </div>
+                      </div>
+                    </TD>
+                    <TD className="text-text-secondary">{lead.company ?? "—"}</TD>
+                    <TD className="font-mono text-xs text-text-secondary">{lead.phone ?? "—"}</TD>
+                    <TD>
+                      <Badge variant={SOURCE_BADGE[lead.source] ?? "neutral"}>{src.label}</Badge>
+                    </TD>
+                    <TD>
+                      <StatusSelect id={lead.id} value={lead.status} onChange={(v) => handleStatusChange(lead.id, v)} />
+                    </TD>
+                    <TD className="whitespace-nowrap text-xs text-text-muted">{fmtDate(lead.createdAt)}</TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableContainer>
       )}
 
       {/* Pagination */}

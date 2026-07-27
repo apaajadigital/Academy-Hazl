@@ -27,6 +27,7 @@ import {
   Modal,
   ModalContent,
   Pagination,
+  TableContainer,
   Table,
   THead,
   TBody,
@@ -36,6 +37,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  FilterBar,
+  TableActionButton,
+  DashboardLoading,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -315,7 +319,7 @@ export default function AdminKursusPage() {
     "inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50";
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -325,8 +329,8 @@ export default function AdminKursusPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
+      <FilterBar>
+        <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 items-end gap-2">
           <Input
             containerClassName="flex-1"
             leftIcon={<Search size={16} aria-hidden="true" />}
@@ -335,7 +339,7 @@ export default function AdminKursusPage() {
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari kursus"
           />
-          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
+          <Button type="submit" variant="cyan" size="sm">Cari</Button>
         </form>
         <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
           <TabsList className="flex-wrap">
@@ -346,21 +350,18 @@ export default function AdminKursusPage() {
             ))}
           </TabsList>
         </Tabs>
-      </div>
+      </FilterBar>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : courses.length === 0 ? (
         <EmptyState icon={BookOpen} title="Tidak ada kursus ditemukan" description="Coba ubah kata kunci pencarian atau filter status." />
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="overflow-x-auto">
+        <TableContainer>
             <Table className="min-w-[860px]">
               <THead>
-                <tr>
+                <TR className="hover:bg-transparent">
                   <TH>Kursus</TH>
                   <TH>Trainer</TH>
                   <TH>Status</TH>
@@ -369,7 +370,7 @@ export default function AdminKursusPage() {
                   <TH>Pendaftar</TH>
                   <TH>Rating</TH>
                   <TH>Aksi</TH>
-                </tr>
+                </TR>
               </THead>
               <TBody>
                 {courses.map((c) => {
@@ -377,7 +378,7 @@ export default function AdminKursusPage() {
                   return (
                     <TR key={c.id}>
                       <TD>
-                        <div className="flex max-w-[220px] flex-wrap items-center gap-1.5">
+                        <div className="flex max-w-[220px] flex-wrap items-center gap-2">
                           <span className="font-semibold text-text-primary">{c.title}</span>
                           {c.isFeatured && (
                             <Badge variant="warning">
@@ -393,7 +394,7 @@ export default function AdminKursusPage() {
                         </div>
                       </TD>
                       <TD>
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2">
                           <Avatar name={c.trainer.name} size="sm" />
                           <div className="min-w-0">
                             <p className="font-medium text-text-primary">{c.trainer.name}</p>
@@ -434,63 +435,64 @@ export default function AdminKursusPage() {
                         </span>
                       </TD>
                       <TD>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <button
-                            className={cn(actionPill, "bg-surface-accent-soft text-accent-cyan-strong hover:bg-accent-cyan-strong hover:text-white")}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <TableActionButton
+                            variant="neutral"
                             onClick={() => openDetailModal(c.id)}
                             disabled={actionLoading !== null}
+                            leftIcon={<Eye size={14} aria-hidden="true" />}
                           >
-                            <Eye size={14} aria-hidden="true" /> Detail &amp; Review
-                          </button>
+                            Detail &amp; Review
+                          </TableActionButton>
                           {c.status === "pending" && (
                             <>
-                              <button
-                                className={cn(actionPill, "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white")}
+                              <TableActionButton
+                                variant="ok"
                                 onClick={() => updateStatus(c.id, "published")}
                                 disabled={actionLoading !== null}
+                                leftIcon={<Check size={14} aria-hidden="true" />}
                               >
-                                <Check size={14} aria-hidden="true" /> Approve
-                              </button>
-                              <button
-                                className={cn(actionPill, "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white")}
+                                Approve
+                              </TableActionButton>
+                              <TableActionButton
+                                variant="danger"
                                 onClick={() => openDetailModal(c.id)}
                                 disabled={actionLoading !== null}
+                                leftIcon={<X size={14} aria-hidden="true" />}
                               >
-                                <X size={14} aria-hidden="true" /> Tolak
-                              </button>
+                                Tolak
+                              </TableActionButton>
                             </>
                           )}
                           {c.status === "published" && (
-                            <button
-                              className={cn(actionPill, "bg-surface-sunken text-text-secondary hover:bg-text-secondary hover:text-white")}
+                            <TableActionButton
+                              variant="neutral"
                               onClick={() => updateStatus(c.id, "archived")}
                               disabled={actionLoading !== null}
+                              leftIcon={<Archive size={14} aria-hidden="true" />}
                             >
-                              <Archive size={14} aria-hidden="true" /> Arsip
-                            </button>
+                              Arsip
+                            </TableActionButton>
                           )}
                           {(c.status === "rejected" || c.status === "archived") && (
-                            <button
-                              className={cn(actionPill, "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white")}
+                            <TableActionButton
+                              variant="ok"
                               onClick={() => updateStatus(c.id, "published")}
                               disabled={actionLoading !== null}
+                              leftIcon={<Check size={14} aria-hidden="true" />}
                             >
-                              <Check size={14} aria-hidden="true" /> Aktifkan
-                            </button>
+                              Aktifkan
+                            </TableActionButton>
                           )}
-                          <button
-                            className={cn(
-                              actionPill,
-                              c.isFeatured
-                                ? "bg-amber-500/10 text-amber-600 hover:bg-amber-500/20"
-                                : "bg-surface-sunken text-text-muted hover:bg-surface-sunken/70",
-                            )}
+                          <TableActionButton
+                            variant={c.isFeatured ? "warn" : "neutral"}
                             onClick={() => toggleFeatured(c.id, c.isFeatured)}
                             disabled={actionLoading !== null}
                             title={c.isFeatured ? "Hapus dari unggulan" : "Jadikan unggulan"}
+                            aria-label={c.isFeatured ? "Hapus dari unggulan" : "Jadikan unggulan"}
                           >
                             <Star size={14} fill={c.isFeatured ? "currentColor" : "none"} aria-hidden="true" />
-                          </button>
+                          </TableActionButton>
                         </div>
                       </TD>
                     </TR>
@@ -498,16 +500,15 @@ export default function AdminKursusPage() {
                 })}
               </TBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-default bg-surface-sunken px-6 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default bg-surface-sunken px-6 py-4">
               <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
               <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
             </div>
           )}
-        </div>
+        </TableContainer>
       )}
 
       {/* Review Modal */}

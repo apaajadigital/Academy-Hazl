@@ -12,7 +12,6 @@ import {
   Undo2,
   Star,
   TrendingUp,
-  TrendingDown,
   Mail,
   ArrowRight,
   ChevronRight,
@@ -25,7 +24,20 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
-import { Card, Table, THead, TBody, TR, TH, TD, Badge } from "@/components/ui";
+import {
+  Card,
+  Table,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Badge,
+  StatCard,
+  QuickActionCard,
+  EmptyState,
+  DashboardLoading,
+} from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 type Stats = {
@@ -136,23 +148,23 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
+      <div className="dash-container">
+        <DashboardLoading label="Memuat dashboard…" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8">
+    <div className="dash-container flex flex-col gap-8">
       {/* ── Greeting & Top Header ── */}
       <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <div className="mb-1.5 flex items-center gap-2 text-green-700">
+          <div className="mb-2 flex items-center gap-2 text-green-700">
             <span className="h-2 w-2 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
             <span className="text-[11px] font-semibold uppercase tracking-wider">Sistem Online</span>
           </div>
-          <h1 className="font-display text-3xl font-bold leading-tight text-text-primary">{greeting}, Admin 👋</h1>
-          <p className="mt-1.5 text-sm text-text-secondary">
+          <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">{greeting}, Admin 👋</h1>
+          <p className="mt-2 text-sm text-text-secondary">
             {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • Overview performa akademi hari ini.
           </p>
         </div>
@@ -160,55 +172,40 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/admin/kursus"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-solid border-border-default bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-card px-4 py-2.5 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
           >
             + Tambah Kursus
           </Link>
           <Link
             href="/admin/pengguna"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent-cyan-strong px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
           >
             Kelola Pengguna
           </Link>
         </div>
       </section>
 
-      {/* ── 8 KPI Cards — Lumina vertical layout (icon tile top-left, trend top-right, value, uppercase label) ── */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {KPI_CARDS.map(({ label, value, icon: Icon, accent, tint, trend }) => {
-          const negative = typeof trend === "string" && trend.trim().startsWith("-");
-          const Trend = negative ? TrendingDown : TrendingUp;
-          return (
-            <div
-              key={label}
-              className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
-            >
-              <div className="mb-4 flex items-start justify-between gap-2">
-                <span
-                  className="flex size-11 shrink-0 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: tint, color: accent }}
-                >
-                  <Icon size={20} aria-hidden="true" />
-                </span>
-                {trend ? (
-                  <Badge variant={negative ? "danger" : "success"} className="gap-1">
-                    <Trend size={12} aria-hidden="true" />
-                    {trend}
-                  </Badge>
-                ) : null}
-              </div>
-              <p className="font-display text-3xl font-bold leading-tight tracking-tight text-text-primary">{value}</p>
-              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-            </div>
-          );
-        })}
+      {/* ── 8 KPI Cards — unified StatCard on the 12-col dash grid (trend is real backend delta) ── */}
+      <section className="dash-grid">
+        {KPI_CARDS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
+          <StatCard
+            key={label}
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={label}
+            value={value}
+            icon={Icon}
+            iconColor={accent}
+            iconBg={tint}
+            trend={trend}
+          />
+        ))}
       </section>
 
-      {/* ── Main 2-column layout: Transaksi table (wide) | Leads + Kursus Terpopuler (narrow) ── */}
-      <section className="grid gap-6 lg:grid-cols-3">
+      {/* ── Main 2-region layout: Transaksi table (wide) | Leads + Kursus Terpopuler (narrow) ── */}
+      <section className="dash-grid">
         {/* Left / wide — Recent Orders table */}
-        <div className="lg:col-span-2">
-          <div className="overflow-hidden rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1">
+        <div className="col-span-12 lg:col-span-8">
+          <div className="overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1">
             <div className="flex items-center justify-between gap-3 border-b border-solid border-border-default px-6 py-5">
               <div>
                 <h2 className="font-display text-lg font-bold text-text-primary">Transaksi Terbaru</h2>
@@ -220,7 +217,13 @@ export default function AdminDashboardPage() {
             </div>
 
             {orders.length === 0 ? (
-              <p className="py-12 text-center text-sm text-text-muted">Belum ada transaksi.</p>
+              <div className="p-6">
+                <EmptyState
+                  icon={ShoppingBag}
+                  title="Belum ada transaksi"
+                  description="Transaksi yang masuk akan muncul di sini."
+                />
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -272,10 +275,10 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Right / narrow — Leads gradient card + Kursus Terpopuler */}
-        <div className="flex flex-col gap-6 lg:col-span-1">
+        <div className="col-span-12 flex flex-col gap-6 lg:col-span-4">
           {/* Leads Baru — dark navy → teal professional gradient */}
           <div
-            className="relative overflow-hidden rounded-[var(--radius-lg)] p-6 text-white shadow-e3"
+            className="relative overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e3"
             style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
           >
             <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
@@ -342,7 +345,7 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
             {courses.length === 0 ? (
-              <p className="py-6 text-center text-sm text-text-muted">Belum ada kursus.</p>
+              <EmptyState icon={BookOpen} title="Belum ada kursus" />
             ) : (
               <div className="flex flex-col gap-4">
                 {courses.map((course, i) => {
@@ -378,21 +381,18 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* ── Akses Cepat / Quick Actions ── */}
-      <section className="space-y-4">
-        <h2 className="font-display text-xl font-bold text-text-primary">Akses Cepat</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-lg font-bold text-text-primary">Akses Cepat</h2>
+        <div className="dash-grid">
           {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
-            <Link
+            <QuickActionCard
               key={href}
+              className="col-span-6 sm:col-span-4 xl:col-span-2"
               href={href}
-              className="group flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 text-center shadow-e1 transition-all hover:-translate-y-0.5 hover:border-accent-cyan-strong hover:shadow-e2"
-            >
-              <span className="flex size-11 items-center justify-center rounded-xl bg-surface-accent-soft text-accent-cyan-strong transition-colors group-hover:bg-accent-cyan-strong group-hover:text-white">
-                <Icon size={20} aria-hidden="true" />
-              </span>
-              <span className="text-xs font-semibold text-text-primary">{label}</span>
-              <span className="text-[10px] text-text-muted">{desc}</span>
-            </Link>
+              label={label}
+              icon={Icon}
+              description={desc}
+            />
           ))}
         </div>
       </section>

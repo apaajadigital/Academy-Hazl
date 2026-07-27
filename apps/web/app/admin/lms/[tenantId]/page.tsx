@@ -16,6 +16,8 @@ import {
   Card,
   Modal,
   ModalContent,
+  StatCard,
+  DashboardLoading,
   TableContainer,
   Table,
   THead,
@@ -69,11 +71,11 @@ function authHeaders() {
   return { Authorization: `Bearer ${getToken() ?? ""}`, "Content-Type": "application/json" };
 }
 
-const PLAN_STYLE: Record<string, { bg: string; text: string }> = {
-  trial:      { bg: "rgba(180,83,9,0.12)",   text: "#B45309" },
-  starter:    { bg: "rgba(0,119,168,0.1)",   text: "#0077A8" },
-  pro:        { bg: "rgba(124,58,237,0.1)",  text: "#7C3AED" },
-  enterprise: { bg: "rgba(22,163,74,0.1)",   text: "#15803D" },
+const PLAN_VARIANT: Record<string, BadgeProps["variant"]> = {
+  trial: "warning",
+  starter: "info",
+  pro: "brand",
+  enterprise: "success",
 };
 
 function fmtDate(d: string | null) {
@@ -111,18 +113,18 @@ function InviteModal({ tenantId, onClose }: { tenantId: string; onClose: () => v
       <ModalContent title={done ? "Undangan Terkirim" : "Undang Pengguna"} className="max-w-md">
         {done ? (
           <>
-            <p className="mb-[18px] text-sm text-text-secondary">Undangan sudah dikirim ke <strong>{email}</strong>.</p>
+            <p className="mb-4 text-sm text-text-secondary">Undangan sudah dikirim ke <strong>{email}</strong>.</p>
             <Button onClick={onClose} variant="cyan" className="w-full">Selesai</Button>
           </>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-            {error && <div className="rounded-[var(--radius-md)] bg-red-600/10 px-3.5 py-2.5 text-sm text-red-700">{error}</div>}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {error && <div className="rounded-[var(--radius-md)] bg-red-600/10 px-4 py-3 text-sm text-red-700">{error}</div>}
             <Input id="invite-email-input" label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nama@perusahaan.com" />
             <Select id="invite-role-select" label="Role" value={role} onChange={(e) => setRole(e.target.value as typeof role)}>
               <option value="lms_employee">Karyawan (Employee)</option>
               <option value="lms_admin">Admin LMS</option>
             </Select>
-            <div className="mt-1 flex gap-2.5">
+            <div className="mt-2 flex gap-3">
               <Button type="button" onClick={onClose} variant="ghost" className="flex-1">Batal</Button>
               <Button id="invite-submit-btn" type="submit" disabled={loading} variant="cyan" className="flex-[2]">
                 {loading ? "Mengirim…" : "Kirim Undangan"}
@@ -182,11 +184,7 @@ export default function AdminTenantDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-[300px] items-center justify-center">
-        <span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
-      </div>
-    );
+    return <DashboardLoading />;
   }
 
   if (!tenant) {
@@ -199,7 +197,6 @@ export default function AdminTenantDetailPage() {
     );
   }
 
-  const plan = PLAN_STYLE[tenant.planType] ?? PLAN_STYLE.trial!;
   const expired = tenant.trialEndsAt && new Date(tenant.trialEndsAt) < new Date();
   const seatUsed = tenant._count?.enrollments ?? 0;
   const seatPct = Math.min(100, Math.round((seatUsed / tenant.seatLimit) * 100));
@@ -213,19 +210,19 @@ export default function AdminTenantDetailPage() {
   ];
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
 
       {/* Tenant header card (light) */}
-      <Card className="p-7">
+      <Card className="p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="bg-brand-gradient flex size-14 shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold text-white">
+            <div className="bg-brand-gradient flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-xl font-extrabold text-white">
               {tenant.name.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <div className="mb-1 flex flex-wrap items-center gap-2.5">
+              <div className="mb-2 flex flex-wrap items-center gap-3">
                 <h1 className="font-display text-2xl font-extrabold text-text-primary">{tenant.name}</h1>
-                <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold" style={{ background: plan.bg, color: plan.text }}>{tenant.planType.toUpperCase()}</span>
+                <Badge variant={PLAN_VARIANT[tenant.planType] ?? "warning"}>{tenant.planType.toUpperCase()}</Badge>
                 <Badge variant={statusVariant} dot>{expired ? "KADALUARSA" : tenant.isActive ? "AKTIF" : "NON-AKTIF"}</Badge>
               </div>
               <p className="font-mono text-sm text-text-muted">/{tenant.slug}</p>
@@ -234,14 +231,14 @@ export default function AdminTenantDetailPage() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2.5">
+          <div className="flex gap-3">
             <Button id="tenant-detail-invite-btn" onClick={() => setShowInvite(true)} variant="secondary" size="sm" leftIcon={<Mail size={14} />}>
               Undang
             </Button>
             <button
               id="tenant-detail-toggle-btn"
               onClick={toggleActive}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tenant.isActive ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white" : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`}
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${tenant.isActive ? "bg-red-600/10 text-red-700 hover:bg-red-600 hover:text-white" : "bg-green-600/10 text-green-700 hover:bg-green-600 hover:text-white"}`}
             >
               {tenant.isActive ? <ToggleRight size={14} aria-hidden="true" /> : <ToggleLeft size={14} aria-hidden="true" />}
               {tenant.isActive ? "Nonaktifkan" : "Aktifkan"}
@@ -251,7 +248,7 @@ export default function AdminTenantDetailPage() {
 
         {/* Seat usage bar */}
         <div className="mt-5">
-          <div className="mb-1.5 flex justify-between">
+          <div className="mb-2 flex justify-between">
             <span className="text-xs text-text-secondary">Penggunaan Kursi</span>
             <span className="text-xs font-semibold text-text-primary">{seatUsed} / {tenant.seatLimit} ({seatPct}%)</span>
           </div>
@@ -261,22 +258,18 @@ export default function AdminTenantDetailPage() {
         </div>
       </Card>
 
-      {/* Stats row — Lumina KPI cards: icon tile top-left, value, uppercase label below */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Stats row — KPI cards */}
+      <div className="dash-grid">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <div
+          <StatCard
             key={label}
-            className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
-          >
-            <span
-              className="mb-4 flex size-11 items-center justify-center rounded-xl"
-              style={{ backgroundColor: `${color}18`, color }}
-            >
-              <Icon size={20} aria-hidden="true" />
-            </span>
-            <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{value}</p>
-            <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-          </div>
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={label}
+            value={value}
+            icon={Icon}
+            iconColor={color}
+            iconBg={`${color}18`}
+          />
         ))}
       </div>
 
@@ -292,9 +285,9 @@ export default function AdminTenantDetailPage() {
 
       {/* Section: Overview */}
       {activeSection === "overview" && (
-        <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Card className="p-5">
-            <h3 className="mb-3.5 text-sm font-bold text-text-primary">Info Tenant</h3>
+            <h3 className="mb-4 text-sm font-bold text-text-primary">Info Tenant</h3>
             {[
               ["Nama", tenant.name],
               ["Slug", `/${tenant.slug}`],
@@ -310,9 +303,9 @@ export default function AdminTenantDetailPage() {
               </div>
             ))}
           </Card>
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
             <Card className="flex-1 p-5">
-              <h3 className="mb-3.5 text-sm font-bold text-text-primary">Batch Terbaru</h3>
+              <h3 className="mb-4 text-sm font-bold text-text-primary">Batch Terbaru</h3>
               {batches.length === 0
                 ? <p className="text-sm text-text-muted">Belum ada batch.</p>
                 : batches.slice(0, 4).map((b) => (
@@ -324,7 +317,7 @@ export default function AdminTenantDetailPage() {
               }
             </Card>
             <Card className="flex-1 p-5">
-              <h3 className="mb-3.5 text-sm font-bold text-text-primary">Kursus Aktif</h3>
+              <h3 className="mb-4 text-sm font-bold text-text-primary">Kursus Aktif</h3>
               {courses.filter((c) => c.status === "published").length === 0
                 ? <p className="text-sm text-text-muted">Belum ada kursus published.</p>
                 : courses.filter((c) => c.status === "published").slice(0, 4).map((c) => (
@@ -345,12 +338,12 @@ export default function AdminTenantDetailPage() {
           {batches.length === 0
             ? <EmptyState icon={Layers} title="Belum ada batch." className="col-span-full" />
             : batches.map((b) => (
-              <Card key={b.id} className="p-[18px]">
-                <div className="mb-2.5 flex items-center justify-between">
+              <Card key={b.id} className="p-4">
+                <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-bold text-text-primary">{b.name}</p>
                   <Badge variant={b.isActive ? "success" : "neutral"}>{b.isActive ? "Aktif" : "Non-aktif"}</Badge>
                 </div>
-                {b.description && <p className="mb-2.5 text-xs text-text-muted">{b.description}</p>}
+                {b.description && <p className="mb-2 text-xs text-text-muted">{b.description}</p>}
                 <div className="flex gap-4 text-xs text-text-secondary">
                   <span>👥 {b._count?.members ?? 0} peserta</span>
                   <span>📚 {b._count?.assignments ?? 0} kursus assigned</span>
@@ -368,12 +361,12 @@ export default function AdminTenantDetailPage() {
           {courses.length === 0
             ? <EmptyState icon={BookOpen} title="Belum ada kursus." className="col-span-full" />
             : courses.map((c) => (
-              <Card key={c.id} className="p-[18px]">
-                <div className="mb-2.5 flex items-center justify-between">
+              <Card key={c.id} className="p-4">
+                <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm font-bold text-text-primary">{c.title}</p>
                   <Badge variant={c.status === "published" ? "success" : "neutral"}>{c.status === "published" ? "Published" : "Draft"}</Badge>
                 </div>
-                {c.description && <p className="mb-2.5 text-xs text-text-muted">{c.description}</p>}
+                {c.description && <p className="mb-2 text-xs text-text-muted">{c.description}</p>}
                 <div className="flex gap-4 text-xs text-text-secondary">
                   <span>📖 {c._count?.lessons ?? 0} pelajaran</span>
                   <span>👥 {c._count?.enrollments ?? 0} enrolled</span>
@@ -402,9 +395,9 @@ export default function AdminTenantDetailPage() {
                       <TD className="py-3 font-semibold text-text-primary">{m.name}</TD>
                       <TD className="py-3 text-text-secondary">{m.email}</TD>
                       <TD className="py-3">
-                        <span className="rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: m.role === "lms_admin" ? "rgba(124,58,237,0.1)" : "rgba(0,119,168,0.1)", color: m.role === "lms_admin" ? "#7C3AED" : "#0077A8" }}>
+                        <Badge variant={m.role === "lms_admin" ? "brand" : "info"}>
                           {m.role === "lms_admin" ? "Admin LMS" : "Karyawan"}
-                        </span>
+                        </Badge>
                       </TD>
                     </TR>
                   ))}

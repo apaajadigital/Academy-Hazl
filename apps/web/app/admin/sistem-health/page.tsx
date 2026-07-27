@@ -12,7 +12,6 @@ import {
   PieChart,
   Database,
   RefreshCw,
-  AlertCircle,
   BookOpen,
   CreditCard,
   Star,
@@ -22,7 +21,7 @@ import {
   ClipboardList,
   type LucideIcon,
 } from "lucide-react";
-import { Card } from "@/components/ui";
+import { Card, StatCard, DashboardLoading, DashboardError } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 /* ─────────────────────────── Types ────────────────────────────────────────── */
@@ -347,25 +346,16 @@ export default function SystemHealthPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <span className="h-9 w-9 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" />
+      <div className="dash-container">
+        <DashboardLoading label="Memuat data sistem…" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="px-5 py-16 text-center">
-        <p className="flex items-center justify-center gap-2 text-red-600">
-          <AlertCircle size={18} aria-hidden="true" /> {error ?? "Data tidak tersedia"}
-        </p>
-        <button
-          type="button"
-          onClick={fetchData}
-          className="mt-4 rounded-lg border border-solid border-accent-cyan-strong bg-surface-card px-5 py-2 font-semibold text-accent-cyan-strong transition hover:bg-surface-accent-soft"
-        >
-          Coba Lagi
-        </button>
+      <div className="dash-container py-16">
+        <DashboardError message={error ?? "Data tidak tersedia"} onRetry={fetchData} />
       </div>
     );
   }
@@ -380,12 +370,12 @@ export default function SystemHealthPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-text-primary">Kesehatan Sistem</h1>
-          <p className="mt-1 text-[13px] text-text-secondary">
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">Kesehatan Sistem</h1>
+          <p className="mt-2 text-sm text-text-secondary">
             Visualisasi data real-time platform Jago Akademi
             {lastRefresh && (
               <span className="font-medium text-accent-cyan-strong"> · Terakhir: {lastRefresh.toLocaleTimeString("id-ID")}</span>
@@ -401,26 +391,19 @@ export default function SystemHealthPage() {
         </button>
       </div>
 
-      {/* KPI Summary — Lumina vertical cards: icon tile top-left, value, uppercase label below */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-        {kpiCards.map((k) => {
-          const Icon = k.icon;
-          return (
-            <div
-              key={k.label}
-              className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
-            >
-              <span
-                className="mb-4 flex size-11 items-center justify-center rounded-xl"
-                style={{ background: k.bg, color: k.color }}
-              >
-                <Icon size={20} aria-hidden="true" />
-              </span>
-              <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{k.value}</p>
-              <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{k.label}</p>
-            </div>
-          );
-        })}
+      {/* KPI Summary — unified StatCard on the 12-col dash grid */}
+      <div className="dash-grid">
+        {kpiCards.map((k) => (
+          <StatCard
+            key={k.label}
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={k.label}
+            value={k.value}
+            icon={k.icon}
+            iconColor={k.color}
+            iconBg={k.bg}
+          />
+        ))}
       </div>
 
       {/* Charts Row 1: Revenue + User Growth — framed layered-white cards with header rule */}

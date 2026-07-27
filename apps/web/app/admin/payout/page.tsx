@@ -14,6 +14,9 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  FilterBar,
+  DashboardLoading,
+  TableActionButton,
   TableContainer,
   Table,
   THead,
@@ -220,7 +223,7 @@ export default function AdminPayoutPage() {
   };
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -231,10 +234,11 @@ export default function AdminPayoutPage() {
 
       {/* KPI Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="dash-grid">
           {kpiCards.map((k) => (
             <StatCard
               key={k.label}
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
               label={k.label}
               value={k.value}
               icon={k.icon}
@@ -254,30 +258,34 @@ export default function AdminPayoutPage() {
           </TabsList>
         </Tabs>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
-          <form onSubmit={handleSearch} className="flex flex-1 items-end gap-2">
-            <Input className="min-w-[200px] py-2" containerClassName="flex-1" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search size={16} />} />
-            <Button type="submit" variant="cyan" size="sm" aria-label="Cari"><Search size={16} /></Button>
-          </form>
-          <Tabs
-            value={statusFilter}
-            onValueChange={(s) => { setStatusFilter(s); if (tab === "trainer") setTrainerPage(1); else setAffPage(1); }}
-          >
-            <TabsList className="flex-wrap">
-              {["all", "pending", "approved", "rejected", "paid"].map((s) => (
-                <TabsTrigger key={s} value={s}>
-                  {s === "all" ? "Semua" : STATUS_MAP[s]?.label ?? s}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
+        <FilterBar
+          search={
+            <form onSubmit={handleSearch} className="flex items-end gap-2">
+              <Input className="min-w-[200px]" containerClassName="flex-1" placeholder="Cari nama..." value={search} onChange={(e) => setSearch(e.target.value)} leftIcon={<Search size={16} aria-hidden="true" />} />
+              <Button type="submit" variant="cyan" size="sm" aria-label="Cari"><Search size={16} aria-hidden="true" /></Button>
+            </form>
+          }
+          filters={
+            <Tabs
+              value={statusFilter}
+              onValueChange={(s) => { setStatusFilter(s); if (tab === "trainer") setTrainerPage(1); else setAffPage(1); }}
+            >
+              <TabsList className="flex-wrap">
+                {["all", "pending", "approved", "rejected", "paid"].map((s) => (
+                  <TabsTrigger key={s} value={s}>
+                    {s === "all" ? "Semua" : STATUS_MAP[s]?.label ?? s}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          }
+        />
       </div>
 
       {/* Table */}
       {tab === "trainer" ? (
         trainerLoading ? (
-          <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+          <DashboardLoading />
         ) : trainerPayouts.length === 0 ? (
           <EmptyState icon={Inbox} title="Tidak ada data payout trainer." />
         ) : (
@@ -317,7 +325,7 @@ export default function AdminPayoutPage() {
                       <TD className="py-3"><span className="block max-w-[140px] truncate text-xs text-text-secondary">{p.note ?? "—"}</span></TD>
                       <TD className="py-3">
                         {p.status === "pending" || p.status === "approved" ? (
-                          <button className="inline-flex items-center gap-1 rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white" onClick={() => openModal(p, "trainer")}><Settings size={13} /> Kelola</button>
+                          <TableActionButton variant="neutral" leftIcon={<Settings size={13} aria-hidden="true" />} onClick={() => openModal(p, "trainer")}>Kelola</TableActionButton>
                         ) : (
                           <Check size={16} className="text-green-600" />
                         )}
@@ -331,7 +339,7 @@ export default function AdminPayoutPage() {
         )
       ) : (
         affLoading ? (
-          <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+          <DashboardLoading />
         ) : affWithdrawals.length === 0 ? (
           <EmptyState icon={Inbox} title="Tidak ada data withdrawal afiliator." />
         ) : (
@@ -372,7 +380,7 @@ export default function AdminPayoutPage() {
                       <TD className="py-3"><span className="block max-w-[140px] truncate text-xs text-text-secondary">{w.note ?? "—"}</span></TD>
                       <TD className="py-3">
                         {w.status === "pending" || w.status === "approved" ? (
-                          <button className="inline-flex items-center gap-1 rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-bold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white" onClick={() => openModal(w, "affiliate")}><Settings size={13} /> Kelola</button>
+                          <TableActionButton variant="neutral" leftIcon={<Settings size={13} aria-hidden="true" />} onClick={() => openModal(w, "affiliate")}>Kelola</TableActionButton>
                         ) : (
                           <Check size={16} className="text-green-600" />
                         )}
@@ -427,7 +435,7 @@ export default function AdminPayoutPage() {
           >
             <div className="flex flex-col gap-5">
               {/* Summary */}
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-sunken px-4 py-3">
                   <span className="text-[10px] font-bold uppercase text-text-muted">Nama</span>
                   <span className="text-sm font-semibold text-text-primary">
@@ -451,7 +459,7 @@ export default function AdminPayoutPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-text-primary">Pilih Tindakan</h3>
                 <div className="flex gap-2">
                   {modalItem.status === "pending" && (

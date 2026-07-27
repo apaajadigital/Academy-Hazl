@@ -20,6 +20,11 @@ import {
   TR,
   TH,
   TD,
+  StatCard,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  DashboardLoading,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -56,12 +61,12 @@ function authHeaders() {
   return { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
 }
 
-// Plan chip colors kept as tokens-in-context (purple "pro" has no Badge variant).
-const PLAN_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  trial:      { bg: "rgba(180,83,9,0.12)",   text: "#B45309", label: "Trial" },
-  starter:    { bg: "rgba(0,119,168,0.1)",   text: "#0077A8", label: "Starter" },
-  pro:        { bg: "rgba(124,58,237,0.1)",  text: "#7C3AED", label: "Pro" },
-  enterprise: { bg: "rgba(22,163,74,0.1)",   text: "#15803D", label: "Enterprise" },
+// Plan chips mapped to semantic Badge variants (tokens-only, no inline styles).
+const PLAN_STYLE: Record<string, { variant: BadgeProps["variant"]; label: string }> = {
+  trial:      { variant: "warning", label: "Trial" },
+  starter:    { variant: "info",    label: "Starter" },
+  pro:        { variant: "brand",   label: "Pro" },
+  enterprise: { variant: "success", label: "Enterprise" },
 };
 
 // ─── Create Tenant Modal ──────────────────────────────────────────────────────
@@ -99,10 +104,10 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void; onCrea
     <Modal open onOpenChange={(o) => { if (!o) onClose(); }}>
       <ModalContent title="Buat Tenant Baru" className="max-w-md">
         {error && (
-          <div className="mb-3.5 rounded-[var(--radius-md)] bg-red-600/10 px-3.5 py-2.5 text-sm text-red-700">{error}</div>
+          <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2.5 text-sm text-red-700">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input id="tenant-name-input" label="Nama Perusahaan / Institusi *" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Contoh: PT Maju Bersama" />
           <Input
             id="tenant-slug-input"
@@ -189,12 +194,12 @@ function WorkshopAssignPanel() {
     <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
       {/* Left: form */}
       <Card className="p-6">
-        <h3 className="mb-[18px] text-[15px] font-bold text-text-primary">Assign Kursus ke Batch</h3>
+        <h3 className="mb-4 text-base font-bold text-text-primary">Assign Kursus ke Batch</h3>
 
-        {error && <div className="mb-3.5 rounded-[var(--radius-md)] bg-red-600/10 px-3.5 py-2.5 text-sm text-red-700">{error}</div>}
-        {success && <div className="mb-3.5 rounded-[var(--radius-md)] bg-green-600/10 px-3.5 py-2.5 text-sm text-green-700">{success}</div>}
+        {error && <div className="mb-4 rounded-[var(--radius-md)] bg-red-600/10 px-4 py-2.5 text-sm text-red-700">{error}</div>}
+        {success && <div className="mb-4 rounded-[var(--radius-md)] bg-green-600/10 px-4 py-2.5 text-sm text-green-700">{success}</div>}
 
-        <form onSubmit={handleAssign} className="flex flex-col gap-3.5">
+        <form onSubmit={handleAssign} className="flex flex-col gap-4">
           <Select id="assign-tenant-select" label="1. Pilih Tenant" value={form.tenantId} onChange={(e) => handleTenantChange(e.target.value)} required>
             <option value="">— Pilih perusahaan —</option>
             {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -231,10 +236,10 @@ function WorkshopAssignPanel() {
       </Card>
 
       {/* Right: info */}
-      <div className="flex flex-col gap-3.5">
-        <div className="rounded-[var(--radius-lg)] border border-solid border-[rgba(0,119,168,0.15)] bg-surface-accent-soft p-5">
-          <h4 className="mb-2.5 text-sm font-bold text-accent-cyan-strong">ℹ️ Cara Kerja Assignment</h4>
-          <ol className="flex list-decimal flex-col gap-2 pl-[18px] text-sm leading-relaxed text-text-primary">
+      <div className="flex flex-col gap-4">
+        <div className="rounded-[var(--radius-card)] border border-solid border-[rgba(0,119,168,0.15)] bg-surface-accent-soft p-5">
+          <h4 className="mb-2 text-sm font-bold text-accent-cyan-strong">ℹ️ Cara Kerja Assignment</h4>
+          <ol className="flex list-decimal flex-col gap-2 pl-4 text-sm leading-relaxed text-text-primary">
             <li>Pilih tenant (perusahaan/institusi klien)</li>
             <li>Pilih batch peserta yang akan menerima kursus</li>
             <li>Pilih kursus LMS yang sudah di-publish</li>
@@ -243,7 +248,7 @@ function WorkshopAssignPanel() {
           </ol>
         </div>
         <Card className="p-5">
-          <h4 className="mb-2.5 text-sm font-bold text-text-primary">📊 Ringkasan Tenant Aktif</h4>
+          <h4 className="mb-2 text-sm font-bold text-text-primary">📊 Ringkasan Tenant Aktif</h4>
           {tenants.filter((t) => t.isActive).length === 0
             ? <p className="text-sm text-text-muted">Belum ada tenant aktif.</p>
             : tenants.filter((t) => t.isActive).slice(0, 5).map((t) => (
@@ -260,8 +265,6 @@ function WorkshopAssignPanel() {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-
-const TENANT_TAB = "border-b-[3px] px-[18px] py-2.5 text-sm font-semibold transition-colors";
 
 export default function AdminLMSPage() {
   const [activeTab, setActiveTab] = useState<"tenants" | "workshop">("tenants");
@@ -313,12 +316,12 @@ export default function AdminLMSPage() {
   ];
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold text-text-primary">LMS B2B</h1>
+          <h1 className="font-display text-2xl font-extrabold text-text-primary">LMS B2B</h1>
           <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} perusahaan / institusi</p>
         </div>
         {activeTab === "tenants" && (
@@ -328,45 +331,34 @@ export default function AdminLMSPage() {
         )}
       </div>
 
-      {/* Metrics — Lumina KPI cards: icon tile top-left, value, uppercase label below */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Metrics — StatCard KPI row in the 12-col dash grid */}
+      <div className="dash-grid">
         {metrics.map(({ label, value, color, icon: Icon }) => (
-          <div
+          <StatCard
             key={label}
-            className="flex flex-col rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card p-5 shadow-e1 transition-shadow hover:shadow-e2"
-          >
-            <span
-              className="mb-4 flex size-11 items-center justify-center rounded-xl"
-              style={{ backgroundColor: `${color}18`, color }}
-            >
-              <Icon size={20} aria-hidden="true" />
-            </span>
-            <p className="font-display text-2xl font-bold leading-tight tracking-tight text-text-primary">{value.toLocaleString("id-ID")}</p>
-            <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</p>
-          </div>
+            className="col-span-12 sm:col-span-6 xl:col-span-3"
+            label={label}
+            value={value.toLocaleString("id-ID")}
+            icon={Icon}
+            iconColor={color}
+            iconBg={`${color}18`}
+          />
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b-2 border-solid border-border-default">
-        {([["tenants", "🏢 Tenants"], ["workshop", "⚙️ Workshop Assignment"]] as const).map(([tab, label]) => (
-          <button
-            id={`lms-tab-${tab}-btn`}
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`${TENANT_TAB} -mb-0.5 ${activeTab === tab ? "border-accent-cyan-strong text-accent-cyan-strong" : "border-transparent text-text-secondary hover:text-text-primary"}`}
-            aria-current={activeTab === tab ? "true" : undefined}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "tenants" | "workshop")}>
+        <TabsList>
+          <TabsTrigger value="tenants">🏢 Tenants</TabsTrigger>
+          <TabsTrigger value="workshop">⚙️ Workshop Assignment</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Tab: Tenants */}
       {activeTab === "tenants" && (
         <>
           {loading ? (
-            <div className="flex justify-center py-12"><span className="size-8 animate-spin rounded-full border-[3px] border-accent-cyan-strong border-t-transparent" /></div>
+            <DashboardLoading />
           ) : tenants.length === 0 ? (
             <EmptyState
               icon={Building2}
@@ -403,7 +395,7 @@ export default function AdminLMSPage() {
                           {t._count?.batches ?? 0} batch · {t._count?.courses ?? 0} kursus · {t._count?.enrollments ?? 0} enrolled
                         </TD>
                         <TD className="py-3">
-                          <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: plan.bg, color: plan.text }}>{plan.label}</span>
+                          <Badge variant={plan.variant}>{plan.label}</Badge>
                         </TD>
                         <TD className="py-3">
                           <Badge variant={statusVariant} dot>{expired ? "Kadaluarsa" : t.isActive ? "Aktif" : "Non-aktif"}</Badge>
@@ -440,9 +432,9 @@ export default function AdminLMSPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3">
-              <button id="lms-prev-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-lg border border-solid border-border-default bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40">← Prev</button>
+              <button id="lms-prev-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="rounded-lg border border-solid border-border-default bg-surface-card px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40">← Prev</button>
               <span className="text-sm text-text-secondary">{page} / {totalPages}</span>
-              <button id="lms-next-page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-lg border border-solid border-border-default bg-surface-card px-3.5 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40">Next →</button>
+              <button id="lms-next-page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="rounded-lg border border-solid border-border-default bg-surface-card px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:bg-surface-sunken disabled:opacity-40">Next →</button>
             </div>
           )}
         </>

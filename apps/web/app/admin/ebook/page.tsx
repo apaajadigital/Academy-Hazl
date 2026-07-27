@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Plus, BookMarked, Loader2 } from "lucide-react";
+import { Search, Plus, BookMarked } from "lucide-react";
 import {
   Badge,
   Button,
@@ -11,12 +11,16 @@ import {
   Modal,
   ModalContent,
   Pagination,
+  FilterBar,
+  TableContainer,
   Table,
   THead,
   TBody,
   TR,
   TH,
   TD,
+  TableActionButton,
+  DashboardLoading,
   Tabs,
   TabsList,
   TabsTrigger,
@@ -212,7 +216,7 @@ export default function AdminEbookPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="flex max-w-[1200px] flex-col gap-5">
+    <div className="dash-container flex flex-col gap-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -225,42 +229,43 @@ export default function AdminEbookPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-border-default bg-surface-card p-4 shadow-e1 lg:flex-row lg:items-center lg:justify-between">
-        <form onSubmit={handleSearch} className="flex w-full items-end gap-2 lg:max-w-sm">
-          <Input
-            containerClassName="flex-1"
-            leftIcon={<Search size={16} aria-hidden="true" />}
-            placeholder="Cari judul atau penulis..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Cari e-book"
-          />
-          <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
-        </form>
-        <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <TabsList className="flex-wrap">
-            {["all", "published", "draft"].map((st) => (
-              <TabsTrigger key={st} value={st}>
-                {st === "all" ? "Semua" : st === "published" ? "Aktif" : "Draft"}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      <FilterBar
+        search={
+          <form onSubmit={handleSearch} className="flex w-full items-end gap-2">
+            <Input
+              containerClassName="flex-1"
+              leftIcon={<Search size={16} aria-hidden="true" />}
+              placeholder="Cari judul atau penulis..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Cari e-book"
+            />
+            <Button type="submit" variant="cyan" size="sm" className="bg-accent-cyan-strong text-white hover:bg-accent-cyan-strong">Cari</Button>
+          </form>
+        }
+        filters={
+          <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+            <TabsList className="flex-wrap">
+              {["all", "published", "draft"].map((st) => (
+                <TabsTrigger key={st} value={st}>
+                  {st === "all" ? "Semua" : st === "published" ? "Aktif" : "Draft"}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
+      />
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center rounded-[var(--radius-lg)] border border-border-default bg-surface-card py-16 shadow-e1">
-          <Loader2 className="animate-spin text-accent-cyan-strong" size={32} aria-hidden="true" />
-        </div>
+        <DashboardLoading />
       ) : ebooks.length === 0 ? (
         <EmptyState icon={BookMarked} title="Tidak ada e-book ditemukan" description="Mulai dengan menambahkan e-book baru." />
       ) : (
-        <div className="overflow-hidden rounded-[var(--radius-lg)] border border-border-default bg-surface-card shadow-e1">
-          <div className="overflow-x-auto">
-            <Table className="min-w-[800px]">
+        <TableContainer>
+          <Table className="min-w-[800px]">
               <THead>
-                <tr>
+                <TR className="hover:bg-transparent">
                   <TH>Judul E-Book</TH>
                   <TH>Kategori</TH>
                   <TH>Penulis</TH>
@@ -268,7 +273,7 @@ export default function AdminEbookPage() {
                   <TH>Harga</TH>
                   <TH>Status</TH>
                   <TH>Aksi</TH>
-                </tr>
+                </TR>
               </THead>
               <TBody>
                 {ebooks.map((ebook) => (
@@ -309,26 +314,26 @@ export default function AdminEbookPage() {
                       </Badge>
                     </TD>
                     <TD>
-                      <div className="flex items-center gap-1.5">
-                        <button
+                      <div className="flex items-center gap-2">
+                        <TableActionButton
+                          variant="neutral"
                           onClick={() => handleOpenEdit(ebook)}
-                          className="rounded-lg bg-surface-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-cyan-strong transition-colors hover:bg-accent-cyan-strong hover:text-white"
+                          className="bg-surface-accent-soft text-accent-cyan-strong hover:bg-accent-cyan-strong hover:text-white"
                         >
                           Edit
-                        </button>
-                        <button
+                        </TableActionButton>
+                        <TableActionButton
+                          variant="danger"
                           onClick={() => handleDelete(ebook.id, ebook.title)}
-                          className="rounded-lg bg-red-600/10 px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-600 hover:text-white"
                         >
                           Hapus
-                        </button>
+                        </TableActionButton>
                       </div>
                     </TD>
                   </TR>
                 ))}
               </TBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -337,7 +342,7 @@ export default function AdminEbookPage() {
               <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
             </div>
           )}
-        </div>
+        </TableContainer>
       )}
 
       {/* CRUD Modal */}
