@@ -50,7 +50,7 @@ Pass **refinement** menaikkan Admin Panel dari "konsisten" (hasil PR #17) → "*
 - Verifikasi: `tsc` 0 error, ESLint 0 warning, `next build` sukses (semua utility Tailwind baru — `ring-.../45`, `tracking-[-0.01em]`, `hover:border-text-muted`, `tabular-nums` — resolve).
 
 ## 7. Rekomendasi tahap selanjutnya
-- **Keputusan design app‑wide (opsional):** turunkan radius **tombol** dari pill (`--radius-full`) → 12px agar tombol "rhyme" dengan input & bahasa enterprise (Stripe/Linear/Vercel). Ditunda di pass ini karena mengubah identitas tombol **marketing publik**; perlu keputusan sadar lintas tim.
+- **Radius tombol — DIPUTUSKAN & DITERAPKAN (hybrid kontekstual).** Reviewer memilih **hybrid**: **marketing/publik = pill** (hangat, brand edukasi), **dalam aplikasi = 12px** (enterprise, seirama input). Diimplementasikan bersih di komponen `<Button>` (radius 12px via `--radius-md`) sementara class legacy `.btn` (dipakai CTA hero marketing) tetap pill. Verifikasi: hero marketing tak memakai komponen `<Button>` (hanya contact form, quiz player, dashboard) → tak ada CTA marketing yang tak sengaja berubah. *(Perubahan terpisah, PR tersendiri.)*
 - **Shadow ultra‑subtle (opsional):** eksplorasi `e1` lebih tipis lagi untuk look "flat‑premium" ala Linear; perlu review lintas halaman.
 - **Screenshot before/after** untuk lampiran visual (butuh login admin — kredensial dari Anda).
 - Jalankan **Lighthouse a11y** di server live untuk konfirmasi kontras/focus.
