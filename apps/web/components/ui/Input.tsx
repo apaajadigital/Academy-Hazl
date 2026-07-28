@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const fieldBase =
   "w-full rounded-[var(--radius-md)] border border-solid bg-surface-card px-4 py-2.5 text-[0.9375rem] text-text-primary placeholder:text-text-muted outline-none transition-[border-color,box-shadow] focus:ring-2 disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:opacity-60";
-const fieldOk = "border-border-strong focus:border-accent-cyan-strong focus:ring-accent-cyan-strong/20";
+const fieldOk = "border-border-strong hover:border-text-muted focus:border-accent-cyan-strong focus:ring-accent-cyan-strong/25";
 const fieldError = "border-red-600 focus:border-red-600 focus:ring-red-600/20";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {

@@ -36,7 +36,7 @@ function pageItems(page: number, pageCount: number, siblingCount: number): (numb
 }
 
 const arrowClass =
-  "flex h-9 w-9 items-center justify-center rounded-lg border border-solid border-border-default text-text-secondary transition-colors hover:bg-surface-sunken disabled:pointer-events-none disabled:opacity-50";
+  "flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] border border-solid border-border-default text-text-secondary transition-colors duration-200 hover:bg-surface-sunken hover:text-text-primary disabled:pointer-events-none disabled:opacity-50";
 
 /** Pill pagination (‹ 1 2 3 › with ellipses) matching the Stitch table footer. */
 export function Pagination({ page, pageCount, onPageChange, siblingCount = 1, className }: PaginationProps) {
@@ -72,9 +72,9 @@ export function Pagination({ page, pageCount, onPageChange, siblingCount = 1, cl
             aria-current={item === page ? "page" : undefined}
             onClick={() => onPageChange(item)}
             className={cn(
-              "flex h-9 min-w-9 items-center justify-center rounded-lg px-2 text-sm font-semibold transition-colors",
+              "flex h-9 min-w-9 items-center justify-center rounded-[var(--radius-md)] px-2 text-sm font-semibold tabular-nums transition-colors duration-200",
               item === page
-                ? "bg-accent-cyan-strong text-white"
+                ? "bg-accent-cyan-strong text-white shadow-e1"
                 : "text-text-primary hover:bg-surface-sunken",
             )}
           >

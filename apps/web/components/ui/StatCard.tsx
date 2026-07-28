@@ -60,8 +60,13 @@ export function StatCard({
           </span>
         ) : null}
       </div>
-      <p className="font-display text-2xl font-extrabold text-text-primary">{value}</p>
-      <p className="mt-1 text-sm text-text-secondary">{label}</p>
+      {/* KPI value is the visual focus: tabular figures keep digits aligned
+          across the KPI row, and a tight negative tracking makes big numbers
+          read solid (Stripe/Linear metric style). */}
+      <p className="font-display text-2xl font-extrabold tabular-nums tracking-[-0.01em] text-text-primary">
+        {value}
+      </p>
+      <p className="mt-1 text-sm font-medium text-text-secondary">{label}</p>
     </div>
   );
 }
