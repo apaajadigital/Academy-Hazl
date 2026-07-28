@@ -166,10 +166,12 @@
   img, video { max-width: 100%; height: auto; display: block; }
   input, textarea, select, button { font-family: inherit; }
 
-  /* Focus ring — accessible cyan (4.67:1 on white) */
+  /* Focus ring — accessible cyan (4.67:1 on white). Tight 2px offset reads
+     crisper on dense admin controls; kit buttons/inputs layer their own
+     branded ring on top. */
   :focus-visible {
     outline: 2px solid var(--border-focus);
-    outline-offset: 3px;
+    outline-offset: 2px;
     border-radius: 3px;
   }
 }

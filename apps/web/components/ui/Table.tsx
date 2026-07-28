@@ -12,7 +12,8 @@ export function TableContainer({ className, children, ...props }: HTMLAttributes
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[var(--radius-lg)] border border-solid border-border-default bg-surface-card shadow-e1",
+        // 20px (--radius-card) so the table frame matches every other card surface.
+        "overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1",
         className,
       )}
       {...props}

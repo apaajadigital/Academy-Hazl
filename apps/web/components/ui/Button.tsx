@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils";
  * then layers variant/size on top with design tokens.
  */
 const buttonVariants = cva(
-  "btn active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+  // Branded keyboard focus: a soft cyan ring hugging the control (replaces the
+  // generic global :focus-visible outline) for a premium, on-brand focus state.
+  "btn active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/45 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
