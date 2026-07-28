@@ -4,14 +4,17 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Button style contract. Reuses the `.btn` base from globals.css (pill radius,
- * display font, transition) so the kit stays anchored to one source of truth,
- * then layers variant/size on top with design tokens.
+ * Button style contract. Reuses the `.btn` base from globals.css (display font,
+ * transition) for one source of truth, then overrides the radius to 12px
+ * (--radius-md) so in-app buttons "rhyme" with inputs/controls (Linear/Stripe
+ * enterprise language). The legacy `.btn` global class stays pill — used by the
+ * marketing hero CTAs — giving a deliberate 2-tier hybrid: warm pill on the
+ * public/marketing funnel, precise 12px inside the product (dashboards/forms).
  */
 const buttonVariants = cva(
   // Branded keyboard focus: a soft cyan ring hugging the control (replaces the
   // generic global :focus-visible outline) for a premium, on-brand focus state.
-  "btn active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/45 disabled:pointer-events-none disabled:opacity-50",
+  "btn rounded-[var(--radius-md)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/45 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
