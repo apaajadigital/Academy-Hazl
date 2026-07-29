@@ -33,15 +33,16 @@ const UNITS = [
     href: "/trainer-program",
     icon: GraduationCap,
     name: "Trainer Program",
+    // No "Segera hadir" note: /trainer-program is live and accepts leads.
     description: "Jalur menjadi trainer bersertifikat di Jago Akademi.",
-    note: "Segera hadir",
   },
   {
     href: "/marketplace",
     icon: Store,
     name: "Marketplace Materi",
-    description: "Modul dan materi training langsung dari pembuatnya.",
-    note: "Segera hadir",
+    // No "Segera hadir" note: /marketplace is live and sells real e-books via
+    // GET /api/ebooks. The badge contradicted a page that already takes orders.
+    description: "Etalase materi digital siap unduh dari para praktisi.",
   },
 ] as const;
 
@@ -73,7 +74,6 @@ export function CategoryGrid() {
               icon={unit.icon}
               name={unit.name}
               description={unit.description}
-              note={"note" in unit ? unit.note : undefined}
               accent={i % 3 === 1 ? "pink" : "cyan"}
               className="h-full"
             />

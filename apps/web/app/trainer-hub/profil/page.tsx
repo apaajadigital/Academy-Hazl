@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { Button, Card, Input, Textarea, PageHeader, DashboardLoading } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
+import { getApiBase } from "@/lib/api/base";
 
 type UserProfile = {
   id: string;
@@ -20,9 +21,10 @@ type UserProfile = {
   } | null;
 };
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-
+// getApiBase() resolves to "" in the browser, keeping these calls relative so
+// they go through the Next.js /api/* rewrite — same as the other trainer-hub
+// pages. Hardcoding an absolute base broke whenever NEXT_PUBLIC_API_URL was
+// absent at build time.
 export default function TrainerProfilPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -45,7 +47,7 @@ export default function TrainerProfilPage() {
       const token = await getValidToken();
       if (!token) { router.replace("/masuk"); return; }
       try {
-        const r = await fetch(`${API}/api/auth/me`, {
+        const r = await fetch(`${getApiBase()}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const d = await r.json();
@@ -73,7 +75,7 @@ export default function TrainerProfilPage() {
     setSaved(false);
     const token = await getValidToken();
     if (!token) { router.replace("/masuk"); return; }
-    const res = await fetch(`${API}/api/users/me`, {
+    const res = await fetch(`${getApiBase()}/api/users/me`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
@@ -88,7 +90,9 @@ export default function TrainerProfilPage() {
     const data = await res.json();
     setSaving(false);
     if (!res.ok || !data.success) {
-      setError(data.message ?? "Gagal menyimpan profil.");
+      // The API error envelope is { success:false, error:{ code, message } } —
+      // reading data.message always yielded undefined, hiding the server reason.
+      setError(data.error?.message ?? "Gagal menyimpan profil.");
       return;
     }
     setSaved(true);

@@ -34,6 +34,9 @@ export default function TrainerProgramPage() {
       formSource="trainer"
       formTitle="Daftar minat trainer"
       formLede="Isi data singkat — kami hubungi saat batch dibuka."
+      // Exit path for visitors who are ready now: the landing otherwise ends at
+      // the lead form, with no way into the product.
+      secondaryCta={{ label: "Sudah siap? Buat akun dulu", href: "/daftar" }}
     />
   );
 }

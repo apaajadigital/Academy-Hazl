@@ -81,6 +81,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            API_PROXY_TARGET=${{ vars.API_PROXY_TARGET }}
             NEXT_PUBLIC_GA_ID=${{ vars.NEXT_PUBLIC_GA_ID }}
             NEXT_PUBLIC_MIXPANEL_TOKEN=${{ vars.NEXT_PUBLIC_MIXPANEL_TOKEN }}
             NEXT_PUBLIC_APP_NAME=Jago Akademi

@@ -6,18 +6,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Origin the /api/* rewrite proxies to. In a split web/api deployment (Docker
 // compose, separate hosts) the backend is NOT on the web container's localhost,
-// so a hardcoded target silently breaks every proxied call. NEXT_PUBLIC_API_URL
-// is reused because it is already the declared deploy-time API origin
-// (turbo.json globalEnv + apps/web/Dockerfile ARG); the localhost fallback keeps
-// `npm run dev` working with zero configuration.
+// so a hardcoded target silently breaks every proxied call.
+//
+// Resolution order: API_PROXY_TARGET → NEXT_PUBLIC_API_URL → localhost fallback.
+// The two variables answer different questions and must not be conflated:
+//   • NEXT_PUBLIC_API_URL is the API origin the BROWSER calls. It is inlined into
+//     the client bundle, so it has to be publicly reachable.
+//   • API_PROXY_TARGET is the origin this SERVER rewrites to. It may be a
+//     private, cluster-internal address (http://api:4000 on the compose network)
+//     that must never leak to the client — hence deliberately NOT NEXT_PUBLIC_*,
+//     and read here only, at build/server time, never from a component.
+// When API_PROXY_TARGET is unset the chain collapses to the previous behaviour
+// (NEXT_PUBLIC_API_URL, then localhost), so adding it changes nothing for any
+// deploy that does not set it.
 //
 // ⚠️ OPS: `rewrites()` is evaluated at BUILD TIME for `output: "standalone"` —
 // the destination is baked as a literal into .next/routes-manifest.json and
 // .next/standalone/apps/web/server.js. Changing `environment:` in
 // docker-compose.*.yml and restarting the container does NOT change the proxy
 // target. The value only moves when the image is REBUILT with the build-arg
-// (apps/web/Dockerfile `ARG NEXT_PUBLIC_API_URL`, wired from compose
-// `build.args` / the deploy workflow's `build-args`).
+// (apps/web/Dockerfile `ARG NEXT_PUBLIC_API_URL` / `ARG API_PROXY_TARGET`, wired
+// from compose `build.args` / the deploy workflow's `build-args`).
 const API_PROXY_FALLBACK = "http://localhost:4000";
 
 /**
@@ -31,16 +40,24 @@ function resolveApiProxyTarget() {
   // `NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}` and .github/workflows/deploy.yml
   // passes `NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}`. `??` only
   // falls back on null/undefined, so "" survived and collapsed the destination
-  // to "/api/:path*", byte-identical to the source.
-  const raw = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
+  // to "/api/:path*", byte-identical to the source. The same is true of an
+  // unset build-arg for API_PROXY_TARGET, so it gets identical treatment.
+  const override = (process.env.API_PROXY_TARGET || "").trim().replace(/\/+$/, "");
+  const publicOrigin = (process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
+  // Reported in warnings so a rejected value points at the variable that
+  // actually supplied it, not at whichever one the reader assumes.
+  const source = override ? "API_PROXY_TARGET" : "NEXT_PUBLIC_API_URL";
+  const raw = override || publicOrigin;
   if (!raw) {
     return {
       target: API_PROXY_FALLBACK,
-      // `next dev` is meant to run with no NEXT_PUBLIC_API_URL at all, so the
-      // empty case only warns on a production build — where an empty value is a
+      // `next dev` is meant to run with neither variable set, so the empty case
+      // only warns on a production build — where an empty value is a
       // misconfigured deploy rather than the documented zero-config default.
       warning:
-        process.env.NODE_ENV === "production" ? "NEXT_PUBLIC_API_URL is empty or unset" : "",
+        process.env.NODE_ENV === "production"
+          ? "API_PROXY_TARGET and NEXT_PUBLIC_API_URL are both empty or unset"
+          : "",
     };
   }
 
@@ -52,26 +69,27 @@ function resolveApiProxyTarget() {
     // either self-referential or not a valid proxy origin at all.
     return {
       target: API_PROXY_FALLBACK,
-      warning: `NEXT_PUBLIC_API_URL="${raw}" is not an absolute http(s) URL`,
+      warning: `${source}="${raw}" is not an absolute http(s) URL`,
     };
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     return {
       target: API_PROXY_FALLBACK,
-      warning: `NEXT_PUBLIC_API_URL="${raw}" must use http: or https:`,
+      warning: `${source}="${raw}" must use http: or https:`,
     };
   }
 
-  // Self-proxy guard. docs/RUNBOOK_DEPLOY_RELEASE_JUL2026.md currently documents
-  // NEXT_PUBLIC_API_URL=https://jagoakademi.com — the WEB origin, not the API
-  // origin — which routes /api/* back through nginx into this very container.
+  // Self-proxy guard. A target equal to the WEB origin routes /api/* back
+  // through nginx into this very container (the value both runbooks now warn
+  // about). Compared by ORIGIN, so same host on a different port —
+  // http://127.0.0.1:4010 next to a :3000 web — is deliberately still allowed.
   const siteRaw = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
   if (siteRaw) {
     try {
       if (new URL(siteRaw).origin === parsed.origin) {
         return {
           target: API_PROXY_FALLBACK,
-          warning: `NEXT_PUBLIC_API_URL (${parsed.origin}) equals the web origin NEXT_PUBLIC_SITE_URL (${siteRaw})`,
+          warning: `${source} (${parsed.origin}) equals the web origin NEXT_PUBLIC_SITE_URL (${siteRaw})`,
         };
       }
     } catch {
@@ -89,9 +107,9 @@ if (apiProxyWarning) {
   // in the image build log instead of surfacing as a production request loop.
   console.warn(
     `[next.config] /api/* proxy target rejected (would be self-referential): ${apiProxyWarning}. ` +
-      `Falling back to ${API_PROXY_FALLBACK}. Set NEXT_PUBLIC_API_URL to the API ` +
-      `origin (e.g. https://api.jagoakademi.com) and REBUILD the web image — ` +
-      `rewrites are baked at build time.`,
+      `Falling back to ${API_PROXY_FALLBACK}. Set NEXT_PUBLIC_API_URL to the public API ` +
+      `origin (e.g. https://api.jagoakademi.com), or API_PROXY_TARGET to a cluster-internal ` +
+      `one (e.g. http://api:4000), and REBUILD the web image — rewrites are baked at build time.`,
   );
 }
 

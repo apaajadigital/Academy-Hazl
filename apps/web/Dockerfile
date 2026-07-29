@@ -33,6 +33,12 @@ COPY packages ./packages
 
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_SITE_URL
+# Optional server-side origin for the /api/* rewrite (BL-75/BL-79). Deliberately
+# NOT NEXT_PUBLIC_*, so an internal origin such as http://api:4000 never reaches
+# the client bundle. Must be an ARG here: next.config.js resolves rewrites at
+# BUILD time for the standalone output, so a runtime `environment:` entry alone
+# would never move the proxy target.
+ARG API_PROXY_TARGET
 ARG NEXT_PUBLIC_GA_ID
 ARG NEXT_PUBLIC_MIXPANEL_TOKEN
 ARG NEXT_PUBLIC_APP_NAME

@@ -3,8 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { track, AnalyticsEvent } from "@/lib/analytics";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { getApiBase } from "@/lib/api/base";
 
 type Source = "affiliate" | "lms" | "trainer" | "free-class" | "community" | "other";
 
@@ -31,7 +30,11 @@ export function LeadCaptureForm({ source, withCompany = false, submitLabel = "Ki
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/leads`, {
+      // getApiBase() resolves to "" in the browser, so the request stays relative
+      // and goes through the Next.js /api/* rewrite. A build-time-missing
+      // NEXT_PUBLIC_API_URL can therefore never point the user's browser at
+      // http://localhost:4000 and silently kill the form in production.
+      const res = await fetch(`${getApiBase()}/api/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

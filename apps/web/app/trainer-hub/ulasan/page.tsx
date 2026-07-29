@@ -9,6 +9,7 @@ import {
   Card,
   EmptyState,
   PageHeader,
+  Pagination,
   DashboardLoading,
   DashboardError,
 } from "@/components/ui";
@@ -27,45 +28,59 @@ type Review = {
   };
 };
 
+/** Envelope of GET /api/trainer/reviews — `meta` is `PaginationMeta` (api/src/lib/pagination.ts). */
+type ReviewListResponse =
+  | { success: true; data: Review[]; meta?: { total: number; page: number; limit: number } }
+  | { success: false; error?: { message?: string } };
+
+// Mirrors the backend default page size; sent explicitly so the client never
+// depends on the server default staying at 20.
+const PAGE_SIZE = 20;
+
 export default function TrainerReviewsPage() {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  // Bumped by the retry button to re-run the effect without changing `page`.
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    // `cancelled` makes the LAST requested page win: clicking next/prev quickly
+    // fires overlapping requests, and without this an older, slower response
+    // could overwrite the newer page's rows.
+    let cancelled = false;
     (async () => {
       const token = await getValidToken();
       if (!token) { router.replace("/masuk"); return; }
+      setLoading(true);
+      setError("");
       try {
-        const r = await fetch("/api/trainer/reviews", {
+        const r = await fetch(`/api/trainer/reviews?page=${page}&limit=${PAGE_SIZE}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const d = await r.json();
-        if (d.success) setReviews(d.data);
-        else setError(d.error?.message ?? "Gagal memuat ulasan.");
+        const d = (await r.json()) as ReviewListResponse;
+        if (cancelled) return;
+        if (d.success) {
+          setReviews(d.data);
+          // Older API builds sent no `meta`; fall back to the row count so the
+          // header never shows a total smaller than what is on screen.
+          setTotal(d.meta?.total ?? d.data.length);
+        } else {
+          setError(d.error?.message ?? "Gagal memuat ulasan.");
+        }
       } catch {
-        setError("Gagal memuat ulasan.");
+        if (!cancelled) setError("Gagal memuat ulasan.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [router]);
+    return () => { cancelled = true; };
+  }, [page, reloadKey, router]);
 
-  if (loading) {
-    return (
-      <div className="dash-container">
-        <DashboardLoading />
-      </div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="dash-container">
-        <DashboardError message={error} onRetry={() => router.refresh()} />
-      </div>
-    );
-  }
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="dash-container flex flex-col gap-8">
@@ -81,9 +96,20 @@ export default function TrainerReviewsPage() {
       />
 
       <Card className="p-6">
-        <h2 className="mb-6 font-display text-lg font-bold text-text-primary">Daftar Feedback & Ulasan Kursus Anda</h2>
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-bold text-text-primary">Daftar Feedback & Ulasan Kursus Anda</h2>
+          {!loading && !error && total > 0 && (
+            <p className="text-sm text-text-secondary">
+              Menampilkan {reviews.length} dari {total} ulasan
+            </p>
+          )}
+        </div>
 
-        {reviews.length === 0 ? (
+        {loading ? (
+          <DashboardLoading />
+        ) : error ? (
+          <DashboardError message={error} onRetry={() => setReloadKey((k) => k + 1)} />
+        ) : reviews.length === 0 ? (
           <EmptyState
             icon={Star}
             title="Belum ada ulasan"
@@ -125,6 +151,14 @@ export default function TrainerReviewsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination footer — same shape as payout. */}
+        {!loading && !error && totalPages > 1 && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default pt-4">
+            <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+            <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
           </div>
         )}
       </Card>

@@ -1,4 +1,5 @@
-import type { LucideIcon } from "lucide-react";
+import { ArrowRight, type LucideIcon } from "lucide-react";
+import Link from "next/link";
 import { Section } from "@/components/ui/Section";
 import { Reveal } from "@/components/ui/Reveal";
 import { LeadCaptureForm } from "@/components/landing/LeadCaptureForm";
@@ -15,6 +16,12 @@ type Props = {
   formLede: string;
   withCompany?: boolean;
   submitLabel?: string;
+  /**
+   * Optional secondary exit link under the hero lede. Landings are otherwise a
+   * dead end (lead form only), so funnels that have a next step for visitors
+   * who are ready now can opt in without changing any other landing.
+   */
+  secondaryCta?: { label: string; href: string };
 };
 
 /**
@@ -32,6 +39,7 @@ export function LandingTemplate({
   formLede,
   withCompany,
   submitLabel,
+  secondaryCta,
 }: Props) {
   return (
     <div className="pt-16">
@@ -50,6 +58,14 @@ export function LandingTemplate({
             <Reveal immediate delay={0.12}>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-[var(--text-secondary)] md:text-lg">{lede}</p>
             </Reveal>
+            {secondaryCta && (
+              <Reveal immediate delay={0.18}>
+                <Link href={secondaryCta.href} className="btn btn-outline mt-6">
+                  {secondaryCta.label}
+                  <ArrowRight size={18} aria-hidden="true" />
+                </Link>
+              </Reveal>
+            )}
           </div>
 
           <div className="lg:col-span-5">

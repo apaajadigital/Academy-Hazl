@@ -18,7 +18,9 @@ import {
   TD,
   EmptyState,
   PageHeader,
+  Pagination,
   DashboardLoading,
+  DashboardError,
 } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
@@ -34,6 +36,19 @@ type Payout = {
   processedAt: string | null;
 };
 
+/** Envelope of GET /api/trainer/payouts — `meta` is `PaginationMeta` (api/src/lib/pagination.ts). */
+type PayoutListResponse =
+  | { success: true; data: Payout[]; meta?: { total: number; page: number; limit: number } }
+  | { success: false; error?: { message?: string } };
+
+type PayoutCreateResponse =
+  | { success: true; data: Payout }
+  | { success: false; error?: { message?: string } };
+
+// Mirrors the backend default page size; sent explicitly so the client never
+// depends on the server default staying at 20.
+const PAGE_SIZE = 20;
+
 const STATUS_VARIANT: Record<string, "warning" | "info" | "danger" | "success"> = {
   pending: "warning",
   approved: "info",
@@ -48,25 +63,50 @@ export default function TrainerPayoutPage() {
   const router = useRouter();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  // Bumped after a successful submit to force a refetch even when `page` is
+  // already 1 (a no-op setPage would not re-run the effect).
+  const [reloadKey, setReloadKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState("");
   const [form, setForm] = useState({ amount: "", bankName: "", accountNo: "", accountName: "" });
 
   useEffect(() => {
+    // `cancelled` makes the LAST requested page win: clicking next/prev quickly
+    // fires overlapping requests, and without this an older, slower response
+    // could overwrite the newer page's rows.
+    let cancelled = false;
     (async () => {
       const token = await getValidToken();
       if (!token) { router.replace("/masuk"); return; }
+      setLoading(true);
+      setError("");
       try {
-        const r = await fetch("/api/trainer/payouts", {
+        const r = await fetch(`/api/trainer/payouts?page=${page}&limit=${PAGE_SIZE}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const d = await r.json();
-        if (d.success) setPayouts(d.data);
+        const d = (await r.json()) as PayoutListResponse;
+        if (cancelled) return;
+        if (d.success) {
+          setPayouts(d.data);
+          // Older API builds sent no `meta`; fall back to the row count so the
+          // header never shows a total smaller than what is on screen.
+          setTotal(d.meta?.total ?? d.data.length);
+        } else {
+          setError(d.error?.message ?? "Gagal memuat riwayat penarikan.");
+        }
+      } catch {
+        if (!cancelled) setError("Gagal memuat riwayat penarikan.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, [router]);
+    return () => { cancelled = true; };
+  }, [page, reloadKey, router]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,11 +120,16 @@ export default function TrainerPayoutPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, amount: parseFloat(form.amount) }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as PayoutCreateResponse;
       if (data.success) {
-        setPayouts((prev) => [data.data, ...prev]);
         setForm({ amount: "", bankName: "", accountNo: "", accountName: "" });
         setMsg("Permintaan penarikan berhasil dikirim.");
+        // The list is ordered requestedAt DESC, so a brand-new payout always
+        // lands on page 1. Prepending to the current page would show it in the
+        // wrong slice and desync `total`; jump back to page 1 and refetch so the
+        // trainer actually sees the request they just made.
+        setPage(1);
+        setReloadKey((k) => k + 1);
       } else {
         setMsg(data.error?.message ?? "Gagal mengirim permintaan.");
       }
@@ -151,9 +196,18 @@ export default function TrainerPayoutPage() {
       </Card>
 
       <section className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold text-text-primary">Riwayat Penarikan</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-lg font-bold text-text-primary">Riwayat Penarikan</h2>
+          {!loading && !error && total > 0 && (
+            <p className="text-sm text-text-secondary">
+              Menampilkan {payouts.length} dari {total} penarikan
+            </p>
+          )}
+        </div>
         {loading ? (
           <DashboardLoading />
+        ) : error ? (
+          <DashboardError message={error} onRetry={() => setReloadKey((k) => k + 1)} />
         ) : payouts.length === 0 ? (
           <EmptyState
             icon={Wallet}
@@ -193,6 +247,14 @@ export default function TrainerPayoutPage() {
                 })}
               </TBody>
             </Table>
+
+            {/* Pagination footer — same shape as dashboard/pesanan. */}
+            {totalPages > 1 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-solid border-border-default bg-surface-sunken px-6 py-4">
+                <span className="text-sm text-text-secondary">Halaman {page} dari {totalPages}</span>
+                <Pagination page={page} pageCount={totalPages} onPageChange={setPage} />
+              </div>
+            )}
           </TableContainer>
         )}
       </section>

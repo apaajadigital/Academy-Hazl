@@ -122,6 +122,9 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        # Server-side rewrite target (BL-75/BL-79). Unset falls back to
+        # NEXT_PUBLIC_API_URL, i.e. previous behaviour.
+        API_PROXY_TARGET: ${API_PROXY_TARGET:-}
         NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
         NEXT_PUBLIC_APP_NAME: "Jago Akademi"
     restart: always

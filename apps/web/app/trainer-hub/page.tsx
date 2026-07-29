@@ -4,7 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { BookOpen, Users, CreditCard, Wallet, Clock, CalendarDays } from "lucide-react";
+import {
+  BookOpen,
+  Users,
+  CreditCard,
+  Wallet,
+  Clock,
+  CalendarDays,
+  Banknote,
+  Undo2,
+  ArrowUpRight,
+} from "lucide-react";
 import {
   Badge,
   StatCard,
@@ -20,9 +30,29 @@ type DashboardData = {
   totalEnrollments: number;
   totalRevenue: number;
   netRevenue: number;
+  /**
+   * Balance breakdown (BL-78e). Optional on purpose: this page can be served by
+   * an older API build during a rollout, and these three fields would then be
+   * absent. Treating "absent" as 0 would advertise a wrong balance, so the UI
+   * falls back to the previous layout instead (see `hasBalanceBreakdown`).
+   */
+  refundedRevenue?: number;
+  committedPayouts?: number;
+  availableBalance?: number;
   pendingPayouts: number;
   courses: { id: string; title: string; status: string; price: number; enrollments: number }[];
 };
+
+/**
+ * Rupiah in the exact format the cards below already rendered inline
+ * (`Rp ` + `toLocaleString("id-ID")`). Extracted so the non-finite guard lives
+ * in one place: a missing field on an older API build would otherwise reach
+ * `toLocaleString` as `undefined` and print "Rp NaN" — a bug this dashboard
+ * family has actually shipped before.
+ */
+function rupiah(amount: number | undefined): string {
+  return `Rp ${typeof amount === "number" && Number.isFinite(amount) ? amount.toLocaleString("id-ID") : "0"}`;
+}
 
 export default function TrainerHubPage() {
   const router = useRouter();
@@ -73,11 +103,20 @@ export default function TrainerHubPage() {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
   });
 
+  // BL-78e: `netRevenue` is what the trainer EARNED; `availableBalance` is what
+  // they may actually request. Headlining the former made trainers ask for more
+  // than they had and get a 400 back, which reads like a payment bug. When the
+  // API is new enough the headline KPI becomes the withdrawable figure and the
+  // earnings breakdown moves to its own section below.
+  const hasBalanceBreakdown = typeof data.availableBalance === "number";
+
   const stats: { label: string; value: string | number; icon: LucideIcon; color: string; bg: string }[] = [
     { label: "Total Kursus", value: data.totalCourses, icon: BookOpen, color: "#0077A8", bg: "rgba(0,119,168,0.10)" },
     { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, color: "#7C3AED", bg: "rgba(124,58,237,0.10)" },
-    { label: "Pendapatan Kotor", value: `Rp ${Number.isFinite(data.totalRevenue) ? data.totalRevenue.toLocaleString("id-ID") : "0"}`, icon: CreditCard, color: "#16A34A", bg: "rgba(22,163,74,0.10)" },
-    { label: "Pendapatan Bersih (70%)", value: `Rp ${Number.isFinite(data.netRevenue) ? data.netRevenue.toLocaleString("id-ID") : "0"}`, icon: Wallet, color: "#D97706", bg: "rgba(217,119,6,0.10)" },
+    { label: "Pendapatan Kotor", value: rupiah(data.totalRevenue), icon: CreditCard, color: "#16A34A", bg: "rgba(22,163,74,0.10)" },
+    hasBalanceBreakdown
+      ? { label: "Saldo Bisa Ditarik", value: rupiah(data.availableBalance), icon: Wallet, color: "#D97706", bg: "rgba(217,119,6,0.10)" }
+      : { label: "Pendapatan Bersih (70%)", value: rupiah(data.netRevenue), icon: Wallet, color: "#D97706", bg: "rgba(217,119,6,0.10)" },
   ];
 
   return (
@@ -107,6 +146,46 @@ export default function TrainerHubPage() {
           />
         ))}
       </section>
+
+      {/* ── Rincian Saldo (BL-78e) ── */}
+      {hasBalanceBreakdown && (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-display text-lg font-bold text-text-primary">Rincian Saldo</h2>
+            <Link href="/trainer-hub/payout" className="text-sm font-semibold text-accent-cyan-strong hover:underline">Ajukan penarikan →</Link>
+          </div>
+          <p className="text-sm text-text-secondary">
+            Pendapatan bersih (70% dari penjualan setelah refund) dikurangi penarikan yang sudah
+            diajukan atau dibayar. Jumlah yang bisa Anda ajukan adalah <strong className="font-semibold text-text-primary">Saldo Bisa Ditarik</strong>.
+          </p>
+          <div className="dash-grid">
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-4"
+              label="Pendapatan Bersih (70%)"
+              value={rupiah(data.netRevenue)}
+              icon={Banknote}
+              iconColor="#0077A8"
+              iconBg="rgba(0,119,168,0.10)"
+            />
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-4"
+              label="Sudah Direfund"
+              value={rupiah(data.refundedRevenue)}
+              icon={Undo2}
+              iconColor="#DC2626"
+              iconBg="rgba(220,38,38,0.10)"
+            />
+            <StatCard
+              className="col-span-12 sm:col-span-6 xl:col-span-4"
+              label="Penarikan Terkomit"
+              value={rupiah(data.committedPayouts)}
+              icon={ArrowUpRight}
+              iconColor="#D97706"
+              iconBg="rgba(217,119,6,0.10)"
+            />
+          </div>
+        </section>
+      )}
 
       {/* ── Pending payouts alert ── */}
       {data.pendingPayouts > 0 && (
@@ -144,7 +223,7 @@ export default function TrainerHubPage() {
               <div key={c.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-surface-page">
                 <div>
                   <p className="text-sm font-medium text-text-primary">{c.title}</p>
-                  <p className="mt-1 text-xs text-text-secondary">{c.enrollments} peserta · Rp {Number.isFinite(c.price) ? c.price.toLocaleString("id-ID") : "0"}</p>
+                  <p className="mt-1 text-xs text-text-secondary">{c.enrollments} peserta · {rupiah(c.price)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant={c.status === "published" ? "success" : "neutral"} dot>
