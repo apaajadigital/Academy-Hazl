@@ -37,9 +37,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Replace with auth session check when available
-const IS_LOCKED = true;
-
 export default async function MateriPage({ params }: Props) {
   const { kategori, topik, materi } = await params;
   const category = getCategoryBySlug(kategori);
@@ -57,7 +54,7 @@ export default async function MateriPage({ params }: Props) {
 
             {/* Main: chapter list */}
             <div className="lg:col-span-2">
-              <SubscriptionLock isLocked={IS_LOCKED}>
+              <SubscriptionLock>
                 <VideoChapterList
                   chapters={lesson.chapters}
                   lessonTitle={lesson.title}

@@ -28,9 +28,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Replace with auth session check when available
-const IS_LOCKED = true;
-
 export default async function TopikPage({ params }: Props) {
   const { kategori, topik } = await params;
   const category = getCategoryBySlug(kategori);
@@ -43,7 +40,7 @@ export default async function TopikPage({ params }: Props) {
 
       <section className="py-10">
         <div className="max-w-[1152px] mx-auto px-8">
-          <SubscriptionLock isLocked={IS_LOCKED}>
+          <SubscriptionLock>
             <TopicSearch
               lessons={topic.lessons}
               categorySlug={category.slug}
