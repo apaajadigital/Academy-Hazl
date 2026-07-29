@@ -71,7 +71,7 @@ router.get(
       const { accessToken } = await issueTokens(
         res,
         user,
-        user.roles.map((r) => r.role),
+        user.roles,
         ip,
         ua,
       );

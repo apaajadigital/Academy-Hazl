@@ -10,6 +10,7 @@ import {
   REFRESH_COOKIE,
 } from "../../services/auth/token.js";
 import { env } from "../../config/env.js";
+import { toGlobalRoles, type RoleGrant } from "../../lib/roles.js";
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -26,7 +27,11 @@ export function getIp(req: Request): string {
 export async function issueTokens(
   res: Response,
   user: { id: string; email: string },
-  roles: string[],
+  // Raw `UserRole` rows, not pre-mapped strings: the token must carry the same
+  // global-only role set that `authenticate` derives per request (BL-78b), so the
+  // tenantId has to survive this far. Passing strings dropped it and forced an
+  // `as never` cast that let tenant-scoped grants into a `Role[]` payload.
+  roles: readonly RoleGrant[],
   ip: string,
   userAgent: string,
 ): Promise<{ accessToken: string }> {
@@ -47,7 +52,7 @@ export async function issueTokens(
   const accessToken = signAccessToken({
     sub: user.id,
     email: user.email,
-    roles: roles as never,
+    roles: toGlobalRoles(roles),
   });
 
   res.cookie(REFRESH_COOKIE, rawRefresh, COOKIE_OPTIONS);

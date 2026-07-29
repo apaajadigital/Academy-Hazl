@@ -73,7 +73,7 @@ router.post(
       const { accessToken } = await issueTokens(
         res,
         user,
-        user.roles.map((r) => r.role),
+        user.roles,
         stored.ip ?? "",
         stored.userAgent ?? "",
       );

@@ -1,7 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError, type Role } from "../types/index.js";
+import { AppError } from "../types/index.js";
 import { verifyAccessToken } from "../services/auth/token.js";
 import { prisma } from "../db/prisma.js";
+import { toGlobalRoles, type RoleGrant } from "../lib/roles.js";
+
+// Re-exported so existing importers (and the unit tests that pin this behaviour)
+// keep their entry point while the reducer itself lives in lib/ — see lib/roles.ts
+// for why the token-issuing path needs it too.
+export { toGlobalRoles, type RoleGrant };
 
 export async function authenticate(
   req: Request,
@@ -24,7 +30,9 @@ export async function authenticate(
         email: true,
         isActive: true,
         deletedAt: true,
-        roles: { select: { role: true } },
+        // `tenantId` is required to tell platform-wide grants from tenant-scoped
+        // ones; without it the session cannot distinguish them (see toGlobalRoles).
+        roles: { select: { role: true, tenantId: true } },
       },
     });
 
@@ -35,7 +43,7 @@ export async function authenticate(
     req.user = {
       id: user.id,
       email: user.email,
-      roles: user.roles.map((r) => r.role as Role),
+      roles: toGlobalRoles(user.roles),
     };
 
     next();

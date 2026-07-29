@@ -10,10 +10,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../../src/app.js";
+import { signAccessToken } from "../../src/services/auth/token.js";
 
 vi.mock("../../src/db/prisma.js", () => ({
   prisma: {
-    user: { findUnique: vi.fn(), findMany: vi.fn() },
+    user: { findUnique: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     course: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     review: { findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     blogPost: { findMany: vi.fn(), count: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
@@ -73,6 +74,93 @@ describe("Authorization enforcement — admin-only endpoints", () => {
     const res = await request(app).post("/api/blog/admin/posts")
       .send({ title: "Test", slug: "test", content: "Content" });
     expect([401, 403]).toContain(res.status);
+  });
+});
+
+// ─── BL-78b: tenant-scoped roles must not grant platform-wide admin ───────────
+
+describe("Cross-tenant privilege escalation — /api/admin is global-only", () => {
+  // Real `authenticate` + real `requireAdmin`; only the DB rows differ, which is
+  // exactly the fact under test: where the super_admin grant is scoped.
+  // The token claims super_admin; only the DB grant decides. Signed with the real
+  // signer so `authenticate` runs its genuine verification path.
+  const TOKEN = signAccessToken({
+    sub: "user-9",
+    email: "tenant.admin@test.com",
+    roles: ["super_admin"],
+  });
+  const AUTH = { Authorization: `Bearer ${TOKEN}` };
+
+  const account = (roles: { role: string; tenantId: string | null }[]) => ({
+    id: "user-9",
+    email: "tenant.admin@test.com",
+    isActive: true,
+    deletedAt: null,
+    roles,
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("GET /api/admin/users → 403 when super_admin is scoped to a single tenant", async () => {
+    m.user.findUnique.mockResolvedValue(account([{ role: "super_admin", tenantId: "tenant-1" }]));
+
+    const res = await request(app).get("/api/admin/users").set(AUTH);
+
+    expect(res.status).toBe(403);
+    // The gate must reject before any handler query runs.
+    expect(m.user.findMany).not.toHaveBeenCalled();
+  });
+
+  it("GET /api/admin/users → 200 when super_admin is global (tenantId null)", async () => {
+    m.user.findUnique.mockResolvedValue(account([{ role: "super_admin", tenantId: null }]));
+    m.user.findMany.mockResolvedValue([]);
+    m.user.count.mockResolvedValue(0);
+
+    const res = await request(app).get("/api/admin/users").set(AUTH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+  });
+
+  it("a tenant super_admin also holding a global student role stays a student", async () => {
+    m.user.findUnique.mockResolvedValue(
+      account([
+        { role: "student", tenantId: null },
+        { role: "super_admin", tenantId: "tenant-1" },
+      ]),
+    );
+
+    const res = await request(app).get("/api/admin/users").set(AUTH);
+
+    expect(res.status).toBe(403);
+  });
+
+  // /me is the only role source the web shell trusts (admin/dashboard/trainer-hub
+  // layouts all gate on it). Filtering only `req.user.roles` would leave the API
+  // closed but still render the admin UI, so the reduction has to reach here too.
+  it("GET /api/auth/me hides tenant-scoped grants from the client", async () => {
+    m.user.findUnique
+      .mockResolvedValueOnce(account([{ role: "student", tenantId: null }])) // authenticate
+      .mockResolvedValueOnce({
+        id: "user-9",
+        email: "tenant.admin@test.com",
+        name: "Tenant Admin",
+        avatarUrl: null,
+        isVerified: true,
+        createdAt: new Date("2026-01-01"),
+        roles: [
+          { role: "student", tenantId: null },
+          { role: "super_admin", tenantId: "tenant-1" },
+          { role: "lms_admin", tenantId: "tenant-1" },
+        ],
+        profile: null,
+        subscription: null,
+      });
+
+    const res = await request(app).get("/api/auth/me").set(AUTH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.roles).toEqual([{ role: "student" }]);
   });
 });
 
