@@ -63,10 +63,11 @@ JWT_REFRESH_SECRET=<random-64>
 GOOGLE_CLIENT_ID=<dari Google Cloud Console>
 GOOGLE_CLIENT_SECRET=<...>
 GOOGLE_CALLBACK_URL=https://api.jagoakademi.com/api/auth/google/callback
-# URLs
+# URLs — lihat §3.1 sebelum mengubah; salah nilai = proxy /api/* loop
 WEB_URL=https://jagoakademi.com
-NEXT_PUBLIC_API_URL=https://api.jagoakademi.com
+NEXT_PUBLIC_API_URL=https://api.jagoakademi.com   # origin API dipanggil BROWSER — wajib ≠ origin web
 NEXT_PUBLIC_SITE_URL=https://jagoakademi.com
+# API_PROXY_TARGET=http://api:4000                # opsional; hanya bila API tak terekspos publik (§3.1)
 # Payment (DOKU) — mulai SANDBOX, pindah production saat TASK-030 lolos
 DOKU_CLIENT_ID=<...>
 DOKU_SECRET_KEY=<...>
@@ -86,6 +87,87 @@ NEXT_PUBLIC_MIXPANEL_TOKEN=
 ```
 
 `chmod 600 .env`. Generator rahasia: `openssl rand -base64 48`.
+
+## 3.1 Proxy `/api/*` — dua variabel yang berbeda
+
+`apps/web/next.config.js` mem-proxy `/api/*` ke backend lewat `rewrites()`:
+
+| Variabel | Dipakai siapa | Aturan |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | **Browser** (di-inline ke bundle klien) | Origin API yang bisa dijangkau publik, **≠ origin web** (`NEXT_PUBLIC_SITE_URL`). Untuk topologi ini: `https://api.jagoakademi.com`. |
+| `API_PROXY_TARGET` (opsional) | **Server** Next, hanya untuk rewrite | Origin internal (mis. `http://api:4000` di jaringan compose). **Bukan** `NEXT_PUBLIC_*` → tidak bocor ke bundle klien. Pakai hanya bila API tidak terekspos publik. |
+
+Urutan resolusi: `API_PROXY_TARGET` → `NEXT_PUBLIC_API_URL` → `http://localhost:4000`. Bila
+`API_PROXY_TARGET` tidak di-set, perilakunya **persis sama seperti sebelumnya**.
+
+Topologi runbook ini punya subdomain `api.jagoakademi.com` (server block di `nginx/nginx.conf`),
+jadi `NEXT_PUBLIC_API_URL` sudah cukup dan `API_PROXY_TARGET` **tidak perlu**. Untuk topologi
+`docker-compose.vps.yml` yang **tanpa** subdomain api (`/api/*` dilayani lewat origin web), set
+`API_PROXY_TARGET=http://api:4000` — lihat `RUNBOOK_DEPLOY_RELEASE_JUL2026.md` §0.1.
+`http://127.0.0.1:4010` (port host API) hanya benar bila Next berjalan **langsung di host**, bukan
+di dalam container. Guard membandingkan **origin**, jadi host sama dengan port berbeda diizinkan.
+
+**Guard self-proxy.** Bila target sama dengan origin web, build menolaknya, jatuh ke
+`http://localhost:4000`, dan mencetak `[next.config] /api/* proxy target rejected ...`. Ini mencegah
+loop `nginx → web → rewrite → nginx → …`. Kalau baris itu muncul di log build, env salah.
+
+### ⚠️ Topologi VPS produksi yang SEBENARNYA (diverifikasi 29 Jul 2026 lewat `nginx -T`)
+
+`nginx/nginx.conf` di repo **tidak** mencerminkan nginx yang berjalan di VPS. Jangan menyimpulkan
+routing dari file itu — nginx live adalah **nginx level host** (bukan container; itu sebabnya
+`docker-compose.vps.yml` tak punya service nginx) yang melayani beberapa domain sekaligus:
+
+```
+server_name jagoakademi.com www.jagoakademi.com;
+  location /api/auth/  → proxy_pass http://127.0.0.1:4010;   # container api (4010:4000)
+  location /api/       → proxy_pass http://127.0.0.1:4010;   # container api
+  location /           → proxy_pass http://127.0.0.1:3010;   # container web (3010:3000)
+```
+
+Implikasi yang penting dipahami sebelum menyalahkan konfigurasi proxy:
+
+- `/api/*` dari browser **dicegat nginx** dan diteruskan langsung ke container api. Request itu
+  **tidak pernah** sampai ke container web, jadi **rewrite Next tidak berada di jalur trafik browser**
+  pada deployment ini. `API_PROXY_TARGET` bersifat defensif (benar untuk topologi lain, dan menahan
+  salah-konfigurasi), bukan penentu routing di sini.
+- Karena itu `NEXT_PUBLIC_API_URL=https://jagoakademi.com` **benar** untuk VPS ini meskipun sama
+  dengan origin web — nginx yang memisahkan `/api/` dari `/`. Aturan "harus ≠ origin web" di tabel
+  di atas berlaku untuk topologi yang mengandalkan rewrite Next, bukan yang ini.
+- Verifikasi kesehatan jalur internal: `docker compose -f docker-compose.vps.yml exec -T web
+  wget -qO- http://api:4000/api/health` → harus `{"status":"healthy",...}`.
+
+> ### ⚠️ `rewrites()` di-bake saat BUILD
+> Untuk output standalone Next.js, target proxy menjadi literal di `.next/routes-manifest.json`.
+> **Mengubah `environment:` di compose lalu `restart` TIDAK memindahkan target proxy.** Wajib rebuild:
+> ```bash
+> docker compose -f docker-compose.prod.yml build --no-cache web
+> docker compose -f docker-compose.prod.yml up -d --force-recreate web
+> ```
+> **Jangan** pakai `--remove-orphans` di VPS ini — nginx berjalan sebagai orphan container dan akan ikut terhapus.
+
+**Wiring build-arg — SUDAH ada di repo**, tidak perlu tindakan manual. `API_PROXY_TARGET` sudah
+terpasang sebagai `ARG` di `apps/web/Dockerfile`, sebagai `build.args` di `docker-compose.prod.yml`
+dan `docker-compose.vps.yml`, dan sebagai `build-args` di `.github/workflows/deploy.yml`. Ini perlu
+karena entri `environment:` compose hanya berlaku saat **runtime**, sedangkan target rewrite
+di-resolve saat **build** — tanpa build-arg, nilai di `.env` tidak akan pernah sampai ke sana.
+
+Yang tersisa hanyalah menetapkan nilainya:
+- **Compose**: set `API_PROXY_TARGET` di `/var/www/jago-akademi/.env` (dibaca `${API_PROXY_TARGET:-}`).
+- **CI**: set repository variable `API_PROXY_TARGET` di GitHub → Settings → Variables.
+
+Bila tidak di-set, nilainya kosong dan resolusi jatuh ke `NEXT_PUBLIC_API_URL` — perilaku identik
+dengan sebelum variabel ini ada.
+
+Terverifikasi lewat build sungguhan (nilai yang ter-bake di `.next/routes-manifest.json`):
+
+| `API_PROXY_TARGET` | `NEXT_PUBLIC_API_URL` | `destination` hasil build |
+|---|---|---|
+| `http://api:4000` | `https://jagoakademi.com` (= origin web) | `http://api:4000/api/:path*` — override menang, loop dihindari |
+| *(kosong)* | `https://api.jagoakademi.com` | `https://api.jagoakademi.com/api/:path*` |
+| *(kosong)* | *(kosong / = origin web)* | `http://localhost:4000/api/:path*` + peringatan build |
+
+Origin internal tidak bocor ke klien: build dengan `API_PROXY_TARGET=http://api:4000` menghasilkan
+**0 file** di `.next/static` yang memuat `api:4000`, sementara origin publik muncul di 16 file.
 
 ## 4. 🖐️ SSL (Let's Encrypt)
 
