@@ -1,22 +1,81 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
+import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { validateBody } from "../../middleware/validateBody.js";
 import { prisma } from "../../db/prisma.js";
+import { enqueueSearchIndex } from "../../jobs/queues.js";
+import { logger } from "../../lib/logger.js";
 import { AppError, successResponse } from "../../types/index.js";
 
 const router = Router();
+
+/**
+ * Whitelisted `field:direction` sort keys. An unknown value must 400 — the same
+ * enum-boundary rule as BL-47/BL-52 in routes/courses.ts — instead of being
+ * dropped by non-strict Zod. A silently ignored `sort` is exactly how the admin
+ * dashboard's "Kursus Terpopuler" widget ended up rendering the five NEWEST
+ * courses under a headline promising the most-enrolled ones.
+ */
+const COURSE_SORT = {
+  "createdAt:desc": { createdAt: "desc" },
+  "createdAt:asc": { createdAt: "asc" },
+  "totalEnrolled:desc": { totalEnrolled: "desc" },
+  "totalEnrolled:asc": { totalEnrolled: "asc" },
+  "avgRating:desc": { avgRating: "desc" },
+  "publishedAt:desc": { publishedAt: "desc" },
+} satisfies Record<string, Prisma.CourseOrderByWithRelationInput>;
+
+type CourseSort = keyof typeof COURSE_SORT;
+const COURSE_SORT_KEYS = Object.keys(COURSE_SORT) as [CourseSort, ...CourseSort[]];
 
 const CourseListSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.enum(["draft", "pending", "published", "rejected", "archived"]).optional(),
   search: z.string().optional(),
+  sort: z.enum(COURSE_SORT_KEYS).default("createdAt:desc"),
 });
+
+/**
+ * Push one course into the search index after an admin write.
+ *
+ * Mirrors services/course/courseService.ts (same re-fetch shape, same
+ * `enqueueSearchIndex` producer) so the two publish paths cannot drift: the
+ * admin UI only ever calls `PATCH /api/admin/courses/:id`, and that path never
+ * touched the index — so a course published from the panel stayed invisible to
+ * search forever while the index drifted permanently from the DB.
+ *
+ * Degrade-safe by design: the DB write has already committed when this runs, so
+ * an indexing failure is logged and swallowed rather than turned into a 500 that
+ * would tell the admin their publish failed when it did not.
+ */
+async function syncCourseSearchIndex(courseId: string): Promise<void> {
+  try {
+    const course = await prisma.course.findUniqueOrThrow({
+      where: { id: courseId },
+      include: { category: { select: { name: true, slug: true } } },
+    });
+    await enqueueSearchIndex({
+      type: "index-course",
+      course: {
+        ...course,
+        price: course.price.toString(),
+        avgRating: course.avgRating.toString(),
+        categoryName: course.category?.name,
+      },
+    });
+  } catch (err) {
+    logger.warn("admin course search index sync failed (best-effort)", {
+      courseId,
+      err: String(err),
+    });
+  }
+}
 
 // GET /api/admin/courses — course list for admin
 router.get("/courses", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { page, limit, status, search } = CourseListSchema.parse(req.query);
+    const { page, limit, status, search, sort } = CourseListSchema.parse(req.query);
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = {};
@@ -33,7 +92,7 @@ router.get("/courses", async (req: Request, res: Response, next: NextFunction) =
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: COURSE_SORT[sort],
         select: {
           id: true,
           title: true,
@@ -156,6 +215,11 @@ router.patch("/courses/:id", validateBody(AdminCourseUpdateSchema), async (req: 
         onboardingContact: true,
       },
     });
+
+    // Keep Meilisearch in step with the write that just committed — see
+    // syncCourseSearchIndex. Awaited so a same-process inline index (no Redis)
+    // has run before the admin's UI refetches the list.
+    await syncCourseSearchIndex(req.params.id as string);
 
     res.json(successResponse(updated));
   } catch (err) {

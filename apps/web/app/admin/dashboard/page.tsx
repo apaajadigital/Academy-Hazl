@@ -117,7 +117,12 @@ export default function AdminDashboardPage() {
 
       Promise.all([
         fetch("/api/admin/stats", { headers: h }).then((r) => r.json()),
-        fetch("/api/admin/orders?limit=6&sort=createdAt:desc", { headers: h }).then((r) => r.json()),
+        // No `sort` param: GET /api/admin/orders takes none and already orders
+        // by createdAt desc. Sending one that the API drops silently is how the
+        // "Terpopuler" widget below shipped mis-sorted for so long.
+        fetch("/api/admin/orders?limit=6", { headers: h }).then((r) => r.json()),
+        // `sort` is a real, enum-validated parameter on GET /api/admin/courses
+        // (api/src/modules/admin/courses.ts) — an unknown value now 400s.
         fetch("/api/admin/courses?limit=5&sort=totalEnrolled:desc", { headers: h }).then((r) => r.json()),
         fetch("/api/admin/leads?status=new&limit=1", { headers: h }).then((r) => r.json()),
       ])

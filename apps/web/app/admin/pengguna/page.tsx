@@ -21,6 +21,7 @@ import {
   FilterBar,
   TableActionButton,
   DashboardLoading,
+  DashboardError,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,17 @@ type User = {
   _count?: { enrollments: number };
 };
 
+/**
+ * Envelope of GET /api/admin/users (api/src/modules/admin/users.ts): `data` is a
+ * FLAT array and the page info lives in `meta` (PaginationMeta). Reading
+ * `data.total` — as this page used to — yields `undefined`, so the header showed
+ * "0 pengguna terdaftar" and `totalPages` collapsed to 0, hiding the pagination
+ * block entirely and stranding every admin on the 10 most recent users.
+ */
+type UserListResponse =
+  | { success: true; data: User[]; meta?: { total: number; page: number; limit: number } }
+  | { success: false; error?: { message?: string } };
+
 
 // Lumina role chips — tinted, uppercase micro-label per role.
 const ROLES_COLOR: Record<string, string> = {
@@ -47,15 +59,23 @@ const ROLES_COLOR: Record<string, string> = {
   student: "bg-teal-50 text-teal-700",
 };
 
+const PAGE_SIZE = 10;
+
 export default function AdminPenggunaPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  // `search` is the input value; `appliedSearch` is what the last submit asked
+  // for. Only the latter drives the fetch, so typing does not refetch per keystroke.
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [selectedRole, setSelectedRole] = useState("all");
   const [exporting, setExporting] = useState(false);
-  const limit = 10;
+  // Bumped to force a refetch when the query itself did not change (re-submitting
+  // the same search, or reloading after a verify toggle).
+  const [reloadKey, setReloadKey] = useState(0);
 
   async function handleExportCSV() {
     const token = getToken();
@@ -82,35 +102,56 @@ export default function AdminPenggunaPage() {
     }
   }
 
-  function loadUsers() {
+  useEffect(() => {
+    // `cancelled` makes the LAST requested page win: clicking next/prev quickly
+    // fires overlapping requests, and without this an older, slower response
+    // could overwrite the newer page's rows. Same guard as trainer-hub/payout.
+    let cancelled = false;
     const token = getToken();
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
     const params = new URLSearchParams({
       page: String(page),
-      limit: String(limit),
-      ...(search ? { search } : {}),
+      limit: String(PAGE_SIZE),
+      ...(appliedSearch ? { search: appliedSearch } : {}),
       ...(selectedRole !== "all" ? { role: selectedRole } : {}),
     });
 
     setLoading(true);
-    fetch(`/api/admin/users?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body.success) {
-          setUsers(body.data?.users ?? body.data ?? []);
-          setTotal(body.data?.total ?? 0);
+    setError("");
+    (async () => {
+      try {
+        const r = await fetch(`/api/admin/users?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = (await r.json()) as UserListResponse;
+        if (cancelled) return;
+        if (d.success) {
+          setUsers(d.data);
+          // Older API builds sent no `meta`; fall back to the row count so the
+          // header never shows a total smaller than what is on screen.
+          setTotal(d.meta?.total ?? d.data.length);
+        } else {
+          setError(d.error?.message ?? "Gagal memuat daftar pengguna.");
         }
-      })
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => { loadUsers(); }, [page, selectedRole]); // eslint-disable-line
+      } catch {
+        if (!cancelled) setError("Gagal memuat daftar pengguna.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [page, selectedRole, appliedSearch, reloadKey]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     setPage(1);
-    loadUsers();
+    setAppliedSearch(search);
+    // Re-submitting the same term leaves both deps unchanged, so nudge the key.
+    setReloadKey((k) => k + 1);
   }
 
   function toggleVerify(userId: string, current: boolean) {
@@ -120,10 +161,10 @@ export default function AdminPenggunaPage() {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ isVerified: !current }),
-    }).then(() => loadUsers());
+    }).then(() => setReloadKey((k) => k + 1));
   }
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="dash-container flex flex-col gap-6">
@@ -171,6 +212,10 @@ export default function AdminPenggunaPage() {
       {/* Table */}
       {loading ? (
         <DashboardLoading />
+      ) : error ? (
+        // Without this a failed request rendered the empty state, which reads as
+        // "there are no users" — a very different claim from "we could not load".
+        <DashboardError message={error} onRetry={() => setReloadKey((k) => k + 1)} />
       ) : users.length === 0 ? (
         <EmptyState icon={Users} title="Tidak ada pengguna ditemukan" description="Coba ubah kata kunci pencarian atau filter role." />
       ) : (

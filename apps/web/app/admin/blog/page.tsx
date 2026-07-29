@@ -46,35 +46,57 @@ const STATUS_MAP: Record<string, { label: string; variant: BadgeProps["variant"]
 };
 
 
+/**
+ * `GET /api/admin/blog` answers `successResponse(posts, { total, page, limit })`:
+ * `data` is a FLAT array and the page info lives in `meta`. Reading
+ * `data.total` yielded undefined -> total 0 -> totalPages 0, so the header read
+ * "0 artikel" and the pager never rendered — page 2 was unreachable. Same defect
+ * as /admin/pengguna and /admin/transaksi; fixed together.
+ */
+type BlogListResponse = {
+  success: boolean;
+  data: BlogPost[];
+  meta?: { total: number; page: number; limit: number };
+};
+
+const PAGE_SIZE = 10;
+
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  // Submit-time value, so typing does not refetch and the effect can depend on
+  // it honestly instead of being silenced with an eslint-disable.
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const limit = 10;
+  const [reloadKey, setReloadKey] = useState(0);
 
-  function loadPosts() {
+  useEffect(() => {
     const token = getToken();
     if (!token) return;
+    let cancelled = false;
     const params = new URLSearchParams({
-      page: String(page), limit: String(limit),
-      ...(search ? { search } : {}),
+      page: String(page), limit: String(PAGE_SIZE),
+      ...(appliedSearch ? { search: appliedSearch } : {}),
       ...(statusFilter !== "all" ? { status: statusFilter } : {}),
     });
     setLoading(true);
     fetch(`/api/admin/blog?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<BlogListResponse>)
       .then((body) => {
-        if (body.success) { setPosts(body.data?.posts ?? body.data ?? []); setTotal(body.data?.total ?? 0); }
+        // Guard against a slow response from an abandoned page overwriting a newer one.
+        if (cancelled || !body.success) return;
+        const list = Array.isArray(body.data) ? body.data : [];
+        setPosts(list);
+        setTotal(body.meta?.total ?? list.length);
       })
-      .finally(() => setLoading(false));
-  }
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [page, statusFilter, appliedSearch, reloadKey]);
 
-  useEffect(() => { loadPosts(); }, [page, statusFilter]); // eslint-disable-line
-
-  function handleSearch(e: React.FormEvent) { e.preventDefault(); setPage(1); loadPosts(); }
+  function handleSearch(e: React.FormEvent) { e.preventDefault(); setPage(1); setAppliedSearch(search); }
 
   async function updateStatus(id: string, status: string) {
     const token = getToken();
@@ -84,10 +106,10 @@ export default function AdminBlogPage() {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    loadPosts();
+    setReloadKey((k) => k + 1);
   }
 
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="dash-container flex flex-col gap-6">
