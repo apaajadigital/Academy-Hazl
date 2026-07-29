@@ -8,8 +8,8 @@
 
 | Aspect | State |
 |--------|-------|
-| Marketplace page | `apps/web/app/(public)/marketplace/page.tsx` — `<ComingSoon>` placeholder, gated by `features.marketplace` (OFF) |
-| Nav/footer links | Already point at `/marketplace` (`Navbar.tsx:20`, `Footer.tsx:10`) |
+| Marketplace page | `apps/web/app/(public)/marketplace/page.tsx` — **live, bukan placeholder** (bukan `<ComingSoon>`, tidak ter-gate flag). Menarik data nyata dari `GET /api/ebooks` dan menjual e-book asli; kartu produk menaut ke `/ebook/{slug}`. **Facade di atas domain E-Book**, bukan unit bisnis mandiri. Flag `features.marketplace` sudah dihapus (29 Jul 2026) karena tak pernah dibaca kode mana pun (dead flag). |
+| Nav/footer links | Already point at `/marketplace` (`Navbar.tsx:41-42`, `Footer.tsx:14`), plus homepage `CategoryGrid` & `sitemap.ts` |
 | Commerce core | ✅ **Strong.** `Order`, `OrderItem` (polymorphic `itemType`/`itemId`), `PaymentTransaction`, `Coupon`, `Refund`, `AffiliateCommission`, `TrainerPayout` all exist |
 | Checkout | ✅ `routes/checkout.ts` creates Order+OrderItem, validates coupon, calls DOKU — but `itemType` hardcoded `["course","ebook","event"]` |
 | Payment gateway | ✅ `services/payment/dokuService.ts` (HMAC-SHA256, constant-time webhook verify) |
@@ -112,7 +112,7 @@ Digital entitlement after purchase reuses the existing fulfillment pattern (a pu
 1. **`042a` — Schema + migration + moderation states.** All models above; hand-written migration (no local Postgres — `migrate deploy` host-gated). Seed a few marketplace categories. Adds `MarketplaceProduct.status` state machine. *Blast radius: DB only. Non-breaking.*
 2. **`042b` — Core API (`modules/marketplace/`) + `itemType` extension.** Catalog (`GET /api/marketplace/products` with search/category/filter/sort + pagination), product detail, seller CRUD (own products), wishlist, purchased-user reviews. Extend `OrderItem.itemType` with `marketplace_item` + fulfillment handler in `webhooks.ts` (F4). Multi-line **cart** API. Reuse `successResponse`/Zod/`authenticate`. *Split into sub-routers to stay < 400 lines.*
 3. **`042c` — R2 signed upload (BLOCKED on TASK-098).** Presigned PUT for creator files, `fileKey` wiring, signed GET for entitled buyers, virus/type/size guard. Ships only after R2 verified; until then products are `external_link` type.
-4. **`042d` — Buyer UI.** Replace `ComingSoon`: catalog grid + filters, product detail, cart, checkout (reuse existing checkout flow), library/downloads, reviews. Editorial design system + honest empty states. Gate behind `features.marketplace`.
+4. **`042d` — Buyer UI.** Replace `ComingSoon`: catalog grid + filters, product detail, cart, checkout (reuse existing checkout flow), library/downloads, reviews. Editorial design system + honest empty states. **Catatan 29 Jul 2026:** flag `features.marketplace` sudah DIHAPUS (dead flag — nol call site sementara halamannya tayang penuh). Bila 042d butuh gating, deklarasikan ulang flag-nya **bersamaan** dengan call site-nya, jangan mengandalkan yang lama.
 5. **`042e` — Seller dashboard + payout.** Seller onboarding (`SellerPayoutAccount`), product management, sales/earnings view, revenue-share calc → `TrainerPayout`. Payout execution is human-gated (money).
 6. **`042f` — Admin moderation.** Review queue (`pending_review` → publish/reject/suspend), report handling, category management, take-down. Audit-logged (`writeAudit`).
 

@@ -17,6 +17,11 @@ Audit menemukan bahwa "Trainer Program" sebenarnya **dua route terpisah yang tid
 Keputusan owner (29 Jul 2026): halaman `/trainer-program` **tetap live** dan menerima lead. Flag
 `trainerProgram` yang yatim dihapus, badge "Segera hadir" di homepage dihapus.
 
+> Atribusi (koreksi 29 Jul 2026): penghapusan flag `trainerProgram`/`lmsLanding` dan badge
+> "Segera hadir" sebenarnya masuk lewat commit `7a654fa` (sesi LMS/orphan-route), bukan sesi
+> trainer ini — dua sesi paralel sempat sama-sama mengklaimnya. Keputusan owner di atas tetap
+> berlaku; hanya pelaksananya yang dikoreksi agar `git log` dan dokumen ini tidak bertentangan.
+
 ## 2. Ringkasan perubahan
 
 **Keamanan (P0)**

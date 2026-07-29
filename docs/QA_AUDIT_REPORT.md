@@ -66,7 +66,7 @@ Secara fondasi teknis situs **sehat**: CSS/styling sudah pulih (regresi BL-35 te
 | F-01 | Homepage load & render | ❌ Fail | Hero kosong (C-1) |
 | F-02 | Navbar links tampil | ✅ Pass | E-Course/Event/Produk/Blog/Tentang/Kolaborasi/Masuk/Mulai |
 | F-03 | Redirect `/kursus`→`/e-course` | ✅ Pass | 308 permanen |
-| F-04 | Gating fitur belum-jadi | ✅ Pass | "SEGERA HADIR" pada Trainer & Marketplace |
+| F-04 | Gating fitur belum-jadi | ✅ Pass | ⚠️ **Usang (diperbarui 29 Jul 2026)**: saat audit tertulis "SEGERA HADIR" pada Trainer & Marketplace. Kini **tidak berlaku untuk keduanya** — badge "Segera hadir" di homepage `CategoryGrid` sudah dihapus karena kontradiktif: `/trainer-program` live & menerima lead, `/marketplace` live & menjual e-book nyata (`GET /api/ebooks`). Catatan: `/marketplace` masih facade di atas domain E-Book (backend marketplace = TASK-042, Phase 6). |
 | F-05 | Halaman /masuk render | ✅ Pass | Form email+password+Google OAuth |
 | F-06 | Link /daftar, /lupa password | ⚠️ Partial | Ada di UI; alur belum diuji ber-submit |
 | F-07 | Data fiktif dihapus | ✅ Pass | Render nyata memakai konten jujur (fetch lama = cache basi) |

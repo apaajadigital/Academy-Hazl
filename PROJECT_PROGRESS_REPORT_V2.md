@@ -209,6 +209,7 @@ Perbedaan ~30 poin inilah *seluruh pekerjaan tersisa*. Blueprint ini mengubah 30
 #### GAP-10 · Marketplace Materi (unit bisnis ke-6) belum ada (INC-06)
 - **Penyebab:** Belum digarap; scope C2C/hak cipta kompleks.
 - **Dampak:** 1 dari 6 revenue stream hilang.
+- **Koreksi faktual (29 Jul 2026):** Route `/marketplace` **sudah live** (`apps/web/app/(public)/marketplace/page.tsx`, bukan placeholder/`<ComingSoon>`), menarik data nyata dari `GET /api/ebooks` dan menjual e-book asli (kartu → `/ebook/{slug}`); ditautkan dari Navbar, Footer, homepage `CategoryGrid`, dan `sitemap.ts`. **Backend marketplace tetap nol** (tidak ada route/service di `apps/api`, tidak ada model Prisma `MarketplaceProduct`/`Bundle`/`Package`/`Cart`) → halaman ini **facade di atas domain E-Book, bukan unit bisnis ke-6**. Gap ini karena itu **tetap terbuka**; keputusan penundaan di bawah **tidak berubah**.
 - **Keputusan V2 (stakeholder):** **DITUNDA ke pasca Soft Launch** (Phase 6). Stabilkan 5 unit dulu. Ini bukan pembatalan; masuk roadmap resmi setelah 10B stabil.
 - **Solusi saat digarap:** Prisma model (`MarketplaceItem`, `MarketplaceOrder`, `CreatorPayout`), `/api/marketplace/*`, R2 storage + signed URL, moderasi, revenue-share ke creator (reuse pola affiliate/trainer payout).
 - **Prioritas:** 🟡 P2 (post-launch) · **Dependency:** R2 verified, payout engine · **Effort:** XL (pecah).
@@ -300,7 +301,7 @@ Audit langsung terhadap situs produksi (`https://jagoakademi.com`) setelah deplo
 | ID | Temuan | Severity | Bukti | Task |
 |----|--------|----------|-------|------|
 | **GAP-24** | **Data fiktif tayang di production** — statistik ("50K+ Pelajar", "2.000+ berlangganan/minggu", "98% Lulus"), testimoni bernama di perusahaan riil (Rizky Pratama·Tokopedia, Sari Dewi·Astra, dll), leaderboard XP palsu, kursus contoh karangan. Project pra-launch, ~0 user nyata → menyesatkan + risiko hukum/PDP. | 🔴 Blocker | `/`, `/e-course` | TASK-052 |
-| **GAP-25** | **Link ke fitur belum jadi tayang** — `/marketplace` (label "Baru"), `/lms`, `/trainer-program` tampil kosong; ditautkan di nav/footer/home. | 🔴 High | fetch blank | TASK-053 |
+| **GAP-25** | **Link ke fitur belum jadi tayang** — `/marketplace` (label "Baru"), `/lms`, `/trainer-program` tampil kosong; ditautkan di nav/footer/home. **Update 29 Jul 2026:** `/marketplace` **tidak lagi kosong** — halaman live menjual e-book nyata via `GET /api/ebooks` (kartu → `/ebook/{slug}`), badge "Segera hadir" di `CategoryGrid` dihapus, dan flag mati `features.marketplace` (tak pernah dibaca kode) dihapus dari `apps/web/lib/features.ts`. Yang tersisa: **backend marketplace tetap nol** → halaman = facade di atas domain E-Book (lihat GAP-10). | 🔴 High | fetch blank | TASK-053 |
 | **GAP-26** | **Marketing mendahului fitur** — `/e-course` mengiklankan Learning Path, XP/Leaderboard (gamifikasi — di luar blueprint), Komunitas Lifetime, Berlangganan all-access; semuanya EPIC 7 yang **belum dibangun**. | 🟡 Medium | `/e-course` | TASK-054 |
 | **GAP-27** | **Halaman auth perlu verifikasi** — `/masuk` & `/daftar` tampil kosong via fetch tanpa JS; wajib dipastikan berfungsi (fungsi inti). | 🔴 High | fetch blank | TASK-055 |
 
@@ -539,7 +540,7 @@ graph TD
 
 | Ditunda | Ke Fase | Alasan Teknis |
 |---------|---------|---------------|
-| Marketplace Materi (unit-6) | Phase 6 (post-launch) | Butuh R2 verified + payout engine matang + moderasi; kompleks & bukan penghalang launch 5 unit. Keputusan stakeholder. |
+| Marketplace Materi (unit-6) | Phase 6 (post-launch) | Butuh R2 verified + payout engine matang + moderasi; kompleks & bukan penghalang launch 5 unit. Keputusan stakeholder. **Tetap berlaku** — catatan 29 Jul 2026: route `/marketplace` sudah live tetapi hanya **facade e-book** (nol backend marketplace); **TASK-042 belum dikerjakan** dan tetap blocked oleh TASK-098 (Cloudflare R2 / BL-32). |
 | AI features (recommendation, chatbot, adaptive) | M15+ | Butuh data perilaku (event tracking) matang dulu; ROI rendah pra-launch. |
 | Mobile App (React Native) | M15 | Web dulu harus stabil & ter-instrumentasi. |
 | Kubernetes, sharding, read replica, CDN expansion | Fase skala (M13+) | Compose cukup untuk trafik launch; optimasi prematur = biaya sia-sia. |
@@ -994,7 +995,7 @@ Phase 1 STABILIZE ─→ Phase 2 QUALITY GATE ─→ Phase 3 INFRA & PLATFORM �
 - **Dependency:** TASK-011 · **Priority:** 🔴 P1 · **Complexity:** Rendah · **Effort:** S–M
 - **Files create:** `apps/web/lib/features.ts` (atau env `NEXT_PUBLIC_FEATURE_*`), halaman "Segera Hadir" reusable. **Files modify:** `components/layout/{Navbar,Footer}.tsx`, `app/page.tsx` (kartu unit bisnis). **Modules:** web (navigasi).
 - **Langkah Implementasi (Steps):**
-  1. Buat flag default OFF: `marketplace`, `lms_landing`, `trainer_program_landing`, dan fitur EPIC 7 yang belum ada.
+  1. ~~Buat flag default OFF: `marketplace`, `lms_landing`, `trainer_program_landing`, dan fitur EPIC 7 yang belum ada.~~ **SUPERSEDED (29 Jul 2026, commit `7a654fa`)**: ketiga flag ini dibuat lalu **dihapus kembali** karena `/marketplace`, `/clients`, dan `/trainer-program` semuanya tayang dengan konten nyata dan menerima lead/order — menggerbanginya di balik flag default-OFF akan mematikan funnel publik. Flag hanya dipertahankan untuk halaman yang benar-benar belum berisi (lihat `apps/web/lib/features.ts` + BL-86). Flag EPIC 7 tetap sesuai langkah ini.
   2. Sembunyikan/disable link ke `/marketplace` (hapus label "Baru"), `/lms`, `/trainer-program`, `/afiliasi`, `/demo`, `/kolaborasi`, `/klien`, `/event-sebelumnya`, `/faq`, `/hubungi-kami` bila halaman belum berisi.
   3. Untuk route yang tetap perlu diakses tapi belum berisi → halaman "Segera Hadir" rapi (bukan blank) atau `not-found`.
 - **Acceptance Criteria:** Tidak ada link publik menuju halaman kosong; semua tautan nav/footer/home mengarah ke halaman berisi atau "Segera Hadir".

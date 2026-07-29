@@ -145,6 +145,8 @@ ESLint v9 butuh `eslint.config.js` (flat config). App `apps/api` tidak memilikin
 | OneSignal (INC-03) | ghost | Tidak ada di `src/` | ✅ [V] ghost |
 | Marketplace (INC-06) | ghost | Tidak ada route/halaman | ✅ [V] ghost |
 
+> **Pembaruan 29 Jul 2026 (baris Marketplace/INC-06):** baris di atas adalah kondisi baseline saat TASK-000 dan **tidak dihapus** (dokumen historis). Kondisi sekarang: `/marketplace` **sudah ada dan live** — `apps/web/app/(public)/marketplace/page.tsx` bukan placeholder, menarik data nyata dari `GET /api/ebooks` dan menjual e-book asli (kartu menaut ke `/ebook/{slug}`); ditautkan dari Navbar, Footer, homepage `CategoryGrid`, dan `sitemap.ts`. Namun **backend marketplace tetap nol** — tidak ada route/service di `apps/api` dan tidak ada model Prisma (`MarketplaceProduct`/`Bundle`/`Package`/`Cart`). Jadi status akuratnya: **facade di atas domain E-Book, bukan unit bisnis mandiri** (bukan lagi "ghost", tapi juga belum unit-6). Backend marketplace sesungguhnya = **TASK-042, belum dikerjakan, tetap Phase 6**, masih blocked oleh TASK-098 (Cloudflare R2 / BL-32).
+
 ---
 
 ## 7. Implikasi untuk Roadmap
