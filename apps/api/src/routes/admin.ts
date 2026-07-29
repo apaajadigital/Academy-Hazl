@@ -1,6 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from "express";
 import { authenticate } from "../middleware/authenticate.js";
-import { AppError } from "../types/index.js";
+import { AppError, type Role } from "../types/index.js";
 import statsRouter from "../modules/admin/stats.js";
 import usersRouter from "../modules/admin/users.js";
 import coursesRouter from "../modules/admin/courses.js";
@@ -24,10 +24,29 @@ import systemHealthRouter from "../modules/admin/system-health.js";
  */
 const router = Router();
 
+/**
+ * Role check against the authenticated user, typed against `Role`.
+ *
+ * The previous `roles.includes("super_admin" as never)` compiled the gate for
+ * EVERY /api/admin route with the compiler switched off: rename or misspell the
+ * role and the cast silently accepts it, producing a guard that can never match
+ * — with no build error to notice. `readonly Role[]` makes an unknown role name
+ * a compile failure. (Same shape as `hasAnyRole` in routes/trainer.ts; it is
+ * re-stated locally rather than imported because that helper is private to the
+ * trainer router.)
+ */
+function hasAnyRole(req: Request, allowed: readonly Role[]): boolean {
+  const roles: readonly Role[] = req.user?.roles ?? [];
+  return allowed.some((role) => roles.includes(role));
+}
+
+const ADMIN_ROLES: readonly Role[] = ["super_admin"];
+
 // All admin routes require authentication + super_admin role
 function requireAdmin(req: Request, _res: Response, next: NextFunction) {
-  const isAdmin = req.user?.roles.includes("super_admin" as never);
-  if (!isAdmin) return next(new AppError(403, "Akses ditolak. Hanya super admin."));
+  if (!hasAnyRole(req, ADMIN_ROLES)) {
+    return next(new AppError(403, "Akses ditolak. Hanya super admin."));
+  }
   next();
 }
 

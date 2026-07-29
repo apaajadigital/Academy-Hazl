@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validateBody } from "../../middleware/validateBody.js";
 import { prisma } from "../../db/prisma.js";
 import { AppError, successResponse } from "../../types/index.js";
+import { processTrainerPayout } from "../../services/payout/trainerPayoutService.js";
 
 const router = Router();
 
@@ -95,30 +96,21 @@ const PayoutUpdateSchema = z.object({
 router.patch("/payouts/trainer/:id", validateBody(PayoutUpdateSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    // Express types route params as possibly-undefined; narrow instead of
+    // casting so the service keeps a non-optional id in its contract.
+    if (!id) throw new AppError(400, "Payout ID tidak valid.");
     const { status, note } = req.body as z.infer<typeof PayoutUpdateSchema>;
 
-    const existing = await prisma.trainerPayout.findUnique({ where: { id } });
-    if (!existing) throw new AppError(404, "Payout tidak ditemukan.");
-
-    // C2: only a still-pending payout may be processed. The `status: "pending"`
-    // predicate makes the transition atomic, so two concurrent PATCHes cannot
-    // both mark the same payout approved/paid (double processing).
-    const guarded = await prisma.trainerPayout.updateMany({
-      where: { id, status: "pending" },
-      data: {
-        status,
-        note: note ?? null,
-        processedAt: new Date(),
-        processedBy: req.user!.id,
-      },
-    });
-    if (guarded.count === 0) throw new AppError(409, "Payout sudah diproses.");
-
-    const updated = await prisma.trainerPayout.findUnique({
-      where: { id },
-      include: {
-        trainer: { select: { id: true, name: true, email: true } },
-      },
+    // BL-78d: the C2 pending-guard, the 404/409 classification and the re-read
+    // all live in the service, shared with PATCH /api/trainer/payouts/:payoutId
+    // — the two flows used to be byte-for-byte copies that could drift apart.
+    // `includeTrainer` keeps this response's `trainer` relation intact.
+    const updated = await processTrainerPayout({
+      payoutId: id,
+      status,
+      note,
+      processedBy: req.user!.id,
+      includeTrainer: true,
     });
 
     res.json(successResponse(updated));

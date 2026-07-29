@@ -336,6 +336,11 @@ model OrderItem {
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  // Hot path (BL-98): ownership/purchase lookups filter on (itemType, itemId) —
+  // routes/ebooks.ts "my library" + the download gate, and the admin delete guard
+  // in modules/admin/ebooks.ts. Only orderId was indexed, so each of those had to
+  // scan every order line on the platform.
+  @@index([itemType, itemId])
   @@map("order_items")
 }
 
@@ -723,6 +728,11 @@ model Refund {
 
   user User @relation(fields: [userId], references: [id])
 
+  // Hot path (F2): the trainer balance aggregate joins refunds by status to find
+  // approved refunds that still sit on a "paid" order. Without this the only
+  // usable index is the orderId unique key, so the status filter forced a
+  // sequential scan over every refund on the platform.
+  @@index([status])
   @@map("refunds")
 }
 
@@ -743,6 +753,11 @@ model TrainerPayout {
 
   trainer User @relation(fields: [trainerId], references: [id])
 
+  // Hot paths: every trainer-facing query filters on trainerId (routes/trainer.ts
+  // list + balance aggregate), and the admin payout queue filters/aggregates on
+  // status alone (modules/admin/payouts.ts stats + list).
+  @@index([trainerId])
+  @@index([status])
   @@map("trainer_payouts")
 }
 

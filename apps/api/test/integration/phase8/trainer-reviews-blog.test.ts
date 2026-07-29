@@ -7,7 +7,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     course: { findMany: vi.fn(), findFirst: vi.fn() },
     courseEnrollment: { count: vi.fn(), findUnique: vi.fn() },
     orderItem: { aggregate: vi.fn(), findFirst: vi.fn() },
-    trainerPayout: { findMany: vi.fn(), create: vi.fn(), count: vi.fn(), update: vi.fn() },
+    trainerPayout: { findMany: vi.fn(), create: vi.fn(), count: vi.fn(), update: vi.fn(), aggregate: vi.fn() },
     review: {
       findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn(),
       findUnique: vi.fn(), create: vi.fn(), update: vi.fn(),
@@ -16,6 +16,10 @@ vi.mock("../../../src/db/prisma.js", () => ({
       findMany: vi.fn(), count: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(),
       create: vi.fn(), update: vi.fn(), delete: vi.fn(),
     },
+    // The trainer dashboard now derives its money figures from
+    // computeTrainerAvailableBalance, which sums committed payouts and joins
+    // refunds via raw SQL — both must exist on the mock or the route 500s.
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -28,6 +32,9 @@ vi.mock("../../../src/middleware/authenticate.js", () => ({
 
 const { prisma } = await import("../../../src/db/prisma.js");
 const mockPrisma = prisma as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
+// $queryRaw sits at the client root, not inside a model namespace, so it needs
+// its own handle rather than going through mockPrisma's nested-record shape.
+const mockQueryRaw = (prisma as unknown as { $queryRaw: ReturnType<typeof vi.fn> }).$queryRaw;
 
 describe("GET /api/trainer/dashboard", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -39,6 +46,8 @@ describe("GET /api/trainer/dashboard", () => {
     mockPrisma.courseEnrollment.count.mockResolvedValue(12);
     mockPrisma.orderItem.aggregate.mockResolvedValue({ _sum: { totalPrice: 3000000 } });
     mockPrisma.trainerPayout.count.mockResolvedValue(0);
+    mockPrisma.trainerPayout.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+    mockQueryRaw.mockResolvedValue([{ refunded: "0" }]);
 
     const res = await request(app).get("/api/trainer/dashboard");
     expect(res.status).toBe(200);

@@ -8,6 +8,10 @@ import { authenticate } from "../middleware/authenticate.js";
 import { writeAudit } from "../services/audit/log.js";
 import { hashPassword, verifyPassword } from "../services/auth/hash.js";
 import { AppError, successResponse, errorResponse } from "../types/index.js";
+// Single source of truth for the "never zero super admins" invariant. Defined
+// next to the role-management endpoints that first needed it (modules/admin/
+// users.ts) and imported — not copied — so this path cannot drift from them.
+import { runGuarded, wouldLeaveNoSuperAdmin } from "../modules/admin/users.js";
 import { passwordSchema } from "./auth.js";
 import { REFRESH_COOKIE } from "../services/auth/token.js";
 import { env } from "../config/env.js";
@@ -219,9 +223,24 @@ router.delete(
     try {
       const { id, email } = req.user!;
 
-      await prisma.$transaction([
+      // Self-delete sets isActive:false + deletedAt, which drops the caller out
+      // of the active-super-admin population exactly like an admin revoking
+      // their role would — and nothing here checked for it, so the last admin
+      // could erase themselves and leave the platform with zero reachable
+      // admins. Reuses the guard from modules/admin/users.ts (one predicate,
+      // three call sites) and runs inside the anonymization transaction so the
+      // check and the write cannot be interleaved.
+      await runGuarded(async (tx) => {
+        if (await wouldLeaveNoSuperAdmin(tx, id)) {
+          throw new AppError(
+            409,
+            "Anda adalah satu-satunya super admin aktif. Tunjuk super admin lain sebelum menghapus akun Anda.",
+            "LAST_SUPER_ADMIN",
+          );
+        }
+
         // Anonymize user — preserve record for financial/legal retention
-        prisma.user.update({
+        await tx.user.update({
           where: { id },
           data: {
             email: `deleted+${id}@jagoakademi.invalid`,
@@ -236,9 +255,9 @@ router.delete(
             resetPasswordToken: null,
             resetPasswordExpiry: null,
           },
-        }),
+        });
         // Anonymize profile PII
-        prisma.userProfile.updateMany({
+        await tx.userProfile.updateMany({
           where: { userId: id },
           data: {
             phone: null,
@@ -248,13 +267,13 @@ router.delete(
             location: null,
             expertise: [],
           },
-        }),
+        });
         // Revoke all refresh tokens
-        prisma.refreshToken.updateMany({
+        await tx.refreshToken.updateMany({
           where: { userId: id, revokedAt: null },
           data: { revokedAt: new Date() },
-        }),
-      ]);
+        });
+      });
 
       await writeAudit({
         actorId: id,

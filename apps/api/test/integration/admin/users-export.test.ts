@@ -124,7 +124,9 @@ describe("GET /api/admin/users (query validation)", () => {
     expect(res.status).toBe(200);
     expect(vi.mocked(prisma.user.findMany).mock.calls[0]![0]!.where).toEqual({
       deletedAt: null,
-      roles: { some: { role: "trainer" } },
+      // Scoped to global grants (BL-78b) so the listing reflects the roles a
+      // session would actually get, not tenant-only grants that never apply.
+      roles: { some: { role: "trainer", tenantId: null } },
     });
   });
 
@@ -144,7 +146,9 @@ describe("PATCH /api/admin/users/:id", () => {
     // First findUnique authenticates the admin, second one loads the target user.
     vi.mocked(prisma.user.findUnique)
       .mockResolvedValueOnce(VALID_ADMIN as never)
-      .mockResolvedValueOnce({ id: "user-1", deletedAt: null } as never);
+      // `roles` is now selected too: the handler must know whether the target
+      // holds the global super_admin role before it may deactivate them.
+      .mockResolvedValueOnce({ id: "user-1", deletedAt: null, roles: [] } as never);
     vi.mocked(prisma.user.update).mockResolvedValue({
       id: "user-1",
       name: "Budi",
