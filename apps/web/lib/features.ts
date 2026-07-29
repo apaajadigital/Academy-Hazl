@@ -8,12 +8,21 @@
 const on = (v: string | undefined): boolean => v === "true" || v === "1";
 
 export const features = {
-  // Business-unit landing pages (currently "Segera Hadir" placeholders)
-  marketplace: on(process.env.NEXT_PUBLIC_FEATURE_MARKETPLACE),
-  trainerProgram: on(process.env.NEXT_PUBLIC_FEATURE_TRAINER_PROGRAM),
-  lmsLanding: on(process.env.NEXT_PUBLIC_FEATURE_LMS_LANDING),
-  collaboration: on(process.env.NEXT_PUBLIC_FEATURE_COLLABORATION),
-  affiliate: on(process.env.NEXT_PUBLIC_FEATURE_AFFILIATE),
+  // Note: the B2B LMS landing (/clients) is deliberately NOT flagged — it ships
+  // live, sits in the sitemap, and is linked from the navbar/footer/homepage, so
+  // gating it behind a default-OFF flag would 404 an already-public funnel.
+  //
+  // The same reasoning removed three flags — `marketplace`, `collaboration`, and
+  // `affiliate`. Each was declared here but read by nothing (zero call sites),
+  // while /marketplace, /kolaborasi, and /afiliasi all ship live with real content
+  // and are swept by e2e/public-sweep.spec.ts expecting HTTP 200. That combination
+  // is the actual defect: the flag reads as "this page is gated" in review while
+  // the page is in fact fully public, so it hides a live surface from scrutiny.
+  //
+  // `allAccess`/`gamification` below are also unread today, but they gate NOTHING
+  // public — they are forward declarations reserved by EPIC 7 (and, for
+  // gamification, by the resolved reviewer decision in BL-25 → TASK-097), so they
+  // stay. Never re-add a flag for an already-public page without its call site.
 
   // Private Class package page (/kelas-privat) — courses with format
   // "private_class". OFF until the backend catalog endpoint ships.

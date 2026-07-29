@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
+import { downloadProtected } from "@/lib/download";
 import { Card, CardHeader, CardTitle, CardContent, Button, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -79,6 +80,9 @@ export default function OrderDetailPage() {
   const [refundReason, setRefundReason] = useState("");
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundMessage, setRefundMessage] = useState("");
+  // Kept apart from `error`, which drives the full-page fallback — a failed
+  // download must not replace an already-rendered order detail.
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     const token = getToken();
@@ -114,7 +118,7 @@ export default function OrderDetailPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface-page">
         <p className="text-red-600">{error}</p>
-        <Link href="/pesanan" className="text-accent-cyan-strong underline">Kembali ke Pesanan</Link>
+        <Link href="/dashboard/pesanan" className="text-accent-cyan-strong underline">Kembali ke Pesanan</Link>
       </div>
     );
   }
@@ -153,7 +157,7 @@ export default function OrderDetailPage() {
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-2 text-sm text-text-secondary">
-          <Link href="/pesanan" className="inline-flex items-center gap-1 hover:text-accent-cyan-strong">
+          <Link href="/dashboard/pesanan" className="inline-flex items-center gap-1 hover:text-accent-cyan-strong">
             <ArrowLeft size={16} aria-hidden="true" /> Pesanan
           </Link>
           <ChevronRight size={16} aria-hidden="true" className="text-border-strong" />
@@ -282,16 +286,30 @@ export default function OrderDetailPage() {
                 </p>
               )}
 
+              {downloadError && (
+                <p role="alert" className="rounded-xl bg-red-50 p-3 text-center text-sm text-red-600">
+                  {downloadError}
+                </p>
+              )}
+
               {order.status === "paid" && (
                 <>
-                  <a
-                    href={`${getApiBase()}/api/orders/${order.id}/invoice`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {/* The invoice endpoint is bearer-token protected and the token
+                      lives in storage, not a cookie — a plain <a href> navigation
+                      sends no Authorization header and always 401s. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDownloadError("");
+                      downloadProtected(
+                        `${getApiBase()}/api/orders/${order.id}/invoice`,
+                        `invoice-${order.id}.pdf`,
+                      ).catch(() => setDownloadError("Gagal mengunduh invoice."));
+                    }}
                     className="flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-4 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
                   >
                     <Download size={18} aria-hidden="true" /> Unduh Invoice
-                  </a>
+                  </button>
                   <Link
                     href="/dashboard/kursus"
                     className="flex w-full items-center justify-center gap-2 rounded-full border border-border-strong px-4 py-3 text-sm font-semibold text-accent-cyan-strong transition-colors hover:bg-surface-accent-soft"

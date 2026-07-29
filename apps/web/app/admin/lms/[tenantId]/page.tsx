@@ -64,6 +64,32 @@ type LmsCourse = {
 
 type Member = { id: string; name: string; email: string; role: string };
 
+/** Response envelope shared by every LMS endpoint (`packages/types`). Fields are
+ * optional here because this is a network boundary — never trust the shape. */
+type ApiEnvelope<T> = {
+  success?: boolean;
+  data?: T;
+  error?: { code?: string; message?: string };
+};
+
+/** `POST /api/lms/tenants/:id/invites` — bulk employee invites. `emailed` /
+ *  `emailFailed` report actual delivery and are absent on older API builds. */
+type InvitesResult = {
+  created?: string[];
+  skipped?: string[];
+  emailed?: string[];
+  emailFailed?: string[];
+};
+
+/** `POST /api/lms/tenants/:id/admins` — promote an existing user to LMS admin. */
+type AddAdminResult = { message?: string };
+
+/** Outcome of a completed invite request, rendered honestly instead of a blanket
+ * "sent" confirmation. `success` = invite created AND email delivered;
+ * `partial` = invite created but delivery failed or was not reported by the API;
+ * `notice` = request succeeded but nothing changed (e.g. already invited). */
+type InviteOutcome = { tone: "success" | "partial" | "notice"; message: string };
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
@@ -85,35 +111,110 @@ function fmtDate(d: string | null) {
 
 // ─── Invite Modal ─────────────────────────────────────────────────────────────
 
-function InviteModal({ tenantId, onClose }: { tenantId: string; onClose: () => void }) {
+function InviteModal({
+  tenantId,
+  onClose,
+  onSuccess,
+}: {
+  tenantId: string;
+  onClose: () => void;
+  /** Called after the tenant actually changed, so the page can refetch members. */
+  onSuccess: () => void;
+}) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"lms_employee" | "lms_admin">("lms_employee");
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [outcome, setOutcome] = useState<InviteOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  /** Employees get a pending invite record; admins must already have an account
+   * and are attached directly. Two distinct backend routes, two payload shapes. */
+  async function inviteEmployee(): Promise<InviteOutcome | null> {
+    const res = await fetch(`/api/lms/tenants/${tenantId}/invites`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ emails: [email] }),
+    });
+    const body = (await res.json()) as ApiEnvelope<InvitesResult>;
+    if (!res.ok || !body.success || !body.data) {
+      setError(body.error?.message ?? "Gagal mengirim undangan.");
+      return null;
+    }
+    const created = body.data.created ?? [];
+    const skipped = body.data.skipped ?? [];
+    const { emailed, emailFailed } = body.data;
+    if (created.length > 0) {
+      // Only claim delivery when the API says the mail went out. Older builds
+      // omit emailed/emailFailed → neutral "dibuat" wording, never a false
+      // "terkirim". The invite row exists either way, so the caller still refetches.
+      if (emailFailed?.includes(email)) {
+        return {
+          tone: "partial",
+          message: `Undangan untuk ${email} sudah dibuat, tetapi email undangan gagal dikirim. Minta pengguna mencoba lagi nanti atau hubungi mereka langsung.`,
+        };
+      }
+      if (emailed?.includes(email)) {
+        return { tone: "success", message: `Undangan sudah dikirim ke ${email}.` };
+      }
+      return {
+        tone: "partial",
+        message: `Undangan untuk ${email} sudah dibuat. Status pengiriman email tidak dilaporkan server, jadi belum tentu sudah sampai.`,
+      };
+    }
+    if (skipped.length > 0) {
+      // Honest reporting: the request succeeded but no invite was created.
+      return {
+        tone: "notice",
+        message: `${email} sudah pernah diundang ke tenant ini, jadi tidak ada undangan baru yang dikirim.`,
+      };
+    }
+    setError("Server tidak memproses undangan untuk email tersebut.");
+    return null;
+  }
+
+  async function addAdmin(): Promise<InviteOutcome | null> {
+    const res = await fetch(`/api/lms/tenants/${tenantId}/admins`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const body = (await res.json()) as ApiEnvelope<AddAdminResult>;
+    if (!res.ok || !body.success) {
+      // Backend already returns a user-facing Indonesian message (e.g. 404 when
+      // the user has no account yet) — surface it verbatim.
+      setError(body.error?.message ?? "Gagal menambahkan Admin LMS.");
+      return null;
+    }
+    return { tone: "success", message: body.data?.message ?? `${email} kini menjadi Admin LMS.` };
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null); setLoading(true);
     try {
-      const res = await fetch(`/api/lms/tenants/${tenantId}/invite`, {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ email, role }),
-      });
-      const body = await res.json();
-      if (!body.success) { setError(body.error?.message ?? "Gagal mengirim undangan."); return; }
-      setDone(true);
+      const result = role === "lms_admin" ? await addAdmin() : await inviteEmployee();
+      if (!result) return;
+      setOutcome(result);
+      // Only refetch when the tenant actually gained a member/invite — `partial`
+      // still created the invite row, only the email delivery is uncertain.
+      if (result.tone !== "notice") onSuccess();
     } catch { setError("Tidak dapat terhubung ke server."); }
     finally { setLoading(false); }
   }
 
+  const doneTitle =
+    outcome?.tone === "notice"
+      ? "Sudah Pernah Diundang"
+      : outcome?.tone === "partial"
+        ? "Undangan Dibuat"
+        : "Undangan Terkirim";
+
   return (
     <Modal open onOpenChange={(o) => { if (!o) onClose(); }}>
-      <ModalContent title={done ? "Undangan Terkirim" : "Undang Pengguna"} className="max-w-md">
-        {done ? (
+      <ModalContent title={outcome ? doneTitle : "Undang Pengguna"} className="max-w-md">
+        {outcome ? (
           <>
-            <p className="mb-4 text-sm text-text-secondary">Undangan sudah dikirim ke <strong>{email}</strong>.</p>
+            <p className="mb-4 text-sm text-text-secondary">{outcome.message}</p>
             <Button onClick={onClose} variant="cyan" className="w-full">Selesai</Button>
           </>
         ) : (
@@ -408,7 +509,13 @@ export default function AdminTenantDetailPage() {
       )}
 
       {/* Invite modal */}
-      {showInvite && <InviteModal tenantId={tenantId!} onClose={() => setShowInvite(false)} />}
+      {showInvite && (
+        <InviteModal
+          tenantId={tenantId!}
+          onClose={() => setShowInvite(false)}
+          onSuccess={fetchAll}
+        />
+      )}
     </div>
   );
 }

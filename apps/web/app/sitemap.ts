@@ -16,11 +16,18 @@ const STATIC_PAGES: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/clients`,          lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   { url: `${BASE_URL}/afiliasi`,         lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
   { url: `${BASE_URL}/kolaborasi`,       lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+  // Linked from the UI but previously absent from the sitemap, so search engines
+  // had no path to them: /berlangganan (pricing, 3 tiers), /early-access (linked
+  // from 5 surfaces), and the legal pages the footer points at.
+  { url: `${BASE_URL}/berlangganan`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+  { url: `${BASE_URL}/early-access`,     lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
   { url: `${BASE_URL}/about`,            lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
   { url: `${BASE_URL}/contact`,          lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   { url: `${BASE_URL}/faq`,              lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
-  { url: `${BASE_URL}/masuk`,            lastModified: new Date(), changeFrequency: "yearly",  priority: 0.4 },
-  { url: `${BASE_URL}/daftar`,           lastModified: new Date(), changeFrequency: "yearly",  priority: 0.4 },
+  // /masuk and /daftar are intentionally absent: robots.ts disallows both, and
+  // submitting a disallowed URL in the sitemap is a contradictory crawl signal.
+  { url: `${BASE_URL}/privacy`,          lastModified: new Date(), changeFrequency: "yearly",  priority: 0.3 },
+  { url: `${BASE_URL}/terms`,            lastModified: new Date(), changeFrequency: "yearly",  priority: 0.3 },
 ];
 
 async function fetchDynamicPages(): Promise<MetadataRoute.Sitemap> {
@@ -33,25 +40,21 @@ async function fetchDynamicPages(): Promise<MetadataRoute.Sitemap> {
   const opts = { next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000) };
 
   try {
-    const [coursesRes, eventsRes, ebooksRes, blogRes] = await Promise.allSettled([
-      fetch(`${API}/api/courses?limit=200&status=published`, opts),
+    // No per-course URLs: this app has NO indexable course detail page.
+    //   • /e-course/[kategori] is a learning-path TAXONOMY resolved from a static
+    //     category list and calls notFound() on anything else, so a course slug
+    //     there is a soft-404.
+    //   • /checkout/[slug] — what every catalogue card actually links to — is the
+    //     transactional page. It is "use client" (no metadata/canonical) and
+    //     immediately router.push()es an unauthenticated visitor to /masuk, which
+    //     robots.ts disallows. Submitting those URLs would ask Google to crawl a
+    //     login redirect we simultaneously tell it to stay away from.
+    // The /e-course listing in STATIC_PAGES is the correct entry point for courses.
+    const [eventsRes, ebooksRes, blogRes] = await Promise.allSettled([
       fetch(`${API}/api/events?limit=100`, opts),
       fetch(`${API}/api/ebooks?limit=200`, opts),
       fetch(`${API}/api/blog?limit=200`, opts),
     ]);
-
-    if (coursesRes.status === "fulfilled" && coursesRes.value.ok) {
-      const data = await coursesRes.value.json();
-      const courses = (data.data ?? []) as Array<{ slug: string; updatedAt?: string }>;
-      courses.forEach((c) =>
-        pages.push({
-          url: `${BASE_URL}/e-course/${c.slug}`,
-          lastModified: c.updatedAt ? new Date(c.updatedAt) : new Date(),
-          changeFrequency: "weekly",
-          priority: 0.7,
-        })
-      );
-    }
 
     if (eventsRes.status === "fulfilled" && eventsRes.value.ok) {
       const data = await eventsRes.value.json();

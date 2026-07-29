@@ -18,10 +18,13 @@ import {
   ShieldCheck,
   Download,
   GraduationCap,
+  User,
+  Crown,
 } from "lucide-react";
 import { getDashboard, type DashboardData } from "../../lib/api/enrollment";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
 import { getValidToken } from "@/lib/auth/token";
+import { downloadProtected } from "@/lib/download";
 import {
   Card,
   Skeleton,
@@ -37,6 +40,9 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Separate from `error`, which drives the full-page "gagal memuat" fallback —
+  // a failed download must not blank out an already-loaded dashboard.
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [userName, setUserName] = useState("Pengguna");
 
   useEffect(() => {
@@ -112,6 +118,7 @@ export default function DashboardPage() {
   }
 
   const { stats, enrollments, recentCertificates } = data;
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
   const now = new Date();
   const hour = now.getHours();
   const greeting =
@@ -134,6 +141,11 @@ export default function DashboardPage() {
     { label: "Tiket Event", href: "/dashboard/tiket", icon: Ticket, desc: "Event saya" },
     { label: "Pesanan", href: "/dashboard/pesanan", icon: ShoppingBag, desc: "Riwayat transaksi" },
     { label: "Afiliasi", href: "/dashboard/afiliasi", icon: Handshake, desc: "Dapatkan komisi" },
+    // Profil + Berlangganan exist in the sidebar but were missing here, so the
+    // grid did not actually mirror the dashboard's own navigation. Icons match
+    // app/dashboard/layout.tsx so the same destination reads the same everywhere.
+    { label: "Profil Saya", href: "/dashboard/profil", icon: User, desc: "Kelola akun" },
+    { label: "Berlangganan", href: "/dashboard/berlangganan", icon: Crown, desc: "Paket & tagihan" },
   ];
 
   return (
@@ -271,6 +283,11 @@ export default function DashboardPage() {
               Lihat Semua <ArrowRight size={16} aria-hidden="true" />
             </Link>
           </div>
+          {downloadError && (
+            <p role="alert" className="rounded-[var(--radius-md)] bg-red-50 px-4 py-3 text-sm text-red-600">
+              {downloadError}
+            </p>
+          )}
           <div className="flex flex-col gap-3">
             {recentCertificates.slice(0, 3).map((cert) => (
               <div
@@ -295,15 +312,22 @@ export default function DashboardPage() {
                   >
                     <ShieldCheck size={14} aria-hidden="true" /> Verifikasi
                   </Link>
-                  <a
-                    href={`/api/certificates/${cert.code}/download`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
+                  {/* The certificate endpoint is bearer-token protected and the
+                      token lives in storage, not a cookie — a plain <a href>
+                      navigation sends no Authorization header and always 401s. */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDownloadError(null);
+                      downloadProtected(
+                        `${apiBase}/api/certificates/${cert.code}/download`,
+                        `sertifikat-${cert.code}.pdf`,
+                      ).catch(() => setDownloadError("Gagal mengunduh sertifikat."));
+                    }}
                     className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90"
                   >
                     <Download size={14} aria-hidden="true" /> Unduh PDF
-                  </a>
+                  </button>
                 </div>
               </div>
             ))}

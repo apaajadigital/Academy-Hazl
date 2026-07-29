@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   Users, BarChart3, Award, Building2, ShieldCheck,
   Clock, Layers, CheckCircle2,
@@ -55,12 +56,16 @@ const CAPABILITIES = [
   },
 ];
 
+// Every plan routes to the same on-page consultation form (#konsultasi). There is
+// no B2B pricing/checkout endpoint, so the CTA label is the only thing that
+// differentiates the tiers — no prices are stated anywhere.
 const PLANS = [
   {
     name: "Trial",
     badge: "Coba Gratis",
     badgeCls: "bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)]",
     perks: ["14 hari gratis", "50 kursi", "1 batch", "Laporan dasar"],
+    cta: "Mulai Trial Gratis",
   },
   {
     name: "Starter",
@@ -68,18 +73,21 @@ const PLANS = [
     badgeCls: "bg-[rgba(124,58,237,0.1)] text-[#7C3AED]",
     perks: ["100 kursi", "5 batch", "Laporan lengkap", "Sertifikat branded"],
     highlight: true,
+    cta: "Konsultasi Paket Starter",
   },
   {
     name: "Pro",
     badge: "",
     badgeCls: "",
     perks: ["500 kursi", "Batch tak terbatas", "Custom domain", "Priority support"],
+    cta: "Konsultasi Paket Pro",
   },
   {
     name: "Enterprise",
     badge: "",
     badgeCls: "",
     perks: ["Kursi tak terbatas", "SSO/SAML", "Dedicated server", "SLA 99.9%"],
+    cta: "Hubungi Sales",
   },
 ];
 
@@ -149,11 +157,14 @@ export default function ClientsPage() {
             </div>
           </Reveal>
 
-          {/* Scroll cue */}
+          {/* Scroll cue — a real anchor to the consultation form, not dead text. */}
           <Reveal immediate delay={0.22}>
-            <p className="text-sm text-[var(--text-muted)]">
+            <Link
+              href="#konsultasi"
+              className="inline-block text-sm text-[var(--text-muted)] transition-colors hover:text-[var(--brand-cyan-strong)]"
+            >
               ↓ Konsultasi gratis di bawah
-            </p>
+            </Link>
           </Reveal>
         </div>
       </section>
@@ -224,9 +235,9 @@ export default function ClientsPage() {
         />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((plan, i) => (
-            <Reveal key={plan.name} delay={i * 0.05}>
+            <Reveal key={plan.name} delay={i * 0.05} className="h-full">
               <div
-                className="flex flex-col rounded-2xl p-6"
+                className="flex h-full flex-col rounded-2xl p-6"
                 style={{
                   background: plan.highlight ? "var(--brand-cyan-strong)" : "var(--surface-card)",
                   border: plan.highlight
@@ -248,7 +259,7 @@ export default function ClientsPage() {
                     </span>
                   )}
                 </div>
-                <ul className="space-y-2">
+                <ul className="mb-6 space-y-2">
                   {plan.perks.map((perk) => (
                     <li key={perk} className="flex items-center gap-2 text-sm">
                       <CheckCircle2
@@ -262,6 +273,22 @@ export default function ClientsPage() {
                     </li>
                   ))}
                 </ul>
+
+                {/* CTA — all tiers funnel to the consultation form below. `mt-auto`
+                    keeps the buttons on one baseline across the (equal-height) cards.
+                    On the cyan highlight card the button inverts to white-on-cyan
+                    so it stays legible against the solid brand background. */}
+                <Link
+                  href="#konsultasi"
+                  aria-label={`${plan.cta} — paket ${plan.name}`}
+                  className={
+                    plan.highlight
+                      ? "btn btn-sm mt-auto w-full bg-white text-[var(--brand-cyan-strong)] shadow-e1 hover:bg-[var(--surface-accent-soft)] hover:shadow-e2"
+                      : "btn btn-outline btn-sm mt-auto w-full"
+                  }
+                >
+                  {plan.cta}
+                </Link>
               </div>
             </Reveal>
           ))}

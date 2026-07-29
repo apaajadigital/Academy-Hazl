@@ -23,6 +23,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     },
     userRole: {
       findFirst: vi.fn(),
+      upsert: vi.fn(),
     },
   },
 }));
@@ -57,6 +58,7 @@ beforeEach(() => {
   vi.mocked(prisma.lmsEnrollment.upsert).mockResolvedValue({} as never);
   vi.mocked(prisma.lmsTenant.findUnique).mockResolvedValue({ slug: "tenant-slug" } as never);
   vi.mocked(prisma.userRole.findFirst).mockResolvedValue({ role: "super_admin" } as never);
+  vi.mocked(prisma.userRole.upsert).mockResolvedValue({} as never);
 });
 
 describe("POST /api/lms/tenants/:tenantId/invites", () => {
@@ -75,6 +77,21 @@ describe("POST /api/lms/tenants/:tenantId/invites", () => {
       .send({ emails: [] });
     expect(res.status).toBe(400);
   });
+
+  it("accepts a single email field (admin UI shape)", async () => {
+    const res = await request(app)
+      .post("/api/lms/tenants/tenant-1/invites")
+      .send({ email: "solo@test.com" });
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.created).toContain("solo@test.com");
+  });
+
+  it("returns 400 when neither email nor emails is provided", async () => {
+    const res = await request(app).post("/api/lms/tenants/tenant-1/invites").send({});
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+  });
 });
 
 describe("POST /api/lms/invite/:token/accept", () => {
@@ -84,6 +101,31 @@ describe("POST /api/lms/invite/:token/accept", () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.tenantId).toBe("tenant-1");
     expect(prisma.lmsBatchMember.upsert).toHaveBeenCalled();
+  });
+
+  it("grants lms_employee tenant membership on accept", async () => {
+    const res = await request(app).post("/api/lms/invite/test-token-abc/accept");
+    expect(res.status).toBe(200);
+    expect(prisma.userRole.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          userId_role_tenantId: { userId: "user-1", role: "lms_employee", tenantId: "tenant-1" },
+        },
+        create: { userId: "user-1", role: "lms_employee", tenantId: "tenant-1" },
+        update: {},
+      }),
+    );
+  });
+
+  it("grants membership even when the invite has no batch", async () => {
+    vi.mocked(prisma.lmsUserInvite.findUnique).mockResolvedValue({
+      ...mockInvite,
+      batchId: null,
+    } as never);
+    const res = await request(app).post("/api/lms/invite/test-token-abc/accept");
+    expect(res.status).toBe(200);
+    expect(prisma.lmsBatchMember.upsert).not.toHaveBeenCalled();
+    expect(prisma.userRole.upsert).toHaveBeenCalled();
   });
 
   it("returns 404 for unknown token", async () => {
