@@ -18,9 +18,13 @@ import { AppError } from "../../../src/types/index.js";
 const { processTrainerPayout } = vi.hoisted(() => ({ processTrainerPayout: vi.fn() }));
 
 vi.mock("../../../src/services/payout/trainerPayoutService.js", () => ({
-  // Re-exported as-is: routes/trainer.ts reads this at module load to build its
-  // Zod schema, so it must be a real number even in a mocked module.
+  // Re-exported as-is: routes/trainer.ts reads these at module load to build its
+  // Zod schema, so they must be real numbers even in a mocked module. Adding a
+  // constant to the service and using it in the route WILL break this suite at
+  // import time until it is listed here — that is the cost of an explicit
+  // factory, and the error names the missing export.
   MAX_PAYOUT_AMOUNT: 9_999_999_999.99,
+  MIN_PAYOUT_AMOUNT: 10_000,
   TRAINER_REVENUE_SHARE: 0.7,
   trainerShareOf: vi.fn(),
   computeCourseNetRevenue: vi.fn(),
