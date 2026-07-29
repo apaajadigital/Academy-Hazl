@@ -14,7 +14,10 @@ export function MentorHero({ mentor }: MentorHeroProps) {
 
   return (
     <section className="bg-gradient-to-b from-[rgba(0,119,168,0.05)] to-[#F5F5F7] border-b border-[#E5E5E5]">
-      <div className="max-w-[1152px] mx-auto px-8 py-12">
+      {/* pt-28 clears the fixed Navbar (h-16 md:h-[4.5rem]); the (public) layout
+          adds no top offset, so each hero owns its own navbar clearance
+          (mirrors the /mentor listing's pt-24 and ECourseHero's pt-16). */}
+      <div className="max-w-[1152px] mx-auto px-8 pt-28 pb-12">
         <div className="flex flex-col sm:flex-row gap-8 items-start">
 
           {/* Avatar */}
