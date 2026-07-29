@@ -12,6 +12,11 @@ const footerLinks = {
     { label: "E-Book",            href: "/ebook" },
     { label: "Kelas Gratis",      href: "/kelas-gratis" },
     { label: "Marketplace Materi", href: "/marketplace" },
+    // /berlangganan was unreachable from any public surface: its only inbound
+    // links were post-login (/dashboard/berlangganan) and SubscriptionLock, which
+    // itself sits behind the default-OFF learningPath flag. A public pricing page
+    // no visitor can find is a dead funnel.
+    { label: "Berlangganan",      href: "/berlangganan" },
     { label: "Blog",              href: "/blog" },
   ],
   Program: [

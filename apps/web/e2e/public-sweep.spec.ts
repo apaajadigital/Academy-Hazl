@@ -17,8 +17,8 @@ import { test, expect, type Page } from "@playwright/test";
  * Navbar coverage notes (layout audit, apps/web/app):
  *  - (public) layout renders the Navbar component -> hasNavbar: true.
  *  - /masuk and /daftar use the (auth) card shell (logo only, by design).
- *  - /blog and /berlangganan live outside (public) and currently render no
- *    global navbar (root layout has none) — asserted via fallback heading.
+ *  - /blog and /berlangganan were moved into (public) (BL-49) — they used to
+ *    render neither Navbar nor Footer, leaving visitors with no way out.
  */
 
 type PageDef = {
@@ -34,8 +34,7 @@ const PAGES: PageDef[] = [
   { path: "/event", name: "Event listing", hasNavbar: true },
   { path: "/ebook", name: "E-Book listing", hasNavbar: true },
   { path: "/kelas-gratis", name: "Kelas Gratis", hasNavbar: true },
-  // /blog uses the root layout (no global Navbar rendered) — fallback checks.
-  { path: "/blog", name: "Blog listing", hasNavbar: false },
+  { path: "/blog", name: "Blog listing", hasNavbar: true },
   { path: "/about", name: "About", hasNavbar: true },
   { path: "/contact", name: "Contact", hasNavbar: true },
   { path: "/faq", name: "FAQ", hasNavbar: true },
@@ -44,8 +43,14 @@ const PAGES: PageDef[] = [
   { path: "/daftar", name: "Register", hasNavbar: false },
   { path: "/afiliasi", name: "Afiliasi", hasNavbar: true },
   { path: "/kolaborasi", name: "Kolaborasi", hasNavbar: true },
-  // /berlangganan uses the root layout (no global Navbar rendered).
-  { path: "/berlangganan", name: "Berlangganan", hasNavbar: false },
+  // Blind-spot closure: these four are linked from the Navbar dropdown and/or the
+  // homepage CategoryGrid but had zero sweep coverage — a route reachable from
+  // global chrome must be swept, otherwise a crash there ships unnoticed.
+  { path: "/marketplace", name: "Marketplace Materi", hasNavbar: true },
+  { path: "/mentor", name: "Mentor listing", hasNavbar: true },
+  { path: "/clients", name: "LMS Perusahaan", hasNavbar: true },
+  { path: "/trainer-program", name: "Trainer Program", hasNavbar: true },
+  { path: "/berlangganan", name: "Berlangganan", hasNavbar: true },
 ];
 
 const VIEWPORTS = [

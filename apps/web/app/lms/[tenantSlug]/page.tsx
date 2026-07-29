@@ -12,6 +12,7 @@ import {
   ArrowRight,
   CalendarDays,
   Check,
+  Settings,
 } from "lucide-react";
 import { Avatar, Badge, Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
@@ -33,19 +34,37 @@ type CourseProgress = {
 };
 
 type TenantInfo = {
+  id: string;
   name: string;
   slug: string;
   logoUrl: string | null;
   primaryColor: string;
+  /** True when the caller administers this tenant; served by `/api/lms/portal/me`. */
+  isAdmin?: boolean;
 };
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 
-function Sidebar({ slug, tenant }: { slug: string; tenant: TenantInfo | null }) {
+function Sidebar({
+  slug,
+  tenant,
+  isTenantAdmin,
+}: {
+  slug: string;
+  tenant: TenantInfo | null;
+  /** True only when the capability probe confirmed LMS-admin rights (see page). */
+  isTenantAdmin: boolean;
+}) {
   const primary = tenant?.primaryColor ?? "#0077A8";
   const navItems = [
     { href: `/lms/${slug}`,              icon: Home,     label: "Kursus Saya" },
     { href: `/lms/${slug}/certificates`, icon: Trophy,   label: "Sertifikat" },
+    // The admin console is otherwise unreachable by click. It is appended only
+    // for confirmed admins — showing it to an employee would promise a page the
+    // API answers with 403.
+    ...(isTenantAdmin
+      ? [{ href: `/lms/${slug}/admin`, icon: Settings, label: "Konsol Admin" }]
+      : []),
   ];
 
   return (
@@ -230,6 +249,7 @@ export default function LmsPortalHomePage() {
   const [courses, setCourses] = useState<CourseProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
+  const [isTenantAdmin, setIsTenantAdmin] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -242,8 +262,15 @@ export default function LmsPortalHomePage() {
       ]);
       const [meData, coursesData] = await Promise.all([meRes.json(), coursesRes.json()]);
 
-      const myTenant = meData.data?.find((t: { slug: string; name: string; logoUrl: string | null; primaryColor: string }) => t.slug === tenantSlug);
-      if (myTenant) setTenant(myTenant);
+      const myTenant: TenantInfo | undefined = meData.data?.find((t: TenantInfo) => t.slug === tenantSlug);
+      if (myTenant) {
+        setTenant(myTenant);
+        // `/api/lms/portal/me` reports `isAdmin` per tenant (derived from the same
+        // UserRole rows `requireLmsAdmin` checks). Compare strictly so an older API
+        // response omitting the field hides the console link instead of offering
+        // one that would land on a 403.
+        setIsTenantAdmin(myTenant.isAdmin === true);
+      }
       setCourses(coursesData.data ?? []);
       setLoading(false);
     };
@@ -255,7 +282,7 @@ export default function LmsPortalHomePage() {
   return (
     <div className="flex min-h-screen bg-surface-page">
       {/* Sidebar */}
-      <Sidebar slug={tenantSlug} tenant={tenant} />
+      <Sidebar slug={tenantSlug} tenant={tenant} isTenantAdmin={isTenantAdmin} />
 
       {/* Main */}
       <main className="min-w-0 flex-1 px-6 py-7 md:px-8">

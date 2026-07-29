@@ -245,7 +245,7 @@ function PendingContent() {
           ) : (
             <Link
               id="pending-check-order-btn"
-              href={orderId ? `/pesanan/${orderId}` : "/pesanan"}
+              href={orderId ? `/pesanan/${orderId}` : "/dashboard/pesanan"}
               className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
             >
               Cek Status Pesanan

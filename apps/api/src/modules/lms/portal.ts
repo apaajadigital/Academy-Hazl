@@ -11,13 +11,38 @@ const router = Router();
 router.get("/portal/me", authenticate, async (req, res, next) => {
   try {
     const userId = req.user!.id;
-    const batchMemberships = await prisma.lmsBatchMember.findMany({
-      where: { userId },
-      include: { batch: { include: { tenant: true } } },
-    });
-    const tenants = batchMemberships.map((m) => m.batch.tenant);
-    const unique = [...new Map(tenants.map((t) => [t.id, t])).values()];
-    return res.json(successResponse(unique));
+
+    // A user can reach a tenant two ways: enrolled as a batch member, or appointed
+    // lms_admin for it (UserRole, the same fact `requireLmsAdmin` checks). Reading
+    // only batch membership stranded "pure" admins — someone who administers a
+    // tenant without studying in it got an empty list, so both the portal and the
+    // admin-console link derived from this list were invisible to them.
+    const [batchMemberships, adminRoles] = await Promise.all([
+      prisma.lmsBatchMember.findMany({
+        where: { userId },
+        include: { batch: { include: { tenant: true } } },
+      }),
+      prisma.userRole.findMany({
+        where: { userId, role: "lms_admin", NOT: { tenantId: null } },
+        select: { tenantId: true },
+      }),
+    ]);
+
+    const adminTenantIds = new Set(adminRoles.map((r) => r.tenantId as string));
+    const byId = new Map(batchMemberships.map((m) => [m.batch.tenant.id, m.batch.tenant]));
+
+    // UserRole.tenantId is a bare column with no relation to LmsTenant, so tenants
+    // known only through an admin grant need a second lookup.
+    const adminOnlyIds = [...adminTenantIds].filter((id) => !byId.has(id));
+    if (adminOnlyIds.length > 0) {
+      const adminTenants = await prisma.lmsTenant.findMany({ where: { id: { in: adminOnlyIds } } });
+      adminTenants.forEach((t) => byId.set(t.id, t));
+    }
+
+    // `isAdmin` is served here so the client can render the admin-console link
+    // directly instead of probing an admin endpoint once per tenant.
+    const result = [...byId.values()].map((t) => ({ ...t, isAdmin: adminTenantIds.has(t.id) }));
+    return res.json(successResponse(result));
   } catch (err) {
     next(err);
   }

@@ -21,6 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import { getToken, setToken, clearToken, refreshAccessToken } from "@/lib/auth/token";
+import { logout as revokeSession } from "@/lib/auth/api";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home, exact: true },
@@ -41,14 +42,14 @@ type UserInfo = {
   roles?: {role: string}[];
   subscription?: { status: string; expiresAt: string } | null;
 };
-type LmsTenant = { id: string; name: string; slug: string };
+/** `isAdmin` is served per tenant by `/api/lms/portal/me`. */
+type LmsTenant = { id: string; name: string; slug: string; isAdmin: boolean };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<UserInfo | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [lmsTenants, setLmsTenants] = useState<LmsTenant[]>([]);
 
   useEffect(() => {
@@ -93,18 +94,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace("/trainer-hub");
         return;
       }
-      setIsAdmin(false);
-
-      // Fetch LMS tenants for this user
+      // `/api/lms/portal/me` lists every tenant the user can reach — batch
+      // memberships plus tenants they administer — and carries `isAdmin` per
+      // tenant, so the admin-console link needs no extra permission probe.
+      // Default `isAdmin` to false so an older API response hides the link
+      // rather than showing one that would land on a 403.
       fetch("/api/lms/portal/me", { headers: { Authorization: `Bearer ${token}` } })
         .then((r) => r.json())
-        .then((b) => { if (b.success && Array.isArray(b.data)) setLmsTenants(b.data); })
+        .then((b) => {
+          if (!b.success || !Array.isArray(b.data)) return;
+          const tenants = (b.data as LmsTenant[]).map((t) => ({
+            id: t.id,
+            name: t.name,
+            slug: t.slug,
+            isAdmin: t.isAdmin === true,
+          }));
+          setLmsTenants(tenants);
+        })
         .catch(() => {});
     }
     initAuth();
   }, [router]);
 
-  function logout() {
+  async function logout() {
+    // Revoke the HttpOnly refresh cookie server-side first — clearToken() only
+    // drops the access token, leaving `jg_rt` alive and the session resumable.
+    // Failure here must never trap the user in the shell, so we swallow it and
+    // always fall through to the local clear + redirect.
+    await revokeSession().catch(() => undefined);
     clearToken();
     router.replace("/masuk");
   }
@@ -186,21 +203,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="sidebar-admin-wrap">
             <p style={{ fontSize: 10, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 12px", marginBottom: 4 }}>LMS Portal</p>
             {lmsTenants.map((t) => (
-              <a key={t.id} href={`/lms/${t.slug}`} className="sidebar-admin-link" style={{ gap: 8 }}>
-                <GraduationCap size={16} aria-hidden="true" />
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
-              </a>
+              <div key={t.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <a href={`/lms/${t.slug}`} className="sidebar-admin-link" style={{ gap: 8 }}>
+                  <GraduationCap size={16} aria-hidden="true" />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
+                </a>
+                {/* Only rendered for confirmed LMS admins of this tenant. */}
+                {t.isAdmin && (
+                  <a
+                    href={`/lms/${t.slug}/admin`}
+                    className="sidebar-admin-link"
+                    style={{ gap: 8, fontSize: 12, marginLeft: 12 }}
+                  >
+                    <Settings size={14} aria-hidden="true" />
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Konsol Admin</span>
+                  </a>
+                )}
+              </div>
             ))}
-          </div>
-        )}
-
-        {/* Admin Panel shortcut (only for admins) */}
-        {isAdmin && (
-          <div className="sidebar-admin-wrap">
-            <a href="/admin/dashboard" className="sidebar-admin-link">
-              <Settings size={16} aria-hidden="true" />
-              <span>Admin Panel</span>
-            </a>
           </div>
         )}
 
