@@ -77,8 +77,41 @@ router.get("/commissions", async (req: Request, res: Response, next: NextFunctio
   }
 });
 
+/**
+ * Largest value the `AffiliateWithdrawal.amount` column can hold
+ * (`Decimal(12,2)` — 10 integer digits + 2 fraction digits, schema.prisma:811).
+ * Without this bound a request for 1e300 passes `positive()`, clears the
+ * balance check, and only fails at the driver — or worse, is silently coerced.
+ */
+const MAX_WITHDRAWAL_AMOUNT = 9_999_999_999.99;
+
+/**
+ * Smallest withdrawal an affiliate may request (owner decision, 29 Jul 2026).
+ *
+ * Deliberately the SAME number the trainer payout path enforces
+ * (`MIN_PAYOUT_AMOUNT` in services/payout/trainerPayoutService.ts): both are
+ * manually reviewed bank transfers with the same per-transfer cost, so one floor
+ * for both is the rule. It is redefined here rather than imported because
+ * services/payout/** is the trainer domain and this route must not depend on it;
+ * the duplication is the price of that boundary and is flagged for backlog
+ * (a shared money Zod schema in packages/types would remove it).
+ */
+const MIN_WITHDRAWAL_AMOUNT = 10_000;
+
 const withdrawSchema = z.object({
-  amount: z.number().positive("Jumlah harus lebih dari 0."),
+  // B1 (money validation): `positive()` alone let a direct API call file a
+  // Rp 0,01 withdrawal — or a 0,005 one that the Decimal(12,2) column rounds
+  // silently — for staff to process by hand, while the web form advertised a
+  // Rp 50.000 floor that nothing enforced. The trainer path was hardened for
+  // exactly this (routes/trainer.ts payoutSchema); the affiliate path ran
+  // alongside it with none of the same guards. Bound the value to the column,
+  // to whole cents, and to the business floor.
+  amount: z
+    .number()
+    .positive("Jumlah harus lebih dari 0.")
+    .min(MIN_WITHDRAWAL_AMOUNT, "Minimal penarikan Rp 10.000.")
+    .max(MAX_WITHDRAWAL_AMOUNT, "Jumlah melebihi batas maksimum.")
+    .multipleOf(0.01, "Jumlah maksimal 2 angka desimal."),
   bankName: z.string().min(1),
   accountNo: z.string().min(1),
   accountName: z.string().min(1),

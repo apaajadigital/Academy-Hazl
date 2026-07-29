@@ -187,7 +187,11 @@ export default function TrainerPayoutPage() {
           </div>
           <p className="flex items-start gap-2 text-xs text-text-secondary">
             <Info size={14} className="mt-0.5 flex-shrink-0 text-text-muted" aria-hidden="true" />
-            Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 100.000.
+            {/* Same number as the input's min= above and MIN_PAYOUT_AMOUNT in the
+                API. This line was left at Rp 100.000 when the floor was lowered,
+                so one screen showed two contradicting minimums and a trainer with
+                Rp 40.000 would conclude they could not withdraw yet. */}
+            Penarikan diproses dalam 1–3 hari kerja. Minimal Rp 10.000.
           </p>
           <div className="flex items-center gap-3">
             <Button type="submit" variant="cyan" size="sm" disabled={submitting} loading={submitting}>
