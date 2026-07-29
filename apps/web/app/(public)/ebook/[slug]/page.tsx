@@ -155,7 +155,7 @@ export default async function EBookDetailPage({ params }: { params: Promise<{ sl
                 )}
                 {discount && <span className="badge badge-pink">Hemat {discount}%</span>}
               </div>
-              <EBookActions ebookId={book.id} ebookSlug={book.slug} price={displayPrice} title={book.title} />
+              <EBookActions ebookSlug={book.slug} price={displayPrice} />
             </div>
           </div>
         </div>

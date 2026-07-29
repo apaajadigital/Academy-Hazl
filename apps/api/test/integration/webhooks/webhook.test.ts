@@ -5,7 +5,7 @@ import { app } from "../../../src/app.js";
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     paymentTransaction: { findFirst: vi.fn(), update: vi.fn() },
-    order: { findUnique: vi.fn(), update: vi.fn() },
+    order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },
     eventRegistration: { upsert: vi.fn() },
@@ -57,6 +57,9 @@ beforeEach(() => {
   vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(mockTransaction as never);
   vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder as never);
   vi.mocked(prisma.order.update).mockResolvedValue({} as never);
+  // The paid flip is an atomic claim (updateMany with a status predicate); by
+  // default this delivery wins it.
+  vi.mocked(prisma.order.updateMany).mockResolvedValue({ count: 1 } as never);
   // Private Class onboarding: default order has no private_class course.
   vi.mocked(prisma.course.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.paymentTransaction.update).mockResolvedValue({} as never);
@@ -98,10 +101,54 @@ describe("POST /api/webhooks/doku", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.received).toBe(true);
-    expect(prisma.order.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "paid" }) })
-    );
+    // The flip to "paid" is an atomic claim, not a plain update: the status
+    // predicate is what makes two concurrent deliveries pick a single winner, so
+    // it is asserted explicitly — dropping it re-opens the double-fulfillment
+    // race that the outside-the-transaction status read cannot close.
+    expect(prisma.order.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "order-1",
+        status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] },
+      },
+      data: {
+        status: "paid",
+        paidAt: expect.any(Date),
+        paymentMethod: "VIRTUAL_ACCOUNT_BCA",
+      },
+    });
     expect(prisma.courseEnrollment.upsert).toHaveBeenCalled();
+  });
+
+  // Regression for the inline-dispatch race: jobs/queues.ts runs the processor
+  // inline with no dedup when Redis is down, so two deliveries can both read
+  // "pending". The loser's claim matches 0 rows and it must do nothing at all —
+  // no enrollment, no coupon burn, no commission, no buyer email.
+  it("skips every side-effect when a concurrent delivery already claimed the order", async () => {
+    const { sendPaymentSuccess } = await import("../../../src/services/notification/emailService.js");
+    vi.mocked(prisma.order.updateMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      couponId: "coupon-1",
+      referralCode: "REF10",
+    } as never);
+    vi.mocked(prisma.affiliate.findFirst).mockResolvedValue({
+      id: "aff-1",
+      code: "REF10",
+      status: "active",
+      commissionRate: 10,
+    } as never);
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    expect(prisma.paymentTransaction.update).not.toHaveBeenCalled();
+    expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
+    expect(prisma.coupon.update).not.toHaveBeenCalled();
+    expect(prisma.affiliateCommission.create).not.toHaveBeenCalled();
+    expect(sendPaymentSuccess).not.toHaveBeenCalled();
   });
 
   it("is idempotent: skips fulfillment when the order is already paid", async () => {
@@ -119,6 +166,7 @@ describe("POST /api/webhooks/doku", () => {
     expect(res.status).toBe(200);
     // No re-processing → no duplicate enrollment/commission/notification.
     expect(prisma.order.update).not.toHaveBeenCalled();
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
     expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
   });
 
@@ -142,6 +190,7 @@ describe("POST /api/webhooks/doku", () => {
     expect(res.status).toBe(200);
     // No fulfillment side-effects on a cancelled order.
     expect(prisma.order.update).not.toHaveBeenCalled();
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
     expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
     expect(prisma.coupon.update).not.toHaveBeenCalled();
     // A human is alerted: payment arrived for a cancelled order → manual refund.
@@ -326,7 +375,7 @@ describe("POST /api/webhooks/doku", () => {
 
     expect(res.status).toBe(200);
     expect(prisma.eventRegistration.upsert).toHaveBeenCalled();
-    expect(prisma.order.update).toHaveBeenCalledWith(
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: "paid" }) }),
     );
   });
@@ -464,7 +513,7 @@ describe("POST /api/webhooks/doku", () => {
     // loop) and fulfillment side-effects are intact.
     expect(res.status).toBe(200);
     expect(res.body.received).toBe(true);
-    expect(prisma.order.update).toHaveBeenCalledWith(
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: "paid" }) }),
     );
     expect(prisma.courseEnrollment.upsert).toHaveBeenCalled();
@@ -518,6 +567,7 @@ describe("POST /api/webhooks/doku", () => {
 
     expect(res.status).toBe(401);
     expect(prisma.order.update).not.toHaveBeenCalled();
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
   });
 
   it("gracefully handles unknown invoice number", async () => {
@@ -535,5 +585,6 @@ describe("POST /api/webhooks/doku", () => {
     expect(res.status).toBe(200);
     expect(res.body.received).toBe(true);
     expect(prisma.order.update).not.toHaveBeenCalled();
+    expect(prisma.order.updateMany).not.toHaveBeenCalled();
   });
 });

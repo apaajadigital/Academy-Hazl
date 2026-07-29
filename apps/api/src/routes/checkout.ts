@@ -10,6 +10,14 @@ import { z } from "zod";
 
 const router = Router();
 
+/**
+ * Checkout has no cart: every order gets exactly one line of one copy. The
+ * EBook.totalSold increment on the free-fulfillment path reads this SAME
+ * constant as the OrderItem it is counting, so the sales counter cannot drift
+ * from the line quantity if multi-copy purchase ever lands here.
+ */
+const CHECKOUT_LINE_QUANTITY = 1;
+
 const checkoutSchema = z.object({
   itemType: z.enum(["course", "ebook", "event"]),
   itemId: z.string().min(1),
@@ -158,7 +166,7 @@ router.post("/", authenticate, async (req, res, next) => {
               itemType,
               itemId,
               itemTitle,
-              quantity: 1,
+              quantity: CHECKOUT_LINE_QUANTITY,
               unitPrice: price,
               totalPrice: price,
             },
@@ -184,6 +192,27 @@ router.post("/", authenticate, async (req, res, next) => {
           where: { courseId_userId: { courseId: itemId, userId } },
           create: { courseId: itemId, userId },
           update: {},
+        });
+      } else if (itemType === "ebook") {
+        // BL-65: EBook.totalSold was declared but never written, so every ebook
+        // reported 0 sales forever and the admin/report figures built on it were
+        // pure fiction. Count the sale here, on the SAME path that grants access
+        // (the paid order created above is what routes/ebooks.ts checks). No
+        // quota guard: unlike events an ebook has unlimited stock, so a plain
+        // increment is correct and nothing can oversell.
+        //
+        // The counter is gross and increment-only — a refund deliberately does
+        // not release it (routes/orders.ts explains why no correct release
+        // exists). Increment by the order line's quantity constant rather than a
+        // literal so the two can never disagree.
+        //
+        // updateMany, not update: a deleted/renamed ebook would make `update`
+        // throw P2025 AFTER the order + payment transaction were already
+        // committed, 500-ing a checkout the buyer has already been granted.
+        // updateMany matches 0 rows instead and leaves the purchase intact.
+        await prisma.eBook.updateMany({
+          where: { id: itemId },
+          data: { totalSold: { increment: CHECKOUT_LINE_QUANTITY } },
         });
       } else if (itemType === "event") {
         // Batch8: a 100%-off coupon fulfills a paid event inline here. Reserve
@@ -239,7 +268,7 @@ router.post("/", authenticate, async (req, res, next) => {
             itemType,
             itemId,
             itemTitle,
-            quantity: 1,
+            quantity: CHECKOUT_LINE_QUANTITY,
             unitPrice: price,
             totalPrice: price,
           },

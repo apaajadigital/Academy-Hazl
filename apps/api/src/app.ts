@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import path from "node:path";
 
 import { env } from "./config/env.js";
+import { errorResponse } from "./types/index.js";
+import { EBOOK_UPLOAD_SUBDIR } from "./lib/ebookFile.js";
 import { httpLogger } from "./middleware/httpLogger.js";
 import { generalLimiter, authLimiter } from "./middleware/rateLimiter.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
@@ -68,6 +70,43 @@ app.use(
 );
 app.use(cookieParser());
 app.use(generalLimiter);
+
+// Convention: every purchase-gated e-book binary lives under
+// `<UPLOAD_DIR>/ebooks/`. That directory must NEVER be reachable through the
+// unauthenticated static handler below, otherwise anyone who guesses (or is
+// told) the path downloads a paid e-book for free. It is served exclusively by
+// the signed, short-lived `GET /api/ebooks/:slug/download` endpoint
+// (routes/ebooks.ts + lib/ebookFile.ts). Mounted BEFORE express.static so the
+// block wins; the rest of /uploads (images, videos) keeps working.
+// The comparison MUST run on the decoded + normalised path. Express matches
+// `app.use` prefixes against the RAW pathname, while `express.static` decodes and
+// normalises before resolving from disk. Mounting the guard at
+// `/uploads/${EBOOK_UPLOAD_SUBDIR}` therefore looks correct but is trivially
+// bypassed — verified: `/uploads/%65books/x`, `/uploads//ebooks/x` and
+// `/uploads/eboo%6Bs/x` all skipped the guard and were served by the static
+// handler. Normalising here closes every one of those.
+app.use("/uploads", (req, res, next) => {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(req.path);
+  } catch {
+    // A malformed escape sequence cannot be reasoned about — refuse it outright.
+    return res.status(400).json(errorResponse("BAD_REQUEST", "Path berkas tidak valid."));
+  }
+  // Backslashes are folded to `/` first so a Windows-style separator cannot slip
+  // a segment past posix.normalize, which collapses `//` and resolves `.`/`..`.
+  // Lowercased because the static handler is case-insensitive on Windows/macOS.
+  const normalised = path.posix.normalize(decoded.replace(/\\/g, "/")).toLowerCase();
+  const blocked =
+    normalised === `/${EBOOK_UPLOAD_SUBDIR}` || normalised.startsWith(`/${EBOOK_UPLOAD_SUBDIR}/`);
+
+  if (blocked) {
+    return res
+      .status(403)
+      .json(errorResponse("FORBIDDEN", "Berkas e-book hanya dapat diakses melalui tautan unduhan bertanda tangan."));
+  }
+  return next();
+});
 
 // Serve uploaded files (dev only — use CDN/R2 in production)
 app.use("/uploads", express.static(path.join(process.cwd(), env.UPLOAD_DIR)));
