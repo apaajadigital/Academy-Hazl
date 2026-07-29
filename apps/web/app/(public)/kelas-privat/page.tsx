@@ -214,8 +214,19 @@ export default function KelasPrivatPage() {
   useEffect(() => {
     fetch(`${API}/api/courses?format=private_class&limit=50`)
       .then((r) => r.json())
-      .then((body: { success?: boolean; data?: unknown }) => {
-        const raw = Array.isArray(body?.data) ? body.data : [];
+      .then((body: { success?: boolean; data?: { data?: unknown } | unknown[] }) => {
+        // GET /api/courses nests the page under data.data
+        // ({ data, total, page, limit }). Testing Array.isArray(body.data) was
+        // therefore always false and the page permanently showed its empty
+        // state — latent only because the route is behind an OFF feature flag.
+        // Same read as ECourseCatalog / FreeCourseCatalog, incl. their tolerance
+        // for a flat array in case the envelope is ever un-nested.
+        const payload = body?.data;
+        const raw = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
         const valid = body?.success
           ? (raw as ApiCourse[]).filter((c) => Boolean(c && c.slug && c.title))
           : [];
