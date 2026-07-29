@@ -39,6 +39,16 @@ const MONEY_ROUNDING = Prisma.Decimal.ROUND_DOWN;
 /** Largest value a `Decimal(12,2)` column can hold (10 integer + 2 fraction digits). */
 export const MAX_PAYOUT_AMOUNT = 9_999_999_999.99;
 
+/**
+ * Smallest payout a trainer may request (owner decision, 29 Jul 2026).
+ *
+ * A floor is a business rule, not a technical one: every payout costs a manual
+ * review and a bank transfer fee, so tiny withdrawals cost more to process than
+ * they move. Exported so the API boundary and any future admin tooling read the
+ * same number instead of each hardcoding its own.
+ */
+export const MIN_PAYOUT_AMOUNT = 10_000;
+
 /** Payout statuses an admin may transition a pending payout into. */
 export type TrainerPayoutDecision = "approved" | "rejected" | "paid";
 

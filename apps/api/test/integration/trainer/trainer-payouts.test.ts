@@ -282,6 +282,31 @@ describe("POST /api/trainer/payouts (F3 — decimal money)", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  // Owner decision (29 Jul 2026): Rp 10.000 floor. Pinned here because the web
+  // form's min= is only a hint — before this the API accepted Rp 0,01 while the
+  // form advertised Rp 100.000, so neither number was actually the rule.
+  it("rejects an amount below the Rp 10.000 minimum", async () => {
+    mockBalance({ gross: 10_000_000 });
+
+    const res = await request(app)
+      .post("/api/trainer/payouts")
+      .send({ ...validBody, amount: 9_999 });
+
+    expect(res.status).toBe(400);
+    // Rejected at the schema boundary — no balance read, no transaction.
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("accepts an amount exactly at the Rp 10.000 minimum", async () => {
+    mockBalance({ gross: 10_000_000 });
+
+    const res = await request(app)
+      .post("/api/trainer/payouts")
+      .send({ ...validBody, amount: 10_000 });
+
+    expect(res.status).toBe(201);
+  });
+
   it("rejects an amount larger than the Decimal(12,2) column", async () => {
     mockBalance({ gross: 10_000_000 });
 

@@ -155,12 +155,15 @@ export default function TrainerPayoutPage() {
         <h3 className="mb-4 font-display text-base font-bold text-text-primary">Ajukan Penarikan</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Mirrors MIN_PAYOUT_AMOUNT in the API. The form previously claimed
+                100.000 while the API enforced no floor at all — the input is a
+                hint only, the server is the authority. */}
             <Input
               label="Jumlah (Rp)"
-              type="number" min="100000" step="1000" required
+              type="number" min="10000" step="1000" required
               value={form.amount}
               onChange={(e) => setForm({ ...form, amount: e.target.value })}
-              placeholder="Minimal Rp 100.000"
+              placeholder="Minimal Rp 10.000"
             />
             <Input
               label="Nama Bank"

@@ -184,6 +184,25 @@ export default function TrainerHubPage() {
               iconBg="rgba(217,119,6,0.10)"
             />
           </div>
+          {/* Owner decision (29 Jul 2026): the refund figure only needs a plain
+              caption saying what it covers and that it is already settled — no
+              per-refund list, no status filter. Stated for the other two figures
+              as well so a trainer can reconstruct the arithmetic themselves
+              instead of guessing why the withdrawable amount is lower. */}
+          <dl className="flex flex-col gap-2 text-sm text-text-secondary">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+              <dt className="font-semibold text-text-primary sm:min-w-[190px]">Pendapatan Bersih (70%)</dt>
+              <dd>Bagian Anda dari penjualan yang sudah dibayar, setelah dikurangi refund.</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+              <dt className="font-semibold text-text-primary sm:min-w-[190px]">Sudah Direfund</dt>
+              <dd>Pengembalian dana yang <strong className="font-semibold text-text-primary">sudah selesai diproses</strong> dan sudah dipotong dari pendapatan bersih di atas. Tidak perlu tindakan dari Anda.</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-2">
+              <dt className="font-semibold text-text-primary sm:min-w-[190px]">Penarikan Terkomit</dt>
+              <dd>Penarikan yang sudah Anda ajukan — termasuk yang masih menunggu persetujuan — sehingga tidak bisa diajukan dua kali.</dd>
+            </div>
+          </dl>
         </section>
       )}
 

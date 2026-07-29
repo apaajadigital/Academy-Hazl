@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 import { getToken, clearToken, refreshAccessToken } from "@/lib/auth/token";
+import { logout as revokeSession } from "@/lib/auth/api";
 
 const NAV_GROUPS = [
   {
@@ -145,7 +146,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     initAuth();
   }, [router]);
 
-  function logout() {
+  async function logout() {
+    // Revoke the HttpOnly refresh cookie server-side first — clearToken() only
+    // drops the access token, leaving `jg_rt` alive and the session resumable.
+    // Failure here must never trap the user in the shell, so we swallow it and
+    // always fall through to the local clear + redirect.
+    await revokeSession().catch(() => undefined);
     clearToken();
     router.replace("/masuk");
   }
