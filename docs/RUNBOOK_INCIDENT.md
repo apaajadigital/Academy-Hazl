@@ -10,7 +10,7 @@
 | Logs | **pino** JSON → stdout | `X-Request-Id` correlates every line of a request. PII redacted. Collect via Docker log driver / Loki. |
 | Liveness | `GET /api/health` | Process up. Used by container healthcheck. |
 | Readiness | `GET /api/ready` | Checks DB + Meilisearch (+ Redis when queue enabled). 503 if a required dep is down. |
-| Uptime | external monitor 🖐️ | e.g. UptimeRobot/BetterStack hitting `/api/health` + `https://jagoakademi.com`. |
+| Uptime | external monitor 🖐️ | e.g. UptimeRobot/BetterStack hitting `https://jagoakademi.com/api/health` + `https://jagoakademi.com`. Point monitors at the main domain — `api.jagoakademi.com` does **not** resolve (BL-33). |
 
 ## 🖐️ Alerts to configure (post-deploy)
 
@@ -38,8 +38,8 @@ Configure in Sentry + the uptime monitor:
 ## Response flow (P1/P2)
 
 1. **Acknowledge** the alert; declare severity; open an incident channel.
-2. **Assess:** `GET /api/ready` → which dep is down? `docker compose ps` → unhealthy service? Sentry → error signature + `requestId`.
-3. **Correlate logs:** `docker compose logs api --since 15m | grep <requestId>`.
+2. **Assess:** `GET https://jagoakademi.com/api/ready` → which dep is down? `docker compose -f docker-compose.vps.yml ps` → unhealthy service? On any 5xx also check `docker port jago-akademi-web-1` (see BL-43). Sentry → error signature + `requestId`.
+3. **Correlate logs:** `docker compose -f docker-compose.vps.yml logs api --since 15m | grep <requestId>`.
 4. **Mitigate first, fix second:**
    - App bug in last deploy → **rollback** (RUNBOOK_DEPLOY §8).
    - DB down → check `postgres` health/disk; restore from backup only if corrupted (RUNBOOK_DB §3).
@@ -62,12 +62,23 @@ A breach = unauthorized access/disclosure/loss of personal data. Treat as **P1**
 
 ## Common commands
 
+> ⛔ **Compose produksi = `docker-compose.vps.yml`.** Jangan pernah menjalankan `up`/`build` dengan
+> `docker-compose.prod.yml` di host ini — file itu tak mem-publish port dan akan memutus nginx host
+> (502 sitewide, insiden BL-43). Ini justru paling berbahaya saat insiden, ketika orang mengetik
+> cepat.
+
 ```bash
-docker compose -f docker-compose.prod.yml ps
-docker compose -f docker-compose.prod.yml logs -f api worker
-curl -fsS https://api.jagoakademi.com/api/ready | jq
-docker compose -f docker-compose.prod.yml exec redis redis-cli LLEN bull:webhook:failed
+docker compose -f docker-compose.vps.yml ps
+docker port jago-akademi-web-1        # 3010 · api → 4010; kosong = penyebab 502 (BL-43)
+docker compose -f docker-compose.vps.yml logs -f api worker
+curl -fsS https://jagoakademi.com/api/ready | jq
+docker compose -f docker-compose.vps.yml exec redis redis-cli LLEN bull:webhook:failed
+sudo systemctl status nginx           # nginx = service HOST, bukan container
 ```
+
+> 🔴 **Jangan meng-`curl` `https://api.jagoakademi.com`.** Host itu **tidak resolve** (BL-33) — curl
+> akan gagal resolve DNS dan operator menyimpulkan "API down" padahal API sehat. Health check yang
+> benar: `https://jagoakademi.com/api/health` dan `/api/ready`.
 
 ## Validation Checklist (TASK-023)
 

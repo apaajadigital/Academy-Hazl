@@ -75,7 +75,7 @@ Secara fondasi teknis situs **sehat**: CSS/styling sudah pulih (regresi BL-35 te
 | TC | Skenario | Hasil | Catatan |
 |----|----------|-------|---------|
 | I-01 | Email/WA/Search integrasi (non-payment) | ✅ Pass | Terverifikasi di TASK-030 (matrix) |
-| I-02 | DOKU webhook signature+idempotency | ✅ Pass | 286/286 test |
+| I-02 | DOKU webhook signature+idempotency | ✅ Pass | Suite hijau (jumlah: `docs/RUNBOOK_CI.md`) |
 | I-03 | Pembayaran uang nyata | ⚠️ Deferred | Sengaja ditunda |
 | I-04 | Cloudflare Stream/R2 (video/storage) | ❌ Fail | Belum diimplementasi (disk lokal) — TASK-098 |
 

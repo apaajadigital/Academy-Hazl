@@ -2,6 +2,22 @@
 
 Step-by-step instructions for deploying Jago Akademi to production.
 
+> ## 🔴 READ FIRST — this document describes the ORIGINAL DESIGN, not the live deployment
+>
+> **Authoritative runbook: [`RUNBOOK_DEPLOY.md`](./RUNBOOK_DEPLOY.md).** Where the two disagree,
+> `RUNBOOK_DEPLOY.md` wins. This guide is kept as design reference; treat its commands as
+> illustrative, not copy-pasteable.
+>
+> Verified on the VPS 29 Jul 2026 (`nginx -T`, `docker compose`) — the live system differs on four
+> points that break production if you follow this file literally:
+>
+> | This guide says | Reality |
+> |---|---|
+> | `api.jagoakademi.com` serves the API | **That host does not resolve** (BL-33). API is at `https://jagoakademi.com/api/*`. |
+> | nginx runs as a Docker service | nginx runs on the **host** (systemd). Reload = `sudo systemctl reload nginx`. `nginx/nginx.conf` in the repo is **not** the live config. |
+> | `docker-compose.prod.yml` | Live compose is **`docker-compose.vps.yml`**. Running `up` with `prod.yml` recreates `web`/`api` **without published ports** → host nginx 502 sitewide (incident BL-43). |
+> | Deploy path `/opt/jago-akademi` | Actual path `/var/www/jago-akademi`. |
+
 ---
 
 ## Prerequisites
@@ -41,20 +57,25 @@ apt-get install certbot
 certbot certonly --standalone \
   -d jagoakademi.com \
   -d www.jagoakademi.com \
-  -d api.jagoakademi.com \
   --email admin@jagoakademi.com \
   --agree-tos
 
-# Copy to nginx ssl directory
-mkdir -p nginx/ssl
-cp /etc/letsencrypt/live/jagoakademi.com/fullchain.pem nginx/ssl/jagoakademi.com.crt
-cp /etc/letsencrypt/live/jagoakademi.com/privkey.pem nginx/ssl/jagoakademi.com.key
-cp /etc/letsencrypt/live/api.jagoakademi.com/fullchain.pem nginx/ssl/api.jagoakademi.com.crt
-cp /etc/letsencrypt/live/api.jagoakademi.com/privkey.pem nginx/ssl/api.jagoakademi.com.key
-
-# Auto-renewal
-echo "0 0 1 * * root certbot renew --quiet && docker compose -f /opt/jago-akademi/docker-compose.prod.yml restart nginx" >> /etc/crontab
+# Auto-renewal — reload the HOST nginx (there is no nginx container)
+echo "0 3 * * * root certbot renew --quiet --deploy-hook 'systemctl reload nginx'" >> /etc/crontab
 ```
+
+> 🔴 **Two corrections applied here (both were silent 90-day time bombs):**
+>
+> 1. **`-d api.jagoakademi.com` removed.** The host does not resolve, so its HTTP-01 challenge always
+>    fails — and certbot issues a certificate as one transaction, so that single domain fails the
+>    **entire** issuance and every later renewal.
+> 2. **The deploy-hook now reloads host nginx.** The old cron ran
+>    `docker compose ... restart nginx`, but **there is no nginx container**. That command always
+>    errored, so nginx would keep serving the expired certificate even after a successful renewal.
+>
+> The `cp ... nginx/ssl/` steps were also dropped: the live host nginx reads
+> `/etc/letsencrypt/live/jagoakademi.com/` directly. Verify with `sudo certbot certificates` and
+> `sudo certbot renew --dry-run`.
 
 ---
 
@@ -80,12 +101,16 @@ JWT_SECRET=<openssl rand -base64 48>
 JWT_REFRESH_SECRET=<openssl rand -base64 48>
 
 WEB_URL=https://jagoakademi.com
-NEXT_PUBLIC_API_URL=https://api.jagoakademi.com
+# Baked into the client bundle at BUILD time. Same origin as the web app is CORRECT here:
+# the host nginx splits /api/ off to the api container. See RUNBOOK_DEPLOY.md §3.1.
+NEXT_PUBLIC_API_URL=https://jagoakademi.com
 NEXT_PUBLIC_SITE_URL=https://jagoakademi.com
+API_PROXY_TARGET=http://api:4000
 
 GOOGLE_CLIENT_ID=<from Google Console>
 GOOGLE_CLIENT_SECRET=<from Google Console>
-GOOGLE_CALLBACK_URL=https://api.jagoakademi.com/api/auth/google/callback
+# Must match the redirect URI registered in Google Console — and must resolve.
+GOOGLE_CALLBACK_URL=https://jagoakademi.com/api/auth/google/callback
 
 RESEND_API_KEY=re_live_<key>
 EMAIL_FROM=noreply@jagoakademi.com
@@ -152,8 +177,8 @@ docker compose -f docker-compose.prod.yml ps
 ## 6. Verify Deployment
 
 ```bash
-# API health check
-curl -s https://api.jagoakademi.com/api/health | jq
+# API health check — via the main domain; api.jagoakademi.com does not resolve (BL-33)
+curl -s https://jagoakademi.com/api/health | jq
 
 # Expected: { "status": "ok", "timestamp": "..." }
 

@@ -9,7 +9,10 @@ info:
     This spec is a representative starting point (TASK-050); full coverage of all
     ~130 endpoints is added incrementally alongside per-route Zod schemas (BL-12).
 servers:
-  - url: https://api.jagoakademi.com
+  # The API is served from the main domain under /api/*, proxied by the host-level
+  # nginx. There is no api.jagoakademi.com — that host does not resolve (BL-33,
+  # docs/INTEGRATION_VERIFICATION.md). Generated clients must target this origin.
+  - url: https://jagoakademi.com
     description: Production
   - url: http://localhost:4000
     description: Local

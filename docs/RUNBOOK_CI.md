@@ -16,7 +16,21 @@ npm run --workspace api exec -- prisma generate
 npm run lint && npm run check-types && npm run test && npm run build
 ```
 
-All four are currently green (verified TASK-002/003): API+web typecheck 0 errors, lint clean, 256/256 tests, both builds succeed.
+All four are currently green: API+web typecheck 0 errors, lint clean, both builds succeed.
+
+### Jumlah test — satu sumber kebenaran
+
+> **Ini satu-satunya tempat di repo yang boleh mencantumkan jumlah test.** Angka yang sama pernah
+> tersebar di enam dokumen lain (267 / 281 / 256 / 279 / 286 / 608 / 708) dan **semuanya salah**,
+> karena setiap gelombang PR menambah test tanpa ada yang memperbarui salinannya. Kalau kamu butuh
+> angka ini di dokumen lain, tautkan ke sini — jangan salin nilainya.
+
+| Diukur | Perintah | Hasil |
+|---|---|---|
+| 29 Jul 2026 (`ce1e4b8` + remediasi lintas-sesi) | `cd apps/api && npx vitest run` | **85 file / 765 test lulus** |
+
+Ukur ulang sebelum mengutip. Jalankan **sendirian** — BL-80 mencatat suite ini non-deterministik
+bila dijalankan berbarengan dengan `tsc`/`next build` (kegagalan resource, bukan cacat logika).
 
 ## Branch Protection — MANUAL SETUP REQUIRED ⚠️
 

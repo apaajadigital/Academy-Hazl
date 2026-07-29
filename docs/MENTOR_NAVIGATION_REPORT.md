@@ -1,6 +1,6 @@
 # Mentor Navigation (Opsi A) — Report
 
-> **Tanggal:** 28 Jul 2026 · **Branch:** `feat/mentor-navigation` (dari `main`) · **Metode:** implementasi + Explore agent verifikasi. · **Validasi:** build hijau (setelah 2× race OneDrive) + tsc + ESLint 0 + grep fungsional + agent independen. · **Belum di‑merge** — menunggu konfirmasi reviewer.
+> **Tanggal:** 28 Jul 2026 · **Branch:** `feat/mentor-navigation` (dari `main`) · **Metode:** implementasi + Explore agent verifikasi. · **Validasi:** build hijau (setelah 2× race OneDrive) + tsc + ESLint 0 + grep fungsional + agent independen. · ⚠️ **SUDAH DI-MERGE ke `main`** (`12a9554`, dikonfirmasi 29 Jul 2026 — `Navbar.tsx:27`, `Footer.tsx:10`, `sitemap.ts:106`). Klaim "belum di-merge" di versi awal dokumen ini **salah**; rutenya live dan diindeks sitemap. **Peringatan konten §5 karena itu bukan lagi pra-syarat, melainkan masalah produksi aktif** — lihat **BL-114**.
 
 ## 1. Ringkasan
 Membuat rute **`/mentor`** (yang sebelumnya **orphan** — tak terjangkau dari mana pun) **terjangkau** via Navbar + Footer, dan **diindeks** via sitemap. Presentation/link only — tanpa ubah logic/API/DB/routing/fitur. **Peringatan konten (BL‑24) di §5 — WAJIB dibaca sebelum deploy.**

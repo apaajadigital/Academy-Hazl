@@ -6,7 +6,8 @@
 
 > **✅ Kondisi live aktual (terverifikasi 8 Jul 2026)** — realita di host berbeda dari desain awal di bawah:
 > - **Path:** `/var/www/jago-akademi` (bukan direktori lain).
-> - **Compose file live:** `docker-compose.vps.yml` (**bukan** `docker-compose.prod.yml`). Section §5.1 sudah memakai file ini; section lain yang masih menulis `docker-compose.prod.yml` merujuk desain awal (nginx-in-Docker + GHCR/CD) yang belum dipakai.
+> - **Compose file live:** `docker-compose.vps.yml` (**bukan** `docker-compose.prod.yml`). Seluruh perintah operasional di runbook ini sudah memakai `vps.yml` (disapu 29 Jul 2026). `docker-compose.prod.yml` kini hanya disebut sebagai **peringatan** atau saat merujuk isi file itu sendiri — **jangan** menjalankan perintah `up`/`build` dengannya di host ini (BL-43).
+> - **API URL:** `api.jagoakademi.com` **tidak resolve** dan tidak pernah dipakai (BL-33). API dijangkau lewat `https://jagoakademi.com/api/*`. `NEXT_PUBLIC_API_URL=https://jagoakademi.com` — sama dengan origin web, dan itu **benar** di sini karena nginx host yang memisahkan `/api/` (§3.1).
 > - **Reverse proxy:** **nginx level-host** (systemd, di luar Docker) meng-handle TLS + proxy ke container. **Tidak ada Cloudflare / CDN** di depan domain → tidak ada cache CDN yang perlu di-purge; recreate container = langsung live.
 > - **Stack berjalan:** `web` (`:3010→3000`), `api` (`:4010→4000`), `postgres`, `meilisearch`. (redis/BullMQ & CD GitHub Actions belum di-deploy; repo belum punya secret CD.)
 > - **Deploy rutin manual (proven):** `cd /var/www/jago-akademi && git pull --ff-only origin main && docker compose -f docker-compose.vps.yml build --no-cache web && docker compose -f docker-compose.vps.yml up -d --force-recreate web`.
@@ -14,13 +15,24 @@
 
 ## Arsitektur runtime
 
+**Topologi live (satu domain, nginx level-host).** `api.jagoakademi.com` **TIDAK RESOLVE** dan tidak
+pernah dipakai — lihat BL-33 + `docs/INTEGRATION_VERIFICATION.md`. API dijangkau lewat
+`https://jagoakademi.com/api/*`.
+
 ```
-Internet → Nginx (80/443, TLS, rate-limit, gzip)
-             ├── jagoakademi.com      → web (Next.js standalone :3000)
-             └── api.jagoakademi.com  → api (Express :4000)
+Internet → nginx di HOST (systemd, 80/443, TLS, rate-limit, gzip)
+             └── jagoakademi.com
+                   ├── /api/auth/ → 127.0.0.1:4010 → container api  (Express :4000)
+                   ├── /api/      → 127.0.0.1:4010 → container api
+                   └── /          → 127.0.0.1:3010 → container web  (Next.js standalone :3000)
 Backing: postgres:16 · meilisearch:v1.5 · redis:7 (BullMQ, TASK-022)
 Volumes: postgres_data · meilisearch_data · redis_data · uploads · /etc/letsencrypt
 ```
+
+> **nginx bukan container.** Ia berjalan sebagai service systemd di host — itulah sebabnya
+> `docker-compose.vps.yml` tidak punya service `nginx`. Konsekuensinya: `nginx/nginx.conf` **di repo
+> BUKAN konfigurasi produksi**; konfigurasi live ada di `/etc/nginx/` pada host dan hanya bisa dibaca
+> dengan `sudo nginx -T`. Reload = `sudo systemctl reload nginx`, bukan `docker compose exec nginx`.
 
 ## 0. Prasyarat host
 
@@ -37,9 +49,12 @@ Buat A record (TTL 300 selama setup):
 |--------|------|-------|
 | A | `jagoakademi.com` | IP VPS |
 | A | `www.jagoakademi.com` | IP VPS |
-| A | `api.jagoakademi.com` | IP VPS |
 
-Verifikasi: `dig +short jagoakademi.com api.jagoakademi.com`
+> ⛔ **JANGAN tambahkan `api.jagoakademi.com`.** Subdomain itu tidak pernah dibuat dan tidak resolve
+> (BL-33). Seluruh trafik API lewat `jagoakademi.com/api/*`. Menambahkannya sekarang hanya akan
+> menghidupkan kembali template env & certbot yang salah di bawah.
+
+Verifikasi: `dig +short jagoakademi.com www.jagoakademi.com`
 
 ## 2. 🖐️ Bootstrap direktori & kode
 
@@ -62,12 +77,12 @@ JWT_SECRET=<random-64>
 JWT_REFRESH_SECRET=<random-64>
 GOOGLE_CLIENT_ID=<dari Google Cloud Console>
 GOOGLE_CLIENT_SECRET=<...>
-GOOGLE_CALLBACK_URL=https://api.jagoakademi.com/api/auth/google/callback
+GOOGLE_CALLBACK_URL=https://jagoakademi.com/api/auth/google/callback
 # URLs — lihat §3.1 sebelum mengubah; salah nilai = proxy /api/* loop
 WEB_URL=https://jagoakademi.com
-NEXT_PUBLIC_API_URL=https://api.jagoakademi.com   # origin API dipanggil BROWSER — wajib ≠ origin web
+NEXT_PUBLIC_API_URL=https://jagoakademi.com       # origin API dipanggil BROWSER; SAMA dgn origin web — lihat §3.1
 NEXT_PUBLIC_SITE_URL=https://jagoakademi.com
-# API_PROXY_TARGET=http://api:4000                # opsional; hanya bila API tak terekspos publik (§3.1)
+API_PROXY_TARGET=http://api:4000                  # wajib di topologi ini (§3.1)
 # Payment (DOKU) — mulai SANDBOX, pindah production saat TASK-030 lolos
 DOKU_CLIENT_ID=<...>
 DOKU_SECRET_KEY=<...>
@@ -94,16 +109,27 @@ NEXT_PUBLIC_MIXPANEL_TOKEN=
 
 | Variabel | Dipakai siapa | Aturan |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | **Browser** (di-inline ke bundle klien) | Origin API yang bisa dijangkau publik, **≠ origin web** (`NEXT_PUBLIC_SITE_URL`). Untuk topologi ini: `https://api.jagoakademi.com`. |
-| `API_PROXY_TARGET` (opsional) | **Server** Next, hanya untuk rewrite | Origin internal (mis. `http://api:4000` di jaringan compose). **Bukan** `NEXT_PUBLIC_*` → tidak bocor ke bundle klien. Pakai hanya bila API tidak terekspos publik. |
+| `NEXT_PUBLIC_API_URL` | **Browser** (di-inline ke bundle klien) | Origin API yang bisa dijangkau publik dari internet. **Nilai untuk VPS ini: `https://jagoakademi.com`** — sama dengan origin web, dan itu memang benar (lihat kotak di bawah). |
+| `API_PROXY_TARGET` | **Server** Next, hanya untuk rewrite | Origin internal (`http://api:4000` di jaringan compose). **Bukan** `NEXT_PUBLIC_*` → tidak bocor ke bundle klien. **Wajib di-set di VPS ini**, karena tanpanya target rewrite jatuh ke `NEXT_PUBLIC_API_URL` yang = origin web. |
 
-Urutan resolusi: `API_PROXY_TARGET` → `NEXT_PUBLIC_API_URL` → `http://localhost:4000`. Bila
-`API_PROXY_TARGET` tidak di-set, perilakunya **persis sama seperti sebelumnya**.
+Urutan resolusi: `API_PROXY_TARGET` → `NEXT_PUBLIC_API_URL` → `http://localhost:4000`.
 
-Topologi runbook ini punya subdomain `api.jagoakademi.com` (server block di `nginx/nginx.conf`),
-jadi `NEXT_PUBLIC_API_URL` sudah cukup dan `API_PROXY_TARGET` **tidak perlu**. Untuk topologi
-`docker-compose.vps.yml` yang **tanpa** subdomain api (`/api/*` dilayani lewat origin web), set
-`API_PROXY_TARGET=http://api:4000` — lihat `RUNBOOK_DEPLOY_RELEASE_JUL2026.md` §0.1.
+> ### 🔴 Aturan "`NEXT_PUBLIC_API_URL` harus ≠ origin web" **tidak berlaku universal**
+>
+> Aturan itu hanya berlaku bila `/api/*` dilayani oleh **rewrite Next** — di situ, menunjuk
+> `NEXT_PUBLIC_API_URL` ke origin web membuat Next mem-proxy ke dirinya sendiri
+> (`nginx → web → rewrite → nginx → …`).
+>
+> **Di VPS ini `/api/*` TIDAK dilayani rewrite Next.** nginx level-host mencegat `/api/` lebih dulu
+> dan meneruskannya langsung ke container api (`127.0.0.1:4010`); request itu tidak pernah sampai ke
+> container web. Karena nginx yang memisahkan `/api/` dari `/`, `NEXT_PUBLIC_API_URL` **boleh dan
+> harus** sama dengan origin web. Loop dicegah oleh `API_PROXY_TARGET=http://api:4000` yang
+> meng-override target rewrite ke jaringan internal.
+>
+> ⛔ **Jangan mengisinya dengan `https://api.jagoakademi.com`.** Host itu tidak resolve (BL-33).
+> Nilai itu ter-**bake** ke bundle klien saat build, sehingga **setiap fetch dari browser gagal** —
+> situs tampil normal tapi mati fungsi, dan **tidak bisa dipulihkan dengan `restart`**; wajib rebuild.
+
 `http://127.0.0.1:4010` (port host API) hanya benar bila Next berjalan **langsung di host**, bukan
 di dalam container. Guard membandingkan **origin**, jadi host sama dengan port berbeda diizinkan.
 
@@ -140,10 +166,24 @@ Implikasi yang penting dipahami sebelum menyalahkan konfigurasi proxy:
 > Untuk output standalone Next.js, target proxy menjadi literal di `.next/routes-manifest.json`.
 > **Mengubah `environment:` di compose lalu `restart` TIDAK memindahkan target proxy.** Wajib rebuild:
 > ```bash
-> docker compose -f docker-compose.prod.yml build --no-cache web
-> docker compose -f docker-compose.prod.yml up -d --force-recreate web
+> docker compose -f docker-compose.vps.yml build --no-cache web
+> docker compose -f docker-compose.vps.yml up -d --force-recreate web
 > ```
-> **Jangan** pakai `--remove-orphans` di VPS ini — nginx berjalan sebagai orphan container dan akan ikut terhapus.
+>
+> ⛔ **WAJIB `docker-compose.vps.yml` — JANGAN `docker-compose.prod.yml` (insiden BL-43).**
+> `prod.yml` memakai topologi nginx-in-Docker dan karena itu **tidak mem-publish port**. Me-recreate
+> `web` dengannya menghapus binding `3010:3000`, sehingga nginx host kehilangan `127.0.0.1:3010` dan
+> membalas **502 sitewide** (28 menit outage, 17 Jul 2026). Verifikasi pasca-up:
+> `docker port jago-akademi-web-1` harus menampilkan `3010`.
+>
+> **Jangan** pakai `--remove-orphans` di VPS ini. Alasannya **bukan** karena nginx adalah orphan
+> container — nginx berjalan di **host** (systemd) dan tidak terlihat oleh Docker sama sekali.
+> Larangan ini bersifat kehati-hatian: `docker-compose.vps.yml` bukan satu-satunya sumber container
+> di host, sehingga `--remove-orphans` bisa menghapus container yang dikelola di luar file compose
+> ini. (Container `jago-akademi-nginx-1` yang yatim sudah **dihapus** saat pemulihan BL-43 dan tidak
+> boleh dihidupkan lagi.) Untuk me-reload TLS/proxy, target yang benar adalah nginx host:
+> `sudo systemctl reload nginx` — dan konfigurasinya di `/etc/nginx/`, **bukan** `nginx/nginx.conf`
+> di repo.
 
 **Wiring build-arg — SUDAH ada di repo**, tidak perlu tindakan manual. `API_PROXY_TARGET` sudah
 terpasang sebagai `ARG` di `apps/web/Dockerfile`, sebagai `build.args` di `docker-compose.prod.yml`
@@ -162,8 +202,8 @@ Terverifikasi lewat build sungguhan (nilai yang ter-bake di `.next/routes-manife
 
 | `API_PROXY_TARGET` | `NEXT_PUBLIC_API_URL` | `destination` hasil build |
 |---|---|---|
-| `http://api:4000` | `https://jagoakademi.com` (= origin web) | `http://api:4000/api/:path*` — override menang, loop dihindari |
-| *(kosong)* | `https://api.jagoakademi.com` | `https://api.jagoakademi.com/api/:path*` |
+| `http://api:4000` | `https://jagoakademi.com` (= origin web) | `http://api:4000/api/:path*` — override menang, loop dihindari. **← kombinasi yang dipakai VPS ini** |
+| *(kosong)* | origin API terpisah (topologi lain, mis. `https://api.contoh.com`) | `https://api.contoh.com/api/:path*` |
 | *(kosong)* | *(kosong / = origin web)* | `http://localhost:4000/api/:path*` + peringatan build |
 
 Origin internal tidak bocor ke klien: build dengan `API_PROXY_TARGET=http://api:4000` menghasilkan
@@ -176,33 +216,49 @@ First issuance (port 80 masih bebas — nginx belum jalan):
 ```bash
 sudo apt install -y certbot
 sudo certbot certonly --standalone \
-  -d jagoakademi.com -d www.jagoakademi.com -d api.jagoakademi.com \
+  -d jagoakademi.com -d www.jagoakademi.com \
   --email admin@jagoakademi.com --agree-tos --no-eff-email
 ```
 
-Sertifikat → `/etc/letsencrypt/live/jagoakademi.com/` (path yang dipakai `nginx/nginx.conf`).
+> ⛔ **JANGAN sertakan `-d api.jagoakademi.com`.** Host itu tidak resolve (BL-33), jadi challenge
+> HTTP-01 untuknya **selalu gagal** — dan karena certbot memperlakukan issuance sebagai satu
+> transaksi, satu domain gagal menggagalkan **seluruh** sertifikat. Efeknya tidak terasa saat itu
+> juga melainkan ~90 hari kemudian, ketika renewal diam-diam gagal dan TLS kedaluwarsa → seluruh
+> domain mati.
 
-**Renewal otomatis** (nginx sudah serve `/.well-known/acme-challenge/` dari `/var/www/certbot`):
+Sertifikat → `/etc/letsencrypt/live/jagoakademi.com/` (path yang dirujuk konfigurasi nginx host di
+`/etc/nginx/`, **bukan** `nginx/nginx.conf` di repo).
+
+**Renewal otomatis** (nginx host sudah serve `/.well-known/acme-challenge/` dari `/var/www/certbot`):
 
 ```bash
 sudo tee /etc/cron.d/certbot-renew <<'EOF'
-0 3 * * * root certbot renew --webroot -w /var/www/certbot --deploy-hook "docker compose -f /var/www/jago-akademi/docker-compose.prod.yml exec nginx nginx -s reload" >> /var/log/certbot-renew.log 2>&1
+0 3 * * * root certbot renew --webroot -w /var/www/certbot --deploy-hook "systemctl reload nginx" >> /var/log/certbot-renew.log 2>&1
 EOF
 ```
+
+> ⛔ **Deploy-hook harus me-reload nginx HOST.** Versi lama memakai
+> `docker compose -f .../docker-compose.prod.yml exec nginx nginx -s reload` — **tidak ada container
+> nginx** di host ini, jadi hook itu selalu error. Akibatnya sertifikat bisa saja diperpanjang, tapi
+> nginx tidak pernah memuat ulang dan terus menyajikan sertifikat lama sampai kedaluwarsa.
+>
+> Uji hook tanpa menunggu 90 hari: `sudo certbot renew --dry-run` lalu `sudo systemctl reload nginx`
+> harus keluar tanpa error. Cek masa berlaku aktual: `sudo certbot certificates`.
 
 ## 5. 🖐️ First deploy (build di host)
 
 ```bash
 cd /var/www/jago-akademi
-docker compose -f docker-compose.prod.yml build        # ± beberapa menit
-docker compose -f docker-compose.prod.yml run --rm api npx prisma migrate deploy   # migrations ter-commit (TASK-021); DB lama hasil `db push` → baseline dulu, lihat RUNBOOK_DB.md §1
-docker compose -f docker-compose.prod.yml up -d --wait
-docker compose -f docker-compose.prod.yml ps           # semua "healthy"
+docker compose -f docker-compose.vps.yml build        # ± beberapa menit
+docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate deploy   # migrations ter-commit (TASK-021); DB lama hasil `db push` → baseline dulu, lihat RUNBOOK_DB.md §1
+docker compose -f docker-compose.vps.yml up -d --wait
+docker compose -f docker-compose.vps.yml ps           # semua "healthy"
+docker port jago-akademi-web-1                        # WAJIB menampilkan 3010 (guard BL-43)
 ```
 
 ### Smoke test
 ```bash
-curl -fsS https://api.jagoakademi.com/api/health        # {"success":true,...}
+curl -fsS https://jagoakademi.com/api/health            # {"status":"healthy",...}
 curl -fsSI https://jagoakademi.com | head -5            # 200 + security headers
 ```
 SSL rating: https://www.ssllabs.com/ssltest/ → target A.
@@ -261,14 +317,15 @@ Versi sebelumnya tercatat di `.last-deploy-api|web`:
 cd /var/www/jago-akademi
 export API_IMAGE=ghcr.io/<org>/<repo>/api:<versi-sebelumnya>
 export WEB_IMAGE=ghcr.io/<org>/<repo>/web:<versi-sebelumnya>
-docker compose -f docker-compose.prod.yml -f docker-compose.registry.yml up -d --wait
+docker compose -f docker-compose.vps.yml -f docker-compose.registry.yml up -d --wait
+docker port jago-akademi-web-1     # WAJIB 3010 — bila kosong, published port hilang (BL-43)
 ```
 ⚠️ Rollback image **tidak** membatalkan migration — migration harus backward-compatible (aturan TASK-021), atau restore backup DB.
 
 ## 9. Backup sebelum tiap migrate (manual sampai TASK-021 mengotomasi)
 
 ```bash
-docker compose -f docker-compose.prod.yml exec postgres pg_dump -U jagouser jago_akademi | gzip > backup-$(date +%F-%H%M).sql.gz
+docker compose -f docker-compose.vps.yml exec -T postgres pg_dump -U jagouser jago_akademi | gzip > backup-$(date +%F-%H%M).sql.gz
 ```
 
 ## Validation Checklist (TASK-020)
@@ -284,7 +341,7 @@ docker compose -f docker-compose.prod.yml exec postgres pg_dump -U jagouser jago
 
 | Gejala | Aksi |
 |--------|------|
-| Service unhealthy | `docker compose logs <svc> --tail 100` |
-| 502 dari nginx | cek `docker compose ps` api/web healthy; nginx resolve nama service saat start — restart nginx setelah api/web up |
-| Cert renewal gagal | cek `/var/log/certbot-renew.log`; pastikan `/var/www/certbot` ter-mount di nginx |
+| Service unhealthy | `docker compose -f docker-compose.vps.yml logs <svc> --tail 100` |
+| **502 dari nginx** | **Cek dulu `docker port jago-akademi-web-1` / `...-api-1`** — harus `3010`/`4010`. Kosong = container di-recreate dengan compose file salah (BL-43); perbaiki: `docker compose -f docker-compose.vps.yml up -d --force-recreate api worker web`. Kalau port ada, baru cek health service + `sudo systemctl reload nginx`. |
+| Cert renewal gagal | cek `/var/log/certbot-renew.log` + `sudo certbot certificates`; pastikan `/var/www/certbot` di-serve nginx host dan daftar `-d` tidak memuat domain yang tak resolve |
 | Migrate gagal | JANGAN retry buta — restore backup §9, investigasi, baru ulang |

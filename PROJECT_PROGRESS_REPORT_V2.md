@@ -1,5 +1,24 @@
 # 🏛️ JAGO AKADEMI — MASTER ENGINEERING BLUEPRINT & EXECUTION PLAN
 
+> ## ⚠️ PERINGATAN KEBASIAN — BACA SEBELUM MEMAKAI DOKUMEN INI SEBAGAI OTORITAS
+>
+> Metadata di bawah (tanggal **2 Juli 2026**, branch aktif `redesign/light-theme`, status ~85%)
+> **belum diperbarui sejak 27 hari dan ≥6 gelombang PR**. `main` kini `ce1e4b8`; branch itu sudah
+> lama tidak dipakai. Keadaan nyata per **29 Juli 2026**:
+>
+> | Hal | Kata dokumen ini | Kenyataan |
+> |---|---|---|
+> | Branch aktif | `redesign/light-theme` | `main` (`ce1e4b8`), sudah ter-push & di-deploy |
+> | Deploy host | belum | sudah jalan; nginx **host** meneruskan `/api/` → `127.0.0.1:4010` |
+> | `/kelas-gratis` (§854/§858) | sub-route `/kelas-gratis/[slug]`, modul `freeclass/*`, model `FreeClass` | **dibatalkan** oleh **ADR-0004** — kartu langsung ke `/checkout/<slug>` |
+> | Phase 2 Quality Gate | ✅ selesai | **sebagian** — threshold coverage nyata 61/58/49/60 vs target §9.12 ≥80% (BL-11) |
+> | Jumlah test | — | lihat `docs/RUNBOOK_CI.md` (satu-satunya tempat yang boleh mencantumkannya) |
+>
+> **Aturan "SSOT menang" di `CLAUDE.md` §(a) TIDAK berlaku untuk baris-baris di atas.** Untuk
+> keadaan terkini pakai, berurutan: `docs/BACKLOG.md` (BL-01…BL-114) → `docs/adr/` → runbook terkait.
+> Membangun `FreeClass`/`freeclass/*` berdasarkan §854/§858 berarti membatalkan keputusan yang sudah
+> diambil sadar — jangan. Sinkronisasi penuh SSOT masih terbuka (BL-51, butuh reviewer).
+
 > **PROJECT_PROGRESS_REPORT_V2.md**
 > **Single Source of Truth (SSOT)** · **Master Engineering Blueprint** · **Master Execution Plan for Claude Code**
 >

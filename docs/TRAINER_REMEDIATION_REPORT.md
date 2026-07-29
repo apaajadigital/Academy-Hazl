@@ -65,7 +65,22 @@ plus rincian saldo, dengan degradasi aman bila field belum tersedia.
 ## 4. 🖐️ Tindakan reviewer (human-gated, SSOT §9.6)
 
 ### 4.1 Migration — BELUM di-apply
-Tiga migration ditulis manual, **tidak** dijalankan (`prisma migrate dev` sengaja tidak dipakai):
+
+> 🔴 **TABEL DI BAWAH BUKAN CHECKLIST DEPLOY.** Ia hanya mendaftar migration milik **sesi trainer
+> ini**. Repo memuat **13 folder migration** dan yang belum ter-apply mencakup **≥7** — termasuk
+> `20260717000000_course_approval_payout_fields`, `20260721000000_course_private_class`,
+> `20260721100000_alumni_portfolio` (ketiganya **kodenya sudah live**), dan
+> `20260729000003_orderitem_item_lookup_index` (BL-98) yang **lahir setelah tabel ini ditulis**.
+>
+> Meng-apply hanya tiga baris di bawah lalu menyatakan "DB current" adalah kesalahan nyata: index
+> BL-98 tak pernah mendarat dan skema private-class/alumni tetap hilang.
+>
+> **Daftar pending yang dipelihara + pre-flight lengkap: [`RUNBOOK_DB.md` §1.1](./RUNBOOK_DB.md).**
+> Verifikasi selalu dengan
+> `docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status`.
+
+Tiga migration **milik sesi ini** ditulis manual, **tidak** dijalankan (`prisma migrate dev` sengaja
+tidak dipakai — lihat catatan drift di bawah):
 
 | Folder | Isi |
 |---|---|
@@ -86,10 +101,21 @@ tidak ada di `schema.prisma`. `prisma migrate diff` / `migrate dev` akan mengusu
 
 ### 4.2 Env proxy `/api/*` — runbook SUDAH diperbaiki, env host belum
 
+> ⚠️ **KOREKSI 29 Jul 2026 — perbaikan runbook yang diklaim di sesi ini justru SALAH arah.**
+> Sesi ini mengubah kedua runbook menjadi `NEXT_PUBLIC_API_URL=https://api.jagoakademi.com` dengan
+> alasan "wajib ≠ origin web". **Host `api.jagoakademi.com` tidak resolve** (BL-33, diverifikasi di
+> VPS lewat `nginx -T`), jadi nilai itu akan ter-*bake* ke bundle klien dan membuat **setiap fetch
+> browser gagal** — situs tampil tapi mati fungsi, tidak bisa dibalik dengan `restart`.
+>
+> Aturan "harus ≠ origin web" hanya berlaku bila `/api/*` dilayani **rewrite Next**. Di VPS ini
+> tidak: nginx level-**host** mencegat `/api/` → `127.0.0.1:4010` (container api), jadi request
+> browser tak pernah menyentuh container web. **Nilai yang benar & sudah terpasang di host:**
+> `NEXT_PUBLIC_API_URL=https://jagoakademi.com` (= origin web, dan itu benar) +
+> `API_PROXY_TARGET=http://api:4000`. Kedua runbook sudah dikoreksi.
+
 **Sudah beres di repo** (tidak perlu tindakan reviewer):
-- `docs/RUNBOOK_DEPLOY_RELEASE_JUL2026.md:35` yang dulu menetapkan `NEXT_PUBLIC_API_URL=https://jagoakademi.com`
-  (origin **web**, memicu proxy loop) kini `https://api.jagoakademi.com`, selaras dengan
-  `docs/RUNBOOK_DEPLOY.md`. Kedua runbook tidak lagi bertentangan.
+- Kedua runbook kini menetapkan nilai proxy yang benar untuk topologi live dan tidak lagi
+  bertentangan satu sama lain (`RUNBOOK_DEPLOY.md` §3.1, `RUNBOOK_DEPLOY_RELEASE_JUL2026.md` §0.1).
 - Kedua runbook punya bagian proxy khusus (`RELEASE_JUL2026` §0.1, `RUNBOOK_DEPLOY` §3.1) yang
   memisahkan `NEXT_PUBLIC_API_URL` (origin API untuk **browser**) dari `API_PROXY_TARGET` (origin
   **internal** untuk rewrite server-side, sengaja bukan `NEXT_PUBLIC_*` agar tidak bocor ke bundle klien).
@@ -98,12 +124,19 @@ tidak ada di `schema.prisma`. `prisma migrate diff` / `migrate dev` akan mengusu
   baru itu tidak di-set, perilakunya **identik dengan sebelumnya**. Seluruh guard lama dipertahankan.
 
 **🖐️ Sisa untuk reviewer (di host, bukan di repo):**
-1. Set nilai env yang benar di `/var/www/jago-akademi/.env` — `NEXT_PUBLIC_API_URL` **≠**
-   `NEXT_PUBLIC_SITE_URL`. Untuk topologi `docker-compose.vps.yml` (tanpa subdomain api), set
-   `API_PROXY_TARGET=http://api:4000`.
+1. ✅ **SUDAH SELESAI** (diverifikasi di host 29 Jul 2026) — `/var/www/jago-akademi/.env` sudah berisi
+   `NEXT_PUBLIC_SITE_URL=https://jagoakademi.com`, `NEXT_PUBLIC_API_URL=https://jagoakademi.com`,
+   `API_PROXY_TARGET=http://api:4000`; jalur internal dites hidup (`web` → `http://api:4000/api/health`
+   → `{"status":"healthy"}`).
 2. **Rebuild image web** — bukan restart (lihat jebakan ops di bawah):
-   `docker compose -f docker-compose.vps.yml build --no-cache web` lalu `up -d --force-recreate web`
-   (**tanpa** `--remove-orphans` — nginx adalah orphan container di VPS ini).
+   `docker compose -f docker-compose.vps.yml build --no-cache web` lalu `up -d --force-recreate web`,
+   kemudian `docker port jago-akademi-web-1` **wajib** menampilkan `3010`.
+   - ⛔ **Jangan `docker-compose.prod.yml`** — tanpa published port ⇒ 502 sitewide (BL-43).
+   - **Tanpa `--remove-orphans`.** Alasannya **bukan** "nginx adalah orphan container": nginx
+     berjalan di **host** (systemd) dan tak terlihat oleh Docker sama sekali. Larangan ini
+     kehati-hatian terhadap container di luar file compose ini. Reload proxy/TLS =
+     `sudo systemctl reload nginx`; konfigurasi live ada di `/etc/nginx/`, **bukan**
+     `nginx/nginx.conf` di repo (file repo itu bukan konfigurasi produksi).
 3. Bila memakai `API_PROXY_TARGET`: wiring build-arg **sudah terpasang di repo**
    (`apps/web/Dockerfile` `ARG`, `docker-compose.prod.yml` + `vps.yml` `build.args`,
    `.github/workflows/deploy.yml` `build-args`, plus contoh di `.env.example`). Yang tersisa hanya
@@ -128,7 +161,7 @@ sebelum merge, dan verifikasi di staging sebelum menyentuh data produksi.
 | `apps/api` → `tsc --noEmit` | ✅ 0 error |
 | `apps/api` → `prisma validate` | ✅ valid |
 | `apps/api` → `npm run lint` | ✅ 0 warning |
-| `apps/api` → `vitest run` | ✅ **708/708** (79 file) |
+| `apps/api` → `vitest run` | ✅ hijau penuh — snapshot saat PR #27: 714/714 (79 file). **Angka terkini di `docs/RUNBOOK_CI.md`**, jangan kutip dari sini |
 | `apps/web` → `tsc --noEmit` | ✅ 0 error |
 | `apps/web` → `npm run lint` | ✅ 0 warning (`--max-warnings 0`) |
 | `apps/web` → `npm run build` | ✅ compiled |
