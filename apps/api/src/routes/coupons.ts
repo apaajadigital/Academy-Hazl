@@ -24,7 +24,7 @@ router.post("/validate", authenticate, async (req, res, next) => {
 // --- Admin-only below ---
 
 function requireAdmin(req: Parameters<typeof authenticate>[0], res: Parameters<typeof authenticate>[1], next: Parameters<typeof authenticate>[2]) {
-  if (!req.user?.roles.includes("super_admin" as never)) {
+  if (!req.user?.roles.includes("super_admin")) {
     return res.status(403).json(errorResponse("FORBIDDEN", "Akses ditolak."));
   }
   next();

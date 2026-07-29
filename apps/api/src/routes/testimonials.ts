@@ -9,7 +9,7 @@ import { writeAudit } from "../services/audit/log.js";
 const router = Router();
 
 function requireAdmin(req: Request): void {
-  if (!req.user?.roles.includes("super_admin" as never)) {
+  if (!req.user?.roles.includes("super_admin")) {
     throw new AppError(403, "Akses ditolak.");
   }
 }

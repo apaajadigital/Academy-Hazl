@@ -137,7 +137,7 @@ router.get("/withdrawals", async (req: Request, res: Response, next: NextFunctio
 // PATCH /api/affiliate/withdrawals/:withdrawalId — admin process withdrawal
 router.patch("/withdrawals/:withdrawalId", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user?.roles.includes("super_admin" as never);
+    const isAdmin = req.user?.roles.includes("super_admin");
     if (!isAdmin) throw new AppError(403, "Akses ditolak.");
 
     const { withdrawalId } = req.params;

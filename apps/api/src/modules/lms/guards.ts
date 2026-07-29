@@ -8,7 +8,7 @@ export function requireSuperAdmin(
   res: Parameters<typeof authenticate>[1],
   next: Parameters<typeof authenticate>[2],
 ) {
-  if (!req.user?.roles.includes("super_admin" as never)) {
+  if (!req.user?.roles.includes("super_admin")) {
     return res.status(403).json(errorResponse("FORBIDDEN", "Akses ditolak."));
   }
   next();
@@ -23,7 +23,7 @@ export async function requireLmsAdmin(
   const { tenantId } = req.params;
   const userId = req.user?.id;
   if (!userId || !tenantId) return res.status(403).json(errorResponse("FORBIDDEN", "Akses ditolak."));
-  const isSuperAdmin = req.user?.roles.includes("super_admin" as never);
+  const isSuperAdmin = req.user?.roles.includes("super_admin");
   if (isSuperAdmin) return next();
   const role = await prisma.userRole.findFirst({
     where: { userId, role: "lms_admin", tenantId },

@@ -125,7 +125,7 @@ router.get("/:slug/file", authenticate, async (req, res, next) => {
       },
     });
 
-    if (!hasPurchased && !req.user!.roles.includes("super_admin" as never)) {
+    if (!hasPurchased && !req.user!.roles.includes("super_admin")) {
       throw new AppError(403, "Anda belum memiliki akses ke e-book ini.");
     }
 

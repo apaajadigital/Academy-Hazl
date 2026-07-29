@@ -31,7 +31,7 @@ router.get(
           where: { courseId_userId: { courseId: course.id, userId: req.user!.id } },
         });
         if (!enrollment) {
-          const isAdmin = req.user!.roles?.includes("super_admin" as never);
+          const isAdmin = req.user!.roles?.includes("super_admin");
           if (!isAdmin) return next(new AppError(403, "Anda belum terdaftar di kursus ini."));
         }
       }

@@ -86,7 +86,7 @@ router.get("/:code/download", authenticate, async (req: Request, res: Response, 
 
     // Only the owner or super_admin can download
     const isOwner = cert.userId === req.user!.id;
-    const isAdmin = req.user!.roles.includes("super_admin" as never);
+    const isAdmin = req.user!.roles.includes("super_admin");
     if (!isOwner && !isAdmin) return next(new AppError(403, "Akses ditolak."));
 
     if (cert.fileUrl) {

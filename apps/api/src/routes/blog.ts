@@ -68,7 +68,7 @@ router.get("/:slug", async (req: Request, res: Response, next: NextFunction) => 
 // ─── Admin-only below ─────────────────────────────────────────────────────────
 
 function requireAdmin(req: Request, _res: Response, next: NextFunction) {
-  if (!req.user?.roles.includes("super_admin" as never)) {
+  if (!req.user?.roles.includes("super_admin")) {
     return next(new AppError(403, "Akses ditolak."));
   }
   next();

@@ -144,7 +144,7 @@ const adminUpdateSchema = z.object({
 // PATCH /api/subscription/:userId — admin manage subscription
 router.patch("/:userId", authenticate, validateBody(adminUpdateSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user?.roles.includes("super_admin" as never);
+    const isAdmin = req.user?.roles.includes("super_admin");
     if (!isAdmin) throw new AppError(403, "Akses ditolak.");
 
     const { userId } = req.params;

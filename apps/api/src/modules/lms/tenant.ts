@@ -63,7 +63,7 @@ router.post("/tenants", authenticate, requireSuperAdmin, async (req, res, next) 
 router.get("/tenants/:tenantId", authenticate, async (req, res, next) => {
   try {
     const { tenantId } = req.params;
-    const isSuperAdmin = req.user?.roles.includes("super_admin" as never);
+    const isSuperAdmin = req.user?.roles.includes("super_admin");
     if (!isSuperAdmin) {
       const role = await prisma.userRole.findFirst({
         where: { userId: req.user!.id, role: "lms_admin", tenantId },

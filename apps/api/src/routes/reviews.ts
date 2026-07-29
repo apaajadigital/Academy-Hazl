@@ -3,9 +3,24 @@ import { z } from "zod";
 import { authenticate } from "../middleware/authenticate.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { prisma } from "../db/prisma.js";
-import { AppError, successResponse } from "../types/index.js";
+import { AppError, successResponse, type Role } from "../types/index.js";
 
 const router = Router();
+
+/**
+ * Role check against the authenticated user.
+ *
+ * Typed against `Role` on purpose: the previous `roles.includes("x" as never)`
+ * casts silenced the compiler entirely, so a typo or a renamed role would have
+ * compiled into a guard that can never match. With `allowed: readonly Role[]`
+ * an unknown role name is a build error.
+ */
+function hasAnyRole(req: Request, allowed: readonly Role[]): boolean {
+  const roles: readonly Role[] = req.user?.roles ?? [];
+  return allowed.some((role) => roles.includes(role));
+}
+
+const ADMIN_ROLES: readonly Role[] = ["super_admin"];
 
 // GET /api/reviews?itemType=course&itemId=xxx — public listing
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
@@ -119,7 +134,7 @@ router.put("/:reviewId", authenticate, async (req: Request, res: Response, next:
 // PATCH /api/reviews/:reviewId/moderate — admin hide/unhide
 router.patch("/:reviewId/moderate", authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user?.roles.includes("super_admin" as never);
+    const isAdmin = hasAnyRole(req, ADMIN_ROLES);
     if (!isAdmin) throw new AppError(403, "Akses ditolak.");
 
     const { reviewId } = req.params;
@@ -136,7 +151,7 @@ router.patch("/:reviewId/moderate", authenticate, async (req: Request, res: Resp
 // GET /api/reviews/admin — admin list all (auth + admin)
 router.get("/admin", authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user?.roles.includes("super_admin" as never);
+    const isAdmin = hasAnyRole(req, ADMIN_ROLES);
     if (!isAdmin) throw new AppError(403, "Akses ditolak.");
 
     const { itemType, status, page = "1", limit = "20" } = req.query as Record<string, string>;

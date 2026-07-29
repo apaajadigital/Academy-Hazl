@@ -6,6 +6,10 @@ export const ROLES = [
   "corporate_client",
   "partner",
   "creator",
+  // Affiliate accounts are already issued and filterable in the admin user list
+  // (modules/admin/users.ts); the union must know about them or role filters
+  // silently fall outside the type.
+  "affiliate",
   "super_admin",
 ] as const;
 

@@ -1,12 +1,28 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { generateInvoicePDF } from "../services/invoice/invoiceService.js";
 import { logger } from "../lib/logger.js";
-import { successResponse, errorResponse, AppError } from "../types/index.js";
+import { successResponse, errorResponse, AppError, type Role } from "../types/index.js";
 import { z } from "zod";
 
 const router = Router();
+
+/**
+ * Role check against the authenticated user.
+ *
+ * Typed against `Role` on purpose: the previous `roles.includes("x" as never)`
+ * casts silenced the compiler entirely, so a typo or a renamed role would have
+ * compiled into a guard that can never match (an endpoint nobody can reach —
+ * or, under negation, one that lets everybody through). With
+ * `allowed: readonly Role[]` an unknown role name is a build error.
+ */
+function hasAnyRole(req: Request, allowed: readonly Role[]): boolean {
+  const roles: readonly Role[] = req.user?.roles ?? [];
+  return allowed.some((role) => roles.includes(role));
+}
+
+const ADMIN_ROLES: readonly Role[] = ["super_admin"];
 
 router.use(authenticate);
 
@@ -45,7 +61,7 @@ router.get("/:orderId", async (req, res, next) => {
     });
 
     if (!order) throw new AppError(404, "Order tidak ditemukan.");
-    if (order.userId !== req.user!.id && !req.user!.roles.includes("super_admin" as never)) {
+    if (order.userId !== req.user!.id && !hasAnyRole(req, ADMIN_ROLES)) {
       throw new AppError(403, "Akses ditolak.");
     }
 
@@ -96,7 +112,7 @@ router.get("/:orderId/invoice", async (req, res, next) => {
     });
 
     if (!order) throw new AppError(404, "Order tidak ditemukan.");
-    if (order.userId !== req.user!.id && !req.user!.roles.includes("super_admin" as never)) {
+    if (order.userId !== req.user!.id && !hasAnyRole(req, ADMIN_ROLES)) {
       throw new AppError(403, "Akses ditolak.");
     }
     if (order.status !== "paid") throw new AppError(400, "Invoice hanya tersedia untuk order yang sudah dibayar.");
@@ -157,7 +173,7 @@ router.get("/:orderId/refund", async (req, res, next) => {
     const orderId = req.params.orderId as string;
     const refund = await prisma.refund.findUnique({ where: { orderId } });
     if (!refund) throw new AppError(404, "Refund tidak ditemukan.");
-    if (refund.userId !== req.user!.id && !req.user!.roles.includes("super_admin" as never)) {
+    if (refund.userId !== req.user!.id && !hasAnyRole(req, ADMIN_ROLES)) {
       throw new AppError(403, "Akses ditolak.");
     }
     return res.json(successResponse(refund));
@@ -216,7 +232,7 @@ router.post("/:orderId/cancel", async (req, res, next) => {
 
 router.patch("/admin/refunds/:refundId", async (req, res, next) => {
   try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+    if (!hasAnyRole(req, ADMIN_ROLES)) throw new AppError(403, "Akses ditolak.");
 
     const refundId = req.params.refundId as string;
     const { status, adminNote } = req.body as { status: string; adminNote?: string };
@@ -369,7 +385,7 @@ router.patch("/admin/refunds/:refundId", async (req, res, next) => {
 
 router.get("/admin/refunds", async (req, res, next) => {
   try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+    if (!hasAnyRole(req, ADMIN_ROLES)) throw new AppError(403, "Akses ditolak.");
 
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Number(req.query.limit) || 20);
