@@ -24,6 +24,7 @@ const komunitasChildren = [
 
 const navLinks = [
   { label: "E-Course", href: "/e-course" },
+  { label: "Mentor", href: "/mentor" },
   { label: "Event", href: "/event" },
   {
     label: "Produk",
