@@ -41,7 +41,8 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
   // Auth guard — mirrors apps/web/app/dashboard/layout.tsx initAuth verbatim
   // (getToken → /api/auth/me → 401 refresh once → me), with the role gate
   // adapted: this shell is trainer-only. Non-trainers are bounced to /dashboard
-  // (which itself re-routes admins to /admin). The backend still guards every
+  // (which itself re-routes admins to /admin/dashboard — the bare /admin page was
+  // removed and is now only a 308 redirect in next.config.js). The backend still guards every
   // /api/trainer/* endpoint; the client must not render the trainer shell to a
   // non-trainer.
   useEffect(() => {

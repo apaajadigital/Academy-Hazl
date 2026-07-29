@@ -120,7 +120,7 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
             update: {},
           });
         } else if (item.itemType === "ebook") {
-          // BL-65: EBook.totalSold was declared but never written — every ebook
+          // BL-97: EBook.totalSold was declared but never written — every ebook
           // read as 0 sales forever. Count the sale here, inside the SAME
           // transaction that flips the order to "paid" (which is what grants
           // download access in routes/ebooks.ts), so the counter and the access

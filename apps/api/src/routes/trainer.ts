@@ -8,6 +8,7 @@ import { AppError, successResponse, type Role } from "../types/index.js";
 import { parsePageParams, buildPaginationMeta } from "../lib/pagination.js";
 import {
   MAX_PAYOUT_AMOUNT,
+  MIN_PAYOUT_AMOUNT,
   computeCourseNetRevenue,
   computeTrainerAvailableBalance,
   processTrainerPayout,
@@ -336,9 +337,14 @@ const payoutSchema = z.object({
   // fractions such as 0.005, which the `Decimal(12,2)` column would silently
   // round (or reject at the driver) after the balance check had already passed.
   // Bound the value to what the column can hold and to whole cents.
+  // Owner decision (29 Jul 2026): minimum withdrawal is Rp 10.000. It has to be
+  // enforced here, not only in the form — the web input carried min="100000"
+  // while the API accepted Rp 0,01, so the stated floor was decorative and a
+  // direct API call could file a one-cent payout for staff to process by hand.
   amount: z
     .number()
     .positive()
+    .min(MIN_PAYOUT_AMOUNT, "Minimal penarikan Rp 10.000.")
     .max(MAX_PAYOUT_AMOUNT, "Jumlah melebihi batas maksimum.")
     .multipleOf(0.01, "Jumlah maksimal 2 angka desimal."),
   bankName: z.string().min(1),
@@ -451,20 +457,24 @@ router.patch("/courses/:courseId/live", requireTrainer, validateBody(liveSession
     const trainerId = req.user!.id;
     const { courseId } = req.params;
 
-    const course = await prisma.course.findFirst({
-      where: { id: courseId, trainerId },
-    });
-    if (!course) throw new AppError(404, "Kursus tidak ditemukan.");
-
     const { liveZoomLink, liveSchedule } = req.body as z.infer<typeof liveSessionSchema>;
-    const updated = await prisma.course.update({
-      where: { id: courseId },
+
+    // BL-69 atomic ownership guard — same pattern as PATCH /courses/:courseId/status
+    // and courseService.updateCourse. The previous findFirst-then-update-by-id split
+    // re-opened the TOCTOU window BL-69 closed: the `update` was keyed on `id` only,
+    // so a course reassigned to another trainer between the two queries would still
+    // be written by the original trainer. Scoping the write itself makes that
+    // impossible, and `count` doubles as the 404 check.
+    const result = await prisma.course.updateMany({
+      where: { id: courseId, trainerId },
       data: {
         liveZoomLink: liveZoomLink || null,
         liveSchedule: liveSchedule ? new Date(liveSchedule) : null,
       },
     });
+    if (result.count !== 1) throw new AppError(404, "Kursus tidak ditemukan.");
 
+    const updated = await prisma.course.findFirst({ where: { id: courseId, trainerId } });
     return res.json(successResponse(updated));
   } catch (err) {
     next(err);

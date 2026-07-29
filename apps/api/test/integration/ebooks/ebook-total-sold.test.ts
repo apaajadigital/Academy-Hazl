@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import { app } from "../../../src/app.js";
 
-// BL-65 regression suite: EBook.totalSold was declared in the schema but never
+// BL-97 regression suite: EBook.totalSold was declared in the schema but never
 // written by anything in apps/api/src — every ebook reported 0 sales forever.
 //
 // The counter is GROSS and increment-only. Exactly two paths write it (free /
@@ -100,7 +100,7 @@ beforeEach(() => {
 
 // ─── Free / 100%-off checkout path (routes/checkout.ts) ───────────────────────
 
-describe("BL-65 — free ebook checkout counts the sale", () => {
+describe("BL-97 — free ebook checkout counts the sale", () => {
   it("increments totalSold when a 100%-off coupon fulfills an ebook inline", async () => {
     vi.mocked(validateCoupon).mockResolvedValue({
       couponId: "coupon-free",
@@ -162,7 +162,7 @@ describe("BL-65 — free ebook checkout counts the sale", () => {
 
 // ─── Paid fulfillment path (jobs/processors/webhook.ts) ───────────────────────
 
-describe("BL-65 — paid webhook fulfillment counts the sale", () => {
+describe("BL-97 — paid webhook fulfillment counts the sale", () => {
   const webhookHeaders = {
     "client-id": "CLIENT-123",
     "request-id": "req-123",
@@ -273,7 +273,7 @@ describe("BL-65 — paid webhook fulfillment counts the sale", () => {
 
 // ─── Refund path (routes/orders.ts) ───────────────────────────────────────────
 
-describe("BL-65 — approved refund does NOT touch the ebook sales counter", () => {
+describe("BL-97 — approved refund does NOT touch the ebook sales counter", () => {
   const mockRefund = {
     id: "refund-1",
     orderId: "order-1",

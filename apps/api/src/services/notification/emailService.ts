@@ -122,7 +122,7 @@ export async function sendEventFullRefund(to: string, name: string, orderId: str
 }
 
 /**
- * BL-56: registration confirmation + e-ticket. Until now the ONLY event email was
+ * BL-63(c): registration confirmation + e-ticket. Until now the ONLY event email was
  * the failure path (`sendEventFullRefund`) — a successful registrant received
  * nothing at all even though `EventRegistration.ticketCode` is what the check-in
  * desk asks for.

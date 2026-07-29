@@ -194,7 +194,7 @@ router.post("/", authenticate, async (req, res, next) => {
           update: {},
         });
       } else if (itemType === "ebook") {
-        // BL-65: EBook.totalSold was declared but never written, so every ebook
+        // BL-97: EBook.totalSold was declared but never written, so every ebook
         // reported 0 sales forever and the admin/report figures built on it were
         // pure fiction. Count the sale here, on the SAME path that grants access
         // (the paid order created above is what routes/ebooks.ts checks). No
