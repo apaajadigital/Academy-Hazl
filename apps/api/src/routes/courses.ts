@@ -67,7 +67,7 @@ router.get("/:slug", async (req: Request, res: Response, next: NextFunction) => 
   try {
     const course = await getCourseBySlug(req.params.slug!);
     if (!course) return next(new AppError(404, "Kursus tidak ditemukan."));
-    if (course.status !== "published" && !req.user?.roles?.includes("super_admin" as never)) {
+    if (course.status !== "published" && !req.user?.roles?.includes("super_admin")) {
       return next(new AppError(404, "Kursus tidak ditemukan."));
     }
     res.json(successResponse(course));
@@ -137,7 +137,17 @@ router.put(
   validateBody(updateSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const course = await updateCourse(req.params.id!, req.body);
+      // authorize() lets super_admin through for any course; every other caller
+      // reaching this handler is a trainer and must stay inside their own
+      // catalog, so the update is scoped by ownership (404 when it is not theirs).
+      // A user holding both roles is treated as super_admin, matching how
+      // authorize() itself short-circuits on super_admin.
+      const isSuperAdmin = req.user!.roles.includes("super_admin");
+      const course = await updateCourse(
+        req.params.id!,
+        req.body,
+        isSuperAdmin ? { kind: "any" } : { kind: "trainer", trainerId: req.user!.id },
+      );
 
       await writeAudit({
         actorId: req.user!.id,

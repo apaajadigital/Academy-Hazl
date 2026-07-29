@@ -1,6 +1,8 @@
 import { prisma } from "../../db/prisma.js";
 import { searchCourses } from "../search/meilisearch.js";
 import { enqueueSearchIndex } from "../../jobs/queues.js";
+import { AppError } from "../../types/index.js";
+import { logger } from "../../lib/logger.js";
 
 export type CourseListFilter = {
   categorySlug?: string;
@@ -196,20 +198,56 @@ export async function createCourse(trainerId: string, dto: CreateCourseDto) {
 
 export type UpdateCourseDto = Partial<Omit<CreateCourseDto, "slug">>;
 
-export async function updateCourse(id: string, dto: UpdateCourseDto) {
-  const course = await prisma.course.update({
+/**
+ * Who is asking to update the course.
+ *
+ * Deliberately a required, non-optional discriminated union. An earlier shape
+ * (`{ trainerId?: string }` with a `= {}` default) meant a caller that simply
+ * forgot the argument got an UNSCOPED update — the IDOR would silently return
+ * with `tsc` still green. Here, omitting the scope is a compile error, and
+ * "update anything" has to be written out on purpose.
+ */
+export type UpdateCourseScope = { kind: "any" } | { kind: "trainer"; trainerId: string };
+
+export async function updateCourse(id: string, dto: UpdateCourseDto, scope: UpdateCourseScope) {
+  const data = {
+    ...(dto.title !== undefined && { title: dto.title }),
+    ...(dto.description !== undefined && { description: dto.description }),
+    ...(dto.shortDesc !== undefined && { shortDesc: dto.shortDesc }),
+    ...(dto.price !== undefined && { price: dto.price }),
+    ...(dto.salePrice !== undefined && { salePrice: dto.salePrice }),
+    ...(dto.categoryId !== undefined && { categoryId: dto.categoryId }),
+    ...(dto.level !== undefined && { level: dto.level }),
+    ...(dto.thumbnailUrl !== undefined && { thumbnailUrl: dto.thumbnailUrl }),
+    ...(dto.previewVideo !== undefined && { previewVideo: dto.previewVideo }),
+  };
+
+  // IDOR guard. `prisma.course.update` keys on the id alone, so without an
+  // ownership predicate any trainer could rewrite another trainer's course
+  // (title, price, thumbnail).
+  //
+  // updateMany — not findFirst-then-update — so the ownership test and the write
+  // are one statement: a separate probe would also turn a course deleted in the
+  // gap into a Prisma P2025 (an unmapped 500) instead of a 404. Same atomic
+  // pattern as `PATCH /api/trainer/courses/:courseId/status`.
+  const where = scope.kind === "trainer" ? { id, trainerId: scope.trainerId } : { id };
+  const { count } = await prisma.course.updateMany({ where, data });
+
+  if (count === 0) {
+    // 404, never 403: a 403 would confirm the id exists and belongs to someone
+    // else. Published course ids are public anyway (GET /api/courses exposes
+    // them), so what this really protects is the existence of draft/pending
+    // courses. The message is byte-identical to the not-found case on purpose.
+    if (scope.kind === "trainer") {
+      // Denied attempts used to vanish entirely — no audit row, no log line —
+      // which made exactly the attack this guard blocks invisible.
+      logger.warn("course update denied: not owned by trainer", { courseId: id, trainerId: scope.trainerId });
+    }
+    throw new AppError(404, "Kursus tidak ditemukan.");
+  }
+
+  const course = await prisma.course.findUniqueOrThrow({
     where: { id },
-    data: {
-      ...(dto.title !== undefined && { title: dto.title }),
-      ...(dto.description !== undefined && { description: dto.description }),
-      ...(dto.shortDesc !== undefined && { shortDesc: dto.shortDesc }),
-      ...(dto.price !== undefined && { price: dto.price }),
-      ...(dto.salePrice !== undefined && { salePrice: dto.salePrice }),
-      ...(dto.categoryId !== undefined && { categoryId: dto.categoryId }),
-      ...(dto.level !== undefined && { level: dto.level }),
-      ...(dto.thumbnailUrl !== undefined && { thumbnailUrl: dto.thumbnailUrl }),
-      ...(dto.previewVideo !== undefined && { previewVideo: dto.previewVideo }),
-    },
     include: { category: { select: { name: true, slug: true } } },
   });
 
