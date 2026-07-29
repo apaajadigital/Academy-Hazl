@@ -5,46 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getValidToken } from "@/lib/auth/token";
+import { getEventTypeLabel } from "@/lib/event-labels";
+import {
+  checkoutEvent,
+  getEvent,
+  getMyRegistration,
+  type EventRecord,
+  type EventRegistrationRecord,
+} from "@/lib/api/events";
 import { CalendarDays, MapPin, Users, Clock, CheckCircle2, Mic2 } from "lucide-react";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
-
-type EventDetail = {
-  id: string;
-  slug: string;
-  title: string;
-  description: string | null;
-  type: string;
-  status: string;
-  startDate: string;
-  endDate: string | null;
-  location: string | null;
-  venue: string | null;
-  price: string;
-  salePrice: string | null;
-  quota: number | null;
-  totalSold: number;
-  coverUrl: string | null;
-  speakerName: string | null;
-  speakerBio: string | null;
-  isFeatured: boolean;
-};
-
-type Registration = {
-  id: string;
-  status: string;
-  ticketCode: string;
-} | null;
-
-// ─── Constants ─────────────────────────────────────────────────────────────────
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-const TYPE_LABEL: Record<string, string> = {
-  online: "Online",
-  offline: "Offline",
-  hybrid: "Hybrid",
-};
+// E12: the Event/Registration shapes and every endpoint call now come from
+// `lib/api/events`; the local copies here had drifted into a fourth definition.
+// Type/status labels come from `lib/event-labels` (BL-60c) — the local
+// TYPE_LABEL map was a fifth place the same three strings were spelled out.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -141,8 +115,11 @@ function CapacityBar({ quota, sold }: { quota: number; sold: number }) {
 export default function EventDetailClient() {
   const { slug } = useParams() as { slug: string };
   const router = useRouter();
-  const [event, setEvent] = useState<EventDetail | null>(null);
-  const [registration, setRegistration] = useState<Registration>(undefined as never);
+  const [event, setEvent] = useState<EventRecord | null>(null);
+  const [registration, setRegistration] = useState<EventRegistrationRecord | null>(null);
+  // Set after a successful free registration, when the server-side record exists
+  // but has not been re-fetched — avoids fabricating a fake EventRegistration row.
+  const [justRegistered, setJustRegistered] = useState(false);
   const [loading, setLoading] = useState(true);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [error, setError] = useState("");
@@ -152,34 +129,30 @@ export default function EventDetailClient() {
 
   // Fetch event
   useEffect(() => {
-    fetch(`${API}/api/events/${slug}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setEvent(data.data);
-        else setError("Event tidak ditemukan.");
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Gagal memuat event.");
-        setLoading(false);
-      });
+    let ignore = false;
+    void (async () => {
+      const result = await getEvent(slug);
+      if (ignore) return;
+      if (result.success) setEvent(result.data);
+      // status 0 == the request never completed (offline/timeout), which is a
+      // different message from a genuine 404.
+      else setError(result.status === 0 ? "Gagal memuat event." : "Event tidak ditemukan.");
+      setLoading(false);
+    })();
+    return () => { ignore = true; };
   }, [slug]);
 
   // Fetch registration status (if logged in)
   useEffect(() => {
     if (!event) return;
-    // Finding #4: refresh-aware token; skip the call entirely (no `Bearer null`)
-    // when the visitor is not logged in.
+    // Finding #4: refresh-aware token; the client skips the call entirely (no
+    // `Bearer null`) and reports 401 when the visitor is not logged in, which is
+    // an expected outcome here rather than an error worth surfacing.
     let ignore = false;
-    (async () => {
-      const token = await getValidToken();
-      if (ignore || !token) return;
-      fetch(`${API}/api/events/${slug}/registration`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((data) => { if (!ignore && data.success) setRegistration(data.data); })
-        .catch(() => {});
+    void (async () => {
+      const result = await getMyRegistration(slug);
+      if (ignore || !result.success) return;
+      setRegistration(result.data);
     })();
     return () => { ignore = true; };
   }, [slug, event]);
@@ -194,21 +167,16 @@ export default function EventDetailClient() {
 
     if (price === 0) {
       setRegisterLoading(true);
-      try {
-        const res = await fetch(`${API}/api/checkout`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ itemType: "event", itemId: event.id }),
-        });
-        const data = await res.json();
-        if (data.success && data.data.free) {
-          setMessage("Berhasil mendaftar! Tiket Anda ada di dashboard.");
-          setRegistration({ id: "new", status: "confirmed", ticketCode: "" });
-        } else {
-          setError(data.error?.message ?? "Gagal mendaftar.");
-        }
-      } catch { setError("Terjadi kesalahan."); }
-      finally { setRegisterLoading(false); }
+      const result = await checkoutEvent(event.id);
+      if (result.success && result.data.free) {
+        setMessage("Berhasil mendaftar! Tiket Anda ada di dashboard.");
+        setJustRegistered(true);
+      } else if (!result.success && result.status === 401) {
+        router.push(`/masuk?redirect=/event/${slug}`);
+      } else {
+        setError(result.success ? "Gagal mendaftar." : result.error.message);
+      }
+      setRegisterLoading(false);
     } else {
       router.push(`/checkout/${event.slug}?type=event&itemId=${event.id}`);
     }
@@ -241,7 +209,7 @@ export default function EventDetailClient() {
   const displayPrice = event.salePrice ? Number(event.salePrice) : Number(event.price);
   const spotsLeft = event.quota ? event.quota - event.totalSold : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
-  const isRegistered = registration != null && registration !== undefined;
+  const isRegistered = registration !== null || justRegistered;
   const eventStarted = countdown?.started === true;
 
   return (
@@ -271,7 +239,7 @@ export default function EventDetailClient() {
 
             {/* Badges */}
             <div className="mb-4 flex flex-wrap gap-2">
-              <span className="badge badge-cyan">{TYPE_LABEL[event.type] ?? event.type}</span>
+              <span className="badge badge-cyan">{getEventTypeLabel(event.type)}</span>
               {event.isFeatured && <span className="badge badge-pink">⭐ Unggulan</span>}
               {eventStarted && (
                 <span className="badge" style={{ background: "rgba(22,163,74,0.1)", color: "#15803D", border: "1px solid rgba(22,163,74,0.2)" }}>

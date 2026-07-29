@@ -1,118 +1,55 @@
-import { Router } from "express";
-import { authenticate } from "../middleware/authenticate.js";
-import { prisma } from "../db/prisma.js";
-import { successResponse, errorResponse, AppError } from "../types/index.js";
+import { Router, type RequestHandler } from "express";
 import { z } from "zod";
+import { authenticate } from "../middleware/authenticate.js";
+import { authorize } from "../middleware/authorize.js";
+import { validateBody } from "../middleware/validateBody.js";
+import { asyncHandler } from "../lib/asyncHandler.js";
+import { successResponse } from "../types/index.js";
+import * as eventService from "../services/event/eventService.js";
 
+/**
+ * Event HTTP routes (BL-59).
+ *
+ * This layer only parses/validates the request, delegates to
+ * `services/event/eventService`, and wraps the result in the standard
+ * `{success,data,error,meta}` envelope. No Prisma access and no business rules
+ * live here (SSOT §9.6). Role checks use the shared `authorize()` middleware
+ * instead of the six hand-rolled, cast-laden super-admin role checks this file
+ * used to carry.
+ */
 const router = Router();
 
-// ─── Public ──────────────────────────────────────────────────────────────────
+// ─── Request schemas (Zod at every boundary — SSOT §9.5) ─────────────────────
 
-router.get("/", async (req, res, next) => {
-  try {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Number(req.query.limit) || 12);
-    const skip = (page - 1) * limit;
-    const type = req.query.type as string | undefined;
-    const featured = req.query.featured === "true";
-
-    const where = {
-      status: "published",
-      ...(type && { type }),
-      ...(featured && { isFeatured: true }),
-    };
-
-    const [events, total] = await Promise.all([
-      prisma.event.findMany({
-        where,
-        orderBy: { startDate: "asc" },
-        skip,
-        take: limit,
-        select: {
-          id: true,
-          slug: true,
-          title: true,
-          type: true,
-          startDate: true,
-          endDate: true,
-          location: true,
-          venue: true,
-          price: true,
-          salePrice: true,
-          quota: true,
-          totalSold: true,
-          coverUrl: true,
-          speakerName: true,
-          isFeatured: true,
-        },
-      }),
-      prisma.event.count({ where }),
-    ]);
-
-    return res.json(successResponse(events, { total, page, limit }));
-  } catch (err) {
-    next(err);
-  }
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  // Hard ceiling keeps the public catalog cheap to serve.
+  limit: z.coerce.number().int().min(1).max(50).default(12),
+  // `type` stays a free-form string: the catalog is filtered by whatever event
+  // taxonomy is stored, and an unknown value simply yields an empty page.
+  type: z.string().optional(),
+  // Presence-style boolean flag: only the literal "true" enables the filter,
+  // matching the pre-refactor behaviour for any other value.
+  featured: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
 });
 
-router.get("/:slug", async (req, res, next) => {
-  try {
-    const event = await prisma.event.findUnique({ where: { slug: req.params.slug as string } });
-    if (!event || event.status !== "published") throw new AppError(404, "Event tidak ditemukan.");
-    return res.json(successResponse(event));
-  } catch (err) {
-    next(err);
-  }
+const adminListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  // Both filters are optional and additive, so an existing caller that sends
+  // only page/limit keeps the previous "every status, newest first" result.
+  // `status` stays a free-form string rather than the canonical enum: legacy
+  // rows carry lifecycle values the enum no longer accepts, and an admin must
+  // still be able to list them.
+  status: z.string().min(1).max(50).optional(),
+  search: z.string().min(1).max(200).optional(),
 });
 
-// ─── Authenticated ────────────────────────────────────────────────────────────
-
-router.get("/:slug/registration", authenticate, async (req, res, next) => {
-  try {
-    const event = await prisma.event.findUnique({ where: { slug: req.params.slug as string } });
-    if (!event) throw new AppError(404, "Event tidak ditemukan.");
-
-    const registration = await prisma.eventRegistration.findUnique({
-      where: { eventId_userId: { eventId: event.id, userId: req.user!.id } },
-    });
-
-    return res.json(successResponse(registration));
-  } catch (err) {
-    next(err);
-  }
-});
-
-// ─── Dashboard: my tickets ────────────────────────────────────────────────────
-
-router.get("/my/tickets", authenticate, async (req, res, next) => {
-  try {
-    const registrations = await prisma.eventRegistration.findMany({
-      where: { userId: req.user!.id },
-      include: {
-        event: {
-          select: {
-            id: true,
-            slug: true,
-            title: true,
-            type: true,
-            startDate: true,
-            endDate: true,
-            location: true,
-            venue: true,
-            coverUrl: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return res.json(successResponse(registrations));
-  } catch (err) {
-    next(err);
-  }
-});
-
-// ─── Admin ────────────────────────────────────────────────────────────────────
+const slugParamSchema = z.object({ slug: z.string().min(1).max(200) });
+const idParamSchema = z.object({ id: z.string().min(1).max(100) });
 
 const eventSchema = z.object({
   slug: z.string().min(2).max(100),
@@ -133,137 +70,141 @@ const eventSchema = z.object({
   isFeatured: z.boolean().default(false),
 });
 
-router.get("/admin/all", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+const eventPatchSchema = eventSchema.partial();
 
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(50, Number(req.query.limit) || 20);
-    const skip = (page - 1) * limit;
+const checkinSchema = z.object({ ticketCode: z.string().min(1) });
 
-    const [events, total] = await Promise.all([
-      prisma.event.findMany({
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-        include: { _count: { select: { registrations: true } } },
-      }),
-      prisma.event.count(),
-    ]);
+/** Every admin endpoint below is super-admin only (BL-59). */
+const adminOnly: RequestHandler[] = [authenticate, authorize("super_admin")];
 
-    return res.json(successResponse(events, { total, page, limit }));
-  } catch (err) {
-    next(err);
-  }
-});
+// ─── Public ──────────────────────────────────────────────────────────────────
 
-router.post("/admin", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+router.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const query = listQuerySchema.parse(req.query);
+    const { data, total, page, limit } = await eventService.listPublishedEvents(query);
+    res.json(successResponse(data, { total, page, limit }));
+  }),
+);
 
-    const body = eventSchema.safeParse(req.body);
-    if (!body.success) {
-      return res.status(400).json(errorResponse("VALIDATION_ERROR", body.error.issues[0]?.message ?? "Validasi gagal."));
-    }
+router.get(
+  "/:slug",
+  asyncHandler(async (req, res) => {
+    const { slug } = slugParamSchema.parse(req.params);
+    const event = await eventService.getPublishedEventBySlug(slug);
+    res.json(successResponse(event));
+  }),
+);
 
-    const existing = await prisma.event.findUnique({ where: { slug: body.data.slug } });
-    if (existing) throw new AppError(400, "Slug sudah digunakan.");
+// ─── Authenticated ────────────────────────────────────────────────────────────
 
-    const event = await prisma.event.create({
-      data: {
-        ...body.data,
-        price: body.data.price,
-        startDate: new Date(body.data.startDate),
-        endDate: body.data.endDate ? new Date(body.data.endDate) : null,
-      },
-    });
+router.get(
+  "/:slug/registration",
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const { slug } = slugParamSchema.parse(req.params);
+    const registration = await eventService.getUserRegistration(slug, req.user!.id);
+    res.json(successResponse(registration));
+  }),
+);
 
-    return res.status(201).json(successResponse(event));
-  } catch (err) {
-    next(err);
-  }
-});
+// ─── Dashboard: my tickets ────────────────────────────────────────────────────
 
-router.patch("/admin/:id", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+router.get(
+  "/my/tickets",
+  authenticate,
+  asyncHandler(async (req, res) => {
+    const registrations = await eventService.listUserTickets(req.user!.id);
+    res.json(successResponse(registrations));
+  }),
+);
 
-    const eventId = req.params.id as string;
-    const existing = await prisma.event.findUnique({ where: { id: eventId } });
-    if (!existing) throw new AppError(404, "Event tidak ditemukan.");
+// ─── Admin ────────────────────────────────────────────────────────────────────
 
-    const body = eventSchema.partial().safeParse(req.body);
-    if (!body.success) {
-      return res.status(400).json(errorResponse("VALIDATION_ERROR", body.error.issues[0]?.message ?? "Validasi gagal."));
-    }
+router.get(
+  "/admin/all",
+  ...adminOnly,
+  asyncHandler(async (req, res) => {
+    const query = adminListQuerySchema.parse(req.query);
+    const result = await eventService.listAllEvents(query);
+    res.json(successResponse(result.data, { total: result.total, page: result.page, limit: result.limit }));
+  }),
+);
 
-    const updated = await prisma.event.update({
-      where: { id: eventId },
-      data: {
-        ...body.data,
-        startDate: body.data.startDate ? new Date(body.data.startDate) : undefined,
-        endDate: body.data.endDate ? new Date(body.data.endDate) : undefined,
-      },
-    });
+/**
+ * Admin detail by id.
+ *
+ * Declared AFTER `/admin/all` so the literal path keeps winning over this
+ * parameterised one. It exists because the only endpoint that returned a
+ * non-published event was the paginated list, which forced the edit screen to
+ * walk up to 20 pages — and to give up (404) on any event past that window.
+ */
+router.get(
+  "/admin/:id",
+  ...adminOnly,
+  asyncHandler(async (req, res) => {
+    const { id } = idParamSchema.parse(req.params);
+    const event = await eventService.getAdminEventById(id);
+    res.json(successResponse(event));
+  }),
+);
 
-    return res.json(successResponse(updated));
-  } catch (err) {
-    next(err);
-  }
-});
+router.post(
+  "/admin",
+  ...adminOnly,
+  validateBody(eventSchema),
+  asyncHandler(async (req, res) => {
+    const dto = req.body as z.infer<typeof eventSchema>;
+    const event = await eventService.createEvent(dto);
+    res.status(201).json(successResponse(event));
+  }),
+);
 
-router.delete("/admin/:id", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+router.patch(
+  "/admin/:id",
+  ...adminOnly,
+  validateBody(eventPatchSchema),
+  asyncHandler(async (req, res) => {
+    const { id } = idParamSchema.parse(req.params);
+    const dto = req.body as z.infer<typeof eventPatchSchema>;
+    const updated = await eventService.updateEvent(id, dto);
+    res.json(successResponse(updated));
+  }),
+);
 
-    const eventId = req.params.id as string;
-    await prisma.event.delete({ where: { id: eventId } });
-    return res.json(successResponse({ id: eventId }));
-  } catch (err) {
-    next(err);
-  }
-});
+router.delete(
+  "/admin/:id",
+  ...adminOnly,
+  asyncHandler(async (req, res) => {
+    const { id } = idParamSchema.parse(req.params);
+    // BL-62b: 409 instead of a raw Prisma P2003 when registrations exist.
+    const result = await eventService.deleteEvent(id);
+    res.json(successResponse(result));
+  }),
+);
 
 // ─── Admin: check-in ─────────────────────────────────────────────────────────
 
-router.get("/admin/:id/registrations", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
+router.get(
+  "/admin/:id/registrations",
+  ...adminOnly,
+  asyncHandler(async (req, res) => {
+    const { id } = idParamSchema.parse(req.params);
+    const registrations = await eventService.listEventRegistrations(id);
+    res.json(successResponse(registrations));
+  }),
+);
 
-    const registrations = await prisma.eventRegistration.findMany({
-      where: { eventId: req.params.id as string },
-      include: { user: { select: { id: true, name: true, email: true } } },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return res.json(successResponse(registrations));
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post("/admin/checkin", authenticate, async (req, res, next) => {
-  try {
-    if (!req.user!.roles.includes("super_admin" as never)) throw new AppError(403, "Akses ditolak.");
-
-    const { ticketCode } = req.body as { ticketCode: string };
-    if (!ticketCode) throw new AppError(400, "ticketCode diperlukan.");
-
-    const reg = await prisma.eventRegistration.findUnique({ where: { ticketCode } });
-    if (!reg) throw new AppError(404, "Tiket tidak ditemukan.");
-    if (reg.attendedAt) throw new AppError(400, "Tiket sudah pernah di-scan.");
-    if (reg.status !== "confirmed") throw new AppError(400, "Tiket belum confirmed.");
-
-    const updated = await prisma.eventRegistration.update({
-      where: { ticketCode },
-      data: { status: "attended", attendedAt: new Date() },
-      include: { user: { select: { name: true, email: true } }, event: { select: { title: true } } },
-    });
-
-    return res.json(successResponse(updated));
-  } catch (err) {
-    next(err);
-  }
-});
+router.post(
+  "/admin/checkin",
+  ...adminOnly,
+  validateBody(checkinSchema),
+  asyncHandler(async (req, res) => {
+    const { ticketCode } = req.body as z.infer<typeof checkinSchema>;
+    const updated = await eventService.checkInTicket(ticketCode);
+    res.json(successResponse(updated));
+  }),
+);
 
 export default router;

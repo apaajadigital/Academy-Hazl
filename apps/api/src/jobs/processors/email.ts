@@ -3,6 +3,7 @@ import {
   sendPaymentPending,
   sendOrderInvoice,
   sendEventFullRefund,
+  sendEventRegistrationConfirmed,
   sendPrivateClassWelcome,
 } from "../../services/notification/emailService.js";
 import { notifyPaymentSuccess } from "../../services/notification/whatsappService.js";
@@ -42,6 +43,19 @@ export async function processEmail(job: EmailJob | PrivateClassWelcomeJob): Prom
       return;
     case "event-full-refund":
       await sendEventFullRefund(job.to, job.name, job.orderId, job.eventName);
+      return;
+    case "event-registration-confirmed":
+      // BL-63: confirmation + e-ticket for every successful registration path.
+      await sendEventRegistrationConfirmed(job.to, {
+        name: job.name,
+        eventTitle: job.eventTitle,
+        ticketCode: job.ticketCode,
+        startDate: job.startDate,
+        location: job.location,
+        venue: job.venue,
+        eventType: job.eventType,
+        orderId: job.orderId,
+      });
       return;
     case "private-class-welcome":
       await sendPrivateClassWelcome(job.to, {

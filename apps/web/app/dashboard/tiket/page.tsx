@@ -10,31 +10,12 @@ import {
 } from "lucide-react";
 import { Badge, DashboardLoading, EmptyState } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getEventTypeLabel } from "@/lib/event-labels";
+import { listMyTickets, type EventTicket } from "@/lib/api/events";
 
-type EventInfo = {
-  id: string;
-  slug: string;
-  title: string;
-  type: string;
-  startDate: string;
-  location: string | null;
-  venue: string | null;
-  coverUrl: string | null;
-};
-
-type Registration = {
-  id: string;
-  eventId: string;
-  ticketCode: string;
-  status: string;
-  attendedAt: string | null;
-  createdAt: string;
-  event: EventInfo;
-};
-
-const API = ""; // Relative path → Next.js proxy → backend
-
+// E12: the ticket + embedded-event shapes and the endpoint call now come from
+// `lib/api/events`, which also owns the base-URL choice (relative `/api/*` in
+// the browser → Next.js proxy → backend).
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("id-ID", {
@@ -50,26 +31,40 @@ const STATUS_META: Record<string, { label: string; variant: "warning" | "success
   attended:  { label: "Hadir",         variant: "info",    Icon: PartyPopper },
 };
 
-const TYPE_LABEL: Record<string, string> = { online: "Online", offline: "Offline", hybrid: "Hybrid" };
+const LOGIN_REDIRECT = "/masuk?redirect=/dashboard/tiket";
 
 export default function TiketPage() {
   const router = useRouter();
-  const [tickets, setTickets] = useState<Registration[]>([]);
+  const [tickets, setTickets] = useState<EventTicket[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.push("/masuk?redirect=/dashboard/tiket"); return; }
+    // Guards against setting state after the effect is torn down (StrictMode / fast nav).
+    let active = true;
 
-    fetch(`${API}/api/events/my/tickets`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setTickets(data.data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    async function loadTickets() {
+      // BL-60d: the shared client refreshes an expired access token first, so a
+      // long-lived session no longer 401s into a silently empty ticket list.
+      const result = await listMyTickets();
+      if (!active) return;
+
+      let redirecting = false;
+      if (result.success) {
+        setTickets(result.data);
+      } else if (result.status === 401) {
+        // BL-60d: an expired/revoked session must send the user to login rather
+        // than render "Belum ada tiket" over data that actually exists.
+        redirecting = true;
+        router.replace(LOGIN_REDIRECT);
+      }
+      // Any other failure (e.g. network) falls through to the empty state.
+
+      // Hold the spinner while navigating so a 401 never flashes "no tickets".
+      if (!redirecting) setLoading(false);
+    }
+
+    void loadTickets();
+    return () => { active = false; };
   }, [router]);
 
   if (loading) {
@@ -130,7 +125,7 @@ export default function TiketPage() {
                         {ticket.event.title}
                       </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
-                        <Badge variant="neutral">{TYPE_LABEL[ticket.event.type] ?? ticket.event.type}</Badge>
+                        <Badge variant="neutral">{getEventTypeLabel(ticket.event.type)}</Badge>
                         <span className="inline-flex items-center gap-1">
                           <CalendarDays size={13} aria-hidden="true" /> {formatDate(ticket.event.startDate)}
                         </span>

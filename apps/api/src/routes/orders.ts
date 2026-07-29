@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { generateInvoicePDF } from "../services/invoice/invoiceService.js";
+import { logger } from "../lib/logger.js";
 import { successResponse, errorResponse, AppError } from "../types/index.js";
 import { z } from "zod";
 
@@ -258,9 +259,46 @@ router.patch("/admin/refunds/:refundId", async (req, res, next) => {
                 where: { courseId: item.itemId, userId: order.userId },
               });
             } else if (item.itemType === "event") {
-              await tx.eventRegistration.deleteMany({
+              const removed = await tx.eventRegistration.deleteMany({
                 where: { eventId: item.itemId, userId: order.userId },
               });
+
+              // BL-58 (event seats leak permanently): Event.totalSold is only ever
+              // incremented (checkout free/100%-coupon paths + webhook fulfillment)
+              // and was never given back on refund. Since the quota guard compares
+              // `totalSold < quota`, every refunded seat shrank the sellable stock
+              // for good and eventually locked the event as "full" while real seats
+              // sat empty. Releasing the seat here — inside the SAME transaction as
+              // the registration delete — keeps stock and registrations consistent:
+              // either both are rolled back or both take effect.
+              //
+              // The release size is the ACTUAL deleteMany count, never a hardcoded 1.
+              // That is what makes this safe for the auto-refund path in
+              // jobs/processors/webhook.ts ("event_full"): there the atomic
+              // reservation matched 0 rows, so totalSold was never incremented and no
+              // registration exists — count is 0 and we release nothing instead of
+              // double-decrementing a seat this order never held.
+              if (removed.count > 0) {
+                // updateMany with a `totalSold >= n` predicate does the decrement
+                // atomically AND floors it at zero: if the counter is somehow lower
+                // than what we are about to subtract (inconsistent data, a manual DB
+                // fix, a legacy refund processed before this fix), the row simply
+                // does not match and totalSold is left untouched rather than driven
+                // negative — a negative counter would silently grant infinite seats.
+                const released = await tx.event.updateMany({
+                  where: { id: item.itemId, totalSold: { gte: removed.count } },
+                  data: { totalSold: { decrement: removed.count } },
+                });
+                if (released.count === 0) {
+                  // Not fatal for the refund (access is already revoked), but a human
+                  // must reconcile the counter, so surface it instead of failing.
+                  logger.warn("BL-58: event seat release skipped — totalSold below deleted registrations", {
+                    eventId: item.itemId,
+                    orderId: order.id,
+                    deletedRegistrations: removed.count,
+                  });
+                }
+              }
             }
             // ebook access is gated on the order being status:"paid" (see
             // routes/ebooks.ts GET /:slug/file), so flipping to "refunded" below

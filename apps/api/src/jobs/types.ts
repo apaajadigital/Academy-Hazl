@@ -18,7 +18,21 @@ export type EmailJob =
   | { type: "wa-payment-success"; phone: string; name: string; courseName: string }
   // Batch8 D2: event was full at fulfillment — the payment is auto-refunded and
   // the buyer is notified instead of being oversold a seat.
-  | { type: "event-full-refund"; to: string; name: string; orderId: string; eventName: string };
+  | { type: "event-full-refund"; to: string; name: string; orderId: string; eventName: string }
+  // BL-63: successful event registration → confirmation + e-ticket. `startDate`
+  // is widened to string because Date is serialized to ISO by the queue payload.
+  | {
+      type: "event-registration-confirmed";
+      to: string;
+      name: string;
+      eventTitle: string;
+      ticketCode: string;
+      startDate?: Date | string | null;
+      location?: string | null;
+      venue?: string | null;
+      eventType?: string | null;
+      orderId?: string | null;
+    };
 
 export type CertificateJob = { type: "issue"; userId: string; courseId: string };
 
