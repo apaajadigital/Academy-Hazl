@@ -7,6 +7,7 @@ import { features } from "@/lib/features";
 const footerLinks = {
   Belajar: [
     { label: "Katalog Kursus",    href: "/e-course" },
+    { label: "Mentor",            href: "/mentor" },
     { label: "Event & Workshop",  href: "/event" },
     { label: "E-Book",            href: "/ebook" },
     { label: "Kelas Gratis",      href: "/kelas-gratis" },

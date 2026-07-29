@@ -1,10 +1,12 @@
 import { type MetadataRoute } from "next";
+import { mentors } from "@/lib/e-course/utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jagoakademi.com";
 
 const STATIC_PAGES: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/`,                 lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
   { url: `${BASE_URL}/e-course`,         lastModified: new Date(), changeFrequency: "daily",   priority: 0.9 },
+  { url: `${BASE_URL}/mentor`,           lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
   { url: `${BASE_URL}/event`,            lastModified: new Date(), changeFrequency: "daily",   priority: 0.9 },
   { url: `${BASE_URL}/ebook`,            lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
   { url: `${BASE_URL}/kelas-gratis`,     lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
@@ -96,7 +98,16 @@ async function fetchDynamicPages(): Promise<MetadataRoute.Sitemap> {
   return pages;
 }
 
+// Mentor profile pages are backed by the static mentor list (no API), so their
+// URLs are known at build time — emit `/mentor/[slug]` for each.
+const MENTOR_PAGES: MetadataRoute.Sitemap = mentors.map((m) => ({
+  url: `${BASE_URL}/mentor/${m.slug}`,
+  lastModified: new Date(),
+  changeFrequency: "monthly",
+  priority: 0.6,
+}));
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dynamicPages = await fetchDynamicPages();
-  return [...STATIC_PAGES, ...dynamicPages];
+  return [...STATIC_PAGES, ...MENTOR_PAGES, ...dynamicPages];
 }
