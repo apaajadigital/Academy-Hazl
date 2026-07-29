@@ -6,12 +6,14 @@ import { CheckCircle2, BookOpen, Download } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
 
 type Props = {
-  ebookId: string;
   ebookSlug: string;
   price: number;
-  title: string;
 };
 
+// Intentionally local, NOT the shared `@/lib/api/base` helper: the shared one
+// returns "" in the browser so calls go through the Next.js /api proxy, while
+// this component talks to the API host directly. Swapping it here would change
+// transport behaviour, so it stays until that migration is done deliberately.
 function getApiBase() {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 }
@@ -21,8 +23,8 @@ export default function EBookActions({ ebookSlug, price }: Props) {
   const router = useRouter();
   const [hasPurchased, setHasPurchased] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [buying] = useState(false);
-  const [error] = useState("");
+  const [buying, setBuying] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const token = getToken();
@@ -39,11 +41,18 @@ export default function EBookActions({ ebookSlug, price }: Props) {
           setHasPurchased(true);
           setFileUrl(data.data.fileUrl);
         }
+        // A non-success body is the normal "not purchased yet" answer, so it
+        // must NOT surface as an error — only a failed request does, below.
       })
-      .catch(() => {});
+      .catch(() => {
+        setError("Gagal memeriksa status pembelian. Muat ulang halaman untuk mencoba lagi.");
+      });
   }, [ebookSlug]);
 
-  async function handleBuy() {
+  function handleBuy() {
+    // Keep the button in its loading state until the checkout route takes over;
+    // this component unmounts on navigation, so there is nothing to reset.
+    setBuying(true);
     router.push(`/checkout/${ebookSlug}?type=ebook`);
   }
 

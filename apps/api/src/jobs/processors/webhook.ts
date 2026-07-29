@@ -15,9 +15,10 @@ async function safeNotify(fn: () => Promise<void>): Promise<void> {
 
 /**
  * DOKU payment fulfillment (TASK-022). Extracted from the webhook route so it can
- * run on the worker. Idempotent: a SUCCESS for an already-paid order returns early,
- * which prevents duplicate enrollments, affiliate commissions, and notifications
- * when DOKU retries the same webhook (fixes a prior double-counting bug).
+ * run on the worker. Idempotent: a SUCCESS for an already-fulfilled order returns
+ * early, and — for deliveries that race past that read — the order is claimed
+ * atomically inside the transaction, so enrollments, sales counters, seats,
+ * affiliate commissions and notifications happen at most once per order.
  */
 export async function processWebhookPayment(job: WebhookJob): Promise<void> {
   const { invoiceNumber, txStatus, channelId } = job;
@@ -37,9 +38,12 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
   if (!order) return;
 
   if (txStatus === "SUCCESS") {
-    // Idempotency guard — already fulfilled, nothing more to do. "refund_pending"
-    // is a terminal fulfillment outcome too (event was full → auto-refund, Batch8
-    // D2); re-processing it would try to create a second unique Refund and loop.
+    // Fast-path idempotency check — already fulfilled, nothing more to do.
+    // "refund_pending" is a terminal fulfillment outcome too (event was full →
+    // auto-refund, Batch8 D2); re-processing it would try to create a second
+    // unique Refund and loop. This read is outside any transaction, so it is an
+    // optimisation, not the guarantee: the atomic claim below is what actually
+    // serialises concurrent deliveries.
     if (order.status === "paid" || order.status === "refund_pending") return;
 
     // A cancelled order must never be flipped to paid: the user already released
@@ -71,16 +75,37 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
       eventType: string | null;
     }> = [];
 
+    // Set to false when the atomic claim below loses to a concurrent delivery,
+    // so the post-transaction notifications are skipped too.
+    let fulfillmentClaimed = true;
+
     // M-webhook: flip the order to paid and run every fulfillment side-effect in
     // one atomic transaction. If any step fails the whole payment fulfillment
     // rolls back instead of leaving an order half-fulfilled (e.g. marked paid but
-    // without enrollment/commission). Combined with the guard above this stays
-    // idempotent across DOKU webhook retries.
+    // without enrollment/commission).
     await prisma.$transaction(async (tx) => {
-      await tx.order.update({
-        where: { id: order.id },
+      // The status read above is only advisory: it happens OUTSIDE this
+      // transaction, so two concurrent deliveries of the same DOKU webhook can
+      // both observe "pending" and both get here. BullMQ's jobId dedup does not
+      // close that window either — jobs/queues.ts `dispatch()` runs the processor
+      // INLINE, with no dedup at all, whenever Redis is unavailable.
+      //
+      // updateMany with a status predicate turns the flip into an atomic CLAIM:
+      // the database picks exactly one winner, and every side-effect below
+      // (counters, seats, commissions) therefore runs at most once per order.
+      // The excluded statuses are the ones where fulfillment already happened or
+      // must never happen; "failed"/"expired" are deliberately NOT excluded, so a
+      // late payment on an expired order still fulfills rather than taking the
+      // buyer's money without granting access.
+      const claimed = await tx.order.updateMany({
+        where: { id: order.id, status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] } },
         data: { status: "paid", paidAt: new Date(), paymentMethod: channelId ?? "doku" },
       });
+      if (claimed.count === 0) {
+        // Another delivery already fulfilled (or terminated) this order.
+        fulfillmentClaimed = false;
+        return;
+      }
       await tx.paymentTransaction.update({
         where: { id: transaction.id },
         data: { status: "success" },
@@ -93,6 +118,32 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
             where: { courseId_userId: { courseId: item.itemId, userId: order.userId } },
             create: { courseId: item.itemId, userId: order.userId },
             update: {},
+          });
+        } else if (item.itemType === "ebook") {
+          // BL-65: EBook.totalSold was declared but never written — every ebook
+          // read as 0 sales forever. Count the sale here, inside the SAME
+          // transaction that flips the order to "paid" (which is what grants
+          // download access in routes/ebooks.ts), so the counter and the access
+          // grant can only ever commit or roll back together.
+          //
+          // A replayed DOKU delivery cannot double-count: this loop is only
+          // reached by the delivery that WON the atomic claim above, and the
+          // claim excludes an order that is already "paid".
+          //
+          // The counter is gross and increment-only — refunds deliberately do not
+          // release it (see the ebook branch of the refund handler in
+          // routes/orders.ts for why no correct release exists).
+          //
+          // Increment by the line quantity, not a hardcoded 1: checkout writes
+          // quantity 1 today, but reading the column keeps the counter honest if
+          // a multi-copy purchase ever lands.
+          //
+          // No quota guard (an ebook has unlimited stock) and updateMany rather
+          // than update: a since-deleted ebook must not abort — and thereby roll
+          // back — a payment fulfillment that already took the buyer's money.
+          await tx.eBook.updateMany({
+            where: { id: item.itemId },
+            data: { totalSold: { increment: item.quantity } },
           });
         } else if (item.itemType === "event") {
           // Batch8 D2 (event overselling / TOCTOU): reserve the seat ATOMICALLY at
@@ -185,6 +236,11 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
         }
       }
     });
+
+    // Lost the claim → another delivery owns this order's fulfillment and has
+    // already sent (or will send) the buyer's emails. Nothing was written by this
+    // run, so there is nothing to notify about.
+    if (!fulfillmentClaimed) return;
 
     // Notifications — best-effort so they never fail fulfillment.
     const courseName = order.items[0]?.itemTitle ?? "produk";

@@ -158,14 +158,51 @@ describe("GET /api/ebooks", () => {
     const res = await request(app).get("/api/ebooks?category=Desain");
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(0);
+    expect(m.eBook.findMany.mock.calls[0]![0].where).toEqual(
+      expect.objectContaining({ status: "published", category: "Desain" }),
+    );
   });
 
-  it("supports search query param", async () => {
+  it("pushes the search term into the prisma where clause", async () => {
+    const MATCH = { id: "eb1", title: "Panduan Marketing", slug: "panduan-marketing" };
+    m.eBook.findMany.mockResolvedValue([MATCH]);
+    m.eBook.count.mockResolvedValue(1);
+
+    const res = await request(app).get("/api/ebooks?search=marketing");
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual([MATCH]);
+    // The filter must actually reach Prisma — asserting only on the status code
+    // passed even while `search` was silently ignored.
+    const where = m.eBook.findMany.mock.calls[0]![0].where;
+    expect(where).toEqual({
+      status: "published",
+      OR: [
+        { title: { contains: "marketing", mode: "insensitive" } },
+        { author: { contains: "marketing", mode: "insensitive" } },
+      ],
+    });
+    // count() must be filtered identically or pagination meta lies.
+    expect(m.eBook.count.mock.calls[0]![0].where).toEqual(where);
+  });
+
+  it("omits the search clause when no search term is given", async () => {
     m.eBook.findMany.mockResolvedValue([]);
     m.eBook.count.mockResolvedValue(0);
 
-    const res = await request(app).get("/api/ebooks?search=marketing");
+    const res = await request(app).get("/api/ebooks");
     expect(res.status).toBe(200);
+    expect(m.eBook.findMany.mock.calls[0]![0].where).toEqual({ status: "published" });
+  });
+
+  it("clamps an oversized limit instead of rejecting it (sitemap uses limit=200)", async () => {
+    m.eBook.findMany.mockResolvedValue([]);
+    m.eBook.count.mockResolvedValue(0);
+
+    const res = await request(app).get("/api/ebooks?limit=200");
+    expect(res.status).toBe(200);
+    expect(m.eBook.findMany.mock.calls[0]![0].take).toBe(50);
+    expect(res.body.meta.limit).toBe(50);
   });
 });
 

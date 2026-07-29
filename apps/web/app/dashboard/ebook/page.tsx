@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag, Info, BookMarked, BookOpen, Calendar, Download, Eye, Loader2 } from "lucide-react";
+import { ShoppingBag, Info, BookMarked, BookOpen, Calendar, Download, Loader2 } from "lucide-react";
 import { EmptyState, DashboardLoading } from "@/components/ui";
 import { getToken } from "@/lib/auth/token";
 
@@ -79,7 +79,7 @@ export default function EbookPage() {
           <p className="mt-1 text-sm text-text-secondary">{ebooks.length} e-book tersedia untuk diunduh</p>
         </div>
         <Link
-          href="/e-course"
+          href="/ebook"
           className="inline-flex items-center gap-2 rounded-full bg-accent-purple px-5 py-2 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
         >
           <ShoppingBag size={16} aria-hidden="true" /> Beli E-Book
@@ -108,7 +108,7 @@ export default function EbookPage() {
           description="Beli e-book premium untuk mendapatkan materi pembelajaran berkualitas tinggi dalam format PDF."
           action={
             <Link
-              href="/e-course"
+              href="/ebook"
               className="inline-flex items-center rounded-full bg-accent-purple px-6 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
             >
               Jelajahi E-Book
@@ -157,13 +157,6 @@ export default function EbookPage() {
                     {downloadingSlug === book.slug
                       ? <><Loader2 size={14} className="animate-spin" aria-hidden="true" /> Memuat...</>
                       : <><Download size={14} aria-hidden="true" /> Unduh PDF</>}
-                  </button>
-                  <button
-                    onClick={() => handleDownload(book.slug)}
-                    disabled={downloadingSlug === book.slug}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] border border-accent-purple px-3 py-2 text-xs font-semibold text-accent-purple transition-colors hover:bg-accent-purple hover:text-white disabled:opacity-60"
-                  >
-                    <Eye size={14} aria-hidden="true" /> Buka File
                   </button>
                 </div>
               </div>

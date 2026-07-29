@@ -299,10 +299,25 @@ router.patch("/admin/refunds/:refundId", async (req, res, next) => {
                   });
                 }
               }
+            } else if (item.itemType === "ebook") {
+              // ebook ACCESS is gated on the order being status:"paid" (see
+              // routes/ebooks.ts GET /:slug/file), so flipping to "refunded"
+              // below revokes downloads without any extra deletion. Nothing else
+              // is undone here on purpose.
+              //
+              // EBook.totalSold is a GROSS lifetime sales counter: increment-only,
+              // never released on refund. Releasing it would require per-line
+              // evidence that THIS order's sale was ever counted, and no such
+              // evidence exists — an ebook has no per-item join table like
+              // eventRegistration, whose deleteMany count is exactly what makes
+              // the Event branch above safe. Without that evidence a decrement is
+              // not "undoing our own increment", it is subtracting from a shared
+              // total: orders paid before the counter existed were never counted,
+              // so refunding one of them silently destroys sales belonging to
+              // other buyers. A `totalSold >= n` guard does not help — it only
+              // stops the number going negative, it cannot tell whose sale it is
+              // taking away.
             }
-            // ebook access is gated on the order being status:"paid" (see
-            // routes/ebooks.ts GET /:slug/file), so flipping to "refunded" below
-            // revokes ebook downloads without any extra deletion.
           }
 
           // Reverse any affiliate commission tied to this order.
