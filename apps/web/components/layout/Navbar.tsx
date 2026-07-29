@@ -38,7 +38,8 @@ const navLinks = [
         : []),
       { label: "Trainer Program",    href: "/trainer-program", desc: "Jadilah trainer profesional" },
       { label: "Paket LMS",          href: "/clients",         desc: "LMS untuk institusi & perusahaan" },
-      { label: "Marketplace Materi", href: "/marketplace",     desc: "Rekaman & modul event" },
+      // desc must match real inventory — the page lists e-books, not event recordings.
+      { label: "Marketplace Materi", href: "/marketplace",     desc: "Etalase materi digital praktisi" },
     ],
   },
   // The Komunitas dropdown only renders when at least one community feature is on.

@@ -22,7 +22,9 @@ export async function sendWhatsApp(phone: string, message: string) {
 }
 
 export async function notifyPaymentSuccess(phone: string, name: string, courseName: string) {
-  const msg = `Halo ${name}! 🎉\n\nPembayaran kursus *${courseName}* telah berhasil dikonfirmasi.\n\nSilakan login dan mulai belajar di: ${env.WEB_URL}/belajar\n\nSalam,\nJago Akademi`;
+  // `/belajar` has no page.tsx (only /belajar/[slug]) — it 404s. The learner's
+  // course list lives at /dashboard/kursus, which is what the sidebar links to.
+  const msg = `Halo ${name}! 🎉\n\nPembayaran kursus *${courseName}* telah berhasil dikonfirmasi.\n\nSilakan login dan mulai belajar di: ${env.WEB_URL}/dashboard/kursus\n\nSalam,\nJago Akademi`;
   await sendWhatsApp(phone, msg);
 }
 

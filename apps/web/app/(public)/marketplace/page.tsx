@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BookMarked, Search, X, Video, Package, ShoppingBag } from "lucide-react";
+import { BookMarked, Search, X, ShoppingBag } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
+// The catalog is sourced solely from GET /api/ebooks. The former
+// "recording" | "module" variants were mock-only: nothing ever produced them and
+// their checkout link (?type=module) was rejected by /checkout/[slug], which only
+// accepts course | event | ebook. Both were removed rather than patched — the real
+// multi-type marketplace arrives with TASK-042 and its own backend.
 type MarketplaceItem = {
   id: string;
   slug: string;
@@ -16,10 +21,8 @@ type MarketplaceItem = {
   salePrice: string | null;
   coverUrl: string | null;
   author: string | null;
-  type: "ebook" | "recording" | "module";
-  badge?: string;
   category: string | null;
-  extraInfo?: string; // e.g. "3 jam video", "12 file template", "180 halaman"
+  extraInfo?: string; // e.g. "180 Halaman"
 };
 
 // Shape of an e-book record returned by GET /api/ebooks.
@@ -73,36 +76,9 @@ function SkeletonCard() {
 function ProductCard({ item }: { item: MarketplaceItem }) {
   const discount = getDiscount(item.price, item.salePrice);
 
-  const getIcon = () => {
-    switch (item.type) {
-      case "recording":
-        return <Video size={36} style={{ color: "var(--brand-pink-strong)", opacity: 0.8 }} />;
-      case "module":
-        return <Package size={36} style={{ color: "#EAB308", opacity: 0.8 }} />;
-      default:
-        return <BookMarked size={36} style={{ color: "var(--brand-cyan-strong)", opacity: 0.8 }} />;
-    }
-  };
-
-  const getFallbackGradient = () => {
-    switch (item.type) {
-      case "recording":
-        return "linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(204,0,82,0.05) 100%)";
-      case "module":
-        return "linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(202,138,4,0.05) 100%)";
-      default:
-        return "linear-gradient(135deg, var(--surface-accent-soft) 0%, rgba(0,119,168,0.05) 100%)";
-    }
-  };
-
-  // Link destination: EBooks go to detail route, others to general checkout/contact
-  const destinationHref = item.type === "ebook"
-    ? `/ebook/${item.slug}`
-    : `/checkout/${item.slug}?type=module&itemId=${item.id}`;
-
   return (
     <Link
-      href={destinationHref}
+      href={`/ebook/${item.slug}`}
       className="card group flex flex-col overflow-hidden !p-0 transition-all duration-300 hover:translate-y-[-4px] hover:shadow-e2"
       style={{
         background: "var(--surface-card)",
@@ -124,25 +100,15 @@ function ProductCard({ item }: { item: MarketplaceItem }) {
         ) : (
           <div
             className="flex h-full w-full flex-col items-center justify-center gap-3 p-4"
-            style={{ background: getFallbackGradient() }}
+            style={{ background: "linear-gradient(135deg, var(--surface-accent-soft) 0%, rgba(0,119,168,0.05) 100%)" }}
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)", boxShadow: "var(--shadow-e1)" }}>
-              {getIcon()}
+              <BookMarked size={36} style={{ color: "var(--brand-cyan-strong)", opacity: 0.8 }} />
             </div>
             <p className="px-2 text-center text-xs font-semibold leading-normal text-[var(--text-secondary)] line-clamp-3">
               {item.title}
             </p>
           </div>
-        )}
-
-        {/* Badge */}
-        {item.badge && (
-          <span
-            className="absolute left-2.5 top-2.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
-            style={{ background: item.type === "recording" ? "var(--brand-pink-strong)" : "var(--brand-cyan)" }}
-          >
-            {item.badge}
-          </span>
         )}
 
         {/* Discount Badge */}
@@ -164,10 +130,10 @@ function ProductCard({ item }: { item: MarketplaceItem }) {
             </p>
           )}
           <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded" style={{
-            background: item.type === "ebook" ? "rgba(0,212,255,0.08)" : item.type === "recording" ? "rgba(236,72,153,0.08)" : "rgba(234,179,8,0.08)",
-            color: item.type === "ebook" ? "var(--brand-cyan)" : item.type === "recording" ? "var(--brand-pink-strong)" : "#EAB308"
+            background: "rgba(0,212,255,0.08)",
+            color: "var(--brand-cyan)"
           }}>
-            {item.type === "ebook" ? "E-Book" : item.type === "recording" ? "Rekaman" : "Modul"}
+            E-Book
           </span>
         </div>
         
@@ -228,7 +194,6 @@ function MarketplaceCatalog() {
             salePrice: b.salePrice,
             coverUrl: b.coverUrl,
             author: b.author,
-            type: "ebook",
             category: b.category,
             extraInfo: b.pages ? `${b.pages} Halaman` : undefined
           }));
@@ -287,11 +252,14 @@ function MarketplaceCatalog() {
         <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "var(--brand-cyan)" }}>
           <ShoppingBag size={12} /> Marketplace
         </span>
+        {/* Copy must describe only what is actually purchasable here (EPIC 8: no
+            fictional inventory). The catalog lists e-books; the earlier headline
+            promised webinar recordings and source-code templates that do not exist. */}
         <h1 className="mt-4 mb-3 text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
-          Koleksi Materi & <span className="text-accent" style={{ background: "linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Modul Eksklusif</span>
+          Koleksi Materi <span className="text-accent" style={{ background: "linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Digital</span>
         </h1>
         <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
-          Dapatkan e-book berkualitas, rekaman penuh webinar eksklusif, serta template boilerplate source code terbaik untuk mengakselerasi proses belajarmu.
+          Etalase materi digital Jago Akademi — saat ini berisi koleksi e-book dari para praktisi. Beli sekali, unduh langsung, akses selamanya.
         </p>
       </div>
 
@@ -301,7 +269,7 @@ function MarketplaceCatalog() {
           { icon: "📥", text: "Download Instan" },
           { icon: "♾️", text: "Akses Selamanya" },
           { icon: "💳", text: "Satu Kali Bayar" },
-          { icon: "⭐", text: "Telah Terverifikasi" },
+          { icon: "✍️", text: "Ditulis Praktisi" },
         ].map((f) => (
           <div
             key={f.text}
