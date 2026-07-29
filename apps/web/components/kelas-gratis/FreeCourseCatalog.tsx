@@ -27,15 +27,31 @@ type Course = {
   trainer?: { name?: string } | null;
 };
 
+const CATALOG_SIZE = 8;
+
 /**
- * Fetches published courses and filters client-side for free ones (price == 0).
- * Falls back gracefully with EmptyState if no free courses are found.
+ * A course is only advertised as free when its list price AND any sale price
+ * are zero — the same rule the API applies for `free=true`.
+ *
+ * This mirrors a server-side filter on purpose: it is a safety net for the
+ * window in which a freshly deployed web build talks to an API that predates
+ * the `free` param and therefore ignores it. Without it that API would answer
+ * with the whole catalog and every paid course would render a "GRATIS" badge.
+ */
+function isFree(course: Course): boolean {
+  const salePrice = course.salePrice != null ? Number(course.salePrice) : null;
+  return Number(course.price) === 0 && (salePrice === null || salePrice === 0);
+}
+
+/**
+ * Fetches free courses from the API (BL-52: filtered in SQL, not client-side)
+ * and falls back gracefully with EmptyState when there are none.
  */
 export function FreeCourseCatalog() {
   const [courses, setCourses] = useState<Course[] | null>(null);
 
   useEffect(() => {
-    fetch(`${API}/api/courses?limit=20`)
+    fetch(`${API}/api/courses?free=true&limit=${CATALOG_SIZE}`)
       .then((r) => r.json())
       .then((d) => {
         if (d?.success) {
@@ -45,12 +61,7 @@ export function FreeCourseCatalog() {
             ? d.data
             : [];
 
-          // Filter courses where effective price is 0
-          const free = raw.filter((c) => {
-            const p = c.salePrice != null ? Number(c.salePrice) : Number(c.price);
-            return p === 0;
-          });
-          setCourses(free);
+          setCourses(raw.filter(isFree));
         } else {
           setCourses([]);
         }
@@ -104,7 +115,7 @@ export function FreeCourseCatalog() {
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {courses.slice(0, 8).map((course, i) => {
+          {courses.slice(0, CATALOG_SIZE).map((course, i) => {
             const rating = Number(course.avgRating ?? 0);
             const hours = course.totalDuration ? Math.round(course.totalDuration / 60) : 0;
             return (
@@ -122,7 +133,12 @@ export function FreeCourseCatalog() {
                     GRATIS
                   </span>
                   <ProgramCard
-                    href={`/kursus/${course.slug}`}
+                    /* BL-51: /kursus/<slug> is a legacy path that only resolves
+                       through a 308 redirect in next.config.js. Courses have no
+                       detail page — /checkout/<slug> is the canonical course
+                       landing across the app (see ECourseCatalog, kelas-privat),
+                       and it fulfils a Rp 0 course without touching DOKU. */
+                    href={`/checkout/${course.slug}`}
                     title={course.title}
                     description={course.trainer?.name ? `Bersama ${course.trainer.name}` : (course.shortDesc ?? undefined)}
                     unitLabel="Kelas Gratis"

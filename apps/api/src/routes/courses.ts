@@ -18,8 +18,12 @@ const router = Router();
 
 // BL-47: format is an enum boundary — an invalid value must 400, not silently
 // fall through to the catalog default.
+// BL-52: `free` is the same kind of boundary. Silently ignoring a typo here
+// would serve the full catalog to a caller that asked for free courses only,
+// which is exactly how a paid course ends up wearing a "GRATIS" badge.
 const listQuerySchema = z.object({
   format: z.enum(["regular", "private_class"]).optional(),
+  free: z.enum(["true", "false"]).optional(),
 });
 
 // GET /api/courses
@@ -27,7 +31,16 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parsedQuery = listQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
-      return next(new AppError(400, "Parameter format harus 'regular' atau 'private_class'.", "VALIDATION_ERROR"));
+      const invalidFree = parsedQuery.error.issues.some((issue) => issue.path[0] === "free");
+      return next(
+        new AppError(
+          400,
+          invalidFree
+            ? "Parameter free harus 'true' atau 'false'."
+            : "Parameter format harus 'regular' atau 'private_class'.",
+          "VALIDATION_ERROR",
+        ),
+      );
     }
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
@@ -37,6 +50,9 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
       q: req.query.q as string | undefined,
       featured: req.query.featured === "true" ? true : req.query.featured === "false" ? false : undefined,
       format: parsedQuery.data.format,
+      // free=false is treated as "no price constraint", same as omitting it —
+      // the catalog has no "paid only" view to serve.
+      free: parsedQuery.data.free === "true" ? true : undefined,
       page,
       limit,
     });
