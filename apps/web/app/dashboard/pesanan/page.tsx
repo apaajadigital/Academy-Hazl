@@ -22,6 +22,7 @@ import {
   EmptyState,
 } from "@/components/ui";
 import { getToken } from "@/lib/auth/token";
+import { downloadProtected } from "@/lib/download";
 
 type OrderItem = { itemTitle: string | null; itemType: string };
 type Order = {
@@ -81,6 +82,15 @@ export default function PesananDashboardPage() {
     } finally {
       setCancellingId(null);
     }
+  }
+
+  // The invoice endpoint is bearer-token protected and the token lives in
+  // storage, not a cookie — a plain <a href> navigation sends no Authorization
+  // header and always 401s, so fetch the PDF with the token instead.
+  function handleDownloadInvoice(orderId: string) {
+    downloadProtected(`/api/orders/${orderId}/invoice`, `invoice-${orderId}.pdf`).catch(() => {
+      alert("Gagal mengunduh invoice.");
+    });
   }
 
   useEffect(() => {
@@ -211,14 +221,13 @@ export default function PesananDashboardPage() {
                             </button>
                           )}
                           {order.status === "paid" && (
-                            <a
-                              href={`/api/orders/${order.id}/invoice`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadInvoice(order.id)}
                               className="whitespace-nowrap text-sm text-text-secondary hover:text-text-primary"
                             >
                               Invoice
-                            </a>
+                            </button>
                           )}
                         </div>
                       </TD>

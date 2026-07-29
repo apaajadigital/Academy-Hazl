@@ -59,6 +59,18 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
     // so we send the buyer a refund notice instead of a payment-success email.
     let eventFull = false;
 
+    // BL-63: e-tickets for the seats actually confirmed in this transaction.
+    // Collected inside the transaction but SENT after it commits — an email must
+    // never be sent for a seat whose transaction later rolls back.
+    const confirmedTickets: Array<{
+      eventTitle: string;
+      ticketCode: string;
+      startDate: Date | null;
+      location: string | null;
+      venue: string | null;
+      eventType: string | null;
+    }> = [];
+
     // M-webhook: flip the order to paid and run every fulfillment side-effect in
     // one atomic transaction. If any step fails the whole payment fulfillment
     // rolls back instead of leaving an order half-fulfilled (e.g. marked paid but
@@ -89,7 +101,9 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
           // never push totalSold past quota.
           const ev = await tx.event.findUnique({
             where: { id: item.itemId },
-            select: { quota: true, title: true },
+            // BL-63: schedule/venue selected here too so the e-ticket email needs
+            // no extra query after the transaction commits.
+            select: { quota: true, title: true, startDate: true, location: true, venue: true, type: true },
           });
           const reserved = await tx.event.updateMany({
             where: { id: item.itemId, OR: [{ quota: null }, { totalSold: { lt: ev?.quota ?? 0 } }] },
@@ -97,6 +111,12 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
           });
           if (reserved.count === 0) {
             // Event full — auto-refund + notify (D2) instead of overselling.
+            // BL-58: reserved.count === 0 means the quota-guarded updateMany matched
+            // no row, so totalSold was NOT incremented and no eventRegistration is
+            // written below. This branch therefore owes no seat back — the refund
+            // release in routes/orders.ts is driven by the eventRegistration
+            // deleteMany count (0 here), so approving this auto-refund cannot
+            // double-decrement a seat that was never taken. Do NOT add a decrement.
             await tx.refund.create({
               data: {
                 orderId: order.id,
@@ -109,10 +129,18 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
             await tx.order.update({ where: { id: order.id }, data: { status: "refund_pending" } });
             eventFull = true;
           } else {
-            await tx.eventRegistration.upsert({
+            const registration = await tx.eventRegistration.upsert({
               where: { eventId_userId: { eventId: item.itemId, userId: order.userId } },
               create: { eventId: item.itemId, userId: order.userId, orderId: order.id, status: "confirmed" },
               update: { status: "confirmed", orderId: order.id },
+            });
+            confirmedTickets.push({
+              eventTitle: ev?.title ?? item.itemTitle ?? "Event",
+              ticketCode: registration.ticketCode,
+              startDate: ev?.startDate ?? null,
+              location: ev?.location ?? null,
+              venue: ev?.venue ?? null,
+              eventType: ev?.type ?? null,
             });
           }
         }
@@ -193,6 +221,22 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
     if (phone) {
       await safeNotify(() =>
         processEmail({ type: "wa-payment-success", phone, name: order.user.name, courseName }),
+      );
+    }
+
+    // BL-63: e-ticket per confirmed event seat. Best-effort like every other
+    // notification here — fulfillment is already committed, so a send failure must
+    // not fail (and thus retry) the webhook. The `eventFull` branch returned above,
+    // so a refunded buyer can never receive a confirmation.
+    for (const ticket of confirmedTickets) {
+      await safeNotify(() =>
+        processEmail({
+          type: "event-registration-confirmed",
+          to: order.user.email,
+          name: order.user.name,
+          orderId: order.id,
+          ...ticket,
+        }),
       );
     }
 

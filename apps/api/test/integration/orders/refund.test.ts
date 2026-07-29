@@ -17,6 +17,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     },
     courseEnrollment: { deleteMany: vi.fn() },
     eventRegistration: { deleteMany: vi.fn() },
+    event: { updateMany: vi.fn(), findUnique: vi.fn() },
     affiliateCommission: { update: vi.fn() },
     affiliate: { findUnique: vi.fn(), update: vi.fn() },
     coupon: { findUnique: vi.fn(), update: vi.fn() },
@@ -74,6 +75,8 @@ beforeEach(() => {
   );
   vi.mocked(prisma.courseEnrollment.deleteMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 1 } as never);
+  // BL-58: seat release succeeds by default (event row matches the `gte` guard).
+  vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.affiliateCommission.update).mockResolvedValue({} as never);
   vi.mocked(prisma.affiliate.findUnique).mockResolvedValue({ id: "aff-1", balance: "29900", totalEarnings: "29900" } as never);
   vi.mocked(prisma.affiliate.update).mockResolvedValue({} as never);
@@ -261,5 +264,119 @@ describe("PATCH /api/orders/admin/refunds/:refundId", () => {
     expect(res.status).toBe(200);
     expect(prisma.courseEnrollment.deleteMany).not.toHaveBeenCalled();
     expect(prisma.order.update).not.toHaveBeenCalled();
+  });
+});
+
+// ─── BL-58 regression: Event.totalSold must be released on refund ──────────────
+// Before the fix totalSold was increment-only, so every refunded seat was leaked
+// permanently and the quota guard (totalSold < quota) eventually locked the event.
+describe("BL-58 — approved refund releases event seats", () => {
+  const eventOrder = {
+    ...mockPaidOrder,
+    status: "paid",
+    couponId: null,
+    items: [{ itemType: "event", itemId: "event-1" }],
+    commissions: [],
+  };
+
+  beforeEach(() => {
+    vi.mocked(authenticate).mockImplementation(async (req, _res, next) => {
+      (req as never as { user: unknown }).user = {
+        id: "admin-1",
+        email: "admin@test.com",
+        name: "Admin",
+        roles: ["super_admin"],
+      };
+      next();
+    });
+    vi.mocked(prisma.refund.findUnique).mockResolvedValue(mockRefund as never);
+    vi.mocked(prisma.refund.update).mockResolvedValue({ ...mockRefund, status: "approved" } as never);
+    vi.mocked(prisma.order.update).mockResolvedValue({ ...eventOrder, status: "refunded" } as never);
+    vi.mocked(prisma.order.findUnique).mockResolvedValue(eventOrder as never);
+  });
+
+  const approve = () =>
+    request(app).patch("/api/orders/admin/refunds/refund-1").send({ status: "approved" });
+
+  it("decrements totalSold by the number of registrations actually deleted", async () => {
+    // Two seats were held under this order/event (e.g. a re-registration row).
+    vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 2 } as never);
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(prisma.event.updateMany).toHaveBeenCalledWith({
+      // The `gte` predicate is the underflow floor — asserted explicitly because
+      // dropping it is exactly how totalSold would be able to go negative.
+      where: { id: "event-1", totalSold: { gte: 2 } },
+      data: { totalSold: { decrement: 2 } },
+    });
+  });
+
+  it("releases nothing when no registration was deleted (event_full auto-refund)", async () => {
+    // webhook.ts "event_full" never reserved a seat and never wrote a registration,
+    // so approving that auto-refund must not decrement a seat it never took.
+    vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 0 } as never);
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(prisma.event.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("never drives totalSold negative when the counter is already too low", async () => {
+    const { logger } = await import("../../../src/lib/logger.js");
+    const warnSpy = vi.spyOn(logger, "warn");
+    vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 3 } as never);
+    // Inconsistent data: totalSold < 3 → the guarded updateMany matches no row.
+    vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    const res = await approve();
+
+    // Refund still succeeds (access already revoked); the skip is logged for a human.
+    expect(res.status).toBe(200);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("BL-58"),
+      expect.objectContaining({ eventId: "event-1", deletedRegistrations: 3 }),
+    );
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: "refunded" } }),
+    );
+  });
+
+  it("does not release a second time when the refund is re-approved (already refunded)", async () => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({ ...eventOrder, status: "refunded" } as never);
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(prisma.eventRegistration.deleteMany).not.toHaveBeenCalled();
+    expect(prisma.event.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("frees the seat for reuse: a sold-out event becomes bookable again", async () => {
+    // Model the real counter so we assert the OUTCOME (quota opens up), not just
+    // that a query was issued. Event is sold out: quota 10, totalSold 10.
+    const event = { id: "event-1", quota: 10, totalSold: 10 };
+    vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.event.updateMany).mockImplementation((async (args: {
+      where: { id: string; totalSold?: { gte: number } };
+      data: { totalSold: { decrement: number } };
+    }) => {
+      const floor = args.where.totalSold?.gte ?? 0;
+      if (args.where.id !== event.id || event.totalSold < floor) return { count: 0 };
+      event.totalSold -= args.data.totalSold.decrement;
+      return { count: 1 };
+    }) as never);
+
+    // Sold out before the refund.
+    expect(event.totalSold < event.quota).toBe(false);
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(event.totalSold).toBe(9);
+    // checkout.ts / webhook.ts quota guard now admits a new buyer again.
+    expect(event.totalSold < event.quota).toBe(true);
   });
 });

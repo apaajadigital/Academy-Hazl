@@ -31,6 +31,12 @@ router.post("/", authenticate, async (req, res, next) => {
     let price = 0;
     /** Slug of the purchased item — used to build the failure redirect URL */
     let itemSlug = "";
+    /**
+     * BL-63: event schedule/venue kept from the lookup above so the e-ticket email
+     * can be built on the 100%-off-coupon path without a second Event query.
+     * Stays null for non-event items.
+     */
+    let eventDetail: { startDate: Date; location: string | null; venue: string | null; type: string } | null = null;
 
     if (itemType === "course") {
       const course = await prisma.course.findUnique({ where: { id: itemId } });
@@ -67,6 +73,12 @@ router.post("/", authenticate, async (req, res, next) => {
       itemTitle = event.title;
       price = event.salePrice ? Number(event.salePrice) : Number(event.price);
       itemSlug = event.slug;
+      eventDetail = {
+        startDate: event.startDate,
+        location: event.location,
+        venue: event.venue,
+        type: event.type,
+      };
 
       if (price === 0) {
         // Free event — register immediately, skip payment.
@@ -77,9 +89,25 @@ router.post("/", authenticate, async (req, res, next) => {
           data: { totalSold: { increment: 1 } },
         });
         if (reserved.count === 0) throw new AppError(409, "Kuota event sudah penuh.");
-        await prisma.eventRegistration.create({
+        const registration = await prisma.eventRegistration.create({
           data: { eventId: itemId, userId, status: "confirmed" },
+          // Pull the buyer's display name in the same round-trip — req.user only
+          // carries id/email/roles, and the e-ticket email is addressed by name.
+          include: { user: { select: { name: true, email: true } } },
         });
+        // BL-63: confirmation + e-ticket. Fire-and-forget — a notification failure
+        // must never undo a registration that already reserved a seat.
+        enqueueEmail({
+          type: "event-registration-confirmed",
+          to: registration.user?.email ?? req.user!.email,
+          name: registration.user?.name ?? "Peserta",
+          eventTitle: event.title,
+          ticketCode: registration.ticketCode,
+          startDate: event.startDate,
+          location: event.location,
+          venue: event.venue,
+          eventType: event.type,
+        }).catch(() => {});
         return res.json(successResponse({ orderId: null, paymentUrl: null, finalAmount: 0, free: true }));
       }
     }
@@ -167,15 +195,31 @@ router.post("/", authenticate, async (req, res, next) => {
           data: { totalSold: { increment: 1 } },
         });
         if (reserved.count === 0) throw new AppError(409, "Kuota event sudah penuh.");
-        await prisma.eventRegistration.upsert({
+        const registration = await prisma.eventRegistration.upsert({
           where: { eventId_userId: { eventId: itemId, userId } },
           create: { eventId: itemId, userId, orderId: order.id, status: "confirmed" },
           update: { status: "confirmed", orderId: order.id },
         });
+        // BL-63: same e-ticket as the free path — a 100%-off coupon still produces
+        // a real confirmed seat. Fire-and-forget: never fail a paid-out checkout.
+        enqueueEmail({
+          type: "event-registration-confirmed",
+          to: order.user.email,
+          name: order.user.name,
+          eventTitle: itemTitle,
+          ticketCode: registration.ticketCode,
+          startDate: eventDetail?.startDate,
+          location: eventDetail?.location,
+          venue: eventDetail?.venue,
+          eventType: eventDetail?.type,
+          orderId: order.id,
+        }).catch(() => {});
       }
 
-      // No email notification needed for free items — the user is redirected
-      // directly to the product page on success.
+      // No payment email for free items — the user is redirected directly to the
+      // product page on success. (Events are the exception: BL-63 sends the
+      // e-ticket from the event branch above, since the ticket code is the only
+      // way in at check-in.)
 
       return res.json(successResponse({ orderId: order.id, paymentUrl: null, finalAmount: 0, free: true }));
     }

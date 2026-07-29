@@ -6,6 +6,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     lmsTenant: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     lmsBatchMember: {
       findMany: vi.fn(),
@@ -38,6 +39,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     },
     userRole: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -101,6 +103,8 @@ beforeEach(() => {
   vi.mocked(prisma.lmsCertificate.upsert).mockResolvedValue({} as never);
   vi.mocked(prisma.lmsCourseAssignment.findMany).mockResolvedValue([]);
   vi.mocked(prisma.userRole.findFirst).mockResolvedValue(null);
+  vi.mocked(prisma.userRole.findMany).mockResolvedValue([]);
+  vi.mocked(prisma.lmsTenant.findMany).mockResolvedValue([]);
 });
 
 describe("GET /api/lms/portal/me", () => {
@@ -109,6 +113,58 @@ describe("GET /api/lms/portal/me", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
+  });
+
+  it("marks a batch-membership-only tenant as isAdmin false", async () => {
+    const res = await request(app).get("/api/lms/portal/me");
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].id).toBe(mockTenant.id);
+    expect(res.body.data[0].isAdmin).toBe(false);
+  });
+
+  it("marks a tenant the caller administers as isAdmin true", async () => {
+    vi.mocked(prisma.userRole.findMany).mockResolvedValue([{ tenantId: mockTenant.id }] as never);
+    const res = await request(app).get("/api/lms/portal/me");
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].isAdmin).toBe(true);
+  });
+
+  // Regression: reading only lmsBatchMember stranded "pure" LMS admins — they
+  // administer a tenant without studying in it, so the portal returned [] and the
+  // admin console was unreachable except by typing the URL.
+  it("includes a tenant known only through an lms_admin grant", async () => {
+    vi.mocked(prisma.lmsBatchMember.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.userRole.findMany).mockResolvedValue([{ tenantId: "tenant-admin-only" }] as never);
+    vi.mocked(prisma.lmsTenant.findMany).mockResolvedValue([
+      { id: "tenant-admin-only", name: "Admin Only", slug: "admin-only" },
+    ] as never);
+
+    const res = await request(app).get("/api/lms/portal/me");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data[0].slug).toBe("admin-only");
+    expect(res.body.data[0].isAdmin).toBe(true);
+  });
+
+  it("does not duplicate a tenant reached by both membership and admin grant", async () => {
+    vi.mocked(prisma.userRole.findMany).mockResolvedValue([{ tenantId: mockTenant.id }] as never);
+    const res = await request(app).get("/api/lms/portal/me");
+    expect(res.body.data).toHaveLength(1);
+    // The second lookup is only for tenants not already covered by membership.
+    expect(vi.mocked(prisma.lmsTenant.findMany)).not.toHaveBeenCalled();
+  });
+
+  it("ignores non-LMS-admin role rows when resolving tenants", async () => {
+    vi.mocked(prisma.lmsBatchMember.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.userRole.findMany).mockResolvedValue([] as never);
+    const res = await request(app).get("/api/lms/portal/me");
+    expect(res.body.data).toEqual([]);
+    // The query must scope to role: "lms_admin" with a non-null tenantId.
+    expect(vi.mocked(prisma.userRole.findMany)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ role: "lms_admin", NOT: { tenantId: null } }),
+      })
+    );
   });
 });
 

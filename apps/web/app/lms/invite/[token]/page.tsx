@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PartyPopper, Mail, AlertCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui";
+import { getValidToken } from "@/lib/auth/token";
 
 export default function LmsInviteAcceptPage() {
   const { token } = useParams<{ token: string }>();
@@ -18,10 +19,22 @@ export default function LmsInviteAcceptPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/lms/invite/${token}/accept`, { method: "POST" });
+      // The accept endpoint is `authenticate`-guarded and reads req.user.id, so a
+      // request without a bearer token is a guaranteed 401. Send the visitor to
+      // log in and bounce straight back to this invite instead of failing here.
+      const accessToken = await getValidToken();
+      if (!accessToken) {
+        router.push(`/masuk?redirect=${encodeURIComponent(`/lms/invite/${token}`)}`);
+        return;
+      }
+      const res = await fetch(`/api/lms/invite/${token}/accept`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.message ?? "Gagal menerima undangan.");
+        // Envelope shape is {success,error:{message}}; keep the legacy fallback.
+        setError(data.error?.message ?? data.message ?? "Gagal menerima undangan.");
         return;
       }
       setSuccess(true);

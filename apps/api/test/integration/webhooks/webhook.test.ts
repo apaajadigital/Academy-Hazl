@@ -26,6 +26,8 @@ vi.mock("../../../src/services/notification/emailService.js", () => ({
   sendPaymentSuccess: vi.fn().mockResolvedValue(undefined),
   sendOrderInvoice: vi.fn().mockResolvedValue(undefined),
   sendEventFullRefund: vi.fn().mockResolvedValue(undefined),
+  // BL-63: e-ticket confirmation for a successfully fulfilled event seat.
+  sendEventRegistrationConfirmed: vi.fn().mockResolvedValue(undefined),
   sendPrivateClassWelcome: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -194,6 +196,138 @@ describe("POST /api/webhooks/doku", () => {
     expect(prisma.eventRegistration.upsert).not.toHaveBeenCalled();
     expect(prisma.order.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ status: "refund_pending" }) }),
+    );
+  });
+
+  // BL-58 regression (event seat accounting): when the atomic reservation matches
+  // no row the seat was never taken, so the event_full branch must leave totalSold
+  // completely untouched. A decrement here would double-release the seat once the
+  // auto-refund is approved (routes/orders.ts already releases per deleted
+  // registration), silently inflating the event's sellable stock.
+  it("does not touch totalSold when the event is full (no leftover increment/decrement)", async () => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      items: [{ itemType: "event", itemId: "event-1", itemTitle: "Webinar" }],
+      user: { name: "T", email: "t@t.com", profile: null },
+    } as never);
+    vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    // Exactly one quota-guarded reservation attempt, and it changed nothing.
+    expect(prisma.event.updateMany).toHaveBeenCalledTimes(1);
+    for (const call of vi.mocked(prisma.event.updateMany).mock.calls) {
+      expect(JSON.stringify(call[0])).not.toContain("decrement");
+    }
+    expect(prisma.event.update).not.toHaveBeenCalled();
+  });
+
+  // ── BL-63: registration confirmation + e-ticket on paid fulfillment ─────────
+
+  it("sends the e-ticket confirmation after a paid event fulfillment (BL-63)", async () => {
+    const { sendEventRegistrationConfirmed } = await import(
+      "../../../src/services/notification/emailService.js"
+    );
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      items: [{ itemType: "event", itemId: "event-1", itemTitle: "Webinar" }],
+      user: { name: "T", email: "t@t.com", profile: null },
+    } as never);
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      quota: 100,
+      title: "Webinar Produktivitas",
+      startDate: new Date("2026-09-10T09:00:00+07:00"),
+      location: null,
+      venue: null,
+      type: "online",
+    } as never);
+    vi.mocked(prisma.eventRegistration.upsert).mockResolvedValue({
+      id: "reg-9",
+      ticketCode: "TKT-PAID-009",
+    } as never);
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    expect(sendEventRegistrationConfirmed).toHaveBeenCalledWith(
+      "t@t.com",
+      expect.objectContaining({
+        eventTitle: "Webinar Produktivitas",
+        ticketCode: "TKT-PAID-009",
+        eventType: "online",
+        orderId: "order-1",
+      }),
+    );
+  });
+
+  // The buyer of a full event gets a refund notice, NOT a ticket: sending both
+  // would hand out a seat that was never reserved.
+  it("does NOT send the e-ticket confirmation when the event is full (BL-63)", async () => {
+    const { sendEventRegistrationConfirmed, sendEventFullRefund } = await import(
+      "../../../src/services/notification/emailService.js"
+    );
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      items: [{ itemType: "event", itemId: "event-1", itemTitle: "Webinar" }],
+      user: { name: "T", email: "t@t.com", profile: null },
+    } as never);
+    vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 0 } as never);
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    expect(sendEventFullRefund).toHaveBeenCalled();
+    expect(sendEventRegistrationConfirmed).not.toHaveBeenCalled();
+  });
+
+  it("does NOT send an e-ticket for a non-event (course) order (BL-63)", async () => {
+    const { sendEventRegistrationConfirmed } = await import(
+      "../../../src/services/notification/emailService.js"
+    );
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    expect(sendEventRegistrationConfirmed).not.toHaveBeenCalled();
+  });
+
+  it("still fulfills when the e-ticket email throws (BL-63, best-effort)", async () => {
+    const { sendEventRegistrationConfirmed } = await import(
+      "../../../src/services/notification/emailService.js"
+    );
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({
+      ...mockOrder,
+      items: [{ itemType: "event", itemId: "event-1", itemTitle: "Webinar" }],
+      user: { name: "T", email: "t@t.com", profile: null },
+    } as never);
+    vi.mocked(prisma.eventRegistration.upsert).mockResolvedValue({
+      id: "reg-10",
+      ticketCode: "TKT-PAID-010",
+    } as never);
+    vi.mocked(sendEventRegistrationConfirmed).mockRejectedValueOnce(new Error("resend down"));
+
+    const res = await request(app)
+      .post("/api/webhooks/doku")
+      .set(webhookHeaders)
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+
+    expect(res.status).toBe(200);
+    expect(prisma.eventRegistration.upsert).toHaveBeenCalled();
+    expect(prisma.order.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "paid" }) }),
     );
   });
 

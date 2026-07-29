@@ -8,6 +8,8 @@ import { validateBody } from "../../middleware/validateBody.js";
 import { loginLimiter } from "../../middleware/rateLimiter.js";
 import { AppError, successResponse } from "../../types/index.js";
 import { env } from "../../config/env.js";
+import { logger } from "../../lib/logger.js";
+import { sendPasswordResetEmail } from "../../services/notification/emailService.js";
 import { getIp, passwordSchema } from "./shared.js";
 
 const router = Router();
@@ -34,9 +36,17 @@ router.post(
           data: { resetPasswordToken: token, resetPasswordExpiry: expiry },
         });
 
-        // In dev: expose token. In prod: send via email.
+        // Email delivery is best-effort and MUST NOT change the response: a send
+        // failure that surfaced as a 500 would leak which addresses are registered,
+        // defeating the generic-200 anti-enumeration guarantee below.
+        try {
+          await sendPasswordResetEmail(user.email, user.name ?? "Pengguna", token);
+        } catch (mailErr) {
+          logger.error("password reset email failed", { userId: user.id, err: mailErr });
+        }
+
         if (env.NODE_ENV !== "production") {
-          console.info(`[dev] Password reset token for ${email}: ${token}`);
+          logger.info(`[dev] Password reset token for ${email}: ${token}`);
         }
       }
 

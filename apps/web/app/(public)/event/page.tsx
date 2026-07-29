@@ -6,6 +6,8 @@ import { Section, SectionHeader } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
+import { getEventTypeLabel } from "@/lib/event-labels";
+import { listEvents, type EventSummary } from "@/lib/api/events";
 
 export const metadata: Metadata = {
   title: "Event & Workshop — Jago Akademi",
@@ -18,41 +20,6 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
-type EventItem = {
-  id: string;
-  slug: string;
-  title: string;
-  type: string;
-  startDate: string;
-  endDate: string | null;
-  location: string | null;
-  venue: string | null;
-  price: string;
-  salePrice: string | null;
-  quota: number | null;
-  totalSold: number;
-  coverUrl: string | null;
-  speakerName: string | null;
-  isFeatured: boolean;
-};
-
-async function getEvents(type?: string): Promise<{ data: EventItem[]; meta: { total: number } }> {
-  try {
-    const qs = new URLSearchParams({ limit: "24" });
-    if (type) qs.set("type", type);
-    const res = await fetch(`${API}/api/events?${qs}`, {
-      next: { revalidate: 300 },
-      signal: AbortSignal.timeout(8000),
-    });
-    const body = await res.json();
-    return body.success ? body : { data: [], meta: { total: 0 } };
-  } catch {
-    return { data: [], meta: { total: 0 } };
-  }
-}
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("id-ID", {
@@ -76,14 +43,8 @@ const TYPES = [
   { value: "hybrid", label: "Hybrid", icon: Layers3 },
 ] as const;
 
-const TYPE_LABEL: Record<string, string> = {
-  online: "Online",
-  offline: "Offline",
-  hybrid: "Hybrid",
-};
-
 // ─── Featured hero banner ──────────────────────────────────────────────────────
-function FeaturedHero({ event }: { event: EventItem }) {
+function FeaturedHero({ event }: { event: EventSummary }) {
   const price = event.salePrice ? Number(event.salePrice) : Number(event.price);
 
   return (
@@ -128,7 +89,7 @@ function FeaturedHero({ event }: { event: EventItem }) {
               ⭐ Unggulan
             </span>
             <span className="badge" style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }}>
-              {TYPE_LABEL[event.type] ?? event.type}
+              {getEventTypeLabel(event.type)}
             </span>
           </div>
           <h2
@@ -196,7 +157,7 @@ function FilterPill({
 }
 
 // ─── Event card ────────────────────────────────────────────────────────────────
-function EventCard({ ev, delay }: { ev: EventItem; delay: number }) {
+function EventCard({ ev, delay }: { ev: EventSummary; delay: number }) {
   const spotsLeft = ev.quota ? ev.quota - ev.totalSold : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
 
@@ -224,7 +185,7 @@ function EventCard({ ev, delay }: { ev: EventItem; delay: number }) {
         <div className="flex flex-1 flex-col gap-2 p-5">
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="badge badge-cyan">{TYPE_LABEL[ev.type] ?? ev.type}</span>
+            <span className="badge badge-cyan">{getEventTypeLabel(ev.type)}</span>
             {ev.isFeatured && <span className="badge badge-pink">Unggulan</span>}
             {isFull && (
               <span
@@ -289,10 +250,17 @@ interface PageProps {
 export default async function EventListPage({ searchParams }: PageProps) {
   const { type } = await searchParams;
   const activeType = TYPES.find((t) => t.value === (type ?? "")) ? (type ?? "") : "";
-  const { data: events, meta } = await getEvents(activeType || undefined);
+  // E12: one shared client for every event call (lib/api/events). A failed or
+  // unreachable API degrades to an empty catalog rather than breaking the render.
+  const result = await listEvents({ type: activeType || undefined, limit: 24 });
+  const events = result.success ? result.data.events : [];
+  const total = result.success ? result.data.total : 0;
 
-  const featuredEvent = events.find((e) => e.isFeatured);
-  const regularEvents = events.filter((e) => !e.isFeatured || e !== featuredEvent);
+  // BL-62a: the hero only renders on the unfiltered list, but the grid used to
+  // drop the featured event unconditionally — so on /event?type=online it
+  // disappeared from both. Only pull it out of the grid when the hero shows it.
+  const heroEvent = activeType ? undefined : events.find((e) => e.isFeatured);
+  const regularEvents = heroEvent ? events.filter((e) => e.id !== heroEvent.id) : events;
 
   return (
     <div className="pt-16">
@@ -324,13 +292,13 @@ export default async function EventListPage({ searchParams }: PageProps) {
         </nav>
 
         {/* Featured hero */}
-        {!activeType && featuredEvent && <FeaturedHero event={featuredEvent} />}
+        {heroEvent && <FeaturedHero event={heroEvent} />}
 
         {/* Grid */}
         {events.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
-            title={activeType ? `Tidak ada event ${TYPE_LABEL[activeType]} saat ini` : "Belum ada event terjadwal"}
+            title={activeType ? `Tidak ada event ${getEventTypeLabel(activeType)} saat ini` : "Belum ada event terjadwal"}
             description="Event dan workshop akan segera hadir. Gabung early access agar tak ketinggalan jadwalnya."
             action={
               <Link href="/early-access" className="btn btn-primary">
@@ -341,7 +309,7 @@ export default async function EventListPage({ searchParams }: PageProps) {
         ) : (
           <>
             <p className="mb-6 text-sm text-[var(--text-muted)]">
-              {meta.total} event tersedia
+              {total} event tersedia
             </p>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {regularEvents.map((ev, i) => (

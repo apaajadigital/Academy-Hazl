@@ -5,9 +5,12 @@ import globals from "globals";
 export default [
   ...nextJsConfig,
   {
-    // Node-run config files (e.g. next.config.js) execute in a Node.js
-    // environment, so `process` and friends are defined there.
-    files: ["*.config.js", "*.config.mjs", "next.config.js"],
+    // Node-run config files (e.g. next.config.js) and the repo-local tooling
+    // scripts under scripts/ execute in a Node.js environment, so `process` and
+    // friends are defined there. Without scripts/** this block, `npm run lint`
+    // fails repo-wide on scripts/lint-spacing.mjs (3 no-undef warnings vs
+    // --max-warnings 0), which blocks CI for every branch (BL-60).
+    files: ["*.config.js", "*.config.mjs", "next.config.js", "scripts/**"],
     languageOptions: {
       globals: {
         ...globals.node,

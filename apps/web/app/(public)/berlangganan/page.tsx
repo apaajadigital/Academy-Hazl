@@ -137,7 +137,10 @@ function PriceDisplay({
 
 export default function BerlanggananPage() {
   return (
-    <main className="min-h-screen bg-surface-page text-text-primary">
+    // A plain <div>, not <main>: the (public) layout already wraps children in
+    // <main id="main-content">, and nesting a second <main> breaks the single
+    // landmark the skip-link targets.
+    <div className="min-h-screen bg-surface-page text-text-primary">
       {/* Hero */}
       <section className="relative overflow-hidden px-6 pb-16 pt-24 text-center">
         <div
@@ -343,6 +346,6 @@ export default function BerlanggananPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

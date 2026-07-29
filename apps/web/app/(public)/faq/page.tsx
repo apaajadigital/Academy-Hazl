@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import Link from "next/link";
 import { List, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui";
 import { waLink } from "@/lib/config";
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
     "Temukan jawaban atas pertanyaan umum seputar Jago Akademi — cara beli kursus, sertifikat, pembayaran, refund, dan lainnya.",
 };
 
-export const FAQ_ITEMS = [
+/** A FAQ answer may embed inline links, so it is a ReactNode rather than a string. */
+type FaqEntry = { q: string; a: ReactNode };
+type FaqGroup = { category: string; items: FaqEntry[] };
+
+export const FAQ_ITEMS: FaqGroup[] = [
   {
     category: "Umum",
     items: [
@@ -93,7 +99,16 @@ export const FAQ_ITEMS = [
     items: [
       {
         q: "Apakah ada paket untuk perusahaan?",
-        a: "Ya! Kami memiliki paket LMS untuk korporat dengan fitur manajemen karyawan, laporan progres, dan konten yang dapat dikustomisasi. Hubungi tim sales kami.",
+        a: (
+          <>
+            Ya! Kami memiliki{" "}
+            <Link href="/clients" className="text-accent-cyan-strong hover:underline">
+              paket LMS untuk korporat
+            </Link>{" "}
+            dengan fitur manajemen karyawan, laporan progres, dan konten yang dapat
+            dikustomisasi. Hubungi tim sales kami.
+          </>
+        ),
       },
       {
         q: "Berapa minimal pengguna untuk paket korporat?",

@@ -4,6 +4,7 @@ import { getMentorBySlug, mentors, categories } from "@/lib/e-course/utils";
 import { MentorHero } from "@/components/mentor/MentorHero";
 import { MentorCourseGrid } from "@/components/mentor/MentorCourseGrid";
 import { MentorConnect } from "@/components/mentor/MentorConnect";
+import { features } from "@/lib/features";
 import type { MentorParams } from "@/lib/e-course/types";
 
 type Props = {
@@ -39,7 +40,13 @@ export default async function MentorPage({ params }: Props) {
   return (
     <>
       <MentorHero mentor={mentor} />
-      <MentorCourseGrid mentor={mentor} topics={mentorTopics} />
+      {/* The grid links to /e-course/[kategori]/[topik], which sets
+          `dynamicParams = false` and generates zero params while
+          `features.learningPath` is OFF — every card would be a promised 404.
+          This page is in the sitemap, so those dead links reach crawlers too. */}
+      {features.learningPath && (
+        <MentorCourseGrid mentor={mentor} topics={mentorTopics} />
+      )}
       <MentorConnect mentor={mentor} />
     </>
   );

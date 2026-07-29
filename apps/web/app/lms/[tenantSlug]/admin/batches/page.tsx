@@ -22,6 +22,15 @@ type Batch = {
   _count: { members: number; assignments: number };
 };
 
+/** `POST /api/lms/tenants/:id/invites`. Every field is optional because this is a
+ *  network boundary: `emailed`/`emailFailed` only exist on newer API builds. */
+type InvitesResult = {
+  created?: string[];
+  skipped?: string[];
+  emailed?: string[];
+  emailFailed?: string[];
+};
+
 export default function LmsAdminBatchesPage() {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const router = useRouter();
@@ -96,13 +105,29 @@ export default function LmsAdminBatchesPage() {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ emails, batchId: inviteBatchId || undefined }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as {
+      success?: boolean;
+      data?: InvitesResult;
+      error?: { message?: string };
+    };
     setInviting(false);
-    if (data.success) {
-      alert(`Undangan terkirim: ${data.data.created.length}, dilewati: ${data.data.skipped.length}`);
-      setInviteEmails("");
-      setCsvParsed([]);
+    if (!data.success) {
+      alert(data.error?.message ?? "Gagal mengirim undangan.");
+      return;
     }
+    // Report what the server actually did. `emailed`/`emailFailed` are absent on
+    // older API builds, so delivery is only claimed when it is reported —
+    // otherwise we say the invite was *created*, which is always true.
+    const created = data.data?.created ?? [];
+    const skipped = data.data?.skipped ?? [];
+    const { emailed, emailFailed } = data.data ?? {};
+    const parts = [`${created.length} undangan dibuat`];
+    if (emailed) parts.push(`${emailed.length} email terkirim`);
+    if (emailFailed && emailFailed.length > 0) parts.push(`${emailFailed.length} email gagal dikirim`);
+    if (skipped.length > 0) parts.push(`${skipped.length} dilewati`);
+    alert(`${parts.join(", ")}.`);
+    setInviteEmails("");
+    setCsvParsed([]);
   }
 
   return (

@@ -3,7 +3,7 @@ import { authenticate } from "../../middleware/authenticate.js";
 import { prisma } from "../../db/prisma.js";
 import { successResponse, errorResponse, AppError } from "../../types/index.js";
 import { z } from "zod";
-import { requireSuperAdmin } from "./guards.js";
+import { requireSuperAdmin, requireLmsAdmin } from "./guards.js";
 
 const router = Router();
 
@@ -97,12 +97,103 @@ router.patch("/tenants/:tenantId", authenticate, requireSuperAdmin, async (req, 
   }
 });
 
-// Assign LMS admin role to a user
+// ─── Tenant: Member Directory ────────────────────────────────────────────────
+
+type TenantMemberRole = "lms_admin" | "lms_employee";
+
+interface TenantMember {
+  id: string;
+  name: string;
+  email: string;
+  role: TenantMemberRole;
+}
+
+/**
+ * Membership lives in two places: explicit UserRole grants (admins, and employees
+ * created when an invite is accepted) and batch enrolment rows. Merge both so the
+ * admin UI never shows an empty roster for people who only joined through a batch.
+ */
+router.get("/tenants/:tenantId/members", authenticate, async (req, res, next) => {
+  try {
+    await requireLmsAdmin(req, res, async () => {
+      const tenantId = req.params.tenantId as string;
+      const [roleRows, batchRows] = await Promise.all([
+        prisma.userRole.findMany({
+          where: { tenantId, role: { in: ["lms_admin", "lms_employee"] } },
+          include: { user: { select: { id: true, name: true, email: true } } },
+        }),
+        // Scope through the parent batch so a foreign batchId can never leak members.
+        prisma.lmsBatchMember.findMany({
+          where: { batch: { tenantId } },
+          include: { user: { select: { id: true, name: true, email: true } } },
+        }),
+      ]);
+
+      const byUserId = new Map<string, TenantMember>();
+      const merge = (user: { id: string; name: string; email: string }, role: TenantMemberRole) => {
+        // lms_admin outranks lms_employee when a user holds both.
+        const existing = byUserId.get(user.id);
+        if (existing?.role === "lms_admin") return;
+        byUserId.set(user.id, { id: user.id, name: user.name, email: user.email, role });
+      };
+
+      for (const row of roleRows) {
+        merge(row.user, row.role === "lms_admin" ? "lms_admin" : "lms_employee");
+      }
+      for (const row of batchRows) {
+        merge(row.user, "lms_employee");
+      }
+
+      const members = [...byUserId.values()].sort((a, b) => {
+        if (a.role !== b.role) return a.role === "lms_admin" ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      });
+      return res.json(successResponse(members));
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Assign LMS admin role to a user (by id, or by email since the UI only knows emails)
+const assignAdminSchema = z
+  .object({
+    userId: z.string().min(1).optional(),
+    email: z.string().email().optional(),
+  })
+  .refine((body) => Boolean(body.userId ?? body.email), {
+    message: "userId atau email diperlukan.",
+  });
+
 router.post("/tenants/:tenantId/admins", authenticate, requireSuperAdmin, async (req, res, next) => {
   try {
     const tenantId = req.params.tenantId as string;
-    const { userId } = req.body as { userId: string };
-    if (!userId) return res.status(400).json(errorResponse("BAD_REQUEST", "userId diperlukan."));
+    const parsed = assignAdminSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json(errorResponse("VALIDATION_ERROR", parsed.error.issues[0]?.message ?? "Validasi gagal."));
+    }
+
+    let userId = parsed.data.userId;
+    if (!userId) {
+      const user = await prisma.user.findUnique({
+        where: { email: parsed.data.email!.toLowerCase().trim() },
+        select: { id: true },
+      });
+      if (!user) {
+        return res
+          .status(404)
+          .json(
+            errorResponse(
+              "NOT_FOUND",
+              "Pengguna dengan email tersebut belum terdaftar. Undang sebagai Karyawan terlebih dahulu.",
+            ),
+          );
+      }
+      userId = user.id;
+    }
+
     await prisma.userRole.upsert({
       where: { userId_role_tenantId: { userId, role: "lms_admin", tenantId } },
       create: { userId, role: "lms_admin", tenantId },

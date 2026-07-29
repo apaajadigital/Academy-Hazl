@@ -202,7 +202,7 @@ function FailedContent() {
           </Link>
           <Link
             id="payment-failed-orders-btn"
-            href="/pesanan"
+            href="/dashboard/pesanan"
             className="btn btn-outline btn-lg flex-1 justify-center"
           >
             Lihat Pesanan
