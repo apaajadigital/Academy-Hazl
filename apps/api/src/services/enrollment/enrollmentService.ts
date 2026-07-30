@@ -13,6 +13,29 @@ export async function enrollInCourse(userId: string, courseId: string) {
   });
   if (existing) throw new AppError(409, "Anda sudah terdaftar di kursus ini.");
 
+  // BL-54: this endpoint is the self-service path for FREE courses only. Paid
+  // courses are granted by the two settlement paths that write the enrollment
+  // themselves — the 100%-off coupon branch in routes/checkout.ts and the DOKU
+  // webhook processor — both only after an order exists. Without this guard any
+  // authenticated user could POST a paid course id here and receive it for free.
+  //
+  // Fail closed: a price we cannot parse is treated as paid, never as free.
+  const effectivePrice = Number(course.salePrice ?? course.price);
+  const isFree = Number.isFinite(effectivePrice) && effectivePrice <= 0;
+  if (!isFree) {
+    const paidOrder = await prisma.order.findFirst({
+      where: {
+        userId,
+        status: "paid",
+        items: { some: { itemType: "course", itemId: courseId } },
+      },
+      select: { id: true },
+    });
+    if (!paidOrder) {
+      throw new AppError(403, "Kursus ini berbayar. Selesaikan pembayaran terlebih dahulu.");
+    }
+  }
+
   return prisma.courseEnrollment.create({
     data: { courseId, userId },
     include: { course: { select: { id: true, title: true, slug: true, thumbnailUrl: true } } },
