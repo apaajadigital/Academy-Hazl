@@ -57,7 +57,11 @@ router.post("/", authenticate, async (req, res, next) => {
       if (alreadyEnrolled) throw new AppError(400, "Anda sudah terdaftar di kursus ini.");
 
       itemTitle = course.title;
-      price = Number(course.price);
+      // BL-53: courses were the only item type billed at full `price`, ignoring
+      // `salePrice` — so every discounted course charged the undiscounted amount
+      // while the catalog advertised the sale. Same precedence as ebook (below)
+      // and event: an explicit salePrice wins, null falls back to price.
+      price = course.salePrice ? Number(course.salePrice) : Number(course.price);
       itemSlug = course.slug;
     } else if (itemType === "ebook") {
       const ebook = await prisma.eBook.findUnique({ where: { id: itemId } });
