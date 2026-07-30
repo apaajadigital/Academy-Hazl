@@ -57,5 +57,5 @@ docker compose -f docker-compose.prod.yml exec redis redis-cli
 - [x] Retry + backoff + failed-job retention (dead-letter)
 - [x] Webhook idempotency (DB guard + jobId) — with regression test
 - [x] Cache-aside helper (`src/lib/cache.ts`)
-- [x] Inline fallback keeps 279/279 tests green without Redis
+- [x] Inline fallback keeps the whole suite green without Redis (jumlah test: `docs/RUNBOOK_CI.md` — sengaja tidak disalin ke sini, angka lamanya "279" sudah basi)
 - [ ] 🖐️ Live: worker consumes a real job end-to-end (verified during TASK-030 with Redis up)

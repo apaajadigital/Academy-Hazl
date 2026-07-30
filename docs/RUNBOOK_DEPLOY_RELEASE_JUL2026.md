@@ -33,9 +33,9 @@ POSTGRES_USER=jagouser
 POSTGRES_PASSWORD=<...>
 MEILISEARCH_KEY=<...>
 WEB_URL=https://jagoakademi.com
-NEXT_PUBLIC_API_URL=https://api.jagoakademi.com   # origin API — WAJIB ≠ origin web (lihat §0.1)
+NEXT_PUBLIC_API_URL=https://jagoakademi.com       # SAMA dgn origin web — benar di VPS ini (§0.1)
 NEXT_PUBLIC_SITE_URL=https://jagoakademi.com
-API_PROXY_TARGET=http://api:4000                  # opsional; WAJIB bila API tak terekspos publik (§0.1)
+API_PROXY_TARGET=http://api:4000                  # WAJIB di VPS ini (§0.1)
 # Email
 RESEND_API_KEY=<...>
 EMAIL_FROM=noreply@jagoakademi.com
@@ -56,18 +56,30 @@ pertanyaan berbeda — **jangan disamakan**:
 
 | Variabel | Dipakai siapa | Aturan |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | **Browser** (di-inline ke bundle klien) | Harus origin yang bisa dijangkau publik, dan **≠ origin web** (`NEXT_PUBLIC_SITE_URL`). |
-| `API_PROXY_TARGET` (opsional) | **Server** Next, hanya untuk rewrite | Origin internal (mis. `http://api:4000` di jaringan compose). **Bukan** `NEXT_PUBLIC_*`, jadi tidak bocor ke bundle klien. Pakai bila API tidak terekspos publik. |
+| `NEXT_PUBLIC_API_URL` | **Browser** (di-inline ke bundle klien) | Origin API yang bisa dijangkau publik dari internet. **Nilai untuk VPS ini: `https://jagoakademi.com`** — sama dengan origin web, dan itu benar (lihat kotak di bawah). |
+| `API_PROXY_TARGET` | **Server** Next, hanya untuk rewrite | Origin internal (`http://api:4000` di jaringan compose). **Bukan** `NEXT_PUBLIC_*`, jadi tidak bocor ke bundle klien. **Wajib di VPS ini** — tanpanya target jatuh ke `NEXT_PUBLIC_API_URL` yang = origin web. |
 
 Urutan resolusi target proxy: `API_PROXY_TARGET` → `NEXT_PUBLIC_API_URL` → `http://localhost:4000`.
-Bila `API_PROXY_TARGET` tidak di-set, perilakunya **persis sama seperti sebelumnya**.
+
+> ### 🔴 "`NEXT_PUBLIC_API_URL` harus ≠ origin web" **bukan hukum universal**
+>
+> Aturan itu hanya berlaku bila `/api/*` dilayani oleh **rewrite Next**. Di VPS ini tidak: nginx
+> level-**host** mencegat `/api/` dan meneruskannya langsung ke container api (`127.0.0.1:4010`),
+> jadi request browser tidak pernah menyentuh container web. Karena nginx yang memisahkan `/api/`
+> dari `/`, `NEXT_PUBLIC_API_URL` **boleh dan harus** sama dengan origin web; loop dicegah oleh
+> `API_PROXY_TARGET=http://api:4000`.
+>
+> ⛔ **`https://api.jagoakademi.com` TIDAK RESOLVE** (BL-33, `docs/INTEGRATION_VERIFICATION.md`).
+> Nilai itu ter-**bake** ke bundle klien saat build → **setiap fetch browser gagal**; situs tampil
+> tapi mati fungsi, dan `restart` tidak memperbaikinya (wajib rebuild). Jangan pakai.
 
 **Nilai per topologi:**
-- **Ada subdomain api** (`docker-compose.prod.yml` + `nginx/nginx.conf` server `api.jagoakademi.com`):
-  `NEXT_PUBLIC_API_URL=https://api.jagoakademi.com`. `API_PROXY_TARGET` tidak perlu.
-- **Tanpa subdomain api** (`docker-compose.vps.yml` — `/api/*` dilayani lewat origin web):
-  set `API_PROXY_TARGET=http://api:4000` (nama service compose; web & api satu network).
-  Ini **wajib**, karena tanpanya target jatuh ke `NEXT_PUBLIC_API_URL`.
+- **VPS produksi ini** (`docker-compose.vps.yml`, satu domain, nginx host):
+  `NEXT_PUBLIC_API_URL=https://jagoakademi.com` + `API_PROXY_TARGET=http://api:4000`
+  (nama service compose; web & api satu network). **Ini satu-satunya kombinasi yang benar di sini.**
+- **Topologi lain dengan subdomain API terpisah** (referensi historis `docker-compose.prod.yml` +
+  `nginx/nginx.conf` — **tidak dipakai di host ini**): `NEXT_PUBLIC_API_URL` diisi origin subdomain
+  yang benar-benar resolve, `API_PROXY_TARGET` tidak perlu.
   > `http://127.0.0.1:4010` (port host API) hanya benar bila proses Next berjalan **langsung di host**,
   > bukan di dalam container — di dalam container `127.0.0.1` adalah loopback container itu sendiri.
   > Guard membandingkan **origin**, jadi host sama dengan port berbeda memang diizinkan.
@@ -84,29 +96,41 @@ perbaiki lalu build ulang.
 > ```bash
 > docker compose -f docker-compose.vps.yml build --no-cache web
 > docker compose -f docker-compose.vps.yml up -d --force-recreate web
+> docker port jago-akademi-web-1     # WAJIB 3010 (guard BL-43)
 > ```
-> **Jangan** pakai `--remove-orphans` di VPS ini — nginx berjalan sebagai orphan container dan akan ikut terhapus.
+> ⛔ **Jangan pakai `docker-compose.prod.yml`** untuk `build`/`up` di host ini: file itu memakai
+> topologi nginx-in-Docker **tanpa published port**, sehingga recreate `web` dengannya memutus
+> `127.0.0.1:3010` dan nginx host langsung **502 sitewide** (insiden BL-43, 28 menit).
+>
+> **Jangan** pakai `--remove-orphans` di VPS ini. Alasannya **bukan** karena nginx adalah orphan
+> container — nginx berjalan di **host** (systemd) dan tak terlihat oleh Docker. Larangan ini
+> kehati-hatian: host memuat container di luar file compose ini, dan `--remove-orphans` bisa
+> menghapusnya. Reload proxy/TLS = `sudo systemctl reload nginx`; konfigurasi live ada di
+> `/etc/nginx/`, **bukan** `nginx/nginx.conf` di repo.
 
-**Prasyarat (belum ada di repo).** `API_PROXY_TARGET` baru sampai ke tahap build kalau ia terdaftar
-sebagai `ARG`/`build-arg`. Tambahkan sebelum memakainya:
+**Prasyarat wiring build-arg — ✅ SUDAH ADA DI REPO, tidak perlu tindakan apa pun.**
 
-```diff
---- a/apps/web/Dockerfile
-+++ b/apps/web/Dockerfile
-@@
- ARG NEXT_PUBLIC_API_URL
-+ARG API_PROXY_TARGET
- ARG NEXT_PUBLIC_SITE_URL
-```
-```diff
---- a/docker-compose.vps.yml   (idem docker-compose.prod.yml)
-+++ b/docker-compose.vps.yml
-@@ web: build: args:
-         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-+        API_PROXY_TARGET: ${API_PROXY_TARGET:-}
-         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
-```
-Tanpa diff ini, menaruh `API_PROXY_TARGET` di `.env` **tidak berefek** — nilainya tidak pernah sampai ke build.
+`API_PROXY_TARGET` hanya sampai ke tahap build kalau terdaftar sebagai `ARG`/`build-arg`. Itu sudah
+terpasang sejak remediasi trainer (BL-75), diverifikasi 29 Jul 2026:
+
+| Tempat | Lokasi |
+|---|---|
+| `ARG` Dockerfile | `apps/web/Dockerfile:41` |
+| `build.args` compose prod | `docker-compose.prod.yml:127` |
+| `build.args` compose vps | `docker-compose.vps.yml:139` |
+| `build-args` CI | `.github/workflows/deploy.yml:84` |
+| `globalEnv` turbo | `turbo.json:8` |
+
+> ⚠️ **JANGAN menerapkan diff penambahan `ARG API_PROXY_TARGET` secara manual.** Versi lama runbook
+> ini memuat diff seperti itu dengan label "belum ada di repo" — informasi itu **salah** dan sudah
+> dihapus. Menerapkannya di tengah jendela deploy akan menghasilkan `ARG` ganda, dan membatalkan
+> deploy karena mengira repo belum siap sama-sama tidak perlu. Yang benar dinyatakan juga di
+> `RUNBOOK_DEPLOY.md` §3.1 — kedua runbook kini sepakat.
+
+Yang tersisa hanyalah **menetapkan nilainya**: `API_PROXY_TARGET=http://api:4000` di
+`/var/www/jago-akademi/.env` (dan repository variable bernama sama bila deploy lewat CI).
+Bila tidak di-set, nilainya kosong dan resolusi jatuh ke `NEXT_PUBLIC_API_URL` — perilaku identik
+dengan sebelum variabel ini ada.
 
 ---
 
@@ -143,7 +167,13 @@ docker compose -f docker-compose.vps.yml up -d postgres redis meilisearch
 docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate deploy
 ```
 
-Migrasi yang akan diterapkan (semua pending, urut):
+> 🔴 **Daftar di bawah adalah snapshot rilis `c106748` (Jul 2026) — BUKAN daftar pending saat ini.**
+> Repo kini punya **13** folder migration dan yang belum ter-apply mencakup **≥7**, termasuk yang
+> lahir **setelah** dokumen ini ditulis. **Jangan pakai daftar ini sebagai checklist** — daftar
+> pending yang dipelihara ada di **`RUNBOOK_DB.md` §1.1**. Verifikasi selalu dengan
+> `docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status`.
+
+Migrasi yang pending **pada rilis `c106748`** (historis, urut):
 - `20260714000000_add_fk_hot_path_indexes` — index hot-path (H10)
 - `20260715000000_lms_child_tenantid` — tenantId tabel anak LMS + backfill
 - `20260715120000_batch8_findings` — `orders.subscriptionConsumedAt` + **dedup sertifikat (hapus duplikat, simpan terlama)** + unique `(userId,courseId,type)`
@@ -154,8 +184,13 @@ Migrasi yang akan diterapkan (semua pending, urut):
 
 ```bash
 docker compose -f docker-compose.vps.yml up -d
-docker compose -f docker-compose.vps.yml ps    # api, worker, web, redis, postgres, meilisearch, nginx = Up/healthy
+docker compose -f docker-compose.vps.yml ps    # api, worker, web, redis, postgres, meilisearch = Up/healthy
+docker port jago-akademi-web-1                 # WAJIB 3010 · docker port jago-akademi-api-1 → 4010
 ```
+
+> **Tidak ada service `nginx` dalam daftar itu** dan itu memang benar: nginx berjalan di **host**
+> (systemd), di luar Docker. Kalau `docker compose ps` menampilkan container nginx, itu container
+> yatim sisa insiden BL-43 — hapus (`docker rm -f jago-akademi-nginx-1`), jangan dibiarkan.
 
 ---
 
@@ -208,7 +243,7 @@ gunzip -c backup_pre_deploy_<ts>.sql.gz | docker compose -f docker-compose.vps.y
 ## Ceklis Go/No-Go
 - [ ] Backup DB dibuat & terverifikasi
 - [ ] `.env` lengkap (DOKU_SECRET_KEY terisi, JWT ≥32)
-- [ ] `migrate deploy` sukses (3 migrasi)
+- [ ] `migrate deploy` sukses — **verifikasi dengan `migrate status`, bukan hitungan hafalan**; daftar pending yang dipelihara ada di `RUNBOOK_DB.md` §1.1 (≥7 pending per 29 Jul 2026, bukan 3)
 - [ ] Semua service Up/healthy; `/api/ready` deps.redis = ok
 - [ ] certificates & ebooks/my = 200; event detail render event
 - [ ] Langganan bypass & sertifikat curang di-review (7a/7b)

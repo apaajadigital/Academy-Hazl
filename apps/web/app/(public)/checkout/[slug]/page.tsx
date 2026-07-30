@@ -129,7 +129,10 @@ function CheckoutContent() {
               id: course.id,
               title: course.title,
               price: Number(course.price),
-              coverUrl: course.coverUrl,
+              // Courses store their image in `thumbnailUrl` — there is no
+              // `coverUrl` column on Course (that name belongs to Event/Ebook),
+              // so reading it always fell through to the emoji placeholder.
+              coverUrl: course.thumbnailUrl,
               itemType: "course",
               subtitle: "Akses seumur hidup",
             });

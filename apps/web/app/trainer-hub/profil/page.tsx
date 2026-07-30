@@ -8,18 +8,29 @@ import { Button, Card, Input, Textarea, PageHeader, DashboardLoading } from "@/c
 import { getValidToken } from "@/lib/auth/token";
 import { getApiBase } from "@/lib/api/base";
 
-type UserProfile = {
+/**
+ * Shape of `GET /api/auth/me` (apps/api/src/modules/auth/me.ts).
+ *
+ * The profile columns arrive FLATTENED at the top level — there is no `profile`
+ * object in the envelope. Reading `data.profile?.headline` therefore always
+ * yielded undefined and rendered every saved value as blank; the mistake stayed
+ * invisible because `await res.json()` is `any`, so these types are declared and
+ * the parse is asserted rather than left untyped.
+ */
+type MeUser = {
   id: string;
   name: string;
   email: string;
   avatarUrl: string | null;
-  profile: {
-    bio: string | null;
-    headline: string | null;
-    linkedin: string | null;
-    location: string | null;
-  } | null;
+  bio: string | null;
+  headline: string | null;
+  linkedin: string | null;
+  location: string | null;
 };
+
+type ApiEnvelope<T> =
+  | { success: true; data: T }
+  | { success: false; error?: { code?: string; message?: string } };
 
 // getApiBase() resolves to "" in the browser, keeping these calls relative so
 // they go through the Next.js /api/* rewrite — same as the other trainer-hub
@@ -27,7 +38,7 @@ type UserProfile = {
 // absent at build time.
 export default function TrainerProfilPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<MeUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -50,16 +61,16 @@ export default function TrainerProfilPage() {
         const r = await fetch(`${getApiBase()}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const d = await r.json();
+        const d = (await r.json()) as ApiEnvelope<MeUser>;
         if (d.success) {
           setUser(d.data);
           setForm({
             name: d.data.name ?? "",
             avatarUrl: d.data.avatarUrl ?? "",
-            bio: d.data.profile?.bio ?? "",
-            headline: d.data.profile?.headline ?? "",
-            linkedin: d.data.profile?.linkedin ?? "",
-            location: d.data.profile?.location ?? "",
+            bio: d.data.bio ?? "",
+            headline: d.data.headline ?? "",
+            linkedin: d.data.linkedin ?? "",
+            location: d.data.location ?? "",
           });
         }
       } finally {
@@ -87,12 +98,14 @@ export default function TrainerProfilPage() {
         location: form.location || undefined,
       }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as ApiEnvelope<MeUser>;
     setSaving(false);
     if (!res.ok || !data.success) {
       // The API error envelope is { success:false, error:{ code, message } } —
       // reading data.message always yielded undefined, hiding the server reason.
-      setError(data.error?.message ?? "Gagal menyimpan profil.");
+      // `data.success ? …` re-narrows the union: a non-2xx response can still
+      // carry success:true-shaped JSON, which has no `error` key.
+      setError((data.success ? undefined : data.error?.message) ?? "Gagal menyimpan profil.");
       return;
     }
     setSaved(true);

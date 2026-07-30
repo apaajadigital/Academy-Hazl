@@ -12,7 +12,7 @@ Go-live verification gate for Jago Akademi. Complete all items before marking la
 | 1.2 | PostgreSQL 16 deployed with daily automated backups | ☐ |
 | 1.3 | Meilisearch v1.5 deployed, master key rotated | ☐ |
 | 1.4 | Cloudflare R2 bucket `jago-akademi-media` created | ☐ |
-| 1.5 | SSL certificates for `jagoakademi.com` and `api.jagoakademi.com` | ☐ |
+| 1.5 | SSL certificate for `jagoakademi.com` + `www.jagoakademi.com` (do **not** add `api.jagoakademi.com` — it does not resolve, so its HTTP-01 challenge always fails and takes the whole issuance/renewal down with it; see BL-33 and `RUNBOOK_DEPLOY.md` §4) | ☐ |
 | 1.6 | Nginx reverse-proxy configured (see `nginx/nginx.conf`) | ☐ |
 | 1.7 | Docker Compose prod stack starts without error | ☐ |
 
@@ -95,7 +95,7 @@ Go-live verification gate for Jago Akademi. Complete all items before marking la
 |---|------|--------|
 | 7.1 | DOKU merchant account is live (not sandbox) | ☐ |
 | 7.2 | Test payment flow completes end-to-end | ☐ |
-| 7.3 | Webhook URL registered: `https://api.jagoakademi.com/api/payments/doku/webhook` | ☐ |
+| 7.3 | 🔴 Webhook URL registered: `https://jagoakademi.com/api/webhooks/doku` — **NOT** `api.jagoakademi.com` (does not resolve, BL-33). A webhook pointed at the dead host is never delivered: **payments are never confirmed and orders hang in `pending` forever.** Verify with a sandbox transaction, not by reading the DOKU dashboard. | ☐ |
 | 7.4 | Payment confirmation email received after test purchase | ☐ |
 | 7.5 | Invoice PDF generated and downloadable | ☐ |
 

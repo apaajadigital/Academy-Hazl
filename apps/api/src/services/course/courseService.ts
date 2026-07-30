@@ -32,6 +32,16 @@ const FREE_COURSE_WHERE = {
   AND: [{ price: 0, OR: [{ salePrice: null }, { salePrice: 0 }] }],
 } as const;
 
+/**
+ * Upper bound on search hits pulled to size the result set (see `listCourses`).
+ *
+ * 500 sits above any realistic single-keyword match in this catalog while
+ * staying under Meilisearch's default `maxTotalHits` of 1000, so a query is
+ * counted exactly rather than estimated. A match set larger than this would be
+ * under-reported — acceptable, and strictly better than reporting one page.
+ */
+const SEARCH_CANDIDATE_CAP = 500;
+
 const COURSE_SELECT = {
   id: true,
   slug: true,
@@ -69,18 +79,42 @@ export async function listCourses(filter: CourseListFilter = {}) {
   const freeWhere = free ? FREE_COURSE_WHERE : {};
 
   if (q) {
-    const hits = await searchCourses(q, { limit, offset: skip, filter: `status = "${status}"` });
+    // The whole match set is pulled in one go (offset 0, capped) instead of one
+    // page at a time. Two reasons, both correctness:
+    //
+    // 1. `total` must describe the match set, not the page. Paging the search
+    //    itself left the caller with `hits.length` as the only count available,
+    //    which equals the page size — so the UI computed totalPages = 1 and
+    //    every result past page 1 became unreachable. Meilisearch does report
+    //    the real figure as `estimatedTotalHits`, but `searchCourses()` (owned
+    //    by services/search/meilisearch.ts, outside this change) returns the
+    //    hits array only. Counting the candidates here is the accurate option
+    //    that does not depend on that signature; when the helper starts
+    //    returning `{ hits, total }` the way `searchEvents` already does, this
+    //    can go back to server-side paging and read the total from it.
+    // 2. Format/free/status are not in the search index, so they are re-applied
+    //    on the Prisma fetch. Filtering AFTER slicing a page (the old order)
+    //    both under-filled pages and counted rows that were then dropped.
+    const hits = await searchCourses(q, {
+      limit: SEARCH_CANDIDATE_CAP,
+      offset: 0,
+      filter: `status = "${status}"`,
+    });
     if (hits.length > 0) {
       const slugs = hits.map((h) => h.slug);
-      // Format is not part of the search index, so the format constraint is
-      // re-applied on the Prisma fetch (search hits outside the requested
-      // format are dropped here).
       const courses = await prisma.course.findMany({
         where: { slug: { in: slugs }, status, format: formatWhere, ...freeWhere },
         select: COURSE_SELECT,
       });
-      const ordered = slugs.map((s) => courses.find((c) => c.slug === s)).filter(Boolean);
-      return { data: ordered, total: ordered.length, page, limit };
+      // Map lookup, not find-per-slug: the candidate set is now up to
+      // SEARCH_CANDIDATE_CAP entries, where the nested scan would be O(n²).
+      const bySlug = new Map(courses.map((c) => [c.slug, c]));
+      // Relevance order comes from Meilisearch, so the hit order is preserved
+      // and hits dropped by the Prisma filter are removed.
+      const ordered = slugs
+        .map((s) => bySlug.get(s))
+        .filter((c): c is (typeof courses)[number] => c !== undefined);
+      return { data: ordered.slice(skip, skip + limit), total: ordered.length, page, limit };
     }
     // Fallback to Prisma ILIKE search
     const where = {

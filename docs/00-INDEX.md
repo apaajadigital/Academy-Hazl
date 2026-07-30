@@ -1,8 +1,12 @@
 # JAGO AKADEMI — Master Documentation Index
 
 > Platform Edukasi Digital Terintegrasi
-> Versi Dokumen: 1.1.0 | Tanggal: 22 Juni 2026
-> Status: **COMPLETE — Ready for Stakeholder Review**
+> Versi Dokumen: 1.2.0 | Blueprint fase 1–10: 22 Juni 2026 · Indeks disegarkan: **29 Juli 2026**
+> Status: **Blueprint COMPLETE · eksekusi BERJALAN** (pra-Soft-Launch; ada blocker terbuka di BACKLOG)
+
+> ⚠️ **Otoritas.** `PROJECT_PROGRESS_REPORT_V2.md` adalah **SSOT** untuk status eksekusi. Indeks ini
+> hanya peta dokumen — bila bertentangan, SSOT yang menang. Status "COMPLETE" di atas mengacu pada
+> **dokumen blueprint fase 1–10**, bukan pada kesiapan produk untuk launch.
 
 ---
 
@@ -23,7 +27,7 @@
 | 6 | Design System & Visual Identity | [06-DESIGN-SYSTEM.md](./06-DESIGN-SYSTEM.md) | ~55 hal | ✅ Done |
 | 9 | Test Plan (Fase 9) | [09-TEST-PLAN.md](./09-TEST-PLAN.md) | ~12 hal | ✅ Done |
 | 10a1 | Launch Checklist (Fase 10) | [10-LAUNCH-CHECKLIST.md](./10-LAUNCH-CHECKLIST.md) | ~8 hal | ✅ Done |
-| 10a2 | Deployment Guide (Fase 10) | [10-DEPLOYMENT-GUIDE.md](./10-DEPLOYMENT-GUIDE.md) | ~10 hal | ✅ Done |
+| 10a2 | Deployment Guide (Fase 10) | [10-DEPLOYMENT-GUIDE.md](./10-DEPLOYMENT-GUIDE.md) | ~10 hal | ⚠️ Desain awal — **`RUNBOOK_DEPLOY.md` yang otoritatif** |
 | 10b | Soft Launch Strategy (Fase 10B) | [10B-SOFT-LAUNCH-STRATEGY.md](./10B-SOFT-LAUNCH-STRATEGY.md) | ~18 hal | ✅ Done |
 | 10c | Public Launch Playbook (Fase 10C) | [10C-PUBLIC-LAUNCH-PLAYBOOK.md](./10C-PUBLIC-LAUNCH-PLAYBOOK.md) | ~22 hal | ✅ Done |
 | 10d | Growth & Scale Strategy (Fase 10D) | [10D-GROWTH-SCALE-STRATEGY.md](./10D-GROWTH-SCALE-STRATEGY.md) | ~25 hal | ✅ Done |
@@ -34,19 +38,45 @@
 |---------|------|--------|
 | SSOT / Blueprint | [PROJECT_PROGRESS_REPORT_V2.md](../PROJECT_PROGRESS_REPORT_V2.md) | Single Source of Truth eksekusi |
 | Baseline Audit | [BASELINE_AUDIT.md](./BASELINE_AUDIT.md) | Kondisi faktual awal (TASK-000) |
-| Backlog | [BACKLOG.md](./BACKLOG.md) | 17 gap/follow-up tracked |
-| ADR | [adr/0001-frontend-stack.md](./adr/0001-frontend-stack.md) | Keputusan Next 16/React 19 + fallback |
+| Backlog | [BACKLOG.md](./BACKLOG.md) | **114 gap/follow-up tracked** (BL-01 … BL-114) — termasuk blocker pra-launch (mis. BL-114) |
 | Compatibility Matrix | [COMPATIBILITY_MATRIX.md](./COMPATIBILITY_MATRIX.md) | Versi pinned + kompat |
 | Security Checklist | [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) | Postur keamanan P1 + RBAC |
 | RBAC Matrix | [rbac-matrix.md](./rbac-matrix.md) | Role × endpoint |
-| CI Runbook | [RUNBOOK_CI.md](./RUNBOOK_CI.md) | CI gate + branch protection |
-| Deploy Runbook | [RUNBOOK_DEPLOY.md](./RUNBOOK_DEPLOY.md) | Deploy host + DNS/SSL + rollback |
-| DB Runbook | [RUNBOOK_DB.md](./RUNBOOK_DB.md) | Migration + backup + restore |
-| Queue Runbook | [RUNBOOK_QUEUE.md](./RUNBOOK_QUEUE.md) | BullMQ worker ops |
-| Incident Runbook | [RUNBOOK_INCIDENT.md](./RUNBOOK_INCIDENT.md) | Observability + SLA + response |
-| Integration Verify | [INTEGRATION_VERIFICATION.md](./INTEGRATION_VERIFICATION.md) | Matriks verifikasi live (TASK-030) |
+| Integration Verify | [INTEGRATION_VERIFICATION.md](./INTEGRATION_VERIFICATION.md) | Matriks verifikasi live (TASK-030) — **catatan: `api.jagoakademi.com` tidak resolve** |
 
-**Total dokumentasi: ~400 halaman** (18 dokumen)
+### Architecture Decision Records (ADR)
+
+| ADR | File | Keputusan |
+|-----|------|-----------|
+| 0001 | [adr/0001-frontend-stack.md](./adr/0001-frontend-stack.md) | Next 16 / React 19 + fallback |
+| 0002 | [adr/0002-phase6-architecture.md](./adr/0002-phase6-architecture.md) | Arsitektur Phase 6 |
+| 0003 | [adr/0003-lms-tenantid-denormalization.md](./adr/0003-lms-tenantid-denormalization.md) | Denormalisasi `tenantId` pada tabel anak LMS |
+| 0004 | [adr/0004-free-course-discovery-and-destination.md](./adr/0004-free-course-discovery-and-destination.md) | **Otoritas keputusan `/kelas-gratis`** (discovery + destination kursus gratis) |
+
+### Runbook operasional
+
+| Runbook | File | Fungsi |
+|---------|------|--------|
+| Deploy (otoritatif) | [RUNBOOK_DEPLOY.md](./RUNBOOK_DEPLOY.md) | **Sumber kebenaran deploy** — topologi live, DNS/SSL, rollback. Mengalahkan `10-DEPLOYMENT-GUIDE.md` bila bertentangan. |
+| Deploy rilis Jul 2026 | [RUNBOOK_DEPLOY_RELEASE_JUL2026.md](./RUNBOOK_DEPLOY_RELEASE_JUL2026.md) | Langkah rilis QA-remediation + gotcha proxy `/api/*` |
+| DB | [RUNBOOK_DB.md](./RUNBOOK_DB.md) | Migration (**inventaris 13 migration §1.1**) + backup + restore |
+| CI | [RUNBOOK_CI.md](./RUNBOOK_CI.md) | CI gate + branch protection |
+| Queue | [RUNBOOK_QUEUE.md](./RUNBOOK_QUEUE.md) | BullMQ worker ops |
+| Incident | [RUNBOOK_INCIDENT.md](./RUNBOOK_INCIDENT.md) | Observability + SLA + response |
+
+### Audit, remediasi & rencana (dokumen eksekusi 2026)
+
+| Dokumen | File | Isi |
+|---------|------|-----|
+| QA Audit | [QA_AUDIT_REPORT.md](./QA_AUDIT_REPORT.md) | Temuan QA menyeluruh + status remediasi |
+| Audit umum | [AUDIT_REPORT.md](./AUDIT_REPORT.md) | Audit lintas-modul |
+| PDP Compliance | [PDP_COMPLIANCE_AUDIT.md](./PDP_COMPLIANCE_AUDIT.md) | Kepatuhan UU PDP (BL-21/BL-22) |
+| Orphan route | [ORPHAN_ROUTE_AUDIT.md](./ORPHAN_ROUTE_AUDIT.md) | Route tak terjangkau (BL-82 … BL-88) |
+| Remediasi trainer | [TRAINER_REMEDIATION_REPORT.md](./TRAINER_REMEDIATION_REPORT.md) | BL-69 … BL-78, BL-111 |
+| Remediasi event | [EVENT_REMEDIATION_PLAN.md](./EVENT_REMEDIATION_PLAN.md) | Rencana perbaikan modul Event |
+| Navigasi mentor | [MENTOR_NAVIGATION_REPORT.md](./MENTOR_NAVIGATION_REPORT.md) | ⚠️ **§5 = peringatan konten setara blocker (lihat BL-114)**. Klaim "belum di-merge" di dokumen itu **sudah usang** — kodenya live di `main` (`12a9554`). |
+| Rencana Phase 6 | [PHASE6_MASTER_PLAN.md](./PHASE6_MASTER_PLAN.md) | Master plan Phase 6 |
+| Implementasi feedback | [FEEDBACK_IMPLEMENTATION_PLAN_JUL2026.md](./FEEDBACK_IMPLEMENTATION_PLAN_JUL2026.md) | Rencana tindak lanjut feedback Jul 2026 |
 
 ---
 

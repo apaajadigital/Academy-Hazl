@@ -99,12 +99,19 @@ router.patch(
         });
       }
 
-      // Return user with profile fields flattened
+      // Return user with profile fields flattened — same flattened shape as
+      // GET /api/auth/me. All five writable profile columns are echoed back so
+      // the response is a truthful representation of what was just saved; a
+      // client that re-seeds its form from this response would otherwise blank
+      // out headline/linkedin/location.
       const profile = await prisma.userProfile.findUnique({ where: { userId: id } });
       res.json(successResponse({
         ...user,
         phone: profile?.phone ?? null,
         bio: profile?.bio ?? null,
+        headline: profile?.headline ?? null,
+        linkedin: profile?.linkedin ?? null,
+        location: profile?.location ?? null,
       }));
     } catch (err) {
       next(err);

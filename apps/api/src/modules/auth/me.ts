@@ -22,7 +22,13 @@ router.get(
           isVerified: true,
           createdAt: true,
           roles: { select: { role: true, tenantId: true } },
-          profile: { select: { phone: true, bio: true } },
+          // headline/linkedin/location are selected because /me is the ONLY
+          // endpoint that returns them: the trainer profile form loads its
+          // current values from here, and without them the form rendered every
+          // saved value as blank with no way for the trainer to see or edit it.
+          profile: {
+            select: { phone: true, bio: true, headline: true, linkedin: true, location: true },
+          },
           subscription: { select: { status: true, expiresAt: true } },
         },
       });
@@ -37,8 +43,14 @@ router.get(
         // admin UI for a tenant-scoped grant that every /api/admin/* call then 403s.
         // Shape is preserved ({ role }[]) so existing clients keep parsing it.
         roles: toGlobalRoles(roles).map((role) => ({ role })),
+        // Flattened, not nested under `profile`, to match the shape every
+        // existing caller already parses (phone/bio have always been top-level).
+        // Adding keys is additive — no consumer of /me reads a `profile` object.
         phone: profile?.phone ?? null,
         bio: profile?.bio ?? null,
+        headline: profile?.headline ?? null,
+        linkedin: profile?.linkedin ?? null,
+        location: profile?.location ?? null,
       }));
     } catch (err) {
       next(err);

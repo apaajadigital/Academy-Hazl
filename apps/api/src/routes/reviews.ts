@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authenticate } from "../middleware/authenticate.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { prisma } from "../db/prisma.js";
+import { parsePageParams, buildPaginationMeta } from "../lib/pagination.js";
 import { AppError, successResponse, type Role } from "../types/index.js";
 
 const router = Router();
@@ -22,33 +23,57 @@ function hasAnyRole(req: Request, allowed: readonly Role[]): boolean {
 
 const ADMIN_ROLES: readonly Role[] = ["super_admin"];
 
+/**
+ * Page size of the public listing when the caller sends none.
+ *
+ * Kept at the 10 this endpoint has always returned (the shared helper defaults
+ * to 20) so clamping the parameters does not silently change the payload size
+ * for callers that never asked for a page — apps/web blog and lesson pages both
+ * fetch without `?limit`.
+ */
+const PUBLIC_REVIEWS_DEFAULT_LIMIT = 10;
+
 // GET /api/reviews?itemType=course&itemId=xxx — public listing
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { itemType, itemId, page = "1", limit = "10" } = req.query as Record<string, string>;
+    const { itemType, itemId } = req.query as Record<string, string | undefined>;
     if (!itemType || !itemId) throw new AppError(400, "itemType dan itemId wajib diisi.");
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    // B3 (unbounded pagination): `parseInt(limit)` used to flow straight into
+    // `take` and `(parseInt(page)-1)*parseInt(limit)` straight into `skip`, so
+    // `?limit=999999` loaded every review of an item into memory in one query
+    // and `?page=0` produced a negative skip that Prisma rejects with a 500.
+    // This was the last list endpoint in the repo without the shared clamp.
+    // Only forward a limit the client actually supplied as a usable number; a
+    // missing or malformed one falls back to this endpoint's historical page
+    // size rather than the helper's generic 20. The clamp to MAX_LIMIT still
+    // comes from the helper.
+    const rawLimit = Number(req.query.limit);
+    const limit = Number.isInteger(rawLimit) && rawLimit > 0 ? rawLimit : PUBLIC_REVIEWS_DEFAULT_LIMIT;
+    const params = parsePageParams({ page: req.query.page, limit });
+
+    const where = { itemType, itemId, status: "published" };
     const [reviews, total, agg] = await Promise.all([
       prisma.review.findMany({
-        where: { itemType, itemId, status: "published" },
+        where,
         include: { user: { select: { id: true, name: true, avatarUrl: true } } },
         orderBy: { createdAt: "desc" },
-        skip,
-        take: parseInt(limit),
+        skip: params.skip,
+        take: params.limit,
       }),
-      prisma.review.count({ where: { itemType, itemId, status: "published" } }),
+      prisma.review.count({ where }),
       prisma.review.aggregate({
         _avg: { rating: true },
         _count: { id: true },
-        where: { itemType, itemId, status: "published" },
+        where,
       }),
     ]);
 
+    // `data` stays a FLAT array and the page info stays in `meta` — the blog
+    // article client reads `d.data` as an array and `d.meta.avgRating`, so
+    // wrapping the rows in an object here would break it.
     return res.json(successResponse(reviews, {
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      ...buildPaginationMeta(total, params),
       avgRating: Number(agg._avg.rating ?? 0),
       totalReviews: agg._count.id,
     }));
@@ -154,8 +179,10 @@ router.get("/admin", authenticate, async (req: Request, res: Response, next: Nex
     const isAdmin = hasAnyRole(req, ADMIN_ROLES);
     if (!isAdmin) throw new AppError(403, "Akses ditolak.");
 
-    const { itemType, status, page = "1", limit = "20" } = req.query as Record<string, string>;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { itemType, status } = req.query as Record<string, string | undefined>;
+    // Same clamp as the public listing above; the admin default page size of 20
+    // is what the shared helper already uses, so no override is needed here.
+    const params = parsePageParams(req.query);
     const where = {
       ...(itemType && { itemType }),
       ...(status && { status }),
@@ -166,13 +193,14 @@ router.get("/admin", authenticate, async (req: Request, res: Response, next: Nex
         where,
         include: { user: { select: { id: true, name: true, email: true } } },
         orderBy: { createdAt: "desc" },
-        skip,
-        take: parseInt(limit),
+        skip: params.skip,
+        take: params.limit,
       }),
       prisma.review.count({ where }),
     ]);
 
-    return res.json(successResponse(reviews, { total, page: parseInt(page), limit: parseInt(limit) }));
+    // Flat `data` array + page info in `meta`, unchanged from before the clamp.
+    return res.json(successResponse(reviews, buildPaginationMeta(total, params)));
   } catch (err) {
     next(err);
   }

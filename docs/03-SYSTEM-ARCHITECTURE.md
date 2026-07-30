@@ -767,7 +767,10 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       imgSrc: ["'self'", "data:", "https:", "blob:"],
       mediaSrc: ["'self'", "https://cloudflarestream.com"],
-      connectSrc: ["'self'", "https://api.jagoakademi.com"],
+      // ⚠️ `api.jagoakademi.com` TIDAK resolve (BL-33, dikonfirmasi DNS + `nginx -T` 29 Jul 2026).
+      // API dilayani lewat `https://jagoakademi.com/api/*` oleh nginx host, jadi `'self'` sudah
+      // cukup. Snippet ini desain awal dan tidak tercermin di kode (`grep connectSrc apps/` = 0).
+      connectSrc: ["'self'"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       frameSrc: ["'none'"],
       objectSrc: ["'none'"]

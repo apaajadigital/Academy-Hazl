@@ -49,6 +49,32 @@ const STATUS_VARIANT: Record<string, "success" | "warning" | "info" | "danger"> 
   rejected: "danger",
 };
 
+type WithdrawForm = { amount: string; bankName: string; accountNo: string; accountName: string };
+
+/**
+ * Withdrawal form fields. `min`/`step` only apply to the amount input.
+ *
+ * The amount hints mirror MIN_WITHDRAWAL_AMOUNT in api/src/routes/affiliate.ts.
+ * This form used to advertise "Min. Rp 50.000" while the API enforced no floor
+ * at all, so the stated minimum was decorative in both directions: a Rp 20.000
+ * request was refused by the browser and a Rp 0,01 request went through via a
+ * direct API call. The server is the authority; these are hints that must agree
+ * with it.
+ */
+const WITHDRAW_FIELDS: ReadonlyArray<{
+  key: keyof WithdrawForm;
+  label: string;
+  type: string;
+  placeholder?: string;
+  min?: string;
+  step?: string;
+}> = [
+  { key: "amount", label: "Jumlah (Rp)", type: "number", placeholder: "Minimal Rp 10.000", min: "10000", step: "1000" },
+  { key: "bankName", label: "Nama Bank", type: "text", placeholder: "BCA, BNI, Mandiri..." },
+  { key: "accountNo", label: "Nomor Rekening", type: "text" },
+  { key: "accountName", label: "Nama Pemilik", type: "text" },
+];
+
 /** Presentation-only money guard so a non-numeric string never renders "Rp NaN". */
 function rp(value: string): string {
   const n = parseFloat(value);
@@ -61,7 +87,7 @@ export default function AfiliasiPage() {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [tab, setTab] = useState<"komisi" | "penarikan">("komisi");
-  const [form, setForm] = useState({ amount: "", bankName: "", accountNo: "", accountName: "" });
+  const [form, setForm] = useState<WithdrawForm>({ amount: "", bankName: "", accountNo: "", accountName: "" });
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState<"success" | "error">("success");
@@ -309,18 +335,15 @@ export default function AfiliasiPage() {
           <form onSubmit={handleWithdraw} className="flex flex-col gap-4">
             <h3 className="font-display text-base font-bold text-text-primary">Ajukan Penarikan</h3>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {[
-                { key: "amount",      label: "Jumlah (Rp)", type: "number", placeholder: "Min. Rp 50.000" },
-                { key: "bankName",    label: "Nama Bank",   type: "text",   placeholder: "BCA, BNI, Mandiri..." },
-                { key: "accountNo",   label: "Nomor Rekening", type: "text", placeholder: "" },
-                { key: "accountName", label: "Nama Pemilik",   type: "text", placeholder: "" },
-              ].map(({ key, label, type, placeholder }) => (
+              {WITHDRAW_FIELDS.map(({ key, label, type, placeholder, min, step }) => (
                 <Input
                   key={key}
                   label={label}
                   type={type}
                   required
-                  value={form[key as keyof typeof form]}
+                  min={min}
+                  step={step}
+                  value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                   placeholder={placeholder}
                 />

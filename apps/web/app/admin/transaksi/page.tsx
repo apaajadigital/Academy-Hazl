@@ -12,6 +12,7 @@ import {
   Pagination,
   FilterBar,
   DashboardLoading,
+  DashboardError,
   TableContainer,
   Table,
   THead,
@@ -39,6 +40,17 @@ type Order = {
   items: { itemTitle: string | null; itemType: string; amount: number }[];
 };
 
+/**
+ * Envelope of GET /api/admin/orders (api/src/modules/admin/transactions.ts):
+ * `data` is a FLAT array, page info lives in `meta`. The old `data.total ??
+ * list.length` fallback was worse than a plain zero: on a full page it resolved
+ * to exactly `limit`, so `totalPages` computed to 1 and the pagination footer
+ * disappeared with no hint that more transactions existed.
+ */
+type OrderListResponse =
+  | { success: true; data: Order[]; meta?: { total: number; page: number; limit: number } }
+  | { success: false; error?: { message?: string } };
+
 const STATUS_VARIANT: Record<string, NonNullable<BadgeProps["variant"]>> = {
   paid: "success",
   pending: "warning",
@@ -60,16 +72,23 @@ const ITEM_TYPE_PILL: Record<string, { label: string; className: string }> = {
 };
 
 
+const PAGE_SIZE = 15;
+
 export default function AdminTransaksiPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  // `search` is the input value; `appliedSearch` is what the last submit asked
+  // for. Only the latter drives the fetch, so typing does not refetch per keystroke.
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [summary, setSummary] = useState({ totalRevenue: 0, paidCount: 0, pendingCount: 0 });
   const [exporting, setExporting] = useState(false);
-  const limit = 15;
+  // Bumped to force a refetch when the query itself did not change.
+  const [reloadKey, setReloadKey] = useState(0);
 
   async function handleExportCSV() {
     const token = getToken();
@@ -96,44 +115,70 @@ export default function AdminTransaksiPage() {
     }
   }
 
-  function loadOrders() {
+  useEffect(() => {
+    // `cancelled` makes the LAST requested page win: clicking next/prev quickly
+    // fires overlapping requests, and without this an older, slower response
+    // could overwrite the newer page's rows. Same guard as trainer-hub/payout.
+    let cancelled = false;
     const token = getToken();
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     const params = new URLSearchParams({
-      page: String(page), limit: String(limit),
-      ...(search ? { search } : {}),
+      page: String(page), limit: String(PAGE_SIZE),
+      ...(appliedSearch ? { search: appliedSearch } : {}),
       ...(statusFilter !== "all" ? { status: statusFilter } : {}),
     });
     setLoading(true);
-    fetch(`/api/admin/orders?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body.success) {
-          const list: Order[] = body.data?.orders ?? body.data ?? [];
-          setOrders(list);
-          setTotal(body.data?.total ?? list.length);
-          // compute summary from current page (approximate)
-          const paid = list.filter((o) => o.status === "paid");
+    setError("");
+    (async () => {
+      try {
+        const r = await fetch(`/api/admin/orders?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const d = (await r.json()) as OrderListResponse;
+        if (cancelled) return;
+        if (d.success) {
+          setOrders(d.data);
+          // Older API builds sent no `meta`; fall back to the row count so the
+          // header never shows a total smaller than what is on screen.
+          setTotal(d.meta?.total ?? d.data.length);
+          // Summary is derived from the rows on screen only — the list endpoint
+          // returns no aggregate. The card labels say so rather than passing a
+          // per-page figure off as a platform total.
+          const paid = d.data.filter((o) => o.status === "paid");
           setSummary({
             totalRevenue: paid.reduce((s, o) => s + Number(o.finalAmount), 0),
             paidCount: paid.length,
-            pendingCount: list.filter((o) => o.status === "pending").length,
+            pendingCount: d.data.filter((o) => o.status === "pending").length,
           });
+        } else {
+          setError(d.error?.message ?? "Gagal memuat daftar transaksi.");
         }
-      })
-      .finally(() => setLoading(false));
+      } catch {
+        if (!cancelled) setError("Gagal memuat daftar transaksi.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [page, statusFilter, appliedSearch, reloadKey]);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setPage(1);
+    setAppliedSearch(search);
+    // Re-submitting the same term leaves both deps unchanged, so nudge the key.
+    setReloadKey((k) => k + 1);
   }
 
-  useEffect(() => { loadOrders(); }, [page, statusFilter]); // eslint-disable-line
-
-  function handleSearch(e: React.FormEvent) { e.preventDefault(); setPage(1); loadOrders(); }
-
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const summaryCards: { label: string; value: string | number; icon: LucideIcon; iconColor?: string; iconBg?: string }[] = [
     { label: "Pendapatan (halaman ini)", value: `Rp ${summary.totalRevenue.toLocaleString("id-ID")}`, icon: Wallet, iconColor: "#16a34a", iconBg: "rgba(22,163,74,0.1)" },
-    { label: "Transaksi Lunas", value: summary.paidCount, icon: CheckCircle2 },
-    { label: "Menunggu Pembayaran", value: summary.pendingCount, icon: Clock, iconColor: "#d97706", iconBg: "rgba(245,158,11,0.1)" },
+    { label: "Transaksi Lunas (halaman ini)", value: summary.paidCount, icon: CheckCircle2 },
+    { label: "Menunggu Pembayaran (halaman ini)", value: summary.pendingCount, icon: Clock, iconColor: "#d97706", iconBg: "rgba(245,158,11,0.1)" },
   ];
 
   return (
@@ -192,6 +237,10 @@ export default function AdminTransaksiPage() {
       {/* Table */}
       {loading ? (
         <DashboardLoading />
+      ) : error ? (
+        // Without this a failed request rendered the empty state, which reads as
+        // "there are no transactions" — not "we could not load them".
+        <DashboardError message={error} onRetry={() => setReloadKey((k) => k + 1)} />
       ) : orders.length === 0 ? (
         <EmptyState icon={CreditCard} title="Tidak ada transaksi ditemukan" description="Coba ubah kata kunci pencarian atau filter status." />
       ) : (
