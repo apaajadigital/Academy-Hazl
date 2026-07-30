@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Video } from "lucide-react";
 import type { Mentor, Topic, Category } from "@/lib/e-course/types";
+import { features } from "@/lib/features";
 
 type MentorCourseGridProps = {
   mentor: Mentor;
@@ -22,7 +23,12 @@ export function MentorCourseGrid({ mentor, topics }: MentorCourseGridProps) {
           {topics.map(({ topic, category }) => (
             <Link
               key={topic.id}
-              href={`/e-course/${category.slug}/${topic.slug}`}
+              // Flag-aware: the /e-course/[kategori]/[topik] learning-path pages
+              // are gated behind features.learningPath (dynamicParams=false → 404
+              // when OFF). Until the path ships, send users to the live catalog
+              // landing instead of a dead 404. Auto-links to the real topic page
+              // once the flag is turned on.
+              href={features.learningPath ? `/e-course/${category.slug}/${topic.slug}` : "/e-course"}
               className="group bg-white border border-[#E5E5E5] rounded-xl p-5 flex flex-col gap-3 shadow-e1 hover:border-[rgba(0,119,168,0.25)] hover:shadow-e2 transition-all duration-200"
             >
               <div className="flex items-start justify-between gap-2">

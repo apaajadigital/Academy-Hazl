@@ -1,14 +1,65 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
+import { getValidToken } from "@/lib/auth/token";
 
 type SubscriptionLockProps = {
-  isLocked: boolean;
   children: ReactNode;
+  /**
+   * Hard override. When provided, the lock honors it verbatim (backward compat).
+   * When omitted, the lock self-determines from the user's LIVE subscription:
+   * unlocked only when `GET /api/subscription/me` reports `isActive === true`.
+   * Fail-closed — locked until an active subscription is confirmed (so content
+   * never flashes for logged-out or lapsed users).
+   */
+  isLocked?: boolean;
 };
 
-export function SubscriptionLock({ isLocked, children }: SubscriptionLockProps) {
-  if (!isLocked) return <>{children}</>;
+/**
+ * Gates premium learning content behind an active subscription. Replaces the
+ * previous hardcoded `IS_LOCKED = true` stub with a real entitlement check
+ * against the subscription endpoint (server still enforces the true gate on the
+ * video URL — this is the UX layer). Renders a blurred preview + upsell overlay
+ * when locked.
+ */
+export function SubscriptionLock({ children, isLocked }: SubscriptionLockProps) {
+  const controlled = isLocked !== undefined;
+  // Fail-closed default: locked until proven otherwise.
+  const [locked, setLocked] = useState<boolean>(isLocked ?? true);
+
+  useEffect(() => {
+    if (controlled) {
+      setLocked(isLocked as boolean);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const token = await getValidToken();
+      if (!token) {
+        if (!cancelled) setLocked(true); // not logged in → locked
+        return;
+      }
+      try {
+        const res = await fetch("/api/subscription/me", {
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+        });
+        const body = await res.json().catch(() => null);
+        const active = res.ok && body?.success && body.data?.isActive === true;
+        if (!cancelled) setLocked(!active);
+      } catch {
+        if (!cancelled) setLocked(true); // fail-closed on error
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [controlled, isLocked]);
+
+  if (!locked) return <>{children}</>;
 
   return (
     <div className="relative">
