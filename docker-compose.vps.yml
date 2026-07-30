@@ -111,6 +111,11 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
       REDIS_URL: redis://redis:6379
+      # The worker builds user-facing links too, so it needs the same WEB_URL as
+      # the api. Without it env.ts falls back to http://localhost:3004 and every
+      # queued email (verify, reset, LMS invite, invoice) ships a dead link —
+      # and certificateService PERSISTS that localhost verify URL on the row.
+      WEB_URL: ${WEB_URL}
       JWT_SECRET: ${JWT_SECRET:?Required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Required}
       RESEND_API_KEY: ${RESEND_API_KEY}
