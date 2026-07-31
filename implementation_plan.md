@@ -344,23 +344,34 @@ CI `main` hijau.
 > Path: `/var/www/jago-akademi`. **Selalu** `docker-compose.vps.yml`. **JANGAN PERNAH** `prod.yml`
 > (BL-43). **Jangan pernah** pakai `--remove-orphans`.
 
+> 🔴 **BUILD DULU, BARU MIGRATE.** Versi pertama rencana ini menaruh `migrate deploy` sebelum build —
+> **itu salah**, dan terbukti salah saat eksekusi 30 Jul 2026. `docker compose run --rm api` memakai
+> image `api` yang sudah ada, bukan source hasil `git pull`. Dengan image lama, `migrate status`
+> melaporkan `9 migrations found` + "Database schema is up to date!" padahal ada 13 dengan 4 pending.
+> Menjalankan `migrate deploy` di titik itu = **no-op yang melaporkan sukses**, dan 4 migration
+> terlewat diam-diam. Urutan di bawah sudah dikoreksi.
+
 - [ ] 6.1 `cd /var/www/jago-akademi && git pull --ff-only origin main`
-- [ ] 6.2 **Migration** (setelah Gate F5):
+- [ ] 6.2 **Build production DULU** (`--no-cache` wajib — pelajaran BL-35 CSS outage):
+      `docker compose -f docker-compose.vps.yml build --no-cache api web`
+      Image baru inilah yang membawa folder migration terbaru.
+- [ ] 6.3 **Verifikasi image benar-benar tergantikan** sebelum percaya apa pun:
+      `docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status`
+      Jumlah "migrations found" **harus sama** dengan `ls apps/api/prisma/migrations | grep -vc migration_lock`.
+      Bila tidak sama → **berhenti**, image belum tergantikan.
+- [ ] 6.4 **Migration** (setelah Gate F5 dan 6.3 cocok):
       `docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate deploy`
-- [ ] 6.3 Verifikasi **semua 13** ter-apply — khususnya `…000002` & `…000003` yang berada
-      **setelah** migration berisiko: `… npx prisma migrate status`
-- [ ] 6.4 **Build production** (`--no-cache` wajib — pelajaran BL-35 CSS outage):
-      `docker compose -f docker-compose.vps.yml build --no-cache web`
-      Bila ada perubahan API/worker: build `api` juga.
-- [ ] 6.5 **Restart service**:
-      `docker compose -f docker-compose.vps.yml up -d --force-recreate web`
-      (tambah `api worker` bila tersentuh — worker **wajib** direstart untuk memuat `WEB_URL` dari 2.3)
-- [ ] 6.6 **Guard BL-43 — WAJIB**: `docker port jago-akademi-web-1` **harus** menampilkan `3010`.
+- [ ] 6.5 Verifikasi **semua ter-apply** — khususnya migration yang urutannya **setelah**
+      `user_roles_global_unique`, karena kegagalan di sana menghentikan sisanya: `… migrate status`
+- [ ] 6.6 **Restart service**:
+      `docker compose -f docker-compose.vps.yml up -d --force-recreate api worker web`
+      Worker **wajib** ikut di-recreate (bukan restart) untuk memuat `WEB_URL` dari 2.3.
+- [ ] 6.7 **Guard BL-43 — WAJIB**: `docker port jago-akademi-web-1` **harus** menampilkan `3010`.
       Bila kosong → topologi salah, langsung recreate dari `vps.yml`.
-- [ ] 6.7 `docker compose -f docker-compose.vps.yml ps` — semua `healthy`
+- [ ] 6.8 `docker compose -f docker-compose.vps.yml ps` — semua `healthy`
       (kecuali `worker`, yang healthcheck-nya sengaja dinonaktifkan)
 
-**Gate F6:** 6.6 menampilkan `3010`; semua container healthy.
+**Gate F6:** 6.3 jumlah migration cocok; 6.7 menampilkan `3010`; semua container healthy.
 
 ---
 
@@ -372,8 +383,13 @@ CI `main` hijau.
 - [ ] 7.4 **Verifikasi deploy benar-benar naik** (jangan asumsi):
       `curl -s https://jagoakademi.com/marketplace | grep -o '<title>[^<]*</title>'`
       → **harus** `Marketplace Materi Digital` (bukan `E-Book & Modul`). Ini fingerprint §3.2.
-- [ ] 7.5 API kontrak: `/api/courses` → `publishedAt` **tidak lagi null** untuk kursus published
-      (perbaikan `3a40107`)
+- [ ] 7.5 API kontrak: publish sebuah kursus dari panel admin, lalu pastikan `publishedAt` **terisi**
+      (perbaikan `3a40107`).
+      ⚠️ **Bukan** "semua kursus published punya `publishedAt`" — itu ekspektasi keliru di versi
+      pertama rencana ini. `3a40107` memperbaiki **jalur tulis**
+      (`modules/admin/courses.ts:182`), bukan mem-backfill baris lama. Kursus hasil `seed.ts`
+      (baris 167–202) di-set `status: "published"` tanpa `publishedAt`, jadi tetap `null` sampai
+      di-publish ulang atau di-backfill — lihat BL-116.
 - [ ] 7.6 Integration test: `/api/events`, `/api/ebooks`, `/api/courses?isFree=true`
       mengembalikan envelope `{success,data}`
 - [ ] 7.7 **Regresi P0**: konfirmasi `POST /api/enrollments` menolak kursus berbayar tanpa order (2.1)

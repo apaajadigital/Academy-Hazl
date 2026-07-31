@@ -33,19 +33,42 @@ docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status
 | 4 | `20260714000000_add_fk_hot_path_indexes` | Index hot-path FK (H10) | ✅ applied (rilis `c106748`) |
 | 5 | `20260715000000_lms_child_tenantid` | `tenantId` tabel anak LMS + backfill | ✅ applied (rilis `c106748`) |
 | 6 | `20260715120000_batch8_findings` | `orders.subscriptionConsumedAt` + dedup sertifikat + unique `(userId,courseId,type)` | ✅ applied (rilis `c106748`) |
-| 7 | `20260717000000_course_approval_payout_fields` | Field approval + payout pada `courses` | ⬜ **PENDING** |
-| 8 | `20260721000000_course_private_class` | Skema private class | ⬜ **PENDING** — kode sudah live |
-| 9 | `20260721100000_alumni_portfolio` | Skema alumni/portfolio | ⬜ **PENDING** — kode sudah live |
-| 10 | `20260729000000_trainer_payout_indexes` | `trainer_payouts(trainerId)`, `(status)` | ⬜ **PENDING** |
-| 11 | `20260729000001_user_roles_global_unique` | Partial unique `user_roles(userId, role) WHERE tenantId IS NULL` | ⬜ **PENDING** — ⚠️ pre-flight + drift, §1.2 |
-| 12 | `20260729000002_refund_status_index` | `refunds(status)` | ⬜ **PENDING** |
-| 13 | `20260729000003_orderitem_item_lookup_index` | Index lookup `order_items` (BL-98) | ⬜ **PENDING** |
+| 7 | `20260717000000_course_approval_payout_fields` | Field approval + payout pada `courses` | ✅ applied |
+| 8 | `20260721000000_course_private_class` | Skema private class | ✅ applied |
+| 9 | `20260721100000_alumni_portfolio` | Skema alumni/portfolio | ✅ applied |
+| 10 | `20260729000000_trainer_payout_indexes` | `trainer_payouts(trainerId)`, `(status)` | ✅ applied (30 Jul 2026) |
+| 11 | `20260729000001_user_roles_global_unique` | Partial unique `user_roles(userId, role) WHERE tenantId IS NULL` | ✅ applied (30 Jul 2026) — ⚠️ drift disengaja, §1.2 |
+| 12 | `20260729000002_refund_status_index` | `refunds(status)` | ✅ applied (30 Jul 2026) |
+| 13 | `20260729000003_orderitem_item_lookup_index` | Index lookup `order_items` (BL-98) | ✅ applied (30 Jul 2026) |
 
-> 🔴 **Yang pending ≥ 7, bukan 3.** `docs/TRAINER_REMEDIATION_REPORT.md` §4.1 hanya mendaftar tiga
-> migration milik sesi trainer (#10–12) karena itu memang ruang lingkupnya — **tabel itu bukan
-> checklist deploy**. Meng-apply 3 dari ≥7 lalu menyatakan "DB current" akan meninggalkan index
-> BL-98 (#13) tidak pernah mendarat, dan skema private-class/alumni (#8, #9) tidak ada **padahal
-> kodenya sudah live di `main`**.
+> ✅ **30 Jul 2026 — DB produksi CURRENT: 13/13 applied.** `migrate deploy` menerapkan #10–13
+> berurutan tanpa error; pre-flight duplikat `user_roles` dan audit role ber-tenant keduanya
+> mengembalikan **0 baris**, sehingga #11 (yang bisa menggagalkan seluruh rangkaian) lolos dan #12–13
+> ikut mendarat. Backup pra-deploy: `backups/jago-2026-07-30-0621.sql.gz`.
+
+> 🔴 **KOREKSI 30 Jul 2026 — klaim "pending ≥ 7" itu SALAH.** Versi sebelumnya menandai #7, #8, dan
+> #9 sebagai PENDING dan menyimpulkan "skema private-class/alumni tidak ada padahal kodenya live".
+> `migrate status` di host membuktikan ketiganya **sudah applied sejak sebelum 30 Jul** — yang benar-benar
+> pending hanya **4** (#10–13). Kekhawatiran "kode live tanpa tabel" tidak pernah terjadi.
+> Pelajarannya: kolom Status di tabel ini adalah **asersi tak terverifikasi**; hanya
+> `_prisma_migrations` di host yang berwenang. Jangan menyalakan alarm dari tabel ini tanpa
+> menjalankan `migrate status` lebih dulu.
+
+> ⚠️ **JEBAKAN — `migrate status` bisa berbohong bila image `api` basi. Build DULU, baru migrate.**
+> `docker compose run --rm api` memakai image `api` yang **sudah ada**, bukan source di working tree.
+> Bila image dibangun sebelum migration baru ditambahkan, Prisma hanya melihat folder yang ter-bake di
+> dalamnya. Pada 30 Jul 2026 ia melaporkan `9 migrations found` + **"Database schema is up to date!"**
+> padahal repo punya 13 dan 4 belum applied — jawaban yang benar untuk 9 itu, tapi menyesatkan total
+> sebagai gerbang deploy. Urutan yang benar:
+>
+> ```bash
+> git pull --ff-only origin main
+> docker compose -f docker-compose.vps.yml build --no-cache api web   # ← DULU
+> docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status
+> ```
+>
+> Bila jumlah "migrations found" tidak sama dengan `ls apps/api/prisma/migrations/ | wc -l`,
+> **berhenti** — image belum tergantikan, dan `migrate deploy` akan jadi no-op yang melaporkan sukses.
 
 **🖐️ Pre-flight wajib sebelum `migrate deploy`:**
 

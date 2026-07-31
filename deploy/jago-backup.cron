@@ -2,10 +2,21 @@
 # Install on host:  sudo cp deploy/jago-backup.cron /etc/cron.d/jago-backup
 # Requires: docker compose stack up; (optional) rclone remote "r2" for offsite.
 #
-# Set R2_REMOTE to enable offsite copy to Cloudflare R2, e.g. r2:jago-backups
 # Daily at 02:15 server time. Logs to /var/log/jago-backup.log.
+#
+# R2_REMOTE was shipped EMPTY here, which meant every backup landed only in
+# /var/www/jago-akademi/backups — on the same VPS as the database it is meant to
+# protect. Host loss = database and every backup gone together. RUNBOOK_DB.md
+# documented r2:jago-backups but the installable artifact contradicted it, so the
+# offsite copy was never actually enabled on any host.
+#
+# It is now set. Prerequisite: `rclone config` once on the host with a remote
+# named "r2". Until that exists the run logs a WARNING and still completes — the
+# offsite copy is deliberately non-fatal (see scripts/backup.sh), so it can never
+# break the local backup or the retention prune. Check the log after installing:
+#   grep -E 'synced|WARNING' /var/log/jago-backup.log | tail
 
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-15 2 * * * root COMPOSE_DIR=/var/www/jago-akademi R2_REMOTE= /var/www/jago-akademi/scripts/backup.sh >> /var/log/jago-backup.log 2>&1
+15 2 * * * root COMPOSE_DIR=/var/www/jago-akademi R2_REMOTE=r2:jago-backups /var/www/jago-akademi/scripts/backup.sh >> /var/log/jago-backup.log 2>&1

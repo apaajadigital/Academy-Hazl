@@ -80,6 +80,11 @@ services:
       UPLOAD_DIR: /app/uploads
       MAX_FILE_SIZE_MB: "50"
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Stamps /api/health and the Sentry release. Never wired before, so health
+      # always reported "1.0.0" (health.ts:15) and Sentry sent release: undefined
+      # (instrument.ts:14) — errors could not be attributed to a deploy. Set
+      # APP_VERSION in the host .env at deploy time (released git sha or tag).
+      APP_VERSION: ${APP_VERSION:-}
     volumes:
       - uploads:/app/uploads
     healthcheck:
@@ -128,6 +133,9 @@ services:
       MEILISEARCH_KEY: ${MEILISEARCH_KEY}
       UPLOAD_DIR: /app/uploads
       SENTRY_DSN: ${SENTRY_DSN:-}
+      # Same reason as the api service — the worker reports into the same Sentry
+      # project, so it needs the same release stamp or its errors are unversioned.
+      APP_VERSION: ${APP_VERSION:-}
     volumes:
       - uploads:/app/uploads
 
