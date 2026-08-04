@@ -184,9 +184,22 @@ npx tsx prisma/seed.ts
 - [x] Folder `prisma/migrations/` + baseline init ter-commit (41 tabel, 44 index)
 - [x] Index hot-path §3.4 ada di schema + SQL + `scripts/index-audit.sql`
 - [x] `scripts/backup.sh` (cron + retensi + R2) + **`scripts/restore.sh`** (drill otomatis)
-- [ ] 🔴 🖐️ **`migrate deploy` prod BELUM current** — `migrate deploy` memang pernah sukses (rilis `c106748`; `/api/ready` → `db: ok`), tapi itu **hanya membuktikan DB tersambung, bukan bahwa skema mutakhir**. Per 29 Jul 2026 **≥7 dari 13 migration masih pending** (§1.1), termasuk skema private-class & alumni yang **kodenya sudah live**. Jalankan `migrate status` lalu `migrate deploy` sesuai pre-flight §1.1.
+- [x] ✅ **`migrate deploy` prod CURRENT 13/13 (30 Jul 2026)** — pre-flight §1.1 dua-duanya 0 baris,
+  backup `jago-2026-07-30-0621.sql.gz`, keempat migration 29 Jul ter-apply berurutan, `migrate status`
+  ulang = "up to date" pada image baru. (Klaim lama "≥7 pending" salah — #7–9 sudah applied; lihat
+  koreksi §1.1.)
 - [ ] 🖐️ Backup cron aktif (`scripts/backup.sh` + `/etc/cron.d/jago-backup`)
 - [ ] 🖐️ Restore drill dijalankan sekali (`./scripts/restore.sh` → PASSED)
 - [ ] 🖐️ Index audit dijalankan (`scripts/index-audit.sql` → indexes present)
-- [ ] 🔴 🖐️ **Seed produksi** — DB verified EMPTY, wajib sebelum Soft Launch (§5)
+- [x] ✅ **Seed produksi sudah jalan** — klaim lama "DB verified EMPTY" kedaluwarsa: live
+  `GET /api/courses` mengembalikan persis kursus `seed.ts` (`brand-design-canva`, `seo-mastery`, dst),
+  begitu pula events & ebooks (diverifikasi 30 Jul 2026). ⚠️ Konten seed = **demo fiktif yang bisa
+  dibeli** (3 trainer fiktif, kursus/event/e-book berbayar tanpa isi) — keputusan konten pra-launch
+  tetap di tangan owner (terkait BL-114); **jangan re-run seed** tanpa membaca §5 (re-run
+  mem-publish-ulang kursus yang di-unpublish admin).
+- [ ] 🖐️ **Backfill `publishedAt` (BL-116)** — `scripts/backfill-published-at.sql`: STEP 1 read-only
+  menampilkan kursus `published` ber-`publishedAt` NULL (warisan seed lama), STEP 2 (UPDATE
+  `publishedAt = createdAt`) sengaja dikomentari — review STEP 1 + backup dulu, lalu uncomment.
+  Hanya tabel `courses` (satu-satunya model lain ber-`publishedAt` adalah `BlogPost`, dan seed blog
+  sudah benar). `seed.ts` sudah diperbaiki agar lubangnya tak lahir lagi.
 - [ ] 🖐️ `EXPLAIN` menunjukkan index terpakai

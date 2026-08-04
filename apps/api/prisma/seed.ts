@@ -159,47 +159,53 @@ async function main() {
     .findUnique({ where: { slug: "programming-tech" } })
     .then((c) => c!.id);
 
+  // BL-116: the seed writes straight to Postgres, bypassing the admin publish
+  // flow that stamps publishedAt — so seeded courses used to go live with
+  // status "published" but publishedAt NULL, leaving the admin `publishedAt:desc`
+  // sort undefined over them. Stamp it here like the blog seed already does;
+  // rows created before this fix are repaired by scripts/backfill-published-at.sql.
+  const coursePublishedAt = new Date();
   const courses = [
     {
       slug: "digital-marketing-fundamentals",
       title: "Digital Marketing Fundamentals",
       shortDesc: "Kuasai dasar-dasar pemasaran digital dari nol hingga mahir.",
-      level: "beginner", price: 299000, status: "published",
+      level: "beginner", price: 299000, status: "published", publishedAt: coursePublishedAt,
       categoryId: marketingCatId, trainerId: trainerIds[0],
     },
     {
       slug: "social-media-marketing-advanced",
       title: "Social Media Marketing Advanced",
       shortDesc: "Strategi konten dan iklan berbayar di Instagram, TikTok, Facebook.",
-      level: "intermediate", price: 399000, status: "published",
+      level: "intermediate", price: 399000, status: "published", publishedAt: coursePublishedAt,
       categoryId: marketingCatId, trainerId: trainerIds[0],
     },
     {
       slug: "ui-ux-design-figma",
       title: "UI/UX Design dengan Figma",
       shortDesc: "Belajar desain antarmuka modern menggunakan Figma dari nol.",
-      level: "beginner", price: 349000, status: "published",
+      level: "beginner", price: 349000, status: "published", publishedAt: coursePublishedAt,
       categoryId: designCatId, trainerId: trainerIds[1],
     },
     {
       slug: "web-development-react-nextjs",
       title: "Full Stack Web Development: React & Next.js",
       shortDesc: "Bangun aplikasi web modern dengan React 18 dan Next.js 14.",
-      level: "intermediate", price: 499000, status: "published",
+      level: "intermediate", price: 499000, status: "published", publishedAt: coursePublishedAt,
       categoryId: techCatId, trainerId: trainerIds[2],
     },
     {
       slug: "seo-mastery",
       title: "SEO Mastery: Ranking #1 di Google",
       shortDesc: "Teknik SEO on-page dan off-page terkini untuk bisnis Anda.",
-      level: "intermediate", price: 279000, status: "published",
+      level: "intermediate", price: 279000, status: "published", publishedAt: coursePublishedAt,
       categoryId: marketingCatId, trainerId: trainerIds[0],
     },
     {
       slug: "brand-design-canva",
       title: "Brand Design dengan Canva Pro",
       shortDesc: "Buat identitas merek profesional tanpa keahlian desain sebelumnya.",
-      level: "beginner", price: 0, status: "published",
+      level: "beginner", price: 0, status: "published", publishedAt: coursePublishedAt,
       categoryId: designCatId, trainerId: trainerIds[1],
     },
   ];
