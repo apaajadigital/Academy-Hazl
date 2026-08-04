@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   ArrowLeft, Building2, Users, Layers, BarChart3,
   ToggleLeft, ToggleRight, Mail, BookOpen,
@@ -25,6 +26,7 @@ import {
   TR,
   TH,
   TD,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -312,8 +314,16 @@ export default function AdminTenantDetailPage() {
 
   return (
     <div className="dash-container flex flex-col gap-6">
-
-      {/* Tenant header card (light) */}
+      <PageHeader
+        breadcrumb={
+          <span className="flex items-center gap-2">
+            <Link href="/admin/lms" className="text-text-secondary hover:underline">LMS B2B</Link>
+            <span>/</span>
+            <span className="font-medium text-text-primary">{tenant.name}</span>
+          </span>
+        }
+        title={`Tenant: ${tenant.name}`}
+      />
       <Card className="p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">

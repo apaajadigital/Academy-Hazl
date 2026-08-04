@@ -30,6 +30,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -264,24 +265,22 @@ export default function AdminLeadsPage() {
     <div className="dash-container flex flex-col gap-6">
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Leads CRM</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {meta.total.toLocaleString("id-ID")} leads dari semua landing page
-          </p>
-        </div>
-        <Button
-          id="leads-export-csv-btn"
-          variant="secondary"
-          size="sm"
-          onClick={handleExportCSV}
-          disabled={exporting}
-          leftIcon={<Download size={15} aria-hidden="true" />}
-        >
-          {exporting ? "Mengekspor..." : "Export CSV"}
-        </Button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Leads</span></span>}
+        title="Leads CRM"
+        actions={
+          <Button
+            id="leads-export-csv-btn"
+            variant="secondary"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            leftIcon={<Download size={15} aria-hidden="true" />}
+          >
+            {exporting ? "Mengekspor..." : "Export CSV"}
+          </Button>
+        }
+      />
 
       {/* Metrics — StatCards that double as status filters */}
       <section className="dash-grid">

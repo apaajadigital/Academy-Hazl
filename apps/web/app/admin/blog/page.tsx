@@ -23,6 +23,7 @@ import {
   FilterBar,
   TableActionButton,
   DashboardLoading,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -113,12 +114,10 @@ export default function AdminBlogPage() {
 
   return (
     <div className="dash-container flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Blog</h1>
-          <p className="mt-1 text-sm text-text-secondary">Kelola konten dan artikel edukasi &middot; {total.toLocaleString("id-ID")} artikel</p>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Blog</span></span>}
+        title="Manajemen Blog"
+      />
 
       <FilterBar>
         <form onSubmit={handleSearch} className="flex min-w-[240px] flex-1 items-end gap-2">

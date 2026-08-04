@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Card, StatCard, DashboardLoading, DashboardError } from "@/components/ui";
+import { Card, StatCard, DashboardLoading, DashboardError, PageHeader, Button } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 import type { ChartPoint, OrderDist, TopCourse } from "./Charts";
 
@@ -126,24 +126,20 @@ export default function SystemHealthPage() {
   return (
     <div className="dash-container flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Kesehatan Sistem</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            Visualisasi data real-time platform Jago Akademi
-            {lastRefresh && (
-              <span className="font-medium text-accent-cyan-strong"> · Terakhir: {lastRefresh.toLocaleTimeString("id-ID")}</span>
-            )}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={fetchData}
-          className="inline-flex items-center gap-2 rounded-xl border border-solid border-border-default bg-surface-card px-4 py-2 text-[13px] font-semibold text-accent-cyan-strong transition hover:bg-surface-accent-soft"
-        >
-          <RefreshCw size={15} aria-hidden="true" /> Refresh
-        </button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Kesehatan Sistem</span></span>}
+        title="Kesehatan Sistem"
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={fetchData}
+            leftIcon={<RefreshCw size={15} aria-hidden="true" />}
+          >
+            Refresh Data
+          </Button>
+        }
+      />
 
       {/* KPI Summary — unified StatCard on the 12-col dash grid */}
       <div className="dash-grid">

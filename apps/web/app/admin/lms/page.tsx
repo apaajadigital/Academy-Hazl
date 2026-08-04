@@ -25,6 +25,7 @@ import {
   TabsList,
   TabsTrigger,
   DashboardLoading,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -319,17 +320,17 @@ export default function AdminLMSPage() {
     <div className="dash-container flex flex-col gap-6">
 
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">LMS B2B</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} perusahaan / institusi</p>
-        </div>
-        {activeTab === "tenants" && (
-          <Button id="lms-create-tenant-btn" onClick={() => setShowCreate(true)} variant="cyan" size="sm" leftIcon={<Plus size={15} />}>
-            Buat Tenant Baru
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">LMS B2B</span></span>}
+        title="LMS B2B"
+        actions={
+          activeTab === "tenants" ? (
+            <Button id="lms-create-tenant-btn" onClick={() => setShowCreate(true)} variant="cyan" size="sm" leftIcon={<Plus size={15} />}>
+              Buat Tenant Baru
+            </Button>
+          ) : undefined
+        }
+      />
 
       {/* Metrics — StatCard KPI row in the 12-col dash grid */}
       <div className="dash-grid">

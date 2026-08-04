@@ -16,6 +16,7 @@ import {
   TabsTrigger,
   TableActionButton,
   Pagination,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -259,13 +260,13 @@ export default function AdminPortofolioPage() {
   return (
     <div className="dash-container flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Portofolio Member</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} member terdaftar</p>
-        </div>
-        <Button onClick={handleOpenCreate} variant="primary" size="sm" leftIcon={<Plus size={16} />}>Tambah Member</Button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Portofolio Member</span></span>}
+        title="Portofolio Member"
+        actions={
+          <Button onClick={handleOpenCreate} variant="primary" size="sm" leftIcon={<Plus size={16} />}>Tambah Member</Button>
+        }
+      />
 
       {/* Status filter — framed filter card */}
       <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">

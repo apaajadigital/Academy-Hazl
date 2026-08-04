@@ -24,6 +24,7 @@ import {
   TabsList,
   TabsTrigger,
   StatCard,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -183,21 +184,21 @@ export default function AdminTransaksiPage() {
 
   return (
     <div className="dash-container flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Laporan Transaksi</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} transaksi total</p>
-        </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleExportCSV}
-          disabled={exporting}
-          leftIcon={<Download size={16} aria-hidden="true" />}
-        >
-          {exporting ? "Mengekspor..." : "Ekspor CSV"}
-        </Button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Transaksi</span></span>}
+        title="Laporan Transaksi"
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            leftIcon={<Download size={16} aria-hidden="true" />}
+          >
+            {exporting ? "Mengekspor..." : "Ekspor CSV"}
+          </Button>
+        }
+      />
 
       {/* Summary cards */}
       <div className="dash-grid">

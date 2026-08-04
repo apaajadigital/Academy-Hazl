@@ -17,6 +17,7 @@ import {
   TD,
   TableActionButton,
   DashboardLoading,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
@@ -102,20 +103,20 @@ export default function AdminKuponPage() {
 
   return (
     <div className="dash-container flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Kupon</h1>
-          <p className="mt-1 text-sm text-text-secondary">Kelola kode promosi dan diskon &middot; {total.toLocaleString("id-ID")} kupon terdaftar</p>
-        </div>
-        <Button
-          variant={showForm ? "ghost" : "primary"}
-          size="sm"
-          onClick={() => setShowForm(!showForm)}
-          leftIcon={showForm ? <X size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
-        >
-          {showForm ? "Batal" : "Buat Kupon"}
-        </Button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Kupon</span></span>}
+        title="Manajemen Kupon"
+        actions={
+          <Button
+            variant={showForm ? "ghost" : "primary"}
+            size="sm"
+            onClick={() => setShowForm(!showForm)}
+            leftIcon={showForm ? <X size={16} aria-hidden="true" /> : <Plus size={16} aria-hidden="true" />}
+          >
+            {showForm ? "Batal" : "+ Buat Kupon"}
+          </Button>
+        }
+      />
 
       {/* Create Form */}
       {showForm && (

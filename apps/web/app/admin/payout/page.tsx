@@ -26,6 +26,7 @@ import {
   TD,
   Pagination,
   StatCard,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -230,12 +231,10 @@ export default function AdminPayoutPage() {
   return (
     <div className="dash-container flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Pencatatan Payout</h1>
-          <p className="mt-1 text-sm text-text-secondary">Kelola penarikan saldo Trainer &amp; Afiliator</p>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Payout</span></span>}
+        title="Pencatatan Payout"
+      />
 
       {/* KPI Cards */}
       {stats && (

@@ -27,6 +27,7 @@ import {
   ProgressBar,
   Modal,
   ModalContent,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -184,39 +185,30 @@ export default function AdminEventPage() {
 
   return (
     <div className="dash-container flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen Event</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Kelola jadwal pelatihan, webinar, dan workshop
-            {/* No count at all while the list is unknown (loading/failed) —
-                "0 event total" would be a number the page cannot vouch for. */}
-            {!loading && !loadError && (
-              <> &middot; {total.toLocaleString("id-ID")} {isFiltered ? "hasil" : "event total"}</>
-            )}
-          </p>
-        </div>
-        {/* BL-61: entry points into the CRUD + check-in screens the API has had
-            since BL-59 but no UI ever reached. */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/admin/event/check-in")}
-            leftIcon={<ScanLine size={16} aria-hidden="true" />}
-          >
-            Check-in Peserta
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => router.push("/admin/event/baru")}
-            leftIcon={<Plus size={16} aria-hidden="true" />}
-          >
-            Buat Event
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Event</span></span>}
+        title="Manajemen Event"
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/admin/event/check-in")}
+              leftIcon={<ScanLine size={16} aria-hidden="true" />}
+            >
+              Check-in Peserta
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => router.push("/admin/event/baru")}
+              leftIcon={<Plus size={16} aria-hidden="true" />}
+            >
+              Buat Event
+            </Button>
+          </div>
+        }
+      />
 
       {actionError && (
         <div role="alert" className="rounded-[var(--radius-md)] border border-solid border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

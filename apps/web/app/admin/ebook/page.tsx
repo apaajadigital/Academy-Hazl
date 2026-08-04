@@ -24,6 +24,7 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
+  PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getValidToken } from "@/lib/auth/token";
@@ -221,15 +222,15 @@ export default function AdminEbookPage() {
   return (
     <div className="dash-container flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary">Manajemen E-Book</h1>
-          <p className="mt-1 text-sm text-text-secondary">{total.toLocaleString("id-ID")} e-book terdaftar</p>
-        </div>
-        <Button variant="primary" size="sm" onClick={handleOpenCreate} leftIcon={<Plus size={16} aria-hidden="true" />}>
-          Tambah E-Book
-        </Button>
-      </div>
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">E-Book</span></span>}
+        title="Manajemen E-Book"
+        actions={
+          <Button variant="primary" size="sm" onClick={handleOpenCreate} leftIcon={<Plus size={16} aria-hidden="true" />}>
+            Tambah E-Book
+          </Button>
+        }
+      />
 
       {/* Filters */}
       <FilterBar

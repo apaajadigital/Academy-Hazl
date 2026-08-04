@@ -24,6 +24,7 @@ import {
   Building2,
   type LucideIcon,
 } from "lucide-react";
+import { PageHeader } from "@/components/ui";
 import {
   Card,
   Table,
@@ -136,16 +137,23 @@ export default function AdminDashboardPage() {
     })();
   }, []);
 
-  const KPI_CARDS = stats
+  // ── Primary KPIs: 4 cards like Student/Trainer dashboard ──
+  const PRIMARY_KPIS = stats
     ? [
         { label: "Total Pengguna",    value: stats.totalUsers.toLocaleString("id-ID"),        icon: Users,        accent: "#0077A8", tint: "rgba(0,119,168,0.10)", trend: stats.trends?.totalUsers ?? null },
         { label: "Kursus Aktif",      value: stats.totalCourses.toLocaleString("id-ID"),      icon: BookOpen,     accent: "#7C3AED", tint: "rgba(124,58,237,0.10)", trend: null },
         { label: "Total Pendaftaran", value: stats.totalEnrollments.toLocaleString("id-ID"),  icon: GraduationCap, accent: "#16A34A", tint: "rgba(22,163,74,0.10)", trend: stats.trends?.totalEnrollments ?? null },
         { label: "Total Pendapatan",  value: `Rp ${stats.totalRevenue.toLocaleString("id-ID")}`, icon: Wallet, accent: "#DC2626", tint: "rgba(220,38,38,0.10)", trend: stats.trends?.totalRevenue ?? null },
-        { label: "Omset Retail",      value: `Rp ${stats.retailRevenue.toLocaleString("id-ID")}`, icon: ShoppingBag, accent: "#0077A8", tint: "rgba(0,119,168,0.10)", trend: stats.trends?.retailRevenue ?? null },
-        { label: "Langganan Aktif",   value: stats.activeSubscriptions.toLocaleString("id-ID"), icon: IdCard, accent: "#D97706", tint: "rgba(217,119,6,0.10)", trend: stats.trends?.activeSubscriptions ?? null },
-        { label: "Tingkat Refund",    value: `${stats.refundRate}%`, icon: Undo2, accent: "#DC2626", tint: "rgba(220,38,38,0.10)", trend: null },
-        { label: "Rata-rata Rating",  value: `${Number.isFinite(stats.avgRating) ? stats.avgRating.toFixed(1) : "0.0"} / 5.0`, icon: Star, accent: "#D97706", tint: "rgba(217,119,6,0.10)", trend: null },
+      ]
+    : [];
+
+  // ── Secondary KPIs: smaller inline metrics ──
+  const SECONDARY_KPIS = stats
+    ? [
+        { label: "Omset Retail",    value: `Rp ${stats.retailRevenue.toLocaleString("id-ID")}`, icon: ShoppingBag, accent: "#0077A8", trend: stats.trends?.retailRevenue ?? null },
+        { label: "Langganan Aktif", value: stats.activeSubscriptions.toLocaleString("id-ID"), icon: IdCard, accent: "#D97706", trend: stats.trends?.activeSubscriptions ?? null },
+        { label: "Tingkat Refund",  value: `${stats.refundRate}%`, icon: Undo2, accent: "#DC2626", trend: null },
+        { label: "Rata-rata Rating", value: `${Number.isFinite(stats.avgRating) ? stats.avgRating.toFixed(1) : "0.0"} / 5.0`, icon: Star, accent: "#D97706", trend: null },
       ]
     : [];
 
@@ -161,38 +169,24 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="dash-container flex flex-col gap-8">
-      {/* ── Greeting & Top Header ── */}
-      <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-green-700">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Sistem Online</span>
-          </div>
-          <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">{greeting}, Admin 👋</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • Overview performa akademi hari ini.
-          </p>
+      {/* ── Greeting — clean, matching Student/Trainer pattern ── */}
+      <section className="space-y-2">
+        <div className="mb-2 flex items-center gap-2 text-green-700">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider">Sistem Online</span>
         </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/kursus"
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] border border-solid border-border-default bg-surface-card px-4 py-2 text-sm font-semibold text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:bg-surface-sunken"
-          >
-            + Tambah Kursus
-          </Link>
-          <Link
-            href="/admin/pengguna"
-            className="inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-4 py-2 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
-          >
-            Kelola Pengguna
-          </Link>
+        <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">{greeting}, Admin 👋</h1>
+        <div className="flex items-center gap-2 text-text-secondary">
+          <CalendarDays size={18} aria-hidden="true" />
+          <span className="text-sm">
+            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • Overview performa akademi hari ini.
+          </span>
         </div>
       </section>
 
-      {/* ── 8 KPI Cards — unified StatCard on the 12-col dash grid (trend is real backend delta) ── */}
+      {/* ── 4 Primary KPI Cards — same as Student/Trainer ── */}
       <section className="dash-grid">
-        {KPI_CARDS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
+        {PRIMARY_KPIS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
           <StatCard
             key={label}
             className="col-span-12 sm:col-span-6 xl:col-span-3"
@@ -206,9 +200,80 @@ export default function AdminDashboardPage() {
         ))}
       </section>
 
-      {/* ── Main 2-region layout: Transaksi table (wide) | Leads + Kursus Terpopuler (narrow) ── */}
+      {/* ── 4 Secondary KPIs — compact inline panel ── */}
+      {SECONDARY_KPIS.length > 0 && (
+        <Card className="rounded-[var(--radius-card)] p-5">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {SECONDARY_KPIS.map(({ label, value, icon: Icon, accent, trend }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: accent + "18", color: accent }}
+                >
+                  <Icon size={16} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs text-text-muted">{label}</p>
+                  <p className="text-sm font-bold text-text-primary">{value}</p>
+                  {trend && <p className="text-[10px] font-medium text-green-600">{trend}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* ── Leads Baru — full-width hero card (moved from cramped sidebar) ── */}
+      <div
+        className="relative overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e3"
+        style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
+      >
+        <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
+          Real-time
+        </span>
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+              <Mail size={22} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
+              <p className="mt-0.5 text-xs text-white/75">
+                {newLeadsCount === null
+                  ? "Memuat…"
+                  : newLeadsCount === 0
+                  ? "Tidak ada leads baru saat ini"
+                  : "Leads baru menunggu follow-up"}
+              </p>
+            </div>
+            <span className="font-display text-4xl font-extrabold leading-none sm:text-5xl">{newLeadsCount ?? "—"}</span>
+            <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-white/70 sm:inline">Orang Terdeteksi</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {newLeadsCount !== null && newLeadsCount > 0 && (
+              <Link
+                href="/admin/leads?status=new"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
+              >
+                Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            )}
+            <Link
+              href="/admin/leads"
+              className={`inline-flex items-center justify-center gap-1 text-xs font-semibold transition hover:text-white ${
+                newLeadsCount && newLeadsCount > 0 ? "text-white/80" : "rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 hover:bg-white/95"
+              }`}
+            >
+              Kelola Leads <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute -bottom-12 -right-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
+      </div>
+
+      {/* ── Transaksi Terbaru + Kursus Terpopuler — 2-col but now more spacious ── */}
       <section className="dash-grid">
-        {/* Left / wide — Recent Orders table */}
+        {/* Transaksi Terbaru */}
         <div className="col-span-12 lg:col-span-8">
           <div className="overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1">
             <div className="flex items-center justify-between gap-3 border-b border-solid border-border-default px-6 py-5">
@@ -279,68 +344,9 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Right / narrow — Leads gradient card + Kursus Terpopuler */}
-        <div className="col-span-12 flex flex-col gap-6 lg:col-span-4">
-          {/* Leads Baru — dark navy → teal professional gradient */}
-          <div
-            className="relative overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e3"
-            style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
-          >
-            <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
-              Real-time
-            </span>
-            <div className="relative z-10">
-              <div className="mb-4 flex items-start gap-3 pr-20">
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-                  <Mail size={22} aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
-                  <p className="mt-0.5 text-xs text-white/75">
-                    {newLeadsCount === null
-                      ? "Memuat…"
-                      : newLeadsCount === 0
-                      ? "Tidak ada leads baru saat ini"
-                      : "Leads baru menunggu follow-up"}
-                  </p>
-                </div>
-              </div>
-              <div className="mb-6 flex items-baseline gap-2">
-                <span className="font-display text-5xl font-extrabold leading-none">{newLeadsCount ?? "—"}</span>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Orang Terdeteksi</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {newLeadsCount !== null && newLeadsCount > 0 ? (
-                  <>
-                    <Link
-                      href="/admin/leads?status=new"
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
-                    >
-                      Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
-                    </Link>
-                    <Link
-                      href="/admin/leads"
-                      className="flex items-center justify-center gap-1 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
-                    >
-                      Kelola Leads <ArrowRight size={14} aria-hidden="true" />
-                    </Link>
-                  </>
-                ) : (
-                  <Link
-                    href="/admin/leads"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
-                  >
-                    Kelola Leads <ArrowRight size={16} aria-hidden="true" />
-                  </Link>
-                )}
-              </div>
-            </div>
-            {/* Decorative glow */}
-            <div className="pointer-events-none absolute -bottom-12 -right-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
-          </div>
-
-          {/* Kursus Terpopuler */}
-          <Card className="p-6">
+        {/* Kursus Terpopuler */}
+        <div className="col-span-12 lg:col-span-4">
+          <Card className="h-full p-6">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="flex items-center gap-2 font-display text-base font-bold text-text-primary">
                 <TrendingUp size={18} className="text-accent-purple" aria-hidden="true" /> Kursus Terpopuler
@@ -385,14 +391,14 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      {/* ── Akses Cepat / Quick Actions ── */}
+      {/* ── Akses Cepat / Quick Actions — col-span-4 = 3 per row, even grid ── */}
       <section className="flex flex-col gap-4">
         <h2 className="font-display text-lg font-bold text-text-primary">Akses Cepat</h2>
         <div className="dash-grid">
           {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
             <QuickActionCard
               key={href}
-              className="col-span-6 sm:col-span-4 xl:col-span-2"
+              className="col-span-6 sm:col-span-4 xl:col-span-4"
               href={href}
               label={label}
               icon={Icon}
