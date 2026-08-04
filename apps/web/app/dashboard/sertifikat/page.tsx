@@ -7,6 +7,7 @@ import { Award, Calendar, ShieldCheck, Download } from "lucide-react";
 import { Badge, EmptyState, DashboardLoading } from "@/components/ui";
 import { getToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
+import { API_BASE as apiBase } from "@/lib/api/base";
 
 type Certificate = {
   id: string;
@@ -41,8 +42,6 @@ export default function SertifikatPage() {
       })
       .finally(() => setLoading(false));
   }, [router]);
-
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
   if (loading) {
     return <DashboardLoading />;

@@ -9,6 +9,7 @@
     "start": "next start --port 3004",
     "lint": "eslint --max-warnings 0",
     "lint:spacing": "node scripts/lint-spacing.mjs",
+    "test:e2e": "playwright test",
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {

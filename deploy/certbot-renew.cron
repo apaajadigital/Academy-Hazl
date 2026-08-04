@@ -1,0 +1,31 @@
+# Jago Akademi — automated TLS renewal (BL-33 / RUNBOOK_DEPLOY.md §4).
+# Install on host:  sudo cp deploy/certbot-renew.cron /etc/cron.d/certbot-renew
+# Verify without waiting 90 days:
+#   sudo certbot renew --dry-run && sudo systemctl reload nginx
+#   sudo certbot certificates          # check actual expiry
+#
+# Why this file exists: the renewal command used to live only inside a prose
+# heredoc in the runbook, so the host was configured by hand from text and there
+# was nothing to diff against. The version installed that way was broken in two
+# ways at once (both fixed here) and would have failed silently for ~90 days:
+#
+#   1. --deploy-hook reloaded nginx via
+#        docker compose -f .../docker-compose.prod.yml exec nginx nginx -s reload
+#      There is NO nginx container on this host — nginx runs as a host systemd
+#      service. That hook always errored, so a renewed certificate would never be
+#      loaded and nginx would keep serving the old one until it expired.
+#
+#   2. Issuance included -d api.jagoakademi.com, which does not resolve (BL-33).
+#      certbot treats issuance as ONE transaction, so that single unresolvable
+#      domain fails the ENTIRE certificate — taking jagoakademi.com down with it.
+#      Renewal inherits the domain list from the original issuance, so if the
+#      live cert still carries api.jagoakademi.com, re-issue it WITHOUT that -d
+#      before relying on this cron (see RUNBOOK_DEPLOY.md §4).
+#
+# Requires: nginx host serving /.well-known/acme-challenge/ from /var/www/certbot
+# (see deploy/jagoakademi.com.nginx — the port-80 server block).
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 3 * * * root certbot renew --webroot -w /var/www/certbot --deploy-hook "systemctl reload nginx" >> /var/log/certbot-renew.log 2>&1

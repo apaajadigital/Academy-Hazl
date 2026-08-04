@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import BlogArticleClient from "./BlogArticleClient";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 type Props = {
   params: Promise<{ slug: string }>;

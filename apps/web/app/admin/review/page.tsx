@@ -74,7 +74,10 @@ export default function AdminReviewPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadReviews(); }, [page, filter]); // eslint-disable-line
+  // `loadReviews` is re-created every render, so listing it would refetch on
+  // every render; page/filter are the real reload triggers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadReviews(); }, [page, filter]);
 
   function loadTestimonials() {
     const token = getToken();
@@ -104,7 +107,10 @@ export default function AdminReviewPage() {
 
   useEffect(() => {
     if (mode === "testimoni") loadTestimonials();
-  }, [mode, tFilter]); // eslint-disable-line
+    // `loadTestimonials` is re-created every render; only mode/tFilter should
+    // trigger a reload, otherwise every render would refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, tFilter]);
 
   function setDraft(id: string, patch: Partial<ModerationDraft>) {
     setDrafts((prev) => ({

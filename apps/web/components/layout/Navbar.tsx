@@ -24,7 +24,9 @@ const komunitasChildren = [
 
 const navLinks = [
   { label: "E-Course", href: "/e-course" },
-  { label: "Mentor", href: "/mentor" },
+  // BL-114: /mentor is flag-gated (fictional roster, route 404s while OFF) —
+  // a chrome link to a 404 is the exact defect the orphan-route audit hunts.
+  ...(features.mentor ? [{ label: "Mentor", href: "/mentor" }] : []),
   { label: "Event", href: "/event" },
   {
     label: "Produk",

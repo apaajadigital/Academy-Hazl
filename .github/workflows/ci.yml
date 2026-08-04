@@ -43,6 +43,18 @@ jobs:
       - name: Test (with coverage + threshold gate)
         run: npm run --workspace api test:coverage
 
+      # Dependency audit (SSOT §9.7). Blocking threshold is CRITICAL only:
+      # the 6 known HIGH advisories are an explicitly accepted, monitored risk
+      # (BL-15, docs/SECURITY_CHECKLIST.md — do NOT `npm audit fix --force`).
+      # Gating on `high` would turn CI permanently red over a decision already
+      # made; a new CRITICAL should absolutely block. The report step above the
+      # gate keeps the full picture visible in every run's log.
+      - name: Audit report (informational)
+        run: npm audit || true
+
+      - name: Audit gate (fail on critical)
+        run: npm audit --audit-level=critical
+
       - name: Build
         run: npm run build
 

@@ -11,7 +11,7 @@
 | 3 | XSS in rendered content | ✅ | `dangerouslySetInnerHTML` removed (TASK-002); React auto-escaping. |
 | 4 | Auth: JWT + refresh (httpOnly cookie) | ✅ | `token.ts`, `REFRESH_COOKIE`. |
 | 5 | RBAC on sensitive endpoints | ✅ | Enforced (mixed `authorize()` + inline guards). Matrix documented. |
-| 6 | Rate limiting | ✅ | Global 100/15m + auth 10/15m. Payment uses global (granular = minor enhancement). |
+| 6 | Rate limiting | ✅ | Global **500**/15m (`apps/api/src/middleware/rateLimiter.ts:12`) + auth **30**/15m (`:25`) + login/register/forgot-password **30**/15m (`:38`). Payment uses global (granular = minor enhancement). ⚠️ **Dikoreksi 30 Jul 2026:** baris ini sebelumnya menulis "Global 100/15m + auth 10/15m" — dua-duanya salah. `docs/BACKLOG.md` BL-42 mencatat kenaikan ke 500 tetapi checklist ini tak pernah ikut diperbarui; header live `RateLimit-Limit: 500` mengonfirmasi angka yang benar. |
 | 7 | Security headers | ✅ | `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, **HSTS** + **baseline CSP** added (TASK-013). |
 | 8 | CSP nonce-based | ⚠️ | Baseline CSP enforcing; nonce-based hardening = P2 (BL-16). `'unsafe-inline'` needed for Next/Tailwind without nonces. |
 | 9 | CSRF protection | ✅ (by design) | State-changing APIs use `Authorization: Bearer` (not cookie-auth) → not CSRF-vulnerable. Refresh cookie is httpOnly + SameSite. Verify SameSite=strict/lax in prod. |

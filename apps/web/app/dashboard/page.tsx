@@ -25,6 +25,7 @@ import { getDashboard, type DashboardData } from "../../lib/api/enrollment";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
 import { getValidToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
+import { API_BASE as apiBase } from "@/lib/api/base";
 import {
   Card,
   Skeleton,
@@ -118,7 +119,6 @@ export default function DashboardPage() {
   }
 
   const { stats, enrollments, recentCertificates } = data;
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
   const now = new Date();
   const hour = now.getHours();
   const greeting =

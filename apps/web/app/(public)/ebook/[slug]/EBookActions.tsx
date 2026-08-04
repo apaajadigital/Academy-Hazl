@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, BookOpen, Download } from "lucide-react";
 import { getToken } from "@/lib/auth/token";
+import { API_BASE } from "@/lib/api/base";
 
 type Props = {
   ebookSlug: string;
   price: number;
 };
 
-// Intentionally local, NOT the shared `@/lib/api/base` helper: the shared one
-// returns "" in the browser so calls go through the Next.js /api proxy, while
-// this component talks to the API host directly. Swapping it here would change
-// transport behaviour, so it stays until that migration is done deliberately.
+// Intentionally NOT the shared getApiBase() helper: that one returns "" in the
+// browser so calls go through the Next.js /api proxy, while this component talks
+// to the API host directly. API_BASE (always absolute) preserves that transport
+// behaviour; switching to the proxy stays a deliberate future migration.
 function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  return API_BASE;
 }
 
 

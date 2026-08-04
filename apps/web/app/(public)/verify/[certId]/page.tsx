@@ -3,8 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { BadgeCheck, CircleX, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 type CertData = {
   code: string;

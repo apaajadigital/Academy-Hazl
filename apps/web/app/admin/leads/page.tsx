@@ -162,6 +162,9 @@ export default function AdminLeadsPage() {
   const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 20 });
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // Debounced copy of `query` that actually drives fetching. The raw `query`
+  // updates on every keystroke, so it must not be an effect dependency.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [source, setSource] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
@@ -213,29 +216,36 @@ export default function AdminLeadsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { fetchLeads(query, source, status, page); }, []); // eslint-disable-line
+  // Single declarative fetch driver: the old version fetched only on mount
+  // (empty deps) and relied on handlers calling fetchLeads imperatively, which
+  // made state and server data easy to desync. `fetchLeads` is stable
+  // (useCallback with []), so listing it cannot cause a refetch loop — the
+  // effect re-runs only when a filter/pagination input actually changes.
+  // Search UX is preserved: the raw `query` stays out of the deps; the
+  // debounced copy triggers the fetch 350ms after typing stops.
+  useEffect(() => {
+    fetchLeads(debouncedQuery, source, status, page);
+  }, [fetchLeads, debouncedQuery, source, status, page]);
 
   function handleSearch(q: string) {
     setQuery(q);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { setPage(1); fetchLeads(q, source, status, 1); }, 350);
+    // React 19 batches these two updates, so the effect above runs once.
+    debounceRef.current = setTimeout(() => { setPage(1); setDebouncedQuery(q); }, 350);
   }
 
   function handleSource(src: string) {
     setSource(src);
     setPage(1);
-    fetchLeads(query, src, status, 1);
   }
 
   function handleStatus(sts: string) {
     setStatus(sts);
     setPage(1);
-    fetchLeads(query, source, sts, 1);
   }
 
   function handlePage(p: number) {
     setPage(p);
-    fetchLeads(query, source, status, p);
   }
 
   function handleStatusChange(id: string, next: string) {

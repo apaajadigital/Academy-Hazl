@@ -147,8 +147,13 @@ export default function AdminPayoutPage() {
   }
 
   useEffect(() => { loadStats(); }, []);
-  useEffect(() => { if (tab === "trainer") loadTrainer(); }, [trainerPage, statusFilter, tab]); // eslint-disable-line
-  useEffect(() => { if (tab === "affiliate") loadAffiliate(); }, [affPage, statusFilter, tab]); // eslint-disable-line
+  // `loadTrainer`/`loadAffiliate` are re-created every render and `search`
+  // refetches through the form submit handler; deps track only the real
+  // auto-reload triggers (page/status/tab).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (tab === "trainer") loadTrainer(); }, [trainerPage, statusFilter, tab]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { if (tab === "affiliate") loadAffiliate(); }, [affPage, statusFilter, tab]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();

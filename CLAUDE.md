@@ -42,7 +42,7 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 - [x] **TASK-000** — Baseline audit (`docs/BASELINE_AUDIT.md`)
 - [x] **Phase 1 STABILIZE** — TASK-001..004 ✅ (commit+tag, 52 type errors fixed, deps pinned, CI). Build+typecheck+lint green.
 - [~] **Phase 2 QUALITY GATE** — TASK-010..013 kode selesai (error-envelope migration, lms.ts split to 7 modules, security P1 CSP/HSTS/RBAC), both builds green. Next.js audit = accepted risk (BL-15). ⚠️ **Kriteria coverage SSOT §9.12 BELUM terpenuhi** — lihat catatan di bawah.
-- [x] **Phase 3 INFRA (code)** — TASK-020..023 ✅ code complete: deploy config+CD+runbooks, DB baseline migration+indexes+backup, BullMQ queue+worker, observability (Sentry/pino/requestId//ready). 🖐️ Host execution: deploy ✅ sudah jalan; `migrate deploy` **belum current** (≥7 migration pending, `docs/RUNBOOK_DB.md` §1.1).
+- [x] **Phase 3 INFRA (code)** — TASK-020..023 ✅ code complete: deploy config+CD+runbooks, DB baseline migration+indexes+backup, BullMQ queue+worker, observability (Sentry/pino/requestId//ready). 🖐️ Host execution: deploy ✅ sudah jalan; `migrate deploy` ✅ **CURRENT 13/13 per 30 Jul 2026** (`docs/RUNBOOK_DB.md` §1.1). Sisa host: backup cron, restore drill, `SENTRY_DSN`, cron certbot.
 
   > 🔴 **Koreksi 29 Jul 2026 — klaim "coverage gate enforced" menyesatkan.** Yang ada adalah
   > **ratchet gate** (anti-regresi), bukan gate 80%. Threshold nyata di `apps/api/vitest.config.ts:48-51`:
@@ -64,9 +64,9 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 > **jangan disalin ke sini**, karena setiap gelombang PR membuatnya basi dalam hitungan jam.
 
 ### 🖐️ Awaiting reviewer (human-gated, SSOT §9.6)
-1. 🔴 **BL-114 — 7 mentor fiktif live + terindeks sitemap** (dipasangkan perusahaan nyata, LinkedIn placeholder). **Blocker Go/No-Go**, butuh keputusan pemilik: hapus / ganti mentor nyata ber-consent / gate di balik flag — `docs/BACKLOG.md` BL-114
-2. 🔴 **`prisma migrate deploy` — DB prod BELUM current**: ≥7 dari 13 migration pending (termasuk private-class & alumni yang **kodenya sudah live**, + index BL-98). Jalankan pre-flight & daftar lengkap di `docs/RUNBOOK_DB.md` §1.1
-3. Backup cron + restore drill + index audit — `docs/RUNBOOK_DB.md`
+1. 🟡 **BL-114 — MITIGASI TERPASANG 31 Jul 2026 (belum ter-deploy):** `/mentor` di-gate `NEXT_PUBLIC_FEATURE_MENTOR` default OFF (404 + keluar dari sitemap/Navbar/Footer) di branch `fix/post-deploy-remediation`. **Live site masih menayangkan mentor fiktif sampai branch ini di-merge + deploy.** Keputusan konten final tetap milik owner (hapus data / ganti mentor nyata ber-consent → flip flag) — `docs/BACKLOG.md` BL-114
+2. ✅ **SELESAI 30 Jul 2026 — `prisma migrate deploy` sudah dijalankan, DB prod CURRENT 13/13.** Pre-flight (duplikat `user_roles` + audit role ber-tenant) dua-duanya 0 baris, backup `jago-2026-07-30-0621.sql.gz`, keempat migration 29 Jul ter-apply berurutan. Klaim lama "≥7 pending termasuk private-class & alumni" **salah** — #7–9 ternyata sudah applied sejak sebelumnya; yang pending hanya 4. Detail + jebakan "image basi bikin `migrate status` berbohong" di `docs/RUNBOOK_DB.md` §1.1
+3. Backup cron + restore drill + index audit — `docs/RUNBOOK_DB.md` (backup manual sudah terbukti jalan 30 Jul; **cron & restore drill masih belum**)
 4. **Perbaiki cron certbot** (deploy-hook ke nginx **host**, hapus domain yang tak resolve dari `-d`) — TLS bisa kedaluwarsa senyap — `docs/RUNBOOK_DEPLOY.md` §4
 5. Set `SENTRY_DSN` + uptime/alert monitors (arahkan ke `https://jagoakademi.com/api/health`) — `docs/RUNBOOK_INCIDENT.md`
 6. **Daftarkan webhook DOKU ke `https://jagoakademi.com/api/webhooks/doku`** dan jalankan live integration matrix (sandbox→prod) — host lama `api.jagoakademi.com` tidak resolve ⇒ pembayaran tak pernah terkonfirmasi — `docs/INTEGRATION_VERIFICATION.md`

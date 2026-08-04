@@ -2,6 +2,33 @@
 
 > Per SSOT §9.4: gap baru yang ditemukan saat eksekusi dicatat di sini (tidak dikerjakan di luar urutan kecuali P0/blocker). Ditinjau saat perencanaan fase.
 
+> ## ✅ KOREKSI 30 Jul 2026 — baris "stale-open": sudah beres di kode, belum ditandai di tabel
+>
+> Audit lintas-environment menemukan **15 baris yang masih terlihat terbuka padahal kodenya sudah
+> diperbaiki**. Baris-baris itu terus melahirkan pekerjaan palsu: reviewer membacanya sebagai gap
+> aktif dan menjadwalkannya ulang. Status yang benar dicatat di sini — **prosa asli tiap baris
+> sengaja TIDAK dihapus** supaya jejak historisnya utuh (kebiasaan repo ini), jadi bila tabel di bawah
+> dan blok ini berbeda, **blok ini yang menang**.
+>
+> **Terverifikasi RESOLVED (dibaca ulang di kode, 30 Jul 2026):**
+>
+> | ID | Klaim lama | Bukti sekarang |
+> |----|-----------|----------------|
+> | BL-14 | "`auth.ts` masih 516 baris (>400)" | `apps/api/src/routes/auth.ts` = **28 baris**, hanya meng-mount 6 sub-router di `modules/auth/` (`register/login/session/me/oauth/password`) |
+> | BL-34 | "HMAC dibanding `===`, bukan constant-time" | `apps/api/src/services/payment/dokuService.ts:1` mengimpor `timingSafeEqual`, dipakai di `:14` |
+> | BL-44 | "`source:\"contact\"` ditolak Zod ⇒ tiap submit 400" | `apps/api/src/routes/leads.ts:15` enum **sudah memuat** `"contact"` |
+> | BL-45 | "Nomor WA placeholder `6281234567890`" | String itu **nol hit** di seluruh codebase; `apps/web/lib/config.ts:9` pakai nomor asli + override `NEXT_PUBLIC_WA_NUMBER` |
+> | BL-46 | "Soft-404 blog/event render 200 kosong" | `apps/web/app/(public)/blog/[slug]/page.tsx` dan `event/[slug]/page.tsx` dua-duanya memanggil `notFound()` |
+> | BL-02, BL-03 | 52 type error API; bug runtime `lms.ts:288` | Ditutup di TASK-002; `tsc --noEmit` 0 error (diukur ulang 30 Jul) |
+> | BL-04, BL-05, BL-06, BL-07 | Sisa temuan Phase 1 | Ditutup di Phase 1 (lihat tracker `CLAUDE.md`) |
+> | BL-23, BL-24, BL-26 | Statistik/testimoni/kursus fiktif | Ditutup di EPIC 8 (TASK-052..055). ⚠️ **Permukaan yang BELUM ditutup dilacak terpisah sebagai BL-114** (7 mentor fiktif di `lib/e-course/data.ts`) — jangan pakai ketiga baris ini sebagai cakupan Go/No-Go |
+>
+> **Terverifikasi SETENGAH resolved:**
+>
+> | ID | Sudah | Belum |
+> |----|-------|-------|
+> | BL-39 | Sisi trainer: `services/payout/trainerPayoutService.ts` `processTrainerPayout` dipakai bersama oleh `routes/trainer.ts` dan `modules/admin/payouts.ts` | Sisi **afiliasi** masih inline Prisma di `routes/affiliate.ts` |
+
 | ID | Temuan | Ditemukan saat | Severity | Rekomendasi | Target Fase |
 |----|--------|----------------|----------|-------------|-------------|
 | **EPIC 8 — Content Integrity (audit live jagoakademi.com, 2 Jul 2026)** | | | | | |
@@ -133,3 +160,18 @@
 | BL-108 | **`contains` Prisma tidak meng-escape metakarakter LIKE** — filter `?search=` publik meneruskan input apa adanya, jadi `?search=%` cocok dengan **semua** baris dan `?search=_` jadi wildcard satu karakter. Diwarisi dari `modules/admin/ebooks.ts` yang dicerminkannya, jadi bukan regresi — tapi kini terpapar di endpoint publik tanpa autentikasi. Panjang input sudah dibatasi `.max(100)`. | Review adversarial BL-100 | 🟢 Low | Escape `%`, `_`, dan `\` sebelum menyusun klausa `contains`, di kedua tempat sekaligus agar admin dan publik tak menyimpang. | Phase 5 |
 | **Remediasi route E-Course (28-29 Jul 2026, branch `feat/ecourse-remediation`, PR #20)** | | | | | |
 | BL-115 | **Learning Path (`/e-course/[kategori]/[topik]/[materi]`) belum bisa DB-backed** — subtree memakai `lib/e-course/data.ts` statik (fiktif, lihat BL-26 & BL-114) dan di-gate OFF. Investigasi 28 Jul: DB punya rantai `Category→Course→Section→Lesson`, tetapi **nol section/lesson ter-seed** dan **tak ada jalur authoring** section/lesson di codebase; strukturnya pun beda (tree marketing punya level "Topic" ekstra, slug kategori tak sama); subscription-unlock belum di-wire (`videos.ts` masih gate per-enrollment). Perbaikan 404/stub yang live sudah dikerjakan di PR #20 (F1/F2/F5); sisanya adalah pekerjaan fitur, bukan perbaikan. | E-Course remediation 28 Jul | 🟡 Medium | **EPIC pasca Soft Launch**: (1) keputusan model (map Topic→Course / Lesson→Section, atau tambah model + migration), (2) jalur authoring section/lesson (terkait BL-32 storage), (3) konten nyata (bukan fiktif), (4) wire subscription→unlock, (5) rewire halaman ke fetch DB + progress real lalu buang `data.ts`, (6) nyalakan flag setelah QA. Detail: `docs/ECOURSE_REMEDIATION_REPORT.md` §4. | Backlog (EPIC 7) |
+> **BL-114 — MITIGASI TERPASANG (31 Jul 2026), keputusan konten tetap di owner.** Atas otorisasi
+> "full handling" owner, opsi (c) diimplementasikan di branch `fix/post-deploy-remediation`:
+> `/mentor` + `/mentor/[slug]` kini di-gate `NEXT_PUBLIC_FEATURE_MENTOR` (default **OFF** →
+> `notFound()`), link Navbar/Footer kondisional, URL mentor keluar dari `sitemap.ts`,
+> `generateStaticParams` kosong saat OFF, dan flag tetap ON di webServer Playwright agar E2E terus
+> meng-cover kode halamannya. **Reversibel penuh**: set `NEXT_PUBLIC_FEATURE_MENTOR=true` + rebuild
+> begitu ada mentor nyata ber-consent. Data fiktif di `lib/e-course/data.ts` **sengaja tidak
+> dihapus** (dipakai subtree learning-path yang juga ter-gate; penghapusannya = keputusan (a) milik
+> owner). Baris BL-114 asli di bawah dipertahankan sebagai catatan sejarah. Catatan tambahan: agar
+> flag bisa dinyalakan sama sekali, ARG `NEXT_PUBLIC_FEATURE_*` ditambahkan ke
+> `apps/web/Dockerfile` + `build.args` compose + `deploy.yml` (temuan audit 30 Jul: sebelumnya
+> semua flag mustahil diaktifkan di image Docker).
+
+| **Verifikasi pasca-deploy (30 Jul 2026)** | | | | | |
+| BL-116 | **`Course.publishedAt` null pada seluruh kursus hasil seed** — diverifikasi live pasca-deploy: `GET /api/courses` mengembalikan `status: "published"` dengan `publishedAt: null` (mis. `brand-design-canva`, `seo-mastery`). **Bukan regresi dan bukan bug pada `3a40107`**: perbaikan itu menyasar *jalur tulis* (`modules/admin/courses.ts:182` menyetel `publishedAt = new Date()` saat publish, `:186`/`:190` mengosongkannya saat draft/rejected) dan bekerja benar. Penyebabnya `prisma/seed.ts:167-202` menyetel `status: "published"` **tanpa** pernah mengisi `publishedAt`, jadi baris lama tak pernah tersentuh jalur itu. Dampak: opsi sort admin `publishedAt:desc` (`modules/admin/courses.ts:25`) mengurutkan kursus-kursus ini secara tak tentu, dan tampilan/urutan apa pun yang bersandar pada tanggal publikasi jadi menyesatkan. | Verifikasi pasca-deploy 30 Jul | 🟢 Low | (1) Script backfill sekali jalan: set `publishedAt = createdAt` untuk baris `status='published' AND "publishedAt" IS NULL` — read-only-safe, tak ada penghapusan. (2) Perbaiki `seed.ts` agar mengisi `publishedAt` saat men-seed status `published`, supaya lubang yang sama tak lahir lagi. Sekelas dengan backfill `totalSold` event di `docs/EVENT_REMEDIATION_PLAN.md:48` — pertimbangkan satu PR "backfill data historis" untuk keduanya. | Phase 5 |

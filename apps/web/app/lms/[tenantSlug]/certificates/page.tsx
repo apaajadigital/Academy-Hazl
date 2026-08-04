@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Trophy, BadgeCheck, Download, ChevronRight, ArrowRight } from "lucide-react";
 import { Badge, Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
+import { API_BASE } from "@/lib/api/base";
 
 type LmsCert = {
   id: string;
@@ -88,7 +89,7 @@ export default function LmsCertificatesPage() {
                     Terverifikasi
                   </Badge>
                   <a
-                    href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/lms/portal/${tenantSlug}/certificates/${cert.id}/download`}
+                    href={`${API_BASE}/api/lms/portal/${tenantSlug}/certificates/${cert.id}/download`}
                     target="_blank"
                     rel="noopener noreferrer"
                     download

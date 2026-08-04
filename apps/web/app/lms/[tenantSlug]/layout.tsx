@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
+import { API_BASE } from "@/lib/api/base";
 
 type TenantBranding = {
   name: string;
@@ -14,7 +15,7 @@ type TenantBranding = {
 async function fetchBranding(tenantSlug: string): Promise<TenantBranding | null> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/lms/public/${tenantSlug}`,
+      `${API_BASE}/api/lms/public/${tenantSlug}`,
       { next: { revalidate: 60 } },
     );
     if (!res.ok) return null;

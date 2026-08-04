@@ -41,10 +41,20 @@ fi
 echo "[$(date -Is)] dump OK ($SIZE bytes)"
 
 # Optional offsite copy to R2 (configure `rclone config` once, remote name "r2").
+#
+# Deliberately non-fatal: this script runs under `set -e`, so a failing rclone
+# (remote not configured yet, R2 unreachable, credentials rotated) would abort
+# the script BEFORE the retention prune below — old dumps would pile up forever
+# and cron would report failure even though a good local backup was already
+# written and size-checked. A broken offsite must not sabotage a working backup;
+# it must be loud instead.
 if [ -n "$R2_REMOTE" ]; then
   if command -v rclone >/dev/null 2>&1; then
-    rclone copy "$FILE" "$R2_REMOTE/postgres/" --s3-no-check-bucket
-    echo "[$(date -Is)] synced to $R2_REMOTE/postgres/"
+    if rclone copy "$FILE" "$R2_REMOTE/postgres/" --s3-no-check-bucket; then
+      echo "[$(date -Is)] synced to $R2_REMOTE/postgres/"
+    else
+      echo "[$(date -Is)] WARNING: offsite copy to $R2_REMOTE FAILED — backup is LOCAL-ONLY" >&2
+    fi
   else
     echo "[$(date -Is)] WARNING: R2_REMOTE set but rclone not installed — skipping offsite copy" >&2
   fi

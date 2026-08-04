@@ -227,7 +227,7 @@ const nextConfig = {
   poweredByHeader: false,
 
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    // optimizePackageImports removed to prevent Turbopack crash
   },
 };
 

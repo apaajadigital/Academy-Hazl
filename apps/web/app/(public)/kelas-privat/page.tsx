@@ -13,8 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { waLink } from "@/lib/config";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 const WA_CONSULT_HREF = waLink("Halo, saya ingin bertanya tentang Private Class");
 

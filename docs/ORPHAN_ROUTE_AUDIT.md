@@ -2,7 +2,20 @@
 
 > **Metode:** inventaris rute mekanis (`app/**/page.tsx`) → ekstraksi semua target navigasi (`href=`, `href:`, `router.push/replace`, `redirect()`, nav config) → diff → verifikasi 5 agent paralel (public / dashboard / admin / LMS+trainer / reverse-link) → **verifikasi ulang manual per temuan**.
 > **Studi kasus pemicu:** `/mentor` (commit `12a9554`) — halaman jadi, tapi tak ada satu pun link masuk; user harus ketik URL manual.
-> **Status:** analisis saja. **Belum ada kode diubah.**
+> **Status (dikoreksi 30 Jul 2026):** ~~analisis saja, belum ada kode diubah~~ — **sudah tidak benar.**
+> Kalimat itu ditulis saat dokumen ini lahir dan tak pernah diperbarui, sehingga pembaca menyimpulkan
+> dua P0 di bawah masih terbuka padahal **keduanya sudah diperbaiki dan sudah live**:
+> - **P0#1 reset password** — `sendPasswordResetEmail` ada di
+>   `apps/api/src/services/notification/emailService.ts:83` dan **dipanggil** di
+>   `apps/api/src/modules/auth/password.ts:43` (import di `:12`).
+> - **P0#2 undangan LMS** — `sendLmsInviteEmail` ada di
+>   `apps/api/src/services/notification/emailService.ts:100` dan **dipanggil** di
+>   `apps/api/src/modules/lms/invite.ts:88` (import di `:7`).
+>
+> Yang **masih terbuka** dari dokumen ini sudah dipindahkan ke backlog dan dilacak di sana — jangan
+> pakai dokumen ini sebagai status: **BL-82** (sidebar portal LMS hanya di halaman home),
+> **BL-56** (`/payment/pending` tak terjangkau), dan orphan `/dashboard/affiliate`.
+> Rujukan status yang berwenang: `docs/BACKLOG.md`.
 
 ---
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { getToken } from "@/lib/auth/token";
+import { API_BASE as API } from "@/lib/api/base";
 
 export default function CoursePlayerEntryPage() {
   const router = useRouter();
@@ -13,8 +14,6 @@ export default function CoursePlayerEntryPage() {
     if (!token) { router.replace("/masuk"); return; }
 
     // Find the course by slug then get enrollment, redirect to first lesson
-    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-
     fetch(`${API}/api/courses/${slug}`, {
       headers: { Authorization: `Bearer ${token}` },
       credentials: "include",

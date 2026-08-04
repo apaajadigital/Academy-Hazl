@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Briefcase, Sparkles } from "lucide-react";
+import { API_BASE as API } from "@/lib/api/base";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const PAGE_SIZE = 12;
 
 // ─── Types (defensive — backend contract is being built in parallel) ──────────

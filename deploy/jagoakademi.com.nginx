@@ -1,7 +1,22 @@
 server {
     listen 80;
     server_name jagoakademi.com www.jagoakademi.com;
-    return 301 https://$host$request_uri;
+
+    # ACME HTTP-01 must be served over plain HTTP and must come BEFORE the
+    # redirect below — a blanket `return 301` answers the challenge with a 301,
+    # which Let's Encrypt does follow to HTTPS but which breaks the moment the
+    # certificate it is trying to renew has already expired. `certbot renew
+    # --webroot -w /var/www/certbot` (see RUNBOOK_DEPLOY.md §4) writes the token
+    # here, so without this location renewal cannot succeed at all.
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
 server {

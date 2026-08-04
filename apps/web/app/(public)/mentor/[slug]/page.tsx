@@ -12,6 +12,11 @@ type Props = {
 };
 
 export function generateStaticParams(): MentorParams[] {
+  // BL-114: while the mentor flag is OFF, generate nothing — otherwise `next
+  // build` would still pre-render 7 static profile pages for the fictional
+  // roster (the layout's notFound() makes them 404, but building them at all
+  // wastes work and keeps the fabricated names in the build output).
+  if (!features.mentor) return [];
   return mentors.map((m) => ({ slug: m.slug }));
 }
 

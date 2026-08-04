@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Tag, Lock, ArrowRight, AlertCircle } from "lucide-react";
 import { getValidToken } from "@/lib/auth/token";
 import { getStoredReferral, clearStoredReferral } from "@/lib/affiliate/referral";
+import { API_BASE } from "@/lib/api/base";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,7 +32,7 @@ type CouponResult = {
 
 // Default export component parameters promise bug fixed in P2
 function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  return API_BASE;
 }
 
 // Format Rp helper

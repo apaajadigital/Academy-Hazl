@@ -95,7 +95,10 @@ export default function AdminPortofolioPage() {
 
   useEffect(() => {
     loadMembers();
-  }, [page, statusFilter]); // eslint-disable-line
+    // `loadMembers` is re-created every render; page/statusFilter are the real
+    // reload triggers, so depending on the function would refetch every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter]);
 
   function handleOpenCreate() {
     setModalMode("create");

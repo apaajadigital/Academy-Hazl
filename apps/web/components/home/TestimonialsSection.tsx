@@ -1,8 +1,7 @@
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { TestimonialCard } from "@/components/ui/TestimonialCard";
 import { Reveal } from "@/components/ui/Reveal";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 type Testimonial = {
   id: string;
