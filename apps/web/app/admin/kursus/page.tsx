@@ -283,7 +283,10 @@ export default function AdminKursusPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { loadCourses(); }, [page, statusFilter]); // eslint-disable-line
+  // `loadCourses` is re-created every render and `search` refetches through the
+  // form submit handler; only page/statusFilter should auto-trigger a reload.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadCourses(); }, [page, statusFilter]);
 
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setPage(1); loadCourses(); }
 

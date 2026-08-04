@@ -97,7 +97,10 @@ export default function AdminEbookPage() {
 
   useEffect(() => {
     loadEbooks();
-  }, [page, statusFilter]); // eslint-disable-line
+    // `loadEbooks` is re-created every render and `search` refetches through the
+    // form submit handler; only page/statusFilter should auto-trigger a reload.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
