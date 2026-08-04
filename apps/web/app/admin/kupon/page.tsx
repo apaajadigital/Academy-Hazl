@@ -41,7 +41,6 @@ const EMPTY_FORM = { code: "", type: "percentage", value: 0, minPurchase: 0, max
 
 export default function AdminKuponPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -58,7 +57,6 @@ export default function AdminKuponPage() {
         if (body.success) {
           const list: Coupon[] = body.data?.coupons ?? body.data ?? [];
           setCoupons(list);
-          setTotal(body.meta?.total ?? list.length);
         }
       })
       .finally(() => setLoading(false));

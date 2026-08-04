@@ -69,7 +69,6 @@ export default function SystemHealthPage() {
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
   const fetchData = useCallback(async () => {
     const token = await getValidToken();
@@ -83,7 +82,6 @@ export default function SystemHealthPage() {
       const json = await res.json();
       if (json.success) {
         setData(json.data);
-        setLastRefresh(new Date());
       } else {
         setError(json.error?.message ?? "Gagal memuat data.");
       }
