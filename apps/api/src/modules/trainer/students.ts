@@ -68,11 +68,14 @@ router.get(
       // Compute progress for each student
       const studentData = await Promise.all(
         enrollments.map(async (enrollment) => {
+          // Progress rows hang off the enrollment (there is no userId column on
+          // CourseLessonProgress — the user is reached via enrollment). Counting
+          // by enrollmentId is also automatically scoped to THIS course, since an
+          // enrollment is per (course, user) — no lesson→section join needed.
           const completedLessons = await prisma.courseLessonProgress.count({
             where: {
-              userId: enrollment.userId,
+              enrollmentId: enrollment.id,
               isCompleted: true,
-              lesson: { section: { courseId } },
             },
           });
 

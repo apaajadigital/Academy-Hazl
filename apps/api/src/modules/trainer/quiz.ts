@@ -59,8 +59,12 @@ const QUESTION_TYPES = [
 
 type QuestionType = (typeof QUESTION_TYPES)[number];
 
-// Validate answer based on question type
-function validateAnswer(type: QuestionType, answer: unknown, options: unknown): boolean {
+// Validate answer based on question type.
+// NOTE: `_options` is accepted (all three call sites pass it) but unused — the
+// per-type checks don't yet bound answers against the option list (e.g.
+// multiple_choice doesn't verify answer < options.length). Underscore-prefixed
+// to satisfy no-unused-vars until that validation is written.
+function validateAnswer(type: QuestionType, answer: unknown, _options: unknown): boolean {
   switch (type) {
     case "multiple_choice":
     case "dropdown":

@@ -283,7 +283,6 @@ export default function CurriculumPage() {
 
         {sections.map((section, secIdx) => {
           const isExpanded = expanded.has(section.id);
-          const TypeIcon = ChevronDown;
 
           return (
             <Card key={section.id} className="overflow-hidden rounded-[var(--radius-card)]">
