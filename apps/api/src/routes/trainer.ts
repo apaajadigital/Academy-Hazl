@@ -14,6 +14,10 @@ import {
   processTrainerPayout,
   requestTrainerPayout,
 } from "../services/payout/trainerPayoutService.js";
+import curriculumRouter from "../modules/trainer/curriculum.js";
+import quizRouter from "../modules/trainer/quiz.js";
+import studentsRouter from "../modules/trainer/students.js";
+import certificatesRouter from "../modules/trainer/certificates.js";
 
 const router = Router();
 router.use(authenticate);
@@ -549,5 +553,11 @@ router.patch("/courses/:courseId/status", requireTrainer, validateBody(statusUpd
     next(err);
   }
 });
+
+// ── Sub-routers for new trainer features (BL-50) ─────────────────────────────
+router.use(curriculumRouter);
+router.use(quizRouter);
+router.use(studentsRouter);
+router.use(certificatesRouter);
 
 export default router;

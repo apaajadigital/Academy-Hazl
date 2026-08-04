@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import {
   Badge,
   Table,
@@ -103,6 +103,14 @@ export default function TrainerCoursesPage() {
             <span className="text-text-secondary">/</span>
             <span className="font-medium text-text-primary">Kursus Saya</span>
           </span>
+        }
+        actions={
+          <Link
+            href="/trainer-hub/kursus/buat"
+            className="inline-flex items-center gap-2 rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-e1 transition-all hover:opacity-90 hover:shadow-e2"
+          >
+            <Plus size={16} /> Buat Kursus Baru
+          </Link>
         }
       />
 

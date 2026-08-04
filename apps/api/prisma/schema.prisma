@@ -227,12 +227,19 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   quizId    String
-  question  String @db.Text
-  options   Json
-  answer    Int
-  sortOrder Int    @default(0)
+  question  String  @db.Text
+  // Question type: multiple_choice | checkboxes | dropdown | short_answer | paragraph | true_false | linear_scale
+  type      String  @default("multiple_choice")
+  options   Json    // String[] for choice-based types, null for text types
+  // Polymorphic answer key: Int for MC/dropdown/true_false, Int[] for checkboxes,
+  // String/String[] for short_answer, null for paragraph, Int for linear_scale.
+  answer    Json
+  required  Boolean @default(true)
+  // Type-specific settings JSON, e.g. { min, max, minLabel, maxLabel } for linear_scale
+  settings  Json?
+  sortOrder Int     @default(0)
 
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 

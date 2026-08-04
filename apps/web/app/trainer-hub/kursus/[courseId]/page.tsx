@@ -13,6 +13,7 @@ import {
   Wallet,
   Coins,
   BarChart3,
+  Pencil,
 } from "lucide-react";
 import {
   Badge,
@@ -218,6 +219,12 @@ export default function CourseAnalyticsPage() {
         title={data.title}
         actions={
           <>
+            <Link
+              href={`/trainer-hub/kursus/${courseId}/edit`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border-default bg-surface-card px-3 py-1.5 text-xs font-medium text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
+            >
+              <Pencil size={12} /> Edit Info Kursus
+            </Link>
             <Badge variant={statusVariant} dot>{statusLabel}</Badge>
             {(status === "draft" || status === "rejected") && (
               <Button
@@ -295,6 +302,31 @@ export default function CourseAnalyticsPage() {
             iconBg={tint}
           />
         ))}
+      </section>
+
+      {/* Quick links to new features (BL-50) */}
+      <section className="flex flex-wrap gap-3">
+        <Link
+          href={`/trainer-hub/kursus/${courseId}/kurikulum`}
+          className="flex items-center gap-2 rounded-[var(--radius-card)] border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
+        >
+          <BookOpen size={16} className="text-accent-cyan-strong" />
+          Kelola Kurikulum →
+        </Link>
+        <Link
+          href={`/trainer-hub/kursus/${courseId}/siswa`}
+          className="flex items-center gap-2 rounded-[var(--radius-card)] border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
+        >
+          <Users size={16} className="text-[#7C3AED]" />
+          Daftar Siswa →
+        </Link>
+        <Link
+          href={`/trainer-hub/kursus/${courseId}/sertifikat`}
+          className="flex items-center gap-2 rounded-[var(--radius-card)] border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
+        >
+          <CheckCircle2 size={16} className="text-[#16A34A]" />
+          Sertifikat Terbit →
+        </Link>
       </section>
 
       {/* Completion + Zoom Live Session */}

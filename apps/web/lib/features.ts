@@ -34,13 +34,10 @@ export const features = {
   community: on(process.env.NEXT_PUBLIC_FEATURE_COMMUNITY),
   gamification: on(process.env.NEXT_PUBLIC_FEATURE_GAMIFICATION),
 
-  // Mentor pages (/mentor, /mentor/[slug]) — BL-114: the current roster in
-  // lib/e-course/data.ts is 7 FICTIONAL people paired with real companies and
-  // placeholder LinkedIn links, live and sitemap-indexed. Gated OFF until the
-  // owner supplies real, consented mentors (then this is a one-flag flip; the
-  // page code and data shape are ready). Reversible mitigation for the
-  // Go/No-Go blocker — the underlying content decision stays with the owner.
-  mentor: on(process.env.NEXT_PUBLIC_FEATURE_MENTOR),
+  // Mentor pages (/mentor, /mentor/[slug]) — owner decision 4 Aug 2026: keep
+  // the mentor listing visible even though the roster data is still placeholder.
+  // Set NEXT_PUBLIC_FEATURE_MENTOR=false to hide again if needed.
+  mentor: process.env.NEXT_PUBLIC_FEATURE_MENTOR === "false" ? false : true,
 
   // Alumni stories page (/alumni) — approved alumni testimonials. OFF until
   // the testimonials endpoint ships with real, consented stories (BL-28).
