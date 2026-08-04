@@ -153,6 +153,18 @@ services:
         NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
         NEXT_PUBLIC_MIXPANEL_TOKEN: ${NEXT_PUBLIC_MIXPANEL_TOKEN:-}
         NEXT_PUBLIC_APP_NAME: "Jago Akademi"
+        # Feature flags are inlined at BUILD time (lib/features.ts). Before these
+        # lines no flag could ever be enabled in a Docker image regardless of the
+        # host .env (30 Jul audit). Empty = OFF, unchanged behaviour.
+        NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: ${NEXT_PUBLIC_FEATURE_PRIVATE_CLASS:-}
+        NEXT_PUBLIC_FEATURE_ALL_ACCESS: ${NEXT_PUBLIC_FEATURE_ALL_ACCESS:-}
+        NEXT_PUBLIC_FEATURE_LEARNING_PATH: ${NEXT_PUBLIC_FEATURE_LEARNING_PATH:-}
+        NEXT_PUBLIC_FEATURE_COMMUNITY: ${NEXT_PUBLIC_FEATURE_COMMUNITY:-}
+        NEXT_PUBLIC_FEATURE_GAMIFICATION: ${NEXT_PUBLIC_FEATURE_GAMIFICATION:-}
+        NEXT_PUBLIC_FEATURE_MENTOR: ${NEXT_PUBLIC_FEATURE_MENTOR:-}
+        NEXT_PUBLIC_FEATURE_ALUMNI: ${NEXT_PUBLIC_FEATURE_ALUMNI:-}
+        NEXT_PUBLIC_FEATURE_PORTFOLIO: ${NEXT_PUBLIC_FEATURE_PORTFOLIO:-}
+        NEXT_PUBLIC_WA_NUMBER: ${NEXT_PUBLIC_WA_NUMBER:-}
     restart: always
     depends_on:
       api:

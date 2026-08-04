@@ -41,6 +41,10 @@ export default defineConfig({
         NEXT_PUBLIC_FEATURE_COMMUNITY: "true",
         NEXT_PUBLIC_FEATURE_ALUMNI: "true",
         NEXT_PUBLIC_FEATURE_PORTFOLIO: "true",
+        // BL-114: /mentor is gated in production (fictional roster) but stays ON
+        // for E2E so public-sweep and the visual baselines keep covering the
+        // page code for its flag-ON future.
+        NEXT_PUBLIC_FEATURE_MENTOR: "true",
       },
     },
     {

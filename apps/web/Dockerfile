@@ -42,6 +42,21 @@ ARG API_PROXY_TARGET
 ARG NEXT_PUBLIC_GA_ID
 ARG NEXT_PUBLIC_MIXPANEL_TOKEN
 ARG NEXT_PUBLIC_APP_NAME
+# Feature flags (lib/features.ts) are NEXT_PUBLIC_* and therefore inlined at
+# BUILD time — without these ARGs no flag could ever be enabled in a Docker
+# image, no matter what the host .env said (the 30 Jul audit found all 8
+# unreachable). They default to unset = OFF, so declaring them changes nothing
+# until a value is passed via compose build.args / deploy.yml build-args.
+ARG NEXT_PUBLIC_FEATURE_PRIVATE_CLASS
+ARG NEXT_PUBLIC_FEATURE_ALL_ACCESS
+ARG NEXT_PUBLIC_FEATURE_LEARNING_PATH
+ARG NEXT_PUBLIC_FEATURE_COMMUNITY
+ARG NEXT_PUBLIC_FEATURE_GAMIFICATION
+ARG NEXT_PUBLIC_FEATURE_MENTOR
+ARG NEXT_PUBLIC_FEATURE_ALUMNI
+ARG NEXT_PUBLIC_FEATURE_PORTFOLIO
+# Same build-time inlining applies to the WhatsApp contact override.
+ARG NEXT_PUBLIC_WA_NUMBER
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
