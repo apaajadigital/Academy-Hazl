@@ -8,8 +8,8 @@ import { Section, SectionHeader } from "@/components/ui/Section";
 import { ProgramCard } from "@/components/ui/ProgramCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
+import { API_BASE as API } from "@/lib/api/base";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const PAGE_SIZE = 8;
 
 type Course = {

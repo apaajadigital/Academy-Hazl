@@ -23,6 +23,7 @@ import { getToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
 import { Card, CardHeader, CardTitle, CardContent, Button, Textarea } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { API_BASE } from "@/lib/api/base";
 
 type OrderDetail = {
   id: string;
@@ -56,7 +57,7 @@ const STATUS_TONE: Record<string, { box: string; Icon: LucideIcon }> = {
 };
 
 function getApiBase() {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  return API_BASE;
 }
 
 function formatDateTime(value: string) {

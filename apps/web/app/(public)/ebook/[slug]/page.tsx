@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ChevronRight, BookOpen, FileText, ShoppingBag } from "lucide-react";
 import EBookActions from "./EBookActions";
+import { API_BASE } from "@/lib/api/base";
 
 type EBook = {
   id: string;
@@ -22,7 +23,7 @@ type EBook = {
 async function getEBook(slug: string): Promise<EBook | null> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ebooks/${slug}`,
+      `${API_BASE}/api/ebooks/${slug}`,
       { next: { revalidate: 300 } }
     );
     const data = await res.json();

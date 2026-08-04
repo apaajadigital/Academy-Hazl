@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, Star, TrendingUp } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 // ─── Types (defensive — backend contract is being built in parallel) ──────────
 

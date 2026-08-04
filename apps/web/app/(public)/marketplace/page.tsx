@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BookMarked, Search, X, ShoppingBag } from "lucide-react";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { API_BASE as API } from "@/lib/api/base";
 
 // The catalog is sourced solely from GET /api/ebooks. The former
 // "recording" | "module" variants were mock-only: nothing ever produced them and

@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import { API_BASE as API } from "@/lib/api/base";
 
 const NAV = [
   { label: "Dashboard", href: "", icon: "📊" },
@@ -19,7 +20,6 @@ export default function LmsAdminLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
     fetch(`${API}/api/lms/public/${tenantSlug}`, { cache: "force-cache" })
       .then((r) => r.json())
       .then((d) => { if (d.data?.name) setTenantName(d.data.name); })

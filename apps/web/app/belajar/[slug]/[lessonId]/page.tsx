@@ -10,6 +10,7 @@ import QuizInterface from "../../../../components/player/QuizInterface";
 import { getVideoUrl, getQuiz, updateProgress } from "../../../../lib/api/enrollment";
 import { getValidToken } from "@/lib/auth/token";
 import { Badge, Button } from "@/components/ui";
+import { API_BASE as API } from "@/lib/api/base";
 
 type Lesson = {
   id: string;
@@ -53,8 +54,6 @@ export default function LessonPlayerPage() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewDone, setReviewDone] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
-
-  const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
   useEffect(() => {
     // Finding #2: reset lesson-specific state on every lessonId change so the
@@ -134,7 +133,8 @@ export default function LessonPlayerPage() {
 
     load();
     return () => { ignore = true; };
-  }, [slug, lessonId, router, API]);
+    // BL-75: API is now a module-scope constant (imported), no longer a valid dep.
+  }, [slug, lessonId, router]);
 
   const handleVideoProgress = useCallback(
     async (pct: number) => {

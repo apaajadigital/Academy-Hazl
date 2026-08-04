@@ -5,6 +5,7 @@ import { Section, SectionHeader } from "@/components/ui/Section";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Reveal } from "@/components/ui/Reveal";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
+import { API_BASE } from "@/lib/api/base";
 
 type EBook = {
   id: string;
@@ -22,7 +23,7 @@ type EBook = {
 async function getEBooks(): Promise<EBook[]> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/ebooks?limit=24`,
+      `${API_BASE}/api/ebooks?limit=24`,
       {
         next: { revalidate: 300 },
         signal: AbortSignal.timeout(8000), // fail fast so build never hangs on a slow/unreachable API
