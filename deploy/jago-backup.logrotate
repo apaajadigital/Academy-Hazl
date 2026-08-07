@@ -1,0 +1,29 @@
+# Jago Akademi — log rotation for the automated Postgres backup.
+# Install on host:  sudo cp deploy/jago-backup.logrotate /etc/logrotate.d/jago-backup
+#
+# NOT installed by this change — shipped as a reviewable artifact only.
+#
+# The host already runs logrotate.timer (verified 6 Aug 2026), so no new
+# scheduling mechanism is introduced; this file only tells the existing one what
+# to do with /var/log/jago-backup.log.
+#
+# Why it matters here: the 4-6 Aug incident was diagnosed entirely from this log.
+# An unrotated log eventually gets truncated by hand or fills the disk — and the
+# VPS is multi-tenant with 48 GB free, so a runaway log is everyone's outage.
+# 12 weekly rotations keep roughly a quarter of history, which comfortably spans
+# the 14-day backup retention window it describes.
+#
+# `create 0640 root adm` keeps the log readable for operators in `adm` without
+# making it world-readable. The log carries no secrets by design — only run IDs,
+# byte counts, table counts, remote NAMES and RESULT lines — but backup timing
+# is still operational information worth not publishing.
+
+/var/log/jago-backup.log {
+    weekly
+    rotate 12
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+}

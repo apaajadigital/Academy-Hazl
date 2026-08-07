@@ -11,7 +11,13 @@ COMPOSE_DIR="${COMPOSE_DIR:-/var/www/jago-akademi}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.vps.yml}"
 BACKUP_DIR="${BACKUP_DIR:-$COMPOSE_DIR/backups}"
 SCRATCH="${SCRATCH_DB:-jago_restore_test}"
-MIN_TABLES="${MIN_TABLES:-40}"
+# Matches scripts/backup.sh. Measured, not guessed: the 4 Aug 2026 production
+# dump carries exactly 45 CREATE TABLE statements (44 models in schema.prisma
+# plus _prisma_migrations, all 14 migrations applied). A restore that yields
+# fewer tables than production is not a proven backup, so the two thresholds
+# must not drift apart — a drill passing at 40 while backups demand 45 would
+# certify a dump the backup step would have rejected.
+MIN_TABLES="${MIN_TABLES:-45}"
 
 cd "$COMPOSE_DIR"
 # Extract only POSTGRES_USER from .env (safe even if .env has unquoted values with spaces).
