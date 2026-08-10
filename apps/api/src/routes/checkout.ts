@@ -3,6 +3,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { validateCoupon, incrementCouponUsage } from "../services/coupon/couponService.js";
 import { createDokuOrder } from "../services/payment/dokuService.js";
+import { isEventEnded } from "../services/event/eventService.js";
 import { enqueueEmail } from "../jobs/queues.js";
 import { successResponse, errorResponse, AppError } from "../types/index.js";
 import { env } from "../config/env.js";
@@ -77,6 +78,18 @@ router.post("/", authenticate, async (req, res, next) => {
         where: { eventId_userId: { eventId: itemId, userId } },
       });
       if (alreadyRegistered) throw new AppError(400, "Anda sudah terdaftar di event ini.");
+
+      // Server-side expiry guard. The listing hides finished events and the UI
+      // disables the button, but neither is a control: a POST straight to this
+      // endpoint bypasses both. On 10 Aug 2026 two finished events were still
+      // sellable here for Rp 350.000 and Rp 150.000.
+      //
+      // 422 rather than 400: the request is well-formed, the resource simply
+      // cannot be bought any more. `EVENT_ENDED` is a stable code the client
+      // can branch on without string-matching the message.
+      if (isEventEnded(event)) {
+        throw new AppError(422, "Event ini sudah selesai dan tidak menerima pendaftaran baru.", "EVENT_ENDED");
+      }
 
       if (event.quota && event.totalSold >= event.quota) {
         throw new AppError(400, "Kapasitas event sudah penuh.");

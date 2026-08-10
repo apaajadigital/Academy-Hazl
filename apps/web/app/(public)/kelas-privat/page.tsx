@@ -12,10 +12,14 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { waLink } from "@/lib/config";
+import { waLink, CONTACT_FALLBACK_HREF } from "@/lib/config";
+
+const waLinkOrContact = (text: string): string => waLink(text) ?? CONTACT_FALLBACK_HREF;
 import { API_BASE as API } from "@/lib/api/base";
 
-const WA_CONSULT_HREF = waLink("Halo, saya ingin bertanya tentang Private Class");
+// Falls back to /contact when WhatsApp is unconfigured — a consult CTA
+// that goes nowhere is worse than one that goes to the contact form.
+const WA_CONSULT_HREF = waLinkOrContact("Halo, saya ingin bertanya tentang Private Class");
 
 // ─── Types (defensive — backend contract is being built in parallel) ──────────
 

@@ -1,8 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MessageCircle, Clock, ArrowUpRight } from "lucide-react";
-import { waLink, WA_NUMBER_DISPLAY } from "@/lib/config";
+import { waLink, WA_NUMBER_DISPLAY, CONTACT_FALLBACK_HREF } from "@/lib/config";
 import { features } from "@/lib/features";
+
+// Resolved once at module scope: waLink() reads a build-time inlined constant,
+// so the answer cannot change between renders.
+const waHref = waLink();
 
 const footerLinks = {
   Belajar: [
@@ -88,16 +92,28 @@ export function Footer() {
               ))}
             </div>
 
-            {/* WhatsApp CTA button */}
-            <a
-              href={waLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm w-fit"
-            >
-              <MessageCircle size={16} aria-hidden="true" />
-              Chat via WhatsApp
-            </a>
+            {/* WhatsApp CTA — hidden entirely when no number is configured.
+                A dead wa.me link is worse than no button: it looks like a
+                working channel and silently drops the enquiry. */}
+            {waHref ? (
+              <a
+                href={waHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm w-fit"
+              >
+                <MessageCircle size={16} aria-hidden="true" />
+                Chat via WhatsApp
+              </a>
+            ) : (
+              <Link
+                href={CONTACT_FALLBACK_HREF}
+                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm w-fit"
+              >
+                <MessageCircle size={16} aria-hidden="true" />
+                Hubungi Kami
+              </Link>
+            )}
           </div>
 
           {/* Link columns */}
@@ -127,28 +143,32 @@ export function Footer() {
               Kontak
             </h4>
             <ul className="space-y-2.5">
-              <li>
-                <a
-                  href={waLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors group"
-                >
-                  <MessageCircle size={15} aria-hidden="true" className="text-accent-cyan-strong" />
-                  WhatsApp
-                  <ArrowUpRight size={13} aria-hidden="true" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href={waLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors"
-                >
-                  {WA_NUMBER_DISPLAY}
-                </a>
-              </li>
+              {waHref && (
+                <li>
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors group"
+                  >
+                    <MessageCircle size={15} aria-hidden="true" className="text-accent-cyan-strong" />
+                    WhatsApp
+                    <ArrowUpRight size={13} aria-hidden="true" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </a>
+                </li>
+              )}
+              {waHref && WA_NUMBER_DISPLAY && (
+                <li>
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors"
+                  >
+                    {WA_NUMBER_DISPLAY}
+                  </a>
+                </li>
+              )}
               <li className="flex items-center gap-1.5 text-sm text-text-muted">
                 <Clock size={15} aria-hidden="true" />
                 Sen–Jum, 09.00–17.00 WIB

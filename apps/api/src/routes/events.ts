@@ -34,6 +34,13 @@ const listQuerySchema = z.object({
     .string()
     .optional()
     .transform((v) => v === "true"),
+  // Archive opt-in. Same presence-style convention as `featured`: only the
+  // literal "true" flips it, so an absent or malformed value keeps the safe
+  // default of showing upcoming events only.
+  past: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
 });
 
 const adminListQuerySchema = z.object({

@@ -212,6 +212,25 @@ export default function EventDetailClient() {
   const isRegistered = registration !== null || justRegistered;
   const eventStarted = countdown?.started === true;
 
+  // Mirrors the server contract in eventService.isEventEnded EXACTLY:
+  //
+  //     active / upcoming  ⇔  eventEnd  >  now
+  //     ended              ⇔  eventEnd <=  now
+  //
+  // `<=` and not `<`: if this page were one instant more permissive than the
+  // API, the button would still be enabled for an event the server has already
+  // closed, and the visitor would meet a 422 only after clicking. Keep the two
+  // comparisons identical — if one changes, change both.
+  //
+  // Both sides compare absolute instants (Date.getTime() is UTC-based), so a
+  // visitor in WIB and an API in UTC reach the same verdict.
+  //
+  // The detail page deliberately stays reachable (200) for history and SEO —
+  // only the purchase path closes.
+  const isEnded =
+    event !== null &&
+    new Date((event.endDate ?? event.startDate) as string).getTime() <= Date.now();
+
   return (
     <div style={{ background: "var(--surface-page)", minHeight: "100vh" }}>
 
@@ -394,6 +413,23 @@ export default function EventDetailClient() {
                 </div>
               )}
 
+              {/* Finished-event notice. Shown above the CTA so the state is
+                  read before the disabled button is reached, rather than the
+                  visitor discovering it by clicking. */}
+              {isEnded && (
+                <div
+                  role="status"
+                  className="mb-4 rounded-xl p-3 text-sm"
+                  style={{ background: "rgba(107,114,128,0.08)", border: "1px solid rgba(107,114,128,0.25)", color: "var(--text-secondary)" }}
+                >
+                  <strong>Event telah selesai.</strong> Pendaftaran sudah ditutup. Lihat{" "}
+                  <Link href="/event" style={{ textDecoration: "underline" }}>
+                    event mendatang
+                  </Link>
+                  .
+                </div>
+              )}
+
               {/* CTA */}
               {isRegistered ? (
                 <div className="text-center">
@@ -415,9 +451,10 @@ export default function EventDetailClient() {
                 <button
                   id="event-register-btn"
                   onClick={handleRegister}
-                  disabled={isFull || registerLoading}
+                  disabled={isEnded || isFull || registerLoading}
+                  aria-disabled={isEnded || isFull || registerLoading}
                   className="btn btn-primary btn-lg w-full justify-center"
-                  style={{ opacity: isFull || registerLoading ? 0.6 : 1 }}
+                  style={{ opacity: isEnded || isFull || registerLoading ? 0.6 : 1 }}
                 >
                   {registerLoading ? (
                     <>
@@ -425,7 +462,8 @@ export default function EventDetailClient() {
                         style={{ borderColor: "var(--text-on-accent)", borderTopColor: "transparent" }} />
                       Memproses...
                     </>
-                  ) : isFull ? "Kapasitas Penuh"
+                  ) : isEnded ? "Event Telah Selesai"
+                    : isFull ? "Kapasitas Penuh"
                     : displayPrice === 0 ? "Daftar Gratis"
                     : "Beli Tiket"}
                 </button>

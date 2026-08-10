@@ -3,8 +3,10 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { List, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui";
-import { waLink } from "@/lib/config";
+import { waLink, CONTACT_FALLBACK_HREF } from "@/lib/config";
 import FaqAccordion from "./FaqAccordion";
+
+const waHref = waLink();
 
 export const metadata: Metadata = {
   title: "FAQ — Pertanyaan Umum",
@@ -165,15 +167,27 @@ export default function FaqPage() {
                 <div className="bg-brand-gradient rounded-2xl p-6 text-white shadow-e2">
                   <p className="mb-1 text-sm opacity-90">Butuh bantuan lebih lanjut?</p>
                   <h3 className="font-display text-lg font-bold">Hubungi Tim Support</h3>
-                  <a
-                    href={waLink()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-accent-cyan-strong transition-opacity hover:opacity-90"
-                  >
-                    <MessageCircle size={16} aria-hidden="true" />
-                    WhatsApp Kami
-                  </a>
+                  {/* Falls back to the contact page when WhatsApp is not
+                      configured, so the support card still leads somewhere. */}
+                  {waHref ? (
+                    <a
+                      href={waHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-accent-cyan-strong transition-opacity hover:opacity-90"
+                    >
+                      <MessageCircle size={16} aria-hidden="true" />
+                      WhatsApp Kami
+                    </a>
+                  ) : (
+                    <a
+                      href={CONTACT_FALLBACK_HREF}
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-accent-cyan-strong transition-opacity hover:opacity-90"
+                    >
+                      <MessageCircle size={16} aria-hidden="true" />
+                      Hubungi Kami
+                    </a>
+                  )}
                 </div>
               </div>
             </aside>

@@ -34,10 +34,18 @@ export const features = {
   community: on(process.env.NEXT_PUBLIC_FEATURE_COMMUNITY),
   gamification: on(process.env.NEXT_PUBLIC_FEATURE_GAMIFICATION),
 
-  // Mentor pages (/mentor, /mentor/[slug]) — owner decision 4 Aug 2026: keep
-  // the mentor listing visible even though the roster data is still placeholder.
-  // Set NEXT_PUBLIC_FEATURE_MENTOR=false to hide again if needed.
-  mentor: process.env.NEXT_PUBLIC_FEATURE_MENTOR === "false" ? false : true,
+  // Mentor pages (/mentor, /mentor/[slug]). Owner decision 6 Aug 2026 REVERSES
+  // the 4 Aug decision that kept the listing visible: the roster is still
+  // placeholder, and on 10 Aug the production sitemap was found advertising
+  // /mentor plus seven fictional profiles to search engines — fictional people
+  // attributed to real companies. Back to default-OFF until real, consented
+  // mentors exist.
+  //
+  // This used to invert the convention (`=== "false" ? false : true`), which
+  // made an unset or empty variable mean ON — the opposite of every other flag
+  // here. Using the shared `on()` helper restores one rule for all flags:
+  // nothing is public unless something explicitly says "true".
+  mentor: on(process.env.NEXT_PUBLIC_FEATURE_MENTOR),
 
   // Alumni stories page (/alumni) — approved alumni testimonials. OFF until
   // the testimonials endpoint ships with real, consented stories (BL-28).

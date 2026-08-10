@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { getValidToken } from "@/lib/auth/token";
-import { WA_NUMBER } from "@/lib/config";
+import { WA_NUMBER, CONTACT_FALLBACK_HREF } from "@/lib/config";
 
 // ─── Private Class order data (present only for paid private-class items) ─────
 // Older API responses may omit `privateClass` entirely — everything is optional.
@@ -240,11 +240,17 @@ function SuccessContent() {
 
   // Private Class onboarding data (first private-class item on the order).
   const pc = pcItems[0]?.privateClass ?? null;
-  const pcAdminHref = `https://wa.me/${toWaDigits(pc?.onboardingContact) ?? WA_NUMBER}?text=${encodeURIComponent(
-    `Halo Admin, saya baru saja menyelesaikan pembayaran Private Class${
-      orderId ? ` (Order ${orderId.slice(0, 8).toUpperCase()})` : ""
-    }. Mohon konfirmasi & info langkah selanjutnya. Terima kasih!`,
-  )}`;
+  // Per-class onboarding contact wins; the site-wide number is the fallback.
+  // When NEITHER exists this is null and the CTA is not rendered — a
+  // just-paid customer must never be handed a wa.me link with no number.
+  const pcAdminNumber = toWaDigits(pc?.onboardingContact) ?? WA_NUMBER;
+  const pcAdminHref = pcAdminNumber
+    ? `https://wa.me/${pcAdminNumber}?text=${encodeURIComponent(
+        `Halo Admin, saya baru saja menyelesaikan pembayaran Private Class${
+          orderId ? ` (Order ${orderId.slice(0, 8).toUpperCase()})` : ""
+        }. Mohon konfirmasi & info langkah selanjutnya. Terima kasih!`,
+      )}`
+    : null;
   const pcGroupLink =
     pc?.waGroupLink && pc.waGroupLink.startsWith("http") ? pc.waGroupLink : null;
 
@@ -331,15 +337,25 @@ function SuccessContent() {
               </p>
             )}
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <a
-                id="success-pc-chat-admin-btn"
-                href={pcAdminHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary flex-1 justify-center"
-              >
-                Chat Admin Sekarang
-              </a>
+              {pcAdminHref ? (
+                <a
+                  id="success-pc-chat-admin-btn"
+                  href={pcAdminHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary flex-1 justify-center"
+                >
+                  Chat Admin Sekarang
+                </a>
+              ) : (
+                <Link
+                  id="success-pc-chat-admin-btn"
+                  href={CONTACT_FALLBACK_HREF}
+                  className="btn btn-primary flex-1 justify-center"
+                >
+                  Hubungi Admin
+                </Link>
+              )}
               {pcGroupLink && (
                 <a
                   id="success-pc-join-group-btn"

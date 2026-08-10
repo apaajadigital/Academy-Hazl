@@ -164,7 +164,13 @@ services:
         NEXT_PUBLIC_FEATURE_MENTOR: ${NEXT_PUBLIC_FEATURE_MENTOR:-}
         NEXT_PUBLIC_FEATURE_ALUMNI: ${NEXT_PUBLIC_FEATURE_ALUMNI:-}
         NEXT_PUBLIC_FEATURE_PORTFOLIO: ${NEXT_PUBLIC_FEATURE_PORTFOLIO:-}
-        NEXT_PUBLIC_WA_NUMBER: ${NEXT_PUBLIC_WA_NUMBER:-}
+        # Accepts either name. The host .env has historically defined WA_NUMBER
+        # while this build arg asked for NEXT_PUBLIC_WA_NUMBER, so the value
+        # resolved to "" and every wa.me link on the site shipped without a
+        # number (found in production 10 Aug 2026). No value is hard-coded here:
+        # when neither variable is set the number stays empty and lib/config.ts
+        # fails closed by hiding the WhatsApp CTAs.
+        NEXT_PUBLIC_WA_NUMBER: ${NEXT_PUBLIC_WA_NUMBER:-${WA_NUMBER:-}}
     restart: always
     depends_on:
       api:

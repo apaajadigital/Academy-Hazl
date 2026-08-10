@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Sparkles, ShieldCheck, Mail, User, Rocket, CheckCircle2 } from "lucide-react";
+import { submitWaitlist } from "@/lib/early-access/submit";
+
+// The countdown that used to live here was hard-coded to 12:45:30 and looped
+// back to 12:00:00 on reaching zero, so every visitor saw a deadline that never
+// arrived and never existed. Manufactured urgency is a dark pattern, and this
+// one was attached to a discount claim. Removed rather than reimplemented: when
+// there is a real deadline it must come from data/config, not a literal.
 
 export default function EarlyAccessPage() {
   const [email, setEmail] = useState("");
@@ -10,24 +17,6 @@ export default function EarlyAccessPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [timeLeft, setTimeLeft] = useState({ jam: 12, menit: 45, detik: 30 });
-
-  // Countdown timer logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.detik > 0) {
-          return { ...prev, detik: prev.detik - 1 };
-        } else if (prev.menit > 0) {
-          return { ...prev, menit: prev.menit - 1, detik: 59 };
-        } else if (prev.jam > 0) {
-          return { jam: prev.jam - 1, menit: 59, detik: 59 };
-        }
-        return { jam: 12, menit: 0, detik: 0 }; // Loop/reset
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,25 +28,13 @@ export default function EarlyAccessPage() {
     }
 
     setLoading(true);
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, source: "early-access-page" }),
-      });
-
-      if (res.ok || res.status === 201) {
-        setSubmitted(true);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error?.message ?? "Terjadi kesalahan. Silakan coba lagi.");
-      }
-    } catch {
-      // Fallback: mark as success to avoid drop-off if API is not ready
-      setSubmitted(true);
-    } finally {
-      setLoading(false);
-    }
+    // Only a successful response is a success — see lib/early-access/submit.ts
+    // for the "avoid drop-off" fallback this replaced. Name and email stay in
+    // the form so a retry costs the visitor nothing.
+    const result = await submitWaitlist({ name, email, source: "early-access-page" });
+    if (result.ok) setSubmitted(true);
+    else setError(result.message);
+    setLoading(false);
   }
 
   return (
@@ -83,26 +60,9 @@ export default function EarlyAccessPage() {
           </p>
         </header>
 
-        {/* Countdown Timer */}
-        <div className="ea-timer-box">
-          <p className="ea-timer-title">⏱️ Penawaran Spesial Berakhir Dalam:</p>
-          <div className="ea-timer-digits">
-            <div className="ea-time-item">
-              <span className="ea-time-val">{timeLeft.jam.toString().padStart(2, "0")}</span>
-              <span className="ea-time-lbl">Jam</span>
-            </div>
-            <span className="ea-timer-colon">:</span>
-            <div className="ea-time-item">
-              <span className="ea-time-val">{timeLeft.menit.toString().padStart(2, "0")}</span>
-              <span className="ea-time-lbl">Menit</span>
-            </div>
-            <span className="ea-timer-colon">:</span>
-            <div className="ea-time-item">
-              <span className="ea-time-val">{timeLeft.detik.toString().padStart(2, "0")}</span>
-              <span className="ea-time-lbl">Detik</span>
-            </div>
-          </div>
-        </div>
+        {/* Countdown removed — see the note at the top of this file. Restore it
+            only behind a real deadline supplied by data/config, and hide it once
+            that deadline passes. */}
 
         {/* Content Wrapper */}
         <div className="ea-content-grid">
@@ -197,7 +157,11 @@ export default function EarlyAccessPage() {
                     disabled={loading}
                     className="btn-primary w-full ea-submit-btn"
                   >
-                    {loading ? "Memproses..." : "Daftar Akses Awal →"}
+                    {loading
+                      ? "Memproses..."
+                      : error
+                        ? "Coba Lagi →"
+                        : "Daftar Akses Awal →"}
                   </button>
 
                   <p className="ea-privacy-note">
@@ -276,55 +240,6 @@ export default function EarlyAccessPage() {
           max-width: 600px;
           margin: 0 auto;
           line-height: 1.6;
-        }
-
-        /* Timer styles */
-        .ea-timer-box {
-          max-width: 320px;
-          margin: 0 auto 48px;
-          background: var(--surface-card, #FFFFFF);
-          border: 1px solid var(--border-default, #E5E5E5);
-          border-radius: 16px;
-          padding: 16px;
-          text-align: center;
-          box-shadow: var(--shadow-e1);
-        }
-        .ea-timer-title {
-          font-size: 11px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-muted, #6E6E73);
-          margin-bottom: 8px;
-        }
-        .ea-timer-digits {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-        }
-        .ea-time-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        .ea-time-val {
-          font-size: 24px;
-          font-weight: 800;
-          color: var(--brand-cyan-strong, #0077A8);
-          font-variant-numeric: tabular-nums;
-        }
-        .ea-time-lbl {
-          font-size: 9px;
-          text-transform: uppercase;
-          color: var(--text-muted, #6E6E73);
-          margin-top: 2px;
-        }
-        .ea-timer-colon {
-          font-size: 20px;
-          font-weight: 700;
-          color: var(--border-strong, #D2D2D7);
-          margin-top: -8px;
         }
 
         /* Content Grid */
