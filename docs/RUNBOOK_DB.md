@@ -131,16 +131,28 @@ pernah membandingkan dengan `schema.prisma`. Alasan lengkap ditulis di header fi
 sempat mendokumentasikan path yang salah; disamakan dengan kenyataan host per audit 6 Agu 2026.
 
 Otomatis via `scripts/backup.sh`: lock anti-overlap → pg_dump → gzip → **validasi berlapis**
-→ **atomic hard-link publish** → offsite terverifikasi → retensi 14 hari.
+→ **atomic hard-link publish** → offsite terverifikasi → retensi (sementara **30 hari**, §2.6).
+
+Jadwal: **02:15 waktu server, setiap hari.** Script **wajib** dipanggil lewat `/bin/bash <path>`
+— bukan by path saja — supaya baris cron kebal bila exec bit hilang lagi (§2).
+
+**Cron dan logrotate adalah dua artefak independen.** Pasang masing-masing dengan gate-nya
+sendiri; jangan disatukan dalam satu skrip instalasi. Pelajaran 10 Agu 2026: validasi logrotate
+yang gagal ikut memblokir instalasi cron yang sama sekali tidak bergantung padanya.
 
 ```bash
-# host, sekali (artefak repo, jangan ketik ulang):
-sudo cp deploy/jago-backup.cron      /etc/cron.d/jago-backup
-sudo cp deploy/jago-backup.logrotate /etc/logrotate.d/jago-backup
+# host — artefak repo, jangan ketik ulang. Dua langkah TERPISAH:
+sudo cp deploy/jago-backup.cron      /etc/cron.d/jago-backup       # langkah 1
+sudo cp deploy/jago-backup.logrotate /etc/logrotate.d/jago-backup  # langkah 2, §2.6
 # R2: rclone config → remote "r2" (S3-compatible, endpoint akun Cloudflare)
 ```
 
 Manual sebelum migrate: `COMPOSE_DIR=/var/www/jago-akademi /bin/bash ./scripts/backup.sh`
+
+> 🖐️ **Fase kerja lokal tidak pernah menjalankan backup atau restore produksi.** Perubahan
+> konfigurasi disiapkan dan diuji di repo canonical, lalu dipindahkan lewat bundle. Menjalankan
+> `backup.sh`/`restore.sh` terhadap produksi selalu tindakan host tersendiri yang butuh
+> persetujuan owner.
 
 ### 2.1 Exit code — kontrak, dipakai alerting
 
@@ -260,6 +272,43 @@ tahun 2000 yang wajib dipangkas. Memeriksa exit code saja tak bisa membedakan "r
 berjalan" dari "retensi dilewati"; marker itu bisa. `restore.sh` juga divalidasi di sini,
 tetapi **secara terisolasi dengan `docker` palsu** — itu menguji ambang dan pemilihan
 database sasaran, **bukan** restore sungguhan.
+
+### 2.6 Retensi sementara 30 hari, dan gate logrotate
+
+**Retensi host di-override menjadi 30 hari.** Default script tetap 14; baris cron menyetel
+`RETENTION_DAYS=30`. Alasannya tunggal: `rclone` belum terpasang, sehingga **seluruh backup
+masih berada di disk yang sama dengan database yang dilindunginya**. Selama itu benar,
+kedalaman riwayat lokal adalah satu-satunya jaring pemulihan yang ada, dan memangkasnya di
+hari ke-14 justru mempersempit satu-satunya hal yang tersisa.
+
+**Jangan menurunkan kembali ke 14 hari sebelum ketiganya benar:**
+
+1. upload offsite berhasil;
+2. objek yang diunggah **terbaca ulang** dan **ukurannya cocok** (`OFFSITE_OK`);
+3. restore drill ke database disposable **disetujui dan lulus**.
+
+Sampai itu tercapai, run berakhir `RESULT=DEGRADED` **exit 10**. Itu hasil yang benar, bukan
+kegagalan: backup lokal valid, tertulis, dan dipertahankan — hanya salinan luar-host yang
+belum ada. **Ketiadaan `rclone` bukan kegagalan backup lokal; yang belum lengkap adalah
+disaster recovery.** `RESULT=FAIL` exit 1 tetap disediakan khusus untuk "tidak ada backup yang
+bisa dipakai sama sekali" (kontrak lengkap di §2.1).
+
+**Validasi kandidat logrotate secara standalone, sebelum dipasang:**
+
+```bash
+logrotate -d /path/ke/kandidat        # -d = debug, TIDAK merotasi apa pun
+# harus: exit 0, tanpa baris `error:`, tanpa `skipping`,
+#        memuat "rotating pattern: /var/log/jago-backup.log weekly (12 rotations)"
+```
+
+Karena itulah stanza memuat **`su root adm` eksplisit**. `/var/log` di host ini `root:syslog`
+mode `0775` — group-writable oleh grup selain root — sehingga logrotate menolak merotasi
+apa pun di bawahnya kecuali ada directive `su`. Nilainya **sengaja sama persis** dengan yang
+sudah diwarisi dari `/etc/logrotate.conf` (`su root adm`, dipasang sebelum
+`include /etc/logrotate.d`), jadi tidak ada perubahan perilaku saat runtime — yang berubah
+hanya: file kini dapat divalidasi sendirian, dan tidak lagi bergantung pada setelan global
+yang tak terlihat dari isinya. Empat config `logrotate.d` milik host ini melakukan hal yang
+sama. `create 0640 root adm` dipertahankan dan konsisten dengan grup tersebut.
 
 ## 3. 🖐️ Restore drill — manual & terkontrol
 
