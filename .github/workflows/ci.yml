@@ -43,6 +43,20 @@ jobs:
       - name: Test (with coverage + threshold gate)
         run: npm run --workspace api test:coverage
 
+      # apps/web had no unit-test runner until Wave 1, so this job only ever ran
+      # the API suite — the web workspace was invisible to CI even after tests
+      # existed. That is how an empty-string feature flag and an empty WhatsApp
+      # number reached production unnoticed.
+      #
+      # Deliberately the workspace script rather than root `npm test`: the root
+      # script is `turbo run test`, which would re-run the entire API suite a
+      # second time (without the coverage gate) for no added signal.
+      #
+      # `npm run` propagates vitest's exit code, so a failing web test fails the
+      # job — proven by an intentional-failure run before this step was added.
+      - name: Web unit tests
+        run: npm run test --workspace web
+
       # Dependency audit (SSOT §9.7). Blocking threshold is CRITICAL only:
       # the 6 known HIGH advisories are an explicitly accepted, monitored risk
       # (BL-15, docs/SECURITY_CHECKLIST.md — do NOT `npm audit fix --force`).

@@ -20,7 +20,13 @@ const ROUTES = [
   { name: "level1-digital-marketing", path: "/e-course/digital-marketing" },
   { name: "level2-marketing-management", path: "/e-course/digital-marketing/marketing-management" },
   { name: "level3-marketing-intro", path: "/e-course/digital-marketing/marketing-management/marketing-introduction" },
-  { name: "mentor-ahmad-fauzi", path: "/mentor/ahmad-fauzi" },
+  // "mentor-ahmad-fauzi" removed: the Mentor feature is OFF by owner decision
+  // C-2, so the page cannot render and there is nothing to photograph. Keeping
+  // it would also mean the repository carried rendered portraits of a fictional
+  // person attributed to a real company (BL-114) — the exact artefact the
+  // decision exists to stop shipping. Its stale .png baselines are deleted in
+  // the same change; the route is covered by the behavioural assertion below
+  // instead. Every other route keeps its visual coverage untouched.
 ] as const;
 
 for (const route of ROUTES) {
@@ -47,3 +53,14 @@ for (const route of ROUTES) {
     });
   }
 }
+
+/**
+ * Replaces the removed `mentor-ahmad-fauzi` snapshot. A visual baseline can only
+ * assert "this page still looks like it did"; what matters for a gated route is
+ * that it does not render at all. This is the behavioural equivalent, and it
+ * fails loudly if the flag ever flips back on unnoticed.
+ */
+test("mentor profile is feature-disabled, not photographed", async ({ page }) => {
+  const res = await page.goto("/mentor/ahmad-fauzi");
+  expect(res?.status()).toBe(404);
+});

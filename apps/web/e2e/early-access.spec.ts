@@ -16,6 +16,16 @@ import { test, expect } from "@playwright/test";
 const PAGE = "/early-access";
 const SUCCESS_TEXT = /Pendaftaran Berhasil/i;
 
+/**
+ * The form's error banner, disambiguated from Next.js's built-in route
+ * announcer — which also carries role="alert" but is always empty. Plain
+ * getByRole("alert") matches both and trips Playwright strict mode, so filter
+ * to the alert that actually says something.
+ */
+function errorBanner(page: import("@playwright/test").Page) {
+  return page.getByRole("alert").filter({ hasText: /\S/ });
+}
+
 async function fillAndSubmit(page: import("@playwright/test").Page) {
   await page.getByLabel(/nama/i).fill("Uji Coba");
   await page.getByLabel(/email/i).fill("uji@example.com");
@@ -37,7 +47,7 @@ test.describe("Early Access — submit states", () => {
     await page.goto(PAGE);
     await fillAndSubmit(page);
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(errorBanner(page)).toBeVisible();
     await expect(page.getByText(/belum tersimpan/i)).toBeVisible();
     await expect(page.getByText(SUCCESS_TEXT)).toHaveCount(0);
   });
@@ -53,7 +63,7 @@ test.describe("Early Access — submit states", () => {
     await page.goto(PAGE);
     await fillAndSubmit(page);
 
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(errorBanner(page)).toBeVisible();
     await expect(page.getByText(/Email sudah terdaftar/i)).toBeVisible();
     await expect(page.getByText(SUCCESS_TEXT)).toHaveCount(0);
   });
@@ -68,7 +78,11 @@ test.describe("Early Access — submit states", () => {
     await page.goto(PAGE);
     await fillAndSubmit(page);
 
-    await expect(page.getByRole("alert")).toBeVisible({ timeout: 15000 });
+    // Wait on the message itself, not on any alert: the request is still in
+    // flight for ~5s and the button correctly reads "Memproses..." until it
+    // settles. Asserting the retry button before this point was the bug — the
+    // product was behaving properly all along.
+    await expect(page.getByText(/belum tersimpan/i)).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(SUCCESS_TEXT)).toHaveCount(0);
     // The visitor must not have to retype anything to retry.
     await expect(page.getByLabel(/nama/i)).toHaveValue("Uji Coba");

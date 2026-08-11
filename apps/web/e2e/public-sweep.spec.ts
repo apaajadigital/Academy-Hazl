@@ -26,12 +26,25 @@ type PageDef = {
   name: string;
   /** Whether the (public) layout Navbar is expected on this route. */
   hasNavbar: boolean;
+  /**
+   * Extra time budget for THIS route only, for the `next dev` cold compile —
+   * not a relaxation of what the test asserts. Set it only where the first hit
+   * on a cold `.next` genuinely cannot finish inside the default per-test
+   * budget; every assertion below stays exactly as strict.
+   */
+  coldCompileSlow?: boolean;
 };
 
 const PAGES: PageDef[] = [
   { path: "/", name: "Homepage", hasNavbar: true },
   { path: "/e-course", name: "E-Course listing", hasNavbar: true },
-  { path: "/event", name: "Event listing", hasNavbar: true },
+  // /event is a server component that, on its first hit against a cold `.next`,
+  // must be compiled AND must complete its server-side listEvents() call before
+  // any HTML reaches the browser. On 11 Aug 2026 that exceeded the default
+  // per-test budget on the desktop viewport (which hits the route first) while
+  // the identical mobile test passed moments later on the warm route — proof
+  // the page itself is fine. Only this entry gets the extra budget.
+  { path: "/event", name: "Event listing", hasNavbar: true, coldCompileSlow: true },
   { path: "/ebook", name: "E-Book listing", hasNavbar: true },
   { path: "/kelas-gratis", name: "Kelas Gratis", hasNavbar: true },
   { path: "/blog", name: "Blog listing", hasNavbar: true },
@@ -47,7 +60,10 @@ const PAGES: PageDef[] = [
   // homepage CategoryGrid but had zero sweep coverage — a route reachable from
   // global chrome must be swept, otherwise a crash there ships unnoticed.
   { path: "/marketplace", name: "Marketplace Materi", hasNavbar: true },
-  { path: "/mentor", name: "Mentor listing", hasNavbar: true },
+  // /mentor deliberately absent from this list: every entry here is asserted to
+  // return response.ok(), and the Mentor feature is OFF by owner decision C-2
+  // (fictional roster). Its contract moved from "must render" to "must 404" and
+  // is asserted at the bottom of this file plus in e2e/mentor-disabled.spec.ts.
   { path: "/clients", name: "LMS Perusahaan", hasNavbar: true },
   { path: "/trainer-program", name: "Trainer Program", hasNavbar: true },
   { path: "/berlangganan", name: "Berlangganan", hasNavbar: true },
@@ -118,6 +134,10 @@ for (const vp of VIEWPORTS) {
 
     for (const pg of PAGES) {
       test(`${pg.name} (${pg.path}) renders cleanly`, async ({ page }) => {
+        // Cold-compile budget for flagged routes only — see PageDef.coldCompileSlow.
+        // Nothing below changes: same assertions, same order, same expectations.
+        if (pg.coldCompileSlow) test.slow();
+
         const consoleErrors = await setupHermeticPage(page);
 
         // 1. Document request succeeds.
@@ -189,3 +209,19 @@ for (const vp of VIEWPORTS) {
     }
   });
 }
+
+/**
+ * Flag-gated routes: the sweep above proves what MUST render; this proves what
+ * must NOT. /mentor used to sit in PAGES expecting HTTP 200 — that expectation
+ * contradicted owner decision C-2 (fictional roster stays hidden), so it is
+ * inverted here rather than dropped. Losing the assertion entirely would let the
+ * route quietly come back.
+ */
+test.describe("Gated routes stay closed", () => {
+  for (const path of ["/mentor", "/mentor/ahmad-fauzi"]) {
+    test(`${path} returns 404 while the Mentor flag is OFF`, async ({ page }) => {
+      const res = await page.goto(path);
+      expect(res?.status(), `${path} must not be publicly reachable`).toBe(404);
+    });
+  }
+});
