@@ -3,8 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { API_BASE as API } from "@/lib/api/base";
-import { getValidToken } from "@/lib/auth/token";
+import { getApiBase } from "@/lib/api/base";
+import { getToken, getValidToken } from "@/lib/auth/token";
 
 const NAV = [
   { label: "Dashboard", href: "", icon: "📊" },
@@ -42,33 +42,84 @@ export default function LmsAdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
 
-    async function authorise() {
-      const token = await getValidToken();
-      if (!token) { router.replace("/masuk"); return; }
+    /**
+     * Every way this can end, named. They collapse into three destinations, but
+     * keeping them distinct is what stopped the last regression being invisible:
+     * "blocked" and "signed-out" both redirect to /masuk, so when the request
+     * was being refused before it left the browser, the result looked exactly
+     * like a correct sign-out check.
+     */
+    type Outcome =
+      | { to: "/masuk"; why: "no-token" | "refresh-failed" | "unreachable" | "rejected" | "unreadable" }
+      | { to: "dashboard"; why: "not-a-member" }
+      | { to: "portal"; why: "member-not-admin" }
+      | { to: "console"; why: "tenant-admin" };
 
-      const res = await fetch(`${API}/api/lms/portal/me`, {
+    async function decide(): Promise<Outcome> {
+      // Split on purpose: no token at all is a different fact from a token that
+      // existed and could not be refreshed, even though both mean "sign in".
+      if (!getToken()) return { to: "/masuk", why: "no-token" };
+      const token = await getValidToken();
+      if (!token) return { to: "/masuk", why: "refresh-failed" };
+
+      /**
+       * Same-origin, via getApiBase().
+       *
+       * This used to read `${API_BASE}/api/lms/portal/me`. With
+       * NEXT_PUBLIC_API_URL unset, API_BASE is the literal
+       * "http://localhost:4000", which the production CSP
+       * (`connect-src 'self' https:` — next.config.js) refuses outright. The
+       * fetch rejected before leaving the renderer, this landed on
+       * `unreachable`, and every legitimate tenant admin was sent to /masuk.
+       * getApiBase() returns "" in the browser, so the request goes to the
+       * Next /api/* proxy on the page's own origin — the same call
+       * dashboard/layout.tsx already makes against this very endpoint.
+       */
+      const res = await fetch(`${getApiBase()}/api/lms/portal/me`, {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => null);
-      if (cancelled) return;
-
-      if (!res || !res.ok) { router.replace("/masuk"); return; }
+      if (!res) return { to: "/masuk", why: "unreachable" };
+      if (!res.ok) return { to: "/masuk", why: "rejected" };
 
       const body = await res.json().catch(() => null);
-      if (cancelled) return;
+      if (!body?.success || !Array.isArray(body.data)) {
+        return { to: "/masuk", why: "unreadable" };
+      }
 
-      const tenants: Array<{ slug: string; isAdmin?: boolean }> =
-        body?.success && Array.isArray(body.data) ? body.data : [];
+      const tenants = body.data as Array<{ slug: string; isAdmin?: boolean }>;
       const tenant = tenants.find((t) => t.slug === tenantSlug);
 
       // Not a member of this tenant at all — send them somewhere that belongs
       // to them. Their own dashboard, never another tenant's console.
-      if (!tenant) { router.replace("/dashboard"); return; }
+      if (!tenant) return { to: "dashboard", why: "not-a-member" };
 
       // A member but not an admin: the participant portal is the correct home,
       // and it is a different route, so this cannot bounce back here.
-      if (tenant.isAdmin !== true) { router.replace(`/lms/${tenantSlug}`); return; }
+      if (tenant.isAdmin !== true) return { to: "portal", why: "member-not-admin" };
 
-      setReady(true);
+      return { to: "console", why: "tenant-admin" };
+    }
+
+    async function authorise() {
+      const outcome = await decide();
+      // One check, immediately before the only state write and the only
+      // navigation — nothing can land after unmount.
+      if (cancelled) return;
+
+      switch (outcome.to) {
+        case "/masuk":
+          router.replace("/masuk");
+          return;
+        case "dashboard":
+          router.replace("/dashboard");
+          return;
+        case "portal":
+          router.replace(`/lms/${tenantSlug}`);
+          return;
+        case "console":
+          setReady(true);
+          return;
+      }
     }
 
     void authorise();
@@ -76,10 +127,16 @@ export default function LmsAdminLayout({ children }: { children: ReactNode }) {
   }, [router, tenantSlug]);
 
   useEffect(() => {
-    fetch(`${API}/api/lms/public/${tenantSlug}`, { cache: "force-cache" })
+    let cancelled = false;
+    // Same-origin for the same CSP reason as the authorisation call above. This
+    // one fails silently by design — a missing display name falls back to the
+    // slug — which is exactly why it went unnoticed that it was being blocked
+    // in every production build.
+    fetch(`${getApiBase()}/api/lms/public/${tenantSlug}`, { cache: "force-cache" })
       .then((r) => r.json())
-      .then((d) => { if (d.data?.name) setTenantName(d.data.name); })
+      .then((d) => { if (!cancelled && d.data?.name) setTenantName(d.data.name); })
       .catch(() => {});
+    return () => { cancelled = true; };
   }, [tenantSlug]);
 
   const base = `/lms/${tenantSlug}/admin`;
