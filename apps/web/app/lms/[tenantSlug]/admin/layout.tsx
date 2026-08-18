@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_BASE as API } from "@/lib/api/base";
+import { getValidToken } from "@/lib/auth/token";
 
 const NAV = [
   { label: "Dashboard", href: "", icon: "📊" },
@@ -16,8 +17,63 @@ const NAV = [
 export default function LmsAdminLayout({ children }: { children: ReactNode }) {
   const { tenantSlug } = useParams<{ tenantSlug: string }>();
   const pathname = usePathname();
+  const router = useRouter();
   const [tenantName, setTenantName] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  /**
+   * This shell had NO guard at all: it painted "LMS ADMIN", the tenant name and
+   * the whole console navigation — Batch & Peserta, Course Builder, Laporan,
+   * Pengaturan — to anyone who typed the URL. Measured with empty storage: the
+   * chrome was on screen from 168ms to 632ms.
+   *
+   * The five pages underneath each call getValidToken() and bounce to /masuk on
+   * their own, so tenant DATA was never exposed. What leaked was the shape of
+   * another organisation's admin console, plus confirmation that a given tenant
+   * slug exists. Gating here closes both, and makes this shell agree with
+   * admin/layout.tsx and trainer-hub/layout.tsx.
+   *
+   * Authorisation reuses what already exists: /api/lms/portal/me returns every
+   * tenant the caller can reach with `isAdmin` per tenant — the same endpoint
+   * the member dashboard uses to decide whether to show the console link. No
+   * new auth system, no duplicated token handling.
+   */
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function authorise() {
+      const token = await getValidToken();
+      if (!token) { router.replace("/masuk"); return; }
+
+      const res = await fetch(`${API}/api/lms/portal/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null);
+      if (cancelled) return;
+
+      if (!res || !res.ok) { router.replace("/masuk"); return; }
+
+      const body = await res.json().catch(() => null);
+      if (cancelled) return;
+
+      const tenants: Array<{ slug: string; isAdmin?: boolean }> =
+        body?.success && Array.isArray(body.data) ? body.data : [];
+      const tenant = tenants.find((t) => t.slug === tenantSlug);
+
+      // Not a member of this tenant at all — send them somewhere that belongs
+      // to them. Their own dashboard, never another tenant's console.
+      if (!tenant) { router.replace("/dashboard"); return; }
+
+      // A member but not an admin: the participant portal is the correct home,
+      // and it is a different route, so this cannot bounce back here.
+      if (tenant.isAdmin !== true) { router.replace(`/lms/${tenantSlug}`); return; }
+
+      setReady(true);
+    }
+
+    void authorise();
+    return () => { cancelled = true; };
+  }, [router, tenantSlug]);
 
   useEffect(() => {
     fetch(`${API}/api/lms/public/${tenantSlug}`, { cache: "force-cache" })
@@ -32,6 +88,20 @@ export default function LmsAdminLayout({ children }: { children: ReactNode }) {
     const full = base + href;
     if (href === "") return pathname === base || pathname === `${base}/`;
     return pathname.startsWith(full);
+  }
+
+  // Gate before ANY console markup, including the tenant name — that alone
+  // would confirm the slug exists to an unauthenticated visitor.
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7]">
+        <span
+          aria-label="Memuat"
+          role="status"
+          className="h-9 w-9 animate-spin rounded-full border-[3px] border-[#0077A8] border-t-transparent"
+        />
+      </div>
+    );
   }
 
   const sidebar = (
