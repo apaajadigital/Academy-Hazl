@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -15,7 +15,7 @@ import {
 import { waLink, CONTACT_FALLBACK_HREF } from "@/lib/config";
 
 const waLinkOrContact = (text: string): string => waLink(text) ?? CONTACT_FALLBACK_HREF;
-import { API_BASE as API } from "@/lib/api/base";
+import { fetchList, resolveListState, type ListState } from "@/lib/api/listResource";
 
 // Falls back to /contact when WhatsApp is unconfigured — a consult CTA
 // that goes nowhere is worse than one that goes to the contact form.
@@ -210,41 +210,33 @@ function PackageCard({ course, featured }: { course: ApiCourse; featured: boolea
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function KelasPrivatPage() {
-  // null = loading; [] = loaded-but-empty (or fetch failed — degrade to the
-  // polite empty state, never a broken page).
-  const [courses, setCourses] = useState<ApiCourse[] | null>(null);
+  /**
+   * Four states, not a nullable array. Both envelope shapes (`data.data` and a
+   * bare array) are handled inside fetchList now — the nesting mismatch that
+   * once left this page permanently "empty" is a single tested code path rather
+   * than something each page re-derives.
+   */
+  const [state, setState] = useState<ListState<ApiCourse>>({ kind: "loading" });
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    fetch(`${API}/api/courses?format=private_class&limit=50`)
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: { data?: unknown } | unknown[] }) => {
-        // GET /api/courses nests the page under data.data
-        // ({ data, total, page, limit }). Testing Array.isArray(body.data) was
-        // therefore always false and the page permanently showed its empty
-        // state — latent only because the route is behind an OFF feature flag.
-        // Same read as ECourseCatalog / FreeCourseCatalog, incl. their tolerance
-        // for a flat array in case the envelope is ever un-nested.
-        const payload = body?.data;
-        const raw = Array.isArray(payload)
-          ? payload
-          : Array.isArray(payload?.data)
-            ? payload.data
-            : [];
-        const valid = body?.success
-          ? (raw as ApiCourse[]).filter((c) => Boolean(c && c.slug && c.title))
-          : [];
-        setCourses(valid);
-      })
-      .catch(() => setCourses([]));
+  const load = useCallback(() => {
+    const id = ++requestIdRef.current;
+    setState({ kind: "loading" });
+    void fetchList<ApiCourse>(
+      "/api/courses?format=private_class&limit=50",
+      (rows) => (rows as ApiCourse[]).filter((c) => Boolean(c && c.slug && c.title)),
+    ).then((result) => {
+      if (id !== requestIdRef.current) return; // superseded — drop it
+      setState(resolveListState(result));
+    });
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
   // "Paling Populer" badge on the middle/featured tier (needs ≥ 2 packages).
+  const shown = state.kind === "list" ? state.items : [];
   const featuredIndex =
-    courses && courses.length >= 3
-      ? Math.floor(courses.length / 2)
-      : courses && courses.length === 2
-        ? 1
-        : -1;
+    shown.length >= 3 ? Math.floor(shown.length / 2) : shown.length === 2 ? 1 : -1;
 
   return (
     <div className="pc-root">
@@ -288,7 +280,7 @@ export default function KelasPrivatPage() {
           hingga program dimulai.
         </p>
 
-        {courses === null ? (
+        {state.kind === "loading" ? (
           <div className="pc-plans-grid" aria-busy="true" aria-label="Memuat paket">
             {[0, 1, 2].map((i) => (
               <div key={i} className="pc-skeleton-card">
@@ -300,7 +292,23 @@ export default function KelasPrivatPage() {
               </div>
             ))}
           </div>
-        ) : courses.length === 0 ? (
+        ) : state.kind === "error" ? (
+          /* "Paket sedang disiapkan" would be a claim about our catalogue. We
+             do not have one to make — we could not reach it. */
+          <div className="pc-empty" role="alert">
+            <div className="pc-empty-icon" aria-hidden="true">
+              ⚠️
+            </div>
+            <h3 className="pc-empty-title">Gagal memuat daftar paket</h3>
+            <p className="pc-empty-desc">
+              Koneksi ke server sedang bermasalah, jadi daftar paket belum bisa
+              ditampilkan. Coba muat ulang, atau hubungi kami langsung.
+            </p>
+            <button type="button" onClick={load} className="pc-btn-primary">
+              Muat Ulang
+            </button>
+          </div>
+        ) : state.kind === "empty" ? (
           <div className="pc-empty">
             <div className="pc-empty-icon" aria-hidden="true">
               🛠️
@@ -322,7 +330,7 @@ export default function KelasPrivatPage() {
           </div>
         ) : (
           <div className="pc-plans-grid">
-            {courses.map((course, idx) => (
+            {shown.map((course, idx) => (
               <PackageCard key={course.id ?? course.slug} course={course} featured={idx === featuredIndex} />
             ))}
           </div>
