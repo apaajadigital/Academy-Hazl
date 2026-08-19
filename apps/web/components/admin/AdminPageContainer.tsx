@@ -25,6 +25,13 @@ export function AdminPageContainer({
   ...props
 }: HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("dash-container flex flex-col gap-6 lg:gap-8", className)} {...props} />
+    <div
+      className={cn(
+        "dash-container",
+        "flex flex-col gap-6 lg:gap-8",
+        className,
+      )}
+      {...props}
+    />
   );
 }

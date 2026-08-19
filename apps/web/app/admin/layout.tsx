@@ -291,7 +291,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         /* Admin shell — token-driven (standardization Jul 2026). Shares the
            same color source of truth as the member & trainer shells. Content
            wrapper is vertical rhythm only; width/padding via .dash-container. */
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* NOTE: "padding: 0" was removed here (Aug 2026).
+           styled-jsx injects this block UNLAYERED, while Tailwind's utilities
+           live in a cascade layer — and an unlayered rule beats every layered
+           one regardless of specificity. The effect was measurable and total:
+           on every admin page the p-6 utility computed to 0px and
+           .dash-container lost its 16/24/32px inline padding, so cards sat
+           flush against their own borders and the console ran to the viewport
+           edge. Trainer and student have no such reset, which is why only
+           admin looked cramped. Tailwind preflight already zeroes padding
+           where it matters (lists, fieldset) from the base layer, where
+           utilities can still override it. The margin reset is kept, so this
+           changes spacing in one direction only. */
+        * { box-sizing: border-box; margin: 0; }
         body { font-family: var(--font-body); }
 
         .al-root {
