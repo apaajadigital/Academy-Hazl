@@ -47,6 +47,94 @@ function overlaps(a: { x: number; y: number; width: number; height: number }, b:
   );
 }
 
+/**
+ * Every way an element can be cut off that `scrollWidth` cannot see.
+ *
+ * `.al-main` is `overflow: hidden`. Anything wider than it is silently clipped
+ * while the document reports no scroll at all — which is exactly how the admin
+ * console shipped running flush to the viewport edge past a green suite. That
+ * defect was found by looking at a screenshot; this closes the gap so the next
+ * one is found by the test.
+ *
+ * A horizontally scrollable ancestor is allowed to clip: that is what a scroll
+ * container is for, and the content stays reachable.
+ */
+async function clippedElements(page: Page) {
+  return page.evaluate(() => {
+    const scope = document.querySelector(".al-content") ?? document.body;
+    const out: { el: string; by: string; overRight: number; overLeft: number; text: string }[] = [];
+    const label = (el: Element) =>
+      `${el.tagName.toLowerCase()}.${String(el.className).split(" ").filter(Boolean).slice(0, 2).join(".")}`;
+
+    scope.querySelectorAll("h1,h2,h3,button,a[href],p.tabular-nums,td,th,[role=alert]").forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return;
+      if (getComputedStyle(el).visibility === "hidden") return;
+
+      let p: Element | null = el.parentElement;
+      while (p && p !== document.documentElement) {
+        const cs = getComputedStyle(p);
+        const clips = /hidden|clip|auto|scroll/.test(cs.overflowX) || /hidden|clip|auto|scroll/.test(cs.overflowY);
+        if (clips) {
+          const scrollableX = /auto|scroll/.test(cs.overflowX) && p.scrollWidth > p.clientWidth + 1;
+          if (!scrollableX) {
+            const pr = p.getBoundingClientRect();
+            const overRight = Math.round(r.right - pr.right);
+            const overLeft = Math.round(pr.left - r.left);
+            if (overRight > 2 || overLeft > 2) {
+              out.push({
+                el: label(el), by: label(p),
+                overRight: Math.max(overRight, 0), overLeft: Math.max(overLeft, 0),
+                text: (el.textContent ?? "").trim().slice(0, 40),
+              });
+            }
+          }
+        }
+        p = p.parentElement;
+      }
+    });
+    return out;
+  });
+}
+
+/** Container geometry, plus where the sidebar actually ends. */
+async function frame(page: Page) {
+  return page.evaluate(() => {
+    const cont = document.querySelector(".dash-container");
+    const aside = document.querySelector("aside");
+    const cs = cont ? getComputedStyle(cont) : null;
+    const r = cont?.getBoundingClientRect();
+    const ar = aside?.getBoundingClientRect();
+    return {
+      found: !!cont,
+      padL: cs ? Math.round(parseFloat(cs.paddingLeft)) : -1,
+      padR: cs ? Math.round(parseFloat(cs.paddingRight)) : -1,
+      left: r ? Math.round(r.left) : -1,
+      right: r ? Math.round(r.right) : -1,
+      // A closed off-canvas drawer sits at a negative right edge; it occupies no
+      // space, so it must not count as an obstruction.
+      sidebarRight: ar && ar.right > 0 ? Math.round(ar.right) : 0,
+      innerWidth: window.innerWidth,
+    };
+  });
+}
+
+/** Only tables may scroll sideways. */
+async function nonTableScrollers(page: Page) {
+  return page.evaluate(() => {
+    const scope = document.querySelector(".al-content") ?? document.body;
+    const out: string[] = [];
+    scope.querySelectorAll("*").forEach((el) => {
+      if (el.scrollWidth > el.clientWidth + 1 && /auto|scroll/.test(getComputedStyle(el).overflowX)) {
+        if (!el.querySelector("table")) {
+          out.push(`${el.tagName.toLowerCase()}.${String(el.className).split(" ")[0]} +${el.scrollWidth - el.clientWidth}px`);
+        }
+      }
+    });
+    return out;
+  });
+}
+
 test.describe("Admin dashboard — layout contracts", () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!PRODUCTION_BUILD, NEEDS_PRODUCTION);
@@ -79,6 +167,30 @@ test.describe("Admin dashboard — layout contracts", () => {
         return out;
       });
       expect(clipped, `clipped numeric values: ${clipped.join(" | ")}`).toEqual([]);
+
+      // 3. Nothing may be cut off by an `overflow: hidden` ancestor. This is the
+      //    assertion `scrollWidth` cannot make, and the one that would have
+      //    caught the console running flush to the viewport edge.
+      const cut = await clippedElements(page);
+      expect(
+        cut,
+        `clipped by an overflow ancestor: ` +
+          cut.map((c) => `<${c.el}> by <${c.by}> R+${c.overRight} L+${c.overLeft} "${c.text}"`).join(" ; "),
+      ).toEqual([]);
+
+      // 4. The container sits inside the viewport, clear of the sidebar, with
+      //    the padding the design token specifies.
+      const f = await frame(page);
+      expect(f.found, "no .dash-container on the page").toBe(true);
+      expect(f.left, `container starts at ${f.left}, sidebar ends at ${f.sidebarRight}`).toBeGreaterThanOrEqual(f.sidebarRight);
+      expect(f.right, `container right ${f.right} exceeds viewport ${f.innerWidth}`).toBeLessThanOrEqual(f.innerWidth + 1);
+      const expectedPad = vp.width >= 1280 ? 32 : vp.width >= 768 ? 24 : 16;
+      expect(f.padL, `left padding ${f.padL}px, expected ${expectedPad}px`).toBe(expectedPad);
+      expect(f.padR, `right padding ${f.padR}px, expected ${expectedPad}px`).toBe(expectedPad);
+
+      // 5. Only a table may scroll sideways.
+      const scrollers = await nonTableScrollers(page);
+      expect(scrollers, `non-table horizontal scrollers: ${scrollers.join(", ")}`).toEqual([]);
     });
   }
 
