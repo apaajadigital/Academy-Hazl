@@ -12,11 +12,49 @@
 #
 # It is now set. Prerequisite: `rclone config` once on the host with a remote
 # named "r2". Until that exists the run logs a WARNING and still completes — the
-# offsite copy is deliberately non-fatal (see scripts/backup.sh), so it can never
-# break the local backup or the retention prune. Check the log after installing:
-#   grep -E 'synced|WARNING' /var/log/jago-backup.log | tail
+# offsite copy is deliberately non-fatal to the LOCAL backup (see
+# scripts/backup.sh), but the run then ends RESULT=DEGRADED with exit 10.
+# Check the log after installing:
+#   grep -E 'RESULT=|OFFSITE_' /var/log/jago-backup.log | tail
+#
+# WHY THE COMMAND CHANGED — silent-backup incident, 4-6 Aug 2026
+# --------------------------------------------------------------
+# The previous line invoked the script BY PATH. scripts/backup.sh is tracked in
+# git as mode 100644, so the host checkout was 644 and bash refused it with
+# exit 126 — "Permission denied" — every single night, for three nights, while
+# cron itself reported nothing wrong. Calling `/bin/bash <script>` makes this
+# line immune to a missing executable bit. The git index mode is fixed to
+# 100755 in the same change, so the two fixes are independent on purpose.
+#
+# NO flock HERE, DELIBERATELY. The anti-overlap lock lives inside backup.sh so
+# that manual runs are protected too. Wrapping this line in flock as well would
+# put two layers on the same lock file, and the inner acquisition would fail
+# against the outer one on every run — turning every backup into RESULT=SKIPPED.
+#
+# Exit codes (see scripts/backup.sh):
+#   0 OK · 10 DEGRADED (local ok, offsite unverified) · 75 SKIPPED (lock) · 1 FAIL
+#
+# RETENTION_DAYS=30 IS A TEMPORARY POLICY, NOT THE TARGET
+# -------------------------------------------------------
+# The script's own default is 14 days. It is overridden to 30 here for one
+# reason: rclone is not installed on this host, so every backup still lives on
+# the same disk as the database it protects. While that is true, local history
+# depth is the ONLY recovery net there is, and pruning it at 14 days narrows the
+# only thing standing between us and total loss.
+#
+# Do NOT lower this back to 14 until all three are true:
+#   1. offsite upload succeeds,
+#   2. the uploaded object reads back and its size matches (OFFSITE_OK),
+#   3. a restore drill into a disposable database has been approved and passed.
+# Until then a run ends RESULT=DEGRADED with exit 10 — that is the correct
+# outcome, NOT a failure: the local backup is valid, written and retained; only
+# the off-host copy is missing. Reserve exit 1 / RESULT=FAIL for "no usable
+# backup exists at all".
+#
+# Still NO flock on the line below (see the paragraph above): the anti-overlap
+# lock lives inside backup.sh so that manual runs are covered too.
 
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-15 2 * * * root COMPOSE_DIR=/var/www/jago-akademi R2_REMOTE=r2:jago-backups /var/www/jago-akademi/scripts/backup.sh >> /var/log/jago-backup.log 2>&1
+15 2 * * * root COMPOSE_DIR=/var/www/jago-akademi RETENTION_DAYS=30 R2_REMOTE=r2:jago-backups /bin/bash /var/www/jago-akademi/scripts/backup.sh >> /var/log/jago-backup.log 2>&1

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { GraduationCap, Star, TrendingUp } from "lucide-react";
-import { API_BASE as API } from "@/lib/api/base";
+import { fetchList, resolveListState, type ListState } from "@/lib/api/listResource";
 
 // ─── Types (defensive — backend contract is being built in parallel) ──────────
 
@@ -102,22 +102,29 @@ function AlumniCard({ item }: { item: ApiTestimonial }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AlumniPage() {
-  // null = loading; [] = loaded-but-empty (or fetch failed — degrade to the
-  // polite empty state, never a broken page).
-  const [stories, setStories] = useState<ApiTestimonial[] | null>(null);
+  /**
+   * Four states, not a nullable array. The old shape said "[] = loaded-but-empty
+   * (or fetch failed — degrade to the polite empty state)", and that parenthesis
+   * was the bug: a dead API told every visitor we had no alumni stories yet.
+   */
+  const [state, setState] = useState<ListState<ApiTestimonial>>({ kind: "loading" });
+  // Guards against an older response overwriting a newer one after a retry.
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    fetch(`${API}/api/testimonials?category=alumni`)
-      .then((r) => r.json())
-      .then((body: { success?: boolean; data?: unknown }) => {
-        const raw = Array.isArray(body?.data) ? body.data : [];
-        const valid = body?.success
-          ? (raw as ApiTestimonial[]).filter((t) => Boolean(t && t.name && t.quote && t.role))
-          : [];
-        setStories(valid);
-      })
-      .catch(() => setStories([]));
+  const load = useCallback(() => {
+    const id = ++requestIdRef.current;
+    setState({ kind: "loading" });
+    void fetchList<ApiTestimonial>(
+      "/api/testimonials?category=alumni",
+      (rows) =>
+        (rows as ApiTestimonial[]).filter((t) => Boolean(t && t.name && t.quote && t.role)),
+    ).then((result) => {
+      if (id !== requestIdRef.current) return; // superseded — drop it
+      setState(resolveListState(result));
+    });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div className="al-root">
@@ -143,7 +150,7 @@ export default function AlumniPage() {
 
       {/* Stories */}
       <section className="al-grid-section">
-        {stories === null ? (
+        {state.kind === "loading" ? (
           <div className="al-grid" aria-busy="true" aria-label="Memuat cerita alumni">
             {[0, 1, 2].map((i) => (
               <div key={i} className="al-skeleton-card">
@@ -157,7 +164,25 @@ export default function AlumniPage() {
               </div>
             ))}
           </div>
-        ) : stories.length === 0 ? (
+        ) : state.kind === "error" ? (
+          /* We could not reach the stories — say so. Claiming "segera hadir"
+             here would be a statement about our alumni that we have no
+             evidence for. */
+          <div className="al-empty" role="alert">
+            <div className="al-empty-icon" aria-hidden="true">
+              ⚠️
+            </div>
+            <h2 className="al-empty-title">Gagal memuat cerita alumni</h2>
+            <p className="al-empty-desc">
+              Koneksi ke server sedang bermasalah, jadi kami belum bisa
+              menampilkan cerita alumni. Ini bukan berarti belum ada ceritanya —
+              coba muat ulang sebentar lagi.
+            </p>
+            <button type="button" onClick={load} className="al-btn-primary">
+              Muat Ulang
+            </button>
+          </div>
+        ) : state.kind === "empty" ? (
           <div className="al-empty">
             <div className="al-empty-icon" aria-hidden="true">
               🎓
@@ -174,7 +199,7 @@ export default function AlumniPage() {
           </div>
         ) : (
           <div className="al-grid">
-            {stories.map((item, idx) => (
+            {state.items.map((item, idx) => (
               <AlumniCard key={item.id ?? `${item.name}-${idx}`} item={item} />
             ))}
           </div>

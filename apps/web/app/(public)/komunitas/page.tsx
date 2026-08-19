@@ -1,9 +1,13 @@
 import { CalendarDays, MessageCircle, MessagesSquare, Tag, Users } from "lucide-react";
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 import { Section } from "@/components/ui/Section";
-import { waLink } from "@/lib/config";
+import { waLink, CONTACT_FALLBACK_HREF } from "@/lib/config";
 
-const WA_CONSULT_HREF = waLink("Halo, saya ingin bergabung dengan Komunitas Jago Akademi");
+const waLinkOrContact = (text: string): string => waLink(text) ?? CONTACT_FALLBACK_HREF;
+
+// Falls back to /contact when WhatsApp is unconfigured — a consult CTA
+// that goes nowhere is worse than one that goes to the contact form.
+const WA_CONSULT_HREF = waLinkOrContact("Halo, saya ingin bergabung dengan Komunitas Jago Akademi");
 
 // Optional WhatsApp community group link — config-only go-live switch. Only an
 // https URL is honored; while unset, the lead form + admin follow-up IS the

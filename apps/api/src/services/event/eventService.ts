@@ -163,12 +163,54 @@ export type EventListFilter = {
   limit?: number;
   type?: string;
   featured?: boolean;
+  /** Opt in to the archive: past events instead of upcoming ones. Default false. */
+  past?: boolean;
 };
 
-/** Public catalog: published events only, soonest first. */
+/** Public catalog: published, still-attendable events only, soonest first. */
+/**
+ * The moment an event stops being sellable.
+ *
+ * `endDate` is optional in the schema, so a single-session event only carries
+ * `startDate`. Falling back to `startDate` is the conservative reading: once a
+ * one-off event has started, selling a seat for it is selling nothing.
+ *
+ * Both values are Prisma `DateTime`, i.e. UTC instants, and are compared
+ * against `new Date()` which is also a UTC instant — so the comparison carries
+ * no timezone assumption. A visitor in WIB and the server in UTC agree on
+ * whether a given instant has passed.
+ */
+export function eventEndsAt(event: { startDate: Date; endDate?: Date | null }): Date {
+  return event.endDate ?? event.startDate;
+}
+
+/**
+ * THE boundary contract, used by the listing filter, the checkout guard and
+ * (mirrored) the detail page:
+ *
+ *     active / upcoming  ⇔  eventEnd  >  now
+ *     ended              ⇔  eventEnd <=  now
+ *
+ * The two halves must stay exact complements. If one used `>=` and the other
+ * `<`, then at the single instant `eventEnd === now` an event would be both
+ * ended and listed — or worse, hidden from the catalogue while checkout still
+ * accepted money for it. Writing the rule once and deriving the query from it
+ * is what keeps that impossible.
+ *
+ * The end instant itself counts as ended: the moment a session's end time
+ * arrives, there is nothing left to sell.
+ */
+export function isEventEnded(
+  event: { startDate: Date; endDate?: Date | null },
+  now: Date = new Date(),
+): boolean {
+  return eventEndsAt(event).getTime() <= now.getTime();
+}
+
 export async function listPublishedEvents(filter: EventListFilter = {}): Promise<PaginatedResult<unknown>> {
-  const { page = 1, limit = 12, type, featured } = filter;
+  const { page = 1, limit = 12, type, featured, past = false } = filter;
   const skip = (page - 1) * limit;
+  const now = new Date();
 
   const where = {
     status: "published",
@@ -176,6 +218,20 @@ export async function listPublishedEvents(filter: EventListFilter = {}): Promise
     // `featured` narrows the result set only when explicitly requested; a false
     // value must not exclude non-featured events (pre-refactor behaviour).
     ...(featured ? { isFeatured: true } : {}),
+    // Default catalogue shows only what a visitor can still attend. On 10 Aug
+    // 2026 all three published events had already happened (14/21/28 Jul) and
+    // two of them were still taking money — this filter is what stops that.
+    // `past=true` is an explicit opt-in for archive/history views; nothing is
+    // deleted, only hidden from the default listing.
+    //
+    // Exact complement of `isEventEnded` (see its doc comment):
+    //   upcoming → eventEnd >  now   (gt / gt)
+    //   past     → eventEnd <= now   (lte / lte)
+    // `gt` here and `<=` there are the same line drawn from opposite sides, so
+    // no event can ever fall into both sets or neither.
+    ...(past
+      ? { OR: [{ endDate: { lte: now } }, { endDate: null, startDate: { lte: now } }] }
+      : { OR: [{ endDate: { gt: now } }, { endDate: null, startDate: { gt: now } }] }),
   };
 
   const [data, total] = await Promise.all([

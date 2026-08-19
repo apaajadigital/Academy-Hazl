@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BookMarked, Search, X, ShoppingBag } from "lucide-react";
-import { API_BASE as API } from "@/lib/api/base";
+import { fetchList, resolveListState, type ListState } from "@/lib/api/listResource";
 
 // The catalog is sourced solely from GET /api/ebooks. The former
 // "recording" | "module" variants were mock-only: nothing ever produced them and
@@ -174,35 +174,37 @@ function MarketplaceCatalog() {
   // Finding #7: the "Semua/E-Book" tabs were dead after mock recordings/modules
   // were removed — getFilteredItems ignored activeTab — so the tab state and UI
   // were dropped. Search + category filters remain the sole controls.
-  const [dbBooks, setDbBooks] = useState<MarketplaceItem[] | null>(null);
+  const [state, setState] = useState<ListState<MarketplaceItem>>({ kind: "loading" });
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("");
+  const requestIdRef = useRef(0);
 
   // Fetch real EBooks from Backend
-  useEffect(() => {
-    fetch(`${API}/api/ebooks?limit=50`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.success && Array.isArray(d.data)) {
-          const mapped: MarketplaceItem[] = (d.data as ApiEbook[]).map((b) => ({
-            id: b.id,
-            slug: b.slug,
-            title: b.title,
-            description: b.description,
-            price: b.price,
-            salePrice: b.salePrice,
-            coverUrl: b.coverUrl,
-            author: b.author,
-            category: b.category,
-            extraInfo: b.pages ? `${b.pages} Halaman` : undefined
-          }));
-          setDbBooks(mapped);
-        } else {
-          setDbBooks([]);
-        }
-      })
-      .catch(() => setDbBooks([]));
+  const load = useCallback(() => {
+    const id = ++requestIdRef.current;
+    setState({ kind: "loading" });
+    void fetchList<MarketplaceItem>("/api/ebooks?limit=50", (rows) =>
+      (rows as ApiEbook[]).map((b) => ({
+        id: b.id,
+        slug: b.slug,
+        title: b.title,
+        description: b.description,
+        price: b.price,
+        salePrice: b.salePrice,
+        coverUrl: b.coverUrl,
+        author: b.author,
+        category: b.category,
+        extraInfo: b.pages ? `${b.pages} Halaman` : undefined,
+      })),
+    ).then((result) => {
+      if (id !== requestIdRef.current) return; // superseded — drop it
+      setState(resolveListState(result));
+    });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const dbBooks = state.kind === "list" ? state.items : [];
 
   // Compute items displayed depending on active category and search query.
   const getFilteredItems = (): MarketplaceItem[] => {
@@ -211,7 +213,7 @@ function MarketplaceCatalog() {
     // Only real, purchasable inventory is shown. Recordings/modules were mock
     // data with a broken checkout (EPIC 8: no fictional data) and were removed;
     // the marketplace currently lists e-books sourced from the API.
-    items = dbBooks ?? [];
+    items = dbBooks;
 
     // Apply Search filter
     if (query) {
@@ -237,7 +239,7 @@ function MarketplaceCatalog() {
   // Categories extraction helper
   const allCategories = Array.from(
     new Set(
-      (dbBooks ?? [])
+      dbBooks
         .map((item) => item.category)
         .filter(Boolean)
     )
@@ -346,9 +348,32 @@ function MarketplaceCatalog() {
       </div>
 
       {/* Grid Area */}
-      {dbBooks === null ? (
+      {state.kind === "loading" ? (
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+      ) : state.kind === "error" ? (
+        /* "Materi segera hadir" is a claim about our inventory. When the
+           request failed we have no idea what the inventory holds, so we say
+           what actually happened instead. */
+        <div
+          role="alert"
+          className="flex flex-col items-center gap-4 rounded-2xl py-16 text-center"
+          style={{ background: "var(--surface-card)", border: "1px solid var(--border-subtle)" }}
+        >
+          <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "var(--surface-accent-soft)" }}>
+            <BookMarked size={32} style={{ color: "var(--brand-cyan-strong)" }} />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">Gagal memuat katalog</h3>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">
+              Koneksi ke server sedang bermasalah, jadi katalog belum bisa
+              ditampilkan. Ini bukan berarti katalognya kosong.
+            </p>
+          </div>
+          <button type="button" onClick={load} className="btn btn-outline btn-sm mt-2">
+            Muat Ulang
+          </button>
         </div>
       ) : filteredItems.length === 0 ? (
         <div

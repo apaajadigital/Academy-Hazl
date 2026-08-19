@@ -1,0 +1,50 @@
+# Jago Akademi — log rotation for the automated Postgres backup.
+# Install on host:  sudo cp deploy/jago-backup.logrotate /etc/logrotate.d/jago-backup
+#
+# NOT installed by this change — shipped as a reviewable artifact only.
+#
+# The host already runs logrotate.timer (verified 6 Aug 2026), so no new
+# scheduling mechanism is introduced; this file only tells the existing one what
+# to do with /var/log/jago-backup.log.
+#
+# Why it matters here: the 4-6 Aug incident was diagnosed entirely from this log.
+# An unrotated log eventually gets truncated by hand or fills the disk — and the
+# VPS is multi-tenant with 48 GB free, so a runaway log is everyone's outage.
+# 12 weekly rotations keep roughly a quarter of history, which comfortably spans
+# the 14-day backup retention window it describes.
+#
+# `create 0640 root adm` keeps the log readable for operators in `adm` without
+# making it world-readable. The log carries no secrets by design — only run IDs,
+# byte counts, table counts, remote NAMES and RESULT lines — but backup timing
+# is still operational information worth not publishing.
+
+/var/log/jago-backup.log {
+    # /var/log on this host is root:syslog mode 0775 — group-writable by a group
+    # that is not root — so logrotate refuses to rotate anything under it unless
+    # an `su` directive says which user/group to rotate as.
+    #
+    # This value is deliberately IDENTICAL to what the file already inherits from
+    # /etc/logrotate.conf (`su root adm`, set before `include /etc/logrotate.d`),
+    # so writing it out changes nothing at runtime. It is made explicit for two
+    # reasons:
+    #   1. the candidate can then be validated on its own with
+    #      `logrotate -d <file>` before installation. Without it that check fails
+    #      on the parent-directory guard — not because the config is wrong, but
+    #      because a standalone file never reads /etc/logrotate.conf. That false
+    #      alarm blocked an installation on 10 Aug 2026;
+    #   2. it stops depending on a global setting that is invisible from here and
+    #      could change. Four of this host's own logrotate.d configs set `su`
+    #      explicitly for the same reason.
+    #
+    # `root` as the user is what matters for access: uid 0 can write /var/log
+    # regardless of its syslog group ownership. `adm` keeps the group consistent
+    # with `create 0640 root adm` below.
+    su root adm
+    weekly
+    rotate 12
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+}

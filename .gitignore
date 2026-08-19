@@ -65,3 +65,18 @@ jago_akademi_clarification_questions.docx.pdf
 *.tsbuildinfo
 graphify-out/
 scratch/
+
+# Runtime database dumps & env backups — P0, 6 Aug 2026.
+# The production working tree (/var/www/jago-akademi) was found holding an
+# environment backup and nine PostgreSQL dumps of REAL user data, all untracked
+# but none of them ignored. A single `git add -A` there would have committed
+# live secrets and user records into a repo that pushes to GitHub.
+#
+# Deliberately NOT `*.sql`: 14 Prisma migrations plus 3 helper queries in
+# scripts/ are source code and must stay tracked. Verified before adding these
+# lines — `git ls-files` against all five patterns matched 0 tracked files.
+/backups/
+*.sql.gz
+*.dump
+backup_*.sql
+.env.bak*

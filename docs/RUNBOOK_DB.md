@@ -114,33 +114,221 @@ pernah membandingkan dengan `schema.prisma`. Alasan lengkap ditulis di header fi
 
 ## 2. Backup
 
-Otomatis via `scripts/backup.sh` (pg_dump → gzip → retensi 14 hari → opsional R2 via rclone):
+> 🔴 **INSIDEN 4–6 Agu 2026 — backup terjadwal DIAM-DIAM nol keluaran selama 3 malam.**
+> Cron menyala tepat waktu setiap malam dan file cron ada, tapi `/var/log/jago-backup.log`
+> hanya mengulang satu baris:
+> `/bin/bash: line 1: /var/www/jago-akademi/scripts/backup.sh: Permission denied`
+> Sebabnya: cron mengeksekusi script **berdasarkan path**, sementara file itu ter-track di
+> Git sebagai mode `100644`, jadi checkout di host jadi `644` — tidak executable. Bash
+> menolak dengan exit 126. Eksekusi **tidak pernah** sampai ke Docker, `pg_dump`, gzip,
+> retensi, atau rclone. **Seluruh backup yang ada dibuat manual.** Ini lebih berbahaya
+> daripada cron yang belum dipasang, karena dari luar tampak terpasang.
+>
+> Dua perbaikan independen, sengaja dua-duanya: (1) mode index Git kini `100755`;
+> (2) baris cron memanggil `/bin/bash <script>` sehingga kebal bila exec bit hilang lagi.
+
+**Path deploy sebenarnya `/var/www/jago-akademi`** — bukan `/opt/jago-akademi`. Runbook ini
+sempat mendokumentasikan path yang salah; disamakan dengan kenyataan host per audit 6 Agu 2026.
+
+Otomatis via `scripts/backup.sh`: lock anti-overlap → pg_dump → gzip → **validasi berlapis**
+→ **atomic hard-link publish** → offsite terverifikasi → retensi (sementara **30 hari**, §2.6).
+
+Jadwal: **02:15 waktu server, setiap hari.** Script **wajib** dipanggil lewat `/bin/bash <path>`
+— bukan by path saja — supaya baris cron kebal bila exec bit hilang lagi (§2).
+
+**Cron dan logrotate adalah dua artefak independen.** Pasang masing-masing dengan gate-nya
+sendiri; jangan disatukan dalam satu skrip instalasi. Pelajaran 10 Agu 2026: validasi logrotate
+yang gagal ikut memblokir instalasi cron yang sama sekali tidak bergantung padanya.
 
 ```bash
-# host, sekali:
-chmod +x /opt/jago-akademi/scripts/backup.sh
-sudo tee /etc/cron.d/jago-backup <<'EOF'
-15 2 * * * root COMPOSE_DIR=/opt/jago-akademi R2_REMOTE=r2:jago-backups /opt/jago-akademi/scripts/backup.sh >> /var/log/jago-backup.log 2>&1
-EOF
+# host — artefak repo, jangan ketik ulang. Dua langkah TERPISAH:
+sudo cp deploy/jago-backup.cron      /etc/cron.d/jago-backup       # langkah 1
+sudo cp deploy/jago-backup.logrotate /etc/logrotate.d/jago-backup  # langkah 2, §2.6
 # R2: rclone config → remote "r2" (S3-compatible, endpoint akun Cloudflare)
 ```
 
-Manual sebelum migrate: `COMPOSE_DIR=/opt/jago-akademi ./scripts/backup.sh`
+Manual sebelum migrate: `COMPOSE_DIR=/var/www/jago-akademi /bin/bash ./scripts/backup.sh`
 
-## 3. 🖐️ Restore drill (uji SEKALI saat gate TASK-021, lalu tiap kuartal)
+> 🖐️ **Fase kerja lokal tidak pernah menjalankan backup atau restore produksi.** Perubahan
+> konfigurasi disiapkan dan diuji di repo canonical, lalu dipindahkan lewat bundle. Menjalankan
+> `backup.sh`/`restore.sh` terhadap produksi selalu tindakan host tersendiri yang butuh
+> persetujuan owner.
 
-Restore ke database **scratch** (bukan menimpa produksi) untuk membuktikan backup valid:
+### 2.1 Exit code — kontrak, dipakai alerting
 
-Automated via **`scripts/restore.sh`** — restores the latest backup into a scratch
-DB, verifies schema (≥ 40 tables) + row counts, then drops it (never touches prod):
+| Exit | RESULT | Arti |
+|---|---|---|
+| `0` | `OK` | backup lokal valid; offsite terverifikasi atau memang tidak dikonfigurasi |
+| `10` | `DEGRADED` | backup lokal valid dan **dipertahankan**, tapi offsite gagal/tak terverifikasi |
+| `75` | `SKIPPED` | run lain memegang lock (EX_TEMPFAIL); tidak ada yang dikerjakan |
+| `1` | `FAIL` | tidak ada backup yang bisa dipakai |
+
+### 2.2 Kenapa validasinya berlapis
+
+Script lama menulis langsung ke nama file final, sehingga dump yang terpotong meninggalkan
+file yang **tampak** seperti backup — lalu retensi memangkas backup lama yang justru masih
+bagus. Sekarang semua ditulis ke `.partial` di direktori yang sama (agar rename-nya atomic),
+dan baru menjadi backup setelah lolos: ukuran minimum, `gzip -t`, footer
+`-- PostgreSQL database dump complete`, dan jumlah tabel ≥ `MIN_TABLES`.
+
+Ambang `MIN_TABLES` **diukur, bukan ditebak**. Dump produksi 4 Agu 2026 diperiksa read-only:
+
+```
+zcat backups/jago-2026-08-04-1051.sql.gz | grep -c '^CREATE TABLE '   →  45
+```
+
+Cocok dengan 44 model di `apps/api/prisma/schema.prisma` + `_prisma_migrations`, dengan
+14/14 migration ter-apply. Karena itu **default `MIN_TABLES=45`** — angka produksi yang
+sebenarnya, bukan angka berbantalan. Dump dengan 44 tabel **tidak** dinyatakan sehat.
+Naikkan/turunkan hanya untuk perubahan skema yang disengaja, dan catat di release atau
+migration yang menyebabkannya.
+
+**Footer validator memakai jendela `tail -20`, bukan `tail -5`.** Sejak security release
+Agu 2025 (CVE-2025-8714) `pg_dump` menambahkan baris `\unrestrict <nonce>` **setelah**
+footer, dan dump produksi 4 Agu 2026 mengonfirmasinya:
+
+```
+-- PostgreSQL database dump complete
+--
+
+\unrestrict XdBL...
+```
+
+Jendela 5 baris tinggal satu baris lagi dari menolak setiap backup sehat di host ini.
+
+**`flock` adalah dependency keras**, terverifikasi ada di host (`/usr/bin/flock`,
+util-linux 2.39.3). Tidak ada mekanisme lock cadangan — sengaja. Bila `flock` hilang,
+script berhenti dengan `RESULT=FAIL reason=flock_tidak_tersedia` dan **tidak menjalankan
+dump**; backup yang diam-diam berjalan tanpa lock lebih berbahaya daripada yang menolak start.
+
+**Publish memakai atomic hard-link publish** (`ln` lalu unlink), **bukan `mv -f`**. Hard link
+gagal secara atomic bila nama tujuan sudah ada, jadi tabrakan nama tidak akan pernah menimpa
+backup lama. `mv -n` bukan pengganti: ia melewati diam-diam dan akan melapor sukses padahal
+tidak menerbitkan apa pun. Kegagalan `ln` dibedakan: bila `$FINAL` memang sudah ada →
+`collision_saat_publish`; selain itu (disk penuh, mount read-only, permission) →
+`publish_gagal`. Menyebut semuanya "collision" akan mengarahkan responder mencari duplikat
+nama padahal masalahnya di filesystem. Timestamp juga naik ke resolusi **detik**
+(`%F-%H%M%S`) — granularitas menit lama membuat run cron dan snapshot pra-deploy dalam menit
+yang sama beradu nama.
+
+**Kontrak kegagalan berbalik tepat setelah hard-link berhasil.** Begitu `$FINAL` ada,
+`PUBLISHED=1` disetel dan ERR handler diganti ke jalur `DEGRADED` — **sebelum** cleanup
+`.partial`, `chmod`, dan logging dijalankan. Urutan itu penting: revisi sebelumnya
+meninggalkan ketiganya di dalam jendela `FAIL`, sehingga `rm` yang gagal bisa melaporkan
+"tidak ada backup" padahal backup valid sudah ada di disk. Sesudah publish, kegagalan
+cleanup/permission/logging/offsite/retensi semuanya `DEGRADED`; **error handler tidak pernah
+menghapus `$FINAL`**.
+
+Retensi **hanya** berjalan setelah file final baru terbukti valid — malam yang gagal tidak
+akan pernah mempersempit jendela pemulihan. Kegagalan retensi **setelah** file final valid
+adalah masalah kerapian, bukan masalah backup: hasilnya `DEGRADED`, bukan `FAIL`.
+
+### 2.3 Verifikasi setelah memasang
 
 ```bash
-cd /opt/jago-akademi
-COMPOSE_DIR=/opt/jago-akademi ./scripts/restore.sh
+grep -E 'RESULT=|OFFSITE_' /var/log/jago-backup.log | tail
+ls -la /var/www/jago-akademi/backups/          # file baru, mode 0600
+```
+
+Backup **belum** dianggap pulih sampai muncul file baru pada **dua malam berturut-turut**.
+
+### 2.4 ⚠️ Ekspektasi saat deployment pertama: `DEGRADED`, dan itu BENAR
+
+`rclone` **belum terpasang** di host (diverifikasi 7 Agu 2026: `command -v rclone` kosong).
+Karena cron menyetel `R2_REMOTE=r2:jago-backups`, run pertama diperkirakan menghasilkan:
+
+- backup lokal **valid** dan tersimpan;
+- `OFFSITE_WARN rclone_tidak_terpasang`;
+- **`RESULT=DEGRADED`, exit 10**.
+
+**Ketiadaan `rclone` BUKAN kegagalan backup lokal.** Backup lokal tetap dibuat, divalidasi,
+di-publish, dan retensi tetap berjalan; yang tidak terjadi hanyalah salinan luar-host. Karena
+itu hasilnya `DEGRADED` (backup ada, perlindungan belum lengkap) dan **tidak pernah** `FAIL`
+(tidak ada backup). Membedakan keduanya adalah inti kontrak exit code di §2.1.
+
+Itu perilaku yang benar, bukan regresi — dan sengaja tidak disembunyikan. Selama masih
+`DEGRADED`, **seluruh backup berada di disk yang sama dengan database yang dilindunginya**;
+kehilangan host berarti kehilangan database dan semua backup sekaligus. Memasang serta
+mengonfigurasi rclone (termasuk credential R2) adalah **tindakan produksi terpisah yang
+butuh persetujuan owner** — jangan digabung dengan perbaikan backup ini.
+
+### 2.5 Test harness
+
+`scripts/tests/backup.test.sh` menjalankan seluruh matriks kegagalan terhadap fixture
+sintetis dan executable palsu di `PATH` (`docker`, `gzip`, `rclone`, `find`, `date`, `rm`).
+**Tidak pernah menyentuh data produksi, database nyata, dump nyata, atau credential.**
+
+```bash
+bash scripts/tests/backup.test.sh
+```
+
+Script produksi sengaja **tanpa test seam** — mocking dilakukan lewat `PATH`, sehingga yang
+diuji identik byte-per-byte dengan yang berjalan di host. Tes lock saling melengkapi antar
+platform: overlap `flock` hanya jalan di Linux, ketiadaan `flock` hanya jalan di Windows;
+masing-masing di-SKIP (bukan PASS) di platform yang tak bisa mengujinya dengan jujur.
+
+Setiap kasus kegagalan offsite memakai **retention marker** — sebuah backup bertanggal
+tahun 2000 yang wajib dipangkas. Memeriksa exit code saja tak bisa membedakan "retensi
+berjalan" dari "retensi dilewati"; marker itu bisa. `restore.sh` juga divalidasi di sini,
+tetapi **secara terisolasi dengan `docker` palsu** — itu menguji ambang dan pemilihan
+database sasaran, **bukan** restore sungguhan.
+
+### 2.6 Retensi sementara 30 hari, dan gate logrotate
+
+**Retensi host di-override menjadi 30 hari.** Default script tetap 14; baris cron menyetel
+`RETENTION_DAYS=30`. Alasannya tunggal: `rclone` belum terpasang, sehingga **seluruh backup
+masih berada di disk yang sama dengan database yang dilindunginya**. Selama itu benar,
+kedalaman riwayat lokal adalah satu-satunya jaring pemulihan yang ada, dan memangkasnya di
+hari ke-14 justru mempersempit satu-satunya hal yang tersisa.
+
+**Jangan menurunkan kembali ke 14 hari sebelum ketiganya benar:**
+
+1. upload offsite berhasil;
+2. objek yang diunggah **terbaca ulang** dan **ukurannya cocok** (`OFFSITE_OK`);
+3. restore drill ke database disposable **disetujui dan lulus**.
+
+Sampai itu tercapai, run berakhir `RESULT=DEGRADED` **exit 10**. Itu hasil yang benar, bukan
+kegagalan: backup lokal valid, tertulis, dan dipertahankan — hanya salinan luar-host yang
+belum ada. **Ketiadaan `rclone` bukan kegagalan backup lokal; yang belum lengkap adalah
+disaster recovery.** `RESULT=FAIL` exit 1 tetap disediakan khusus untuk "tidak ada backup yang
+bisa dipakai sama sekali" (kontrak lengkap di §2.1).
+
+**Validasi kandidat logrotate secara standalone, sebelum dipasang:**
+
+```bash
+logrotate -d /path/ke/kandidat        # -d = debug, TIDAK merotasi apa pun
+# harus: exit 0, tanpa baris `error:`, tanpa `skipping`,
+#        memuat "rotating pattern: /var/log/jago-backup.log weekly (12 rotations)"
+```
+
+Karena itulah stanza memuat **`su root adm` eksplisit**. `/var/log` di host ini `root:syslog`
+mode `0775` — group-writable oleh grup selain root — sehingga logrotate menolak merotasi
+apa pun di bawahnya kecuali ada directive `su`. Nilainya **sengaja sama persis** dengan yang
+sudah diwarisi dari `/etc/logrotate.conf` (`su root adm`, dipasang sebelum
+`include /etc/logrotate.d`), jadi tidak ada perubahan perilaku saat runtime — yang berubah
+hanya: file kini dapat divalidasi sendirian, dan tidak lagi bergantung pada setelan global
+yang tak terlihat dari isinya. Empat config `logrotate.d` milik host ini melakukan hal yang
+sama. `create 0640 root adm` dipertahankan dan konsisten dengan grup tersebut.
+
+## 3. 🖐️ Restore drill — manual & terkontrol
+
+`scripts/restore.sh` memulihkan backup terbaru ke database **scratch** (`jago_restore_test`),
+memverifikasi skema (**≥ 45 tabel**, disamakan dengan `backup.sh` — ambang yang berbeda akan
+mengesahkan dump yang justru ditolak tahap backup) + row count, lalu men-drop-nya. **Tidak pernah menyentuh
+database produksi.**
+
+> 🖐️ **Restore pertama harus dijalankan manual dengan pengawasan, dan butuh persetujuan
+> terpisah owner.** Tidak ada cron restore drill yang dipasang — sengaja. Menjadwalkan drill
+> sebelum satu kali dijalankan dengan mata sendiri hanya memindahkan risiko ke tengah malam.
+
+```bash
+cd /var/www/jago-akademi
+COMPOSE_DIR=/var/www/jago-akademi /bin/bash ./scripts/restore.sh
 # → "restore drill PASSED — backup is valid; scratch DB dropped"
 ```
 
-Run this **once now** to prove the backup (Validation Checklist), then quarterly.
+Setelah drill: pastikan scratch DB benar-benar hilang —
+`psql -Atc "SELECT datname FROM pg_database WHERE datname='jago_restore_test';"` harus kosong.
 
 **Restore produksi sungguhan (bencana)** 🖐️: stop api+worker → `dropdb`/`createdb` → restore dump → `migrate resolve` bila perlu → start. Jangan improvisasi — ikuti urutan ini.
 
@@ -188,8 +376,19 @@ npx tsx prisma/seed.ts
   backup `jago-2026-07-30-0621.sql.gz`, keempat migration 29 Jul ter-apply berurutan, `migrate status`
   ulang = "up to date" pada image baru. (Klaim lama "≥7 pending" salah — #7–9 sudah applied; lihat
   koreksi §1.1.)
-- [ ] 🖐️ Backup cron aktif (`scripts/backup.sh` + `/etc/cron.d/jago-backup`)
-- [ ] 🖐️ Restore drill dijalankan sekali (`./scripts/restore.sh` → PASSED)
+> **Backup BELUM boleh dinyatakan pulih** sampai keempat butir di bawah tercentang semua.
+> Satu backup manual yang berhasil membuktikan script-nya jalan — bukan membuktikan
+> backup produksi sudah sehat.
+
+- [ ] 🖐️ **(a)** Backup manual dengan script baru berhasil (file final ada, mode 0600,
+  `tables=45`, `gzip -t` lulus)
+- [ ] 🖐️ **(b)** Restore drill manual ke DB disposable berhasil + scratch DB terverifikasi
+  hilang — **butuh persetujuan owner terpisah** (§3)
+- [ ] 🖐️ **(c)** Salinan offsite terbukti **terbaca** → `RESULT=OK`, bukan `DEGRADED`.
+  Terblokir sampai `rclone` terpasang & terkonfigurasi (§2.4) — tindakan produksi terpisah
+- [ ] 🖐️ **(d)** Backup terjadwal menghasilkan file pada **dua malam berturut-turut** (§2.3).
+  Cron sendiri sudah terpasang sejak 4 Agu 2026 tapi **nol keluaran 3 malam** karena exec bit
+  (§2) — jadi centang berdasarkan file yang benar-benar ada, bukan berdasarkan cron ter-copy.
 - [ ] 🖐️ Index audit dijalankan (`scripts/index-audit.sql` → indexes present)
 - [x] ✅ **Seed produksi sudah jalan** — klaim lama "DB verified EMPTY" kedaluwarsa: live
   `GET /api/courses` mengembalikan persis kursus `seed.ts` (`brand-design-canva`, `seo-mastery`, dst),

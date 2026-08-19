@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { AlertTriangle, BookOpen, ArrowRight } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { ProgramCard } from "@/components/ui/ProgramCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
 import { Reveal } from "@/components/ui/Reveal";
-import { API_BASE as API } from "@/lib/api/base";
+import { fetchList, resolveListState, type ListState } from "@/lib/api/listResource";
 
 type Course = {
   id: string;
@@ -47,26 +47,24 @@ function isFree(course: Course): boolean {
  * and falls back gracefully with EmptyState when there are none.
  */
 export function FreeCourseCatalog() {
-  const [courses, setCourses] = useState<Course[] | null>(null);
+  const [state, setState] = useState<ListState<Course>>({ kind: "loading" });
+  const requestIdRef = useRef(0);
 
-  useEffect(() => {
-    fetch(`${API}/api/courses?free=true&limit=${CATALOG_SIZE}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.success) {
-          const raw: Course[] = Array.isArray(d.data?.data)
-            ? d.data.data
-            : Array.isArray(d.data)
-            ? d.data
-            : [];
-
-          setCourses(raw.filter(isFree));
-        } else {
-          setCourses([]);
-        }
-      })
-      .catch(() => setCourses([]));
+  const load = useCallback(() => {
+    const id = ++requestIdRef.current;
+    setState({ kind: "loading" });
+    void fetchList<Course>(
+      `/api/courses?free=true&limit=${CATALOG_SIZE}`,
+      // BL-52 keeps the filter in SQL; this is the deploy-window guard, and a
+      // row it drops is genuinely not free — that is emptiness, not failure.
+      (rows) => (rows as Course[]).filter(isFree),
+    ).then((result) => {
+      if (id !== requestIdRef.current) return; // superseded — drop it
+      setState(resolveListState(result));
+    });
   }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <Section tone="sunken" id="kelas-gratis-catalog">
@@ -86,7 +84,7 @@ export function FreeCourseCatalog() {
         }
       />
 
-      {courses === null ? (
+      {state.kind === "loading" ? (
         /* Skeleton */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -100,7 +98,20 @@ export function FreeCourseCatalog() {
             </div>
           ))}
         </div>
-      ) : courses.length === 0 ? (
+      ) : state.kind === "error" ? (
+        /* Telling a visitor that free classes are "segera hadir" when the
+           request failed is a claim we cannot back. Say what happened. */
+        <EmptyState
+          icon={AlertTriangle}
+          title="Gagal memuat kelas gratis"
+          description="Koneksi ke server sedang bermasalah, jadi daftar kelas gratis belum bisa ditampilkan. Ini bukan berarti daftarnya kosong."
+          action={
+            <button type="button" onClick={load} className="btn btn-outline">
+              Muat Ulang
+            </button>
+          }
+        />
+      ) : state.kind === "empty" ? (
         <EmptyState
           icon={BookOpen}
           title="Kelas gratis segera hadir"
@@ -114,7 +125,7 @@ export function FreeCourseCatalog() {
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {courses.slice(0, CATALOG_SIZE).map((course, i) => {
+          {state.items.slice(0, CATALOG_SIZE).map((course, i) => {
             const rating = Number(course.avgRating ?? 0);
             const hours = course.totalDuration ? Math.round(course.totalDuration / 60) : 0;
             return (

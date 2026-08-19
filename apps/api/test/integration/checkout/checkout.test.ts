@@ -85,6 +85,14 @@ beforeEach(() => {
   vi.mocked(prisma.paymentTransaction.create).mockResolvedValue({} as never);
 });
 
+// Prisma's Event.startDate is non-nullable, so a fixture without it never
+// existed in reality. These fixtures predate the expiry guard and omitted it;
+// they are completed here rather than the guard being softened. UPCOMING_EVENT
+// keeps every pre-existing case on the "still sellable" side, which is the
+// behaviour those cases were written to assert.
+const UPCOMING_START = new Date("2099-01-01T00:00:00.000Z");
+const PAST_START = new Date("2020-01-01T00:00:00.000Z");
+
 describe("POST /api/checkout", () => {
   it("creates order and returns paymentUrl for course", async () => {
     const res = await request(app)
@@ -172,6 +180,8 @@ describe("POST /api/checkout", () => {
       price: 0,
       salePrice: null,
       quota: 100,
+      startDate: UPCOMING_START,
+      endDate: null,
       totalSold: 99,
     } as never);
     vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(null);
@@ -188,6 +198,105 @@ describe("POST /api/checkout", () => {
     expect(prisma.eventRegistration.create).not.toHaveBeenCalled();
   });
 
+  // ── Expired events (10 Aug 2026 production finding) ────────────────────────
+  // Three published events had already happened and two were still sellable for
+  // Rp 350.000 and Rp 150.000. The listing filter and the disabled button are
+  // presentation; this endpoint is the control, so it is tested directly —
+  // exactly the way an attacker or a stale tab would reach it.
+  it("rejects a finished single-session event with 422 EVENT_ENDED", async () => {
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      id: "event-1",
+      title: "Workshop UI/UX Design — Jakarta",
+      slug: "workshop-ui-ux-jakarta",
+      status: "published",
+      price: 350000,
+      salePrice: null,
+      quota: 30,
+      startDate: PAST_START,
+      endDate: null,
+      totalSold: 0,
+    } as never);
+    vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(null);
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "event", itemId: "event-1" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("EVENT_ENDED");
+    // No order, no registration, no seat reserved.
+    expect(prisma.order.create).not.toHaveBeenCalled();
+    expect(prisma.eventRegistration.create).not.toHaveBeenCalled();
+    expect(prisma.event.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a finished multi-day event by endDate even though it has capacity", async () => {
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      id: "event-1",
+      title: "Bootcamp 3 Hari",
+      slug: "bootcamp-3-hari",
+      status: "published",
+      price: 0,
+      salePrice: null,
+      quota: 1000,
+      startDate: new Date("2020-01-01T00:00:00.000Z"),
+      endDate: new Date("2020-01-03T00:00:00.000Z"),
+      totalSold: 1,
+    } as never);
+    vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(null);
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "event", itemId: "event-1" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error.code).toBe("EVENT_ENDED");
+    expect(prisma.eventRegistration.create).not.toHaveBeenCalled();
+  });
+
+  it("still sells a multi-day event that has started but not yet finished", async () => {
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({
+      id: "event-1",
+      title: "Bootcamp Berjalan",
+      slug: "bootcamp-berjalan",
+      status: "published",
+      price: 0,
+      salePrice: null,
+      quota: 1000,
+      startDate: PAST_START,
+      endDate: UPCOMING_START,
+      totalSold: 1,
+    } as never);
+    vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 1 } as never);
+    vi.mocked(prisma.eventRegistration.create).mockResolvedValue({} as never);
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "event", itemId: "event-1" });
+
+    expect(res.status).toBe(200);
+    expect(prisma.eventRegistration.create).toHaveBeenCalled();
+  });
+
+  it("leaves courses untouched by the event expiry guard", async () => {
+    vi.mocked(prisma.course.findUnique).mockResolvedValue({
+      id: "course-1",
+      title: "Kursus Biasa",
+      slug: "kursus-biasa",
+      price: 100000,
+      salePrice: null,
+    } as never);
+    vi.mocked(prisma.courseEnrollment.findUnique).mockResolvedValue(null);
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "course", itemId: "course-1" });
+
+    expect(res.status).not.toBe(422);
+  });
+
   it("registers a free event when capacity is available", async () => {
     vi.mocked(prisma.event.findUnique).mockResolvedValue({
       id: "event-1",
@@ -197,6 +306,8 @@ describe("POST /api/checkout", () => {
       price: 0,
       salePrice: null,
       quota: 100,
+      startDate: UPCOMING_START,
+      endDate: null,
       totalSold: 10,
     } as never);
     vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(null);

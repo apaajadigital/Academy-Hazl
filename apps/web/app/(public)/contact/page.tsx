@@ -4,6 +4,9 @@ import { Card } from "@/components/ui";
 import ContactForm from "./ContactForm";
 import { WA_NUMBER_DISPLAY, waLink } from "@/lib/config";
 
+// Resolved once: waLink() reads a build-time inlined constant.
+const waHref = waLink();
+
 export const metadata: Metadata = {
   title: "Hubungi Kami",
   description:
@@ -17,12 +20,20 @@ const CONTACTS = [
     value: "halo@jagoakademi.com",
     href: "mailto:halo@jagoakademi.com",
   },
-  {
-    icon: <MessageCircle size={20} aria-hidden="true" />,
-    label: "WhatsApp",
-    value: WA_NUMBER_DISPLAY,
-    href: waLink(),
-  },
+  // WhatsApp row only exists when a real number is configured. Previously an
+  // unset number rendered the value as a bare "+" next to a dead wa.me link —
+  // a contact channel that looked live and went nowhere (found in production
+  // 10 Aug 2026).
+  ...(waHref && WA_NUMBER_DISPLAY
+    ? [
+        {
+          icon: <MessageCircle size={20} aria-hidden="true" />,
+          label: "WhatsApp",
+          value: WA_NUMBER_DISPLAY,
+          href: waHref,
+        },
+      ]
+    : []),
   {
     icon: <MapPin size={20} aria-hidden="true" />,
     label: "Alamat",
@@ -87,16 +98,20 @@ export default function ContactPage() {
                   ))}
                 </ul>
 
-                {/* Prominent WhatsApp CTA */}
-                <a
-                  href={waLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] px-5 py-3.5 font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
-                >
-                  <MessageCircle size={18} aria-hidden="true" />
-                  Chat via WhatsApp
-                </a>
+                {/* Prominent WhatsApp CTA — omitted when unconfigured. The
+                    email and address channels above remain, so the page never
+                    leaves a visitor without a way to reach us. */}
+                {waHref && (
+                  <a
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] px-5 py-3.5 font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+                  >
+                    <MessageCircle size={18} aria-hidden="true" />
+                    Chat via WhatsApp
+                  </a>
+                )}
               </Card>
 
               <div className="space-y-3 rounded-2xl bg-surface-page p-6">

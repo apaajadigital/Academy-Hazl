@@ -3,29 +3,18 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BookOpen, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowRight, BookOpen, Search, ChevronLeft, ChevronRight, X, AlertTriangle } from "lucide-react";
 import { Section, SectionHeader } from "@/components/ui/Section";
 import { ProgramCard } from "@/components/ui/ProgramCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
-import { API_BASE as API } from "@/lib/api/base";
+import {
+  fetchCourseCatalog,
+  resolveCatalogState,
+  type CatalogState,
+} from "@/lib/e-course/catalog";
 
 const PAGE_SIZE = 8;
-
-type Course = {
-  id: string;
-  slug: string;
-  title: string;
-  shortDesc?: string | null;
-  level?: string | null;
-  avgRating?: number | string;
-  totalReviews?: number;
-  totalEnrolled?: number;
-  totalDuration?: number;
-  thumbnailUrl?: string | null;
-  trainer?: { name?: string; avatarUrl?: string | null } | null;
-  category?: { slug?: string; name?: string } | null;
-};
 
 // ─── Level filter options ──────────────────────────────────────────────────────
 
@@ -129,43 +118,27 @@ function Pagination({
  * Fetches from /api/courses with ?q=, ?level=, ?page=, ?limit= params.
  */
 export function ECourseCatalog() {
-  const [courses, setCourses] = useState<Course[] | null>(null);
-  const [total, setTotal] = useState(0);
+  const [state, setState] = useState<CatalogState>({ kind: "loading" });
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("");
-  const [loading, setLoading] = useState(true);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Monotonic request id. Typing in the search box fires overlapping requests;
+  // without this an older response (or an older FAILURE) can land last and
+  // overwrite a newer, correct result — which would put the honest error state
+  // on screen for a request the visitor already replaced.
+  const requestIdRef = useRef(0);
 
   function fetchCourses(q: string, lvl: string, pg: number) {
-    setLoading(true);
-    const qs = new URLSearchParams({ limit: String(PAGE_SIZE), page: String(pg) });
-    if (q) qs.set("q", q);
-    if (lvl) qs.set("level", lvl);
+    const id = ++requestIdRef.current;
+    setState({ kind: "loading" });
 
-    fetch(`${API}/api/courses?${qs}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.success) {
-          const result = d.data;
-          // API returns { data: Course[], total, page, limit }
-          if (Array.isArray(result?.data)) {
-            setCourses(result.data);
-            setTotal(result.total ?? 0);
-          } else if (Array.isArray(result)) {
-            setCourses(result);
-            setTotal(result.length);
-          } else {
-            setCourses([]);
-            setTotal(0);
-          }
-        } else {
-          setCourses([]);
-          setTotal(0);
-        }
-      })
-      .catch(() => { setCourses([]); setTotal(0); })
-      .finally(() => setLoading(false));
+    // Failure vs emptiness is decided in lib/e-course/catalog.ts — see the file
+    // header for the regression that made the distinction mandatory.
+    void fetchCourseCatalog({ q, level: lvl, page: pg, limit: PAGE_SIZE }).then((result) => {
+      if (id !== requestIdRef.current) return; // superseded — drop it
+      setState(resolveCatalogState(result));
+    });
   }
 
   // Initial load
@@ -263,26 +236,45 @@ export function ECourseCatalog() {
         </div>
       </div>
 
-      {/* Results count */}
-      {!loading && courses !== null && (
+      {/* Results count — only when we actually have a list to count. */}
+      {state.kind === "list" && (
         <p className="mb-5 text-sm" style={{ color: "var(--text-muted)" }}>
-          {total > 0 ? `${total} kursus ditemukan` : ""}
+          {state.total > 0 ? `${state.total} kursus ditemukan` : ""}
           {query && ` untuk "${query}"`}
           {level && ` — level ${LEVELS.find((l) => l.value === level)?.label}`}
         </p>
       )}
 
       {/* ── Grid ─────────────────────────────────────────────────────────────── */}
-      {loading ? (
+      {state.kind === "loading" ? (
         <SkeletonGrid />
-      ) : courses === null || courses.length === 0 ? (
+      ) : state.kind === "error" ? (
+        // Distinct from "empty": we do not know what the catalogue holds, so we
+        // must not claim it is empty — and must not invite the visitor to wait
+        // for a release that may already have happened. Offering a retry is the
+        // only honest action here.
+        <EmptyState
+          icon={AlertTriangle}
+          title="Gagal memuat katalog kursus"
+          description="Terjadi gangguan saat mengambil daftar kursus, jadi kami belum bisa menampilkannya. Ini bukan berarti katalog kosong."
+          action={
+            <button
+              id="ecourse-retry-btn"
+              onClick={() => fetchCourses(query, level, page)}
+              className="btn btn-primary"
+            >
+              Muat Ulang
+            </button>
+          }
+        />
+      ) : state.kind === "empty" ? (
         <EmptyState
           icon={BookOpen}
-          title={query ? `Tidak ada hasil untuk "${query}"` : "Katalog kursus segera hadir"}
+          title={query ? `Tidak ada hasil untuk "${query}"` : "Belum ada kursus tersedia"}
           description={
             query
               ? "Coba kata kunci lain atau hapus filter yang aktif."
-              : "Kami sedang menyiapkan materi terbaik untukmu. Gabung early access agar jadi yang pertama tahu saat rilis."
+              : "Katalog kursus masih kosong untuk saat ini. Kursus baru akan muncul di halaman ini begitu tersedia."
           }
           action={
             query ? (
@@ -300,7 +292,7 @@ export function ECourseCatalog() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {courses.map((course) => {
+            {state.courses.map((course) => {
               const rating = Number(course.avgRating ?? 0);
               const hours = course.totalDuration ? Math.round(course.totalDuration / 60) : 0;
               return (
@@ -337,7 +329,7 @@ export function ECourseCatalog() {
             })}
           </div>
 
-          <Pagination page={page} total={total} limit={PAGE_SIZE} onChange={handlePage} />
+          <Pagination page={page} total={state.total} limit={PAGE_SIZE} onChange={handlePage} />
         </>
       )}
     </Section>

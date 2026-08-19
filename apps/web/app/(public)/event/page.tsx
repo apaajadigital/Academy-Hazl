@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
 import { getEventTypeLabel } from "@/lib/event-labels";
 import { listEvents, type EventSummary } from "@/lib/api/events";
+import { resolveEventListState } from "@/lib/events/listState";
 
 export const metadata: Metadata = {
   title: "Event & Workshop — Jago Akademi",
@@ -253,8 +254,11 @@ export default async function EventListPage({ searchParams }: PageProps) {
   // E12: one shared client for every event call (lib/api/events). A failed or
   // unreachable API degrades to an empty catalog rather than breaking the render.
   const result = await listEvents({ type: activeType || undefined, limit: 24 });
-  const events = result.success ? result.data.events : [];
-  const total = result.success ? result.data.total : 0;
+  // A failed API and an empty catalogue are DIFFERENT things and must render
+  // differently — see lib/events/listState.ts for why this used to be wrong.
+  const state = resolveEventListState(result);
+  const events = state.kind === "list" ? state.events : [];
+  const total = state.kind === "list" ? state.total : 0;
 
   // BL-62a: the hero only renders on the unfiltered list, but the grid used to
   // drop the featured event unconditionally — so on /event?type=online it
@@ -295,15 +299,38 @@ export default async function EventListPage({ searchParams }: PageProps) {
         {heroEvent && <FeaturedHero event={heroEvent} />}
 
         {/* Grid */}
-        {events.length === 0 ? (
+        {state.kind === "error" ? (
+          // Distinct from "empty": we do not know what the catalogue holds, so
+          // we must not claim it is empty. Offering a retry is honest; a
+          // schedule announcement would not be.
           <EmptyState
             icon={CalendarDays}
-            title={activeType ? `Tidak ada event ${getEventTypeLabel(activeType)} saat ini` : "Belum ada event terjadwal"}
-            description="Event dan workshop akan segera hadir. Gabung early access agar tak ketinggalan jadwalnya."
+            title="Gagal memuat daftar event"
+            description="Terjadi gangguan saat mengambil jadwal event. Silakan muat ulang halaman beberapa saat lagi."
             action={
-              <Link href="/early-access" className="btn btn-primary">
-                Gabung Early Access
+              <Link href="/event" className="btn btn-primary">
+                Muat Ulang
               </Link>
+            }
+          />
+        ) : state.kind === "empty" ? (
+          <EmptyState
+            icon={CalendarDays}
+            title={
+              activeType
+                ? `Belum ada event ${getEventTypeLabel(activeType)} mendatang`
+                : "Belum ada event mendatang"
+            }
+            description="Jadwal event dan workshop berikutnya akan diumumkan di halaman ini. Sementara itu, materi kami tetap bisa dipelajari kapan saja."
+            action={
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link href="/e-course" className="btn btn-primary">
+                  Lihat Katalog Kursus
+                </Link>
+                <Link href="/contact" className="btn btn-outline">
+                  Hubungi Kami
+                </Link>
+              </div>
             }
           />
         ) : (

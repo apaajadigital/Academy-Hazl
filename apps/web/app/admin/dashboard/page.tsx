@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -22,6 +22,7 @@ import {
   CalendarDays,
   Newspaper,
   Building2,
+  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -39,43 +40,20 @@ import {
   DashboardLoading,
 } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
+import {
+  loadPanel,
+  parseStats,
+  parseOrders,
+  parseCourses,
+  parseNewLeads,
+  type PanelState,
+  type Stats,
+  type RecentOrder,
+  type PopularCourse,
+} from "@/lib/admin/dashboardPanels";
 
-type Stats = {
-  totalUsers: number;
-  totalCourses: number;
-  totalEnrollments: number;
-  totalRevenue: number;
-  pendingCourses: number;
-  activeSubscriptions: number;
-  refundRate: number;
-  avgRating: number;
-  retailRevenue: number;
-  trends?: {
-    totalUsers: string | null;
-    totalEnrollments: string | null;
-    totalRevenue: string | null;
-    retailRevenue: string | null;
-    activeSubscriptions: string | null;
-  };
-};
 
-type RecentOrder = {
-  id: string;
-  finalAmount: number;
-  status: string;
-  createdAt: string;
-  user: { name: string; email: string };
-  items: { itemTitle: string | null; itemType: string }[];
-};
 
-type PopularCourse = {
-  id: string;
-  title: string;
-  totalEnrolled: number;
-  avgRating: string;
-  price: string;
-  trainer: { name: string };
-};
 
 const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   paid: "success",
@@ -96,45 +74,103 @@ const QUICK_ACTIONS: { href: string; label: string; icon: LucideIcon; desc: stri
   { href: "/admin/lms",       label: "LMS B2B",      icon: Building2,     desc: "Tenant & lisensi" },
 ];
 
+/** One panel's worth of "we could not load this", with a way to try again. */
+function PanelError({ label, onRetry }: { label: string; onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface-card px-6 py-10 text-center"
+    >
+      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken text-text-secondary">
+        <AlertTriangle size={20} aria-hidden="true" />
+      </span>
+      <div>
+        <p className="text-sm font-bold text-text-primary">Gagal memuat {label}</p>
+        <p className="mt-1 text-xs text-text-secondary">
+          Panel lain di halaman ini tidak terpengaruh.
+        </p>
+      </div>
+      <button type="button" onClick={onRetry} className="btn btn-outline btn-sm">
+        Coba Lagi
+      </button>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [orders, setOrders] = useState<RecentOrder[]>([]);
-  const [courses, setCourses] = useState<PopularCourse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newLeadsCount, setNewLeadsCount] = useState<number | null>(null);
+  /**
+   * Four independent panels. They used to share one `Promise.all`, so the first
+   * failure silently blanked all four — see lib/admin/dashboardPanels.ts for
+   * what that looked like to an admin.
+   */
+  const [statsPanel, setStatsPanel] = useState<PanelState<Stats>>({ kind: "loading" });
+  const [ordersPanel, setOrdersPanel] = useState<PanelState<RecentOrder[]>>({ kind: "loading" });
+  const [coursesPanel, setCoursesPanel] = useState<PanelState<PopularCourse[]>>({ kind: "loading" });
+  const [leadsPanel, setLeadsPanel] = useState<PanelState<number>>({ kind: "loading" });
   const [now] = useState(new Date());
 
   const greeting = now.getHours() < 11 ? "Selamat Pagi" : now.getHours() < 15 ? "Selamat Siang" : now.getHours() < 18 ? "Selamat Sore" : "Selamat Malam";
 
-  useEffect(() => {
-    (async () => {
-      const token = await getValidToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const h = { Authorization: `Bearer ${token}` };
+  /**
+   * Per-panel request counters. A retry issued while an older request is still
+   * in flight must win, or a slow first response can overwrite the fresh one.
+   */
+  const reqIds = useRef({ stats: 0, orders: 0, courses: 0, leads: 0 });
 
-      Promise.all([
-        fetch("/api/admin/stats", { headers: h }).then((r) => r.json()),
-        // No `sort` param: GET /api/admin/orders takes none and already orders
-        // by createdAt desc. Sending one that the API drops silently is how the
-        // "Terpopuler" widget below shipped mis-sorted for so long.
-        fetch("/api/admin/orders?limit=6", { headers: h }).then((r) => r.json()),
-        // `sort` is a real, enum-validated parameter on GET /api/admin/courses
-        // (api/src/modules/admin/courses.ts) — an unknown value now 400s.
-        fetch("/api/admin/courses?limit=5&sort=totalEnrolled:desc", { headers: h }).then((r) => r.json()),
-        fetch("/api/admin/leads?status=new&limit=1", { headers: h }).then((r) => r.json()),
-      ])
-        .then(([s, o, c, l]) => {
-          if (s.success) setStats(s.data);
-          if (o.success) setOrders(Array.isArray(o.data) ? o.data : []);
-          if (c.success) setCourses(c.data?.courses ?? (Array.isArray(c.data) ? c.data : []));
-          if (l.success) setNewLeadsCount(l.meta?.total ?? 0);
-        })
-        .finally(() => setLoading(false));
-    })();
+  const loadStats = useCallback(async () => {
+    const id = ++reqIds.current.stats;
+    setStatsPanel({ kind: "loading" });
+    const token = await getValidToken();
+    const next: PanelState<Stats> = token
+      ? await loadPanel("/api/admin/stats", (d) => parseStats(d), token)
+      : { kind: "error" };
+    if (id === reqIds.current.stats) setStatsPanel(next);
   }, []);
+
+  const loadOrders = useCallback(async () => {
+    const id = ++reqIds.current.orders;
+    setOrdersPanel({ kind: "loading" });
+    const token = await getValidToken();
+    // No `sort` param: GET /api/admin/orders takes none and already orders by
+    // createdAt desc. Sending one that the API drops silently is how the
+    // "Terpopuler" widget below shipped mis-sorted for so long.
+    const next: PanelState<RecentOrder[]> = token
+      ? await loadPanel("/api/admin/orders?limit=6", (d) => parseOrders(d), token)
+      : { kind: "error" };
+    if (id === reqIds.current.orders) setOrdersPanel(next);
+  }, []);
+
+  const loadCourses = useCallback(async () => {
+    const id = ++reqIds.current.courses;
+    setCoursesPanel({ kind: "loading" });
+    const token = await getValidToken();
+    // `sort` is a real, enum-validated parameter on GET /api/admin/courses
+    // (api/src/modules/admin/courses.ts) — an unknown value now 400s.
+    const next: PanelState<PopularCourse[]> = token
+      ? await loadPanel("/api/admin/courses?limit=5&sort=totalEnrolled:desc", (d) => parseCourses(d), token)
+      : { kind: "error" };
+    if (id === reqIds.current.courses) setCoursesPanel(next);
+  }, []);
+
+  const loadLeads = useCallback(async () => {
+    const id = ++reqIds.current.leads;
+    setLeadsPanel({ kind: "loading" });
+    const token = await getValidToken();
+    const next: PanelState<number> = token
+      ? await loadPanel("/api/admin/leads?status=new&limit=1", (d, m) => parseNewLeads(d, m), token)
+      : { kind: "error" };
+    if (id === reqIds.current.leads) setLeadsPanel(next);
+  }, []);
+
+  useEffect(() => {
+    // Concurrent, but settled independently — one rejection cannot take the
+    // others with it, and nothing here can reject unhandled.
+    void Promise.allSettled([loadStats(), loadOrders(), loadCourses(), loadLeads()]);
+  }, [loadStats, loadOrders, loadCourses, loadLeads]);
+
+  const stats = statsPanel.kind === "ready" ? statsPanel.data : null;
+  const orders = ordersPanel.kind === "ready" ? ordersPanel.data : [];
+  const courses = coursesPanel.kind === "ready" ? coursesPanel.data : [];
 
   // ── Primary KPIs: 4 cards like Student/Trainer dashboard ──
   const PRIMARY_KPIS = stats
@@ -158,14 +194,9 @@ export default function AdminDashboardPage() {
 
   const maxEnrolled = Math.max(...courses.map((c) => c.totalEnrolled), 1);
 
-  if (loading) {
-    return (
-      <div className="dash-container">
-        <DashboardLoading label="Memuat dashboard…" />
-      </div>
-    );
-  }
-
+  // No page-level loading gate any more. It used to hide the fact that the four
+  // panels resolve independently: one slow endpoint held the whole console
+  // back, and one failed endpoint emptied it. Each panel now reports itself.
   return (
     <div className="dash-container flex flex-col gap-8">
       {/* ── Greeting — clean, matching Student/Trainer pattern ── */}
@@ -184,20 +215,28 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* ── 4 Primary KPI Cards — same as Student/Trainer ── */}
-      <section className="dash-grid">
-        {PRIMARY_KPIS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
-          <StatCard
-            key={label}
-            className="col-span-12 sm:col-span-6 xl:col-span-3"
-            label={label}
-            value={value}
-            icon={Icon}
-            iconColor={accent}
-            iconBg={tint}
-            trend={trend}
-          />
-        ))}
-      </section>
+      {statsPanel.kind === "loading" ? (
+        <DashboardLoading label="Memuat statistik…" />
+      ) : statsPanel.kind === "error" ? (
+        /* Rendering "Rp 0" here would be a claim about the business. We do not
+           have one to make — the request failed. */
+        <PanelError label="statistik" onRetry={loadStats} />
+      ) : (
+        <section className="dash-grid">
+          {PRIMARY_KPIS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
+            <StatCard
+              key={label}
+              className="col-span-12 sm:col-span-6 xl:col-span-3"
+              label={label}
+              value={value}
+              icon={Icon}
+              iconColor={accent}
+              iconBg={tint}
+              trend={trend}
+            />
+          ))}
+        </section>
+      )}
 
       {/* ── 4 Secondary KPIs — compact inline panel ── */}
       {SECONDARY_KPIS.length > 0 && (
@@ -238,18 +277,33 @@ export default function AdminDashboardPage() {
             <div>
               <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
               <p className="mt-0.5 text-xs text-white/75">
-                {newLeadsCount === null
+                {leadsPanel.kind === "loading"
                   ? "Memuat…"
-                  : newLeadsCount === 0
+                  : leadsPanel.kind === "error"
+                  ? "Gagal memuat jumlah leads"
+                  : leadsPanel.data === 0
                   ? "Tidak ada leads baru saat ini"
                   : "Leads baru menunggu follow-up"}
               </p>
             </div>
-            <span className="font-display text-4xl font-extrabold leading-none sm:text-5xl">{newLeadsCount ?? "—"}</span>
+            {/* "—" for both loading and error, never "0": a zero here would
+                read as "no one enquired today", which we cannot vouch for. */}
+            <span className="font-display text-4xl font-extrabold leading-none sm:text-5xl">
+              {leadsPanel.kind === "ready" ? leadsPanel.data : "—"}
+            </span>
             <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-white/70 sm:inline">Orang Terdeteksi</span>
           </div>
           <div className="flex items-center gap-3">
-            {newLeadsCount !== null && newLeadsCount > 0 && (
+            {leadsPanel.kind === "error" && (
+              <button
+                type="button"
+                onClick={loadLeads}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-sm transition hover:bg-white/25"
+              >
+                Coba Lagi
+              </button>
+            )}
+            {leadsPanel.kind === "ready" && leadsPanel.data > 0 && (
               <Link
                 href="/admin/leads?status=new"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
@@ -260,7 +314,7 @@ export default function AdminDashboardPage() {
             <Link
               href="/admin/leads"
               className={`inline-flex items-center justify-center gap-1 text-xs font-semibold transition hover:text-white ${
-                newLeadsCount && newLeadsCount > 0 ? "text-white/80" : "rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 hover:bg-white/95"
+                leadsPanel.kind === "ready" && leadsPanel.data > 0 ? "text-white/80" : "rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 hover:bg-white/95"
               }`}
             >
               Kelola Leads <ArrowRight size={14} aria-hidden="true" />
@@ -285,7 +339,15 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
 
-            {orders.length === 0 ? (
+            {ordersPanel.kind === "loading" ? (
+              <div className="p-6">
+                <DashboardLoading label="Memuat transaksi…" />
+              </div>
+            ) : ordersPanel.kind === "error" ? (
+              <div className="p-6">
+                <PanelError label="transaksi" onRetry={loadOrders} />
+              </div>
+            ) : orders.length === 0 ? (
               <div className="p-6">
                 <EmptyState
                   icon={ShoppingBag}
@@ -354,7 +416,11 @@ export default function AdminDashboardPage() {
                 Kelola <ChevronRight size={14} aria-hidden="true" />
               </Link>
             </div>
-            {courses.length === 0 ? (
+            {coursesPanel.kind === "loading" ? (
+              <DashboardLoading label="Memuat kursus…" />
+            ) : coursesPanel.kind === "error" ? (
+              <PanelError label="kursus terpopuler" onRetry={loadCourses} />
+            ) : courses.length === 0 ? (
               <EmptyState icon={BookOpen} title="Belum ada kursus" />
             ) : (
               <div className="flex flex-col gap-4">

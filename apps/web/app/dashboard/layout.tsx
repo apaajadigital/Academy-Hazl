@@ -51,6 +51,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser] = useState<UserInfo | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [lmsTenants, setLmsTenants] = useState<LmsTenant[]>([]);
+  /**
+   * Nothing protected renders until this is true.
+   *
+   * Without it this shell painted the full student navigation — Kursus Saya,
+   * Sertifikat, Pesanan, Afiliasi, Keluar — to anyone who typed /dashboard,
+   * for ~900ms, before the redirect to /masuk landed. Measured, not assumed:
+   * the menu was on screen from 103ms to 1001ms with empty storage. The data
+   * behind it was never exposed (every child fetches with a Bearer token), but
+   * the structure of a signed-in account was, and it flashed unstyled because
+   * the `style jsx` had not applied yet.
+   *
+   * `admin/layout.tsx` and `trainer-hub/layout.tsx` already gate exactly this
+   * way. This makes the third shell agree with them rather than inventing
+   * anything new. It is set ONLY on the success path — every `router.replace`
+   * above returns without setting it, so a redirecting visitor keeps seeing the
+   * spinner instead of a shell they are about to be moved away from.
+   */
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     async function initAuth() {
@@ -82,7 +100,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const body = await res.json();
       if (!body.success) { clearToken(); router.replace("/masuk"); return; }
 
-      setUser(body.data);
       const roleNames: string[] = (body.data.roles ?? []).map(
         (r: { role: string } | string) => (typeof r === "string" ? r : r.role)
       );
@@ -94,6 +111,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         router.replace("/trainer-hub");
         return;
       }
+
+      // Only now is this visitor confirmed to belong in THIS shell. setUser
+      // moved below the role checks on purpose: setting it earlier would paint
+      // the student sidebar for an admin who is a tick away from being sent to
+      // /admin/dashboard.
+      setUser(body.data);
+      setReady(true);
       // `/api/lms/portal/me` lists every tenant the user can reach — batch
       // memberships plus tenants they administer — and carries `isAdmin` per
       // tenant, so the admin-console link needs no extra permission probe.
@@ -124,6 +148,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     await revokeSession().catch(() => undefined);
     clearToken();
     router.replace("/masuk");
+  }
+
+  // Gate BEFORE any protected markup — same shape as admin/layout.tsx and
+  // trainer-hub/layout.tsx. A spinner leaks nothing about who is signed in.
+  if (!ready) {
+    return (
+      <div className="dash-auth-loading">
+        <span className="dash-auth-spinner" />
+        <style jsx>{`
+          .dash-auth-loading { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--surface-page); }
+          .dash-auth-spinner { width:36px; height:36px; border-radius:50%; border:3px solid var(--brand-cyan-strong); border-top-color:transparent; animation:spin 0.8s linear infinite; }
+          @keyframes spin { to { transform:rotate(360deg); } }
+        `}</style>
+      </div>
+    );
   }
 
   const initials = user?.name
