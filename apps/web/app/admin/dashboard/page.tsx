@@ -245,7 +245,13 @@ export default function AdminDashboardPage() {
       <section aria-labelledby="kpi-utama" className="flex flex-col gap-4">
         <h2 id="kpi-utama" className="sr-only">Ringkasan utama</h2>
         {statsPanel.kind === "loading" ? (
-          <AdminMetricGridSkeleton />
+          /* Both rows, because the ready state renders both. A skeleton that
+             shows only the headline four makes the secondary row appear from
+             nowhere and shoves the rest of the page down. */
+          <>
+            <AdminMetricGridSkeleton />
+            <AdminMetricGridSkeleton compact />
+          </>
         ) : statsPanel.kind === "error" ? (
           /* Rendering "Rp 0" here would be a claim about the business. We do not
              have one to make — the request failed. */

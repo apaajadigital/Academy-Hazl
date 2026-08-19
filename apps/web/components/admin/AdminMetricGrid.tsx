@@ -34,19 +34,39 @@ export function AdminMetricGrid({ className, ...props }: HTMLAttributes<HTMLDivE
  * roughly half a viewport when stats arrived and shoved everything below it
  * down. A skeleton that occupies the final layout keeps the page still.
  */
-export function AdminMetricGridSkeleton({ count = 4 }: { count?: number }) {
+export function AdminMetricGridSkeleton({
+  count = 4,
+  compact = false,
+}: {
+  count?: number;
+  /** Match the shorter secondary-metric card instead of the headline one. */
+  compact?: boolean;
+}) {
   return (
     <AdminMetricGrid aria-hidden="true">
-      {Array.from({ length: count }).map((_, i) => (
-        <div
-          key={i}
-          className="rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-6 shadow-e1"
-        >
-          <Skeleton className="mb-4 h-10 w-10 rounded-[var(--radius-md)]" />
-          <Skeleton className="h-7 w-28" />
-          <Skeleton className="mt-2 h-4 w-20" />
-        </div>
-      ))}
+      {Array.from({ length: count }).map((_, i) =>
+        compact ? (
+          <div
+            key={i}
+            className="flex items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1"
+          >
+            <Skeleton className="h-10 w-10 shrink-0 rounded-[var(--radius-md)]" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-1.5 h-4 w-24" />
+            </div>
+          </div>
+        ) : (
+          <div
+            key={i}
+            className="rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-6 shadow-e1"
+          >
+            <Skeleton className="mb-4 h-10 w-10 rounded-[var(--radius-md)]" />
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="mt-2 h-4 w-20" />
+          </div>
+        ),
+      )}
     </AdminMetricGrid>
   );
 }
