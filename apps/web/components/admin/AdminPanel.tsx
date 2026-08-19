@@ -8,6 +8,8 @@ type Props = {
   description?: string;
   /** Small glyph before the title. Decorative — never the only label. */
   icon?: LucideIcon;
+  /** Icon colour. Defaults to the accent used on the dashboard. */
+  iconClassName?: string;
   /** Right-aligned link/button in the header. */
   action?: ReactNode;
   /** Heading level. `h2` by default; pass `h3` when nested under one. */
@@ -37,6 +39,7 @@ export function AdminPanel({
   title,
   description,
   icon: Icon,
+  iconClassName,
   action,
   as: Heading = "h2",
   children,
@@ -53,7 +56,7 @@ export function AdminPanel({
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-solid border-border-default px-6 py-5">
         <div className="min-w-0">
           <Heading className="flex items-center gap-2 font-display text-lg font-bold text-text-primary">
-            {Icon ? <Icon size={18} className="shrink-0 text-accent-purple" aria-hidden="true" /> : null}
+            {Icon ? <Icon size={18} className={cn("shrink-0 text-accent-purple", iconClassName)} aria-hidden="true" /> : null}
             <span className="min-w-0">{title}</span>
           </Heading>
           {description ? (
