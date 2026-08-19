@@ -22,11 +22,9 @@ import {
   CalendarDays,
   Newspaper,
   Building2,
-  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import {
-  Card,
   Table,
   THead,
   TBody,
@@ -37,8 +35,15 @@ import {
   StatCard,
   QuickActionCard,
   EmptyState,
-  DashboardLoading,
 } from "@/components/ui";
+import {
+  AdminPageContainer,
+  AdminMetricGrid,
+  AdminMetricGridSkeleton,
+  AdminPanel,
+  AdminPanelError,
+  AdminPanelSkeleton,
+} from "@/components/admin";
 import { getValidToken } from "@/lib/auth/token";
 import {
   loadPanel,
@@ -51,9 +56,6 @@ import {
   type RecentOrder,
   type PopularCourse,
 } from "@/lib/admin/dashboardPanels";
-
-
-
 
 const STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   paid: "success",
@@ -74,25 +76,47 @@ const QUICK_ACTIONS: { href: string; label: string; icon: LucideIcon; desc: stri
   { href: "/admin/lms",       label: "LMS B2B",      icon: Building2,     desc: "Tenant & lisensi" },
 ];
 
-/** One panel's worth of "we could not load this", with a way to try again. */
-function PanelError({ label, onRetry }: { label: string; onRetry: () => void }) {
+const rupiah = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
+
+/**
+ * A secondary metric: same card anatomy as StatCard, one step quieter.
+ *
+ * These four used to live inside ONE card as `grid-cols-2 sm:grid-cols-4`. At
+ * 640px that put four icon-plus-two-lines groups into a single p-5 card —
+ * roughly 130px each — so labels collided with values. Giving each its own card
+ * lets the grid reflow instead of compressing, and keeps them visibly
+ * subordinate to the four headline KPIs above.
+ */
+function SecondaryMetric({
+  label,
+  value,
+  icon: Icon,
+  accent,
+  trend,
+}: {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+  accent: string;
+  trend: string | null;
+}) {
   return (
-    <div
-      role="alert"
-      className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface-card px-6 py-10 text-center"
-    >
-      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-sunken text-text-secondary">
-        <AlertTriangle size={20} aria-hidden="true" />
+    <div className="flex min-w-0 items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+      <span
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)]"
+        style={{ background: `${accent}18`, color: accent }}
+      >
+        <Icon size={18} aria-hidden="true" />
       </span>
-      <div>
-        <p className="text-sm font-bold text-text-primary">Gagal memuat {label}</p>
-        <p className="mt-1 text-xs text-text-secondary">
-          Panel lain di halaman ini tidak terpengaruh.
+      <div className="min-w-0">
+        <p className="truncate text-xs font-medium text-text-secondary">{label}</p>
+        <p className="mt-0.5 truncate font-display text-base font-bold tabular-nums text-text-primary">
+          {value}
         </p>
       </div>
-      <button type="button" onClick={onRetry} className="btn btn-outline btn-sm">
-        Coba Lagi
-      </button>
+      {trend ? (
+        <span className="ml-auto shrink-0 text-xs font-semibold text-green-600">{trend}</span>
+      ) : null}
     </div>
   );
 }
@@ -178,14 +202,14 @@ export default function AdminDashboardPage() {
         { label: "Total Pengguna",    value: stats.totalUsers.toLocaleString("id-ID"),        icon: Users,        accent: "#0077A8", tint: "rgba(0,119,168,0.10)", trend: stats.trends?.totalUsers ?? null },
         { label: "Kursus Aktif",      value: stats.totalCourses.toLocaleString("id-ID"),      icon: BookOpen,     accent: "#7C3AED", tint: "rgba(124,58,237,0.10)", trend: null },
         { label: "Total Pendaftaran", value: stats.totalEnrollments.toLocaleString("id-ID"),  icon: GraduationCap, accent: "#16A34A", tint: "rgba(22,163,74,0.10)", trend: stats.trends?.totalEnrollments ?? null },
-        { label: "Total Pendapatan",  value: `Rp ${stats.totalRevenue.toLocaleString("id-ID")}`, icon: Wallet, accent: "#DC2626", tint: "rgba(220,38,38,0.10)", trend: stats.trends?.totalRevenue ?? null },
+        { label: "Total Pendapatan",  value: rupiah(stats.totalRevenue), icon: Wallet, accent: "#DC2626", tint: "rgba(220,38,38,0.10)", trend: stats.trends?.totalRevenue ?? null },
       ]
     : [];
 
   // ── Secondary KPIs: smaller inline metrics ──
   const SECONDARY_KPIS = stats
     ? [
-        { label: "Omset Retail",    value: `Rp ${stats.retailRevenue.toLocaleString("id-ID")}`, icon: ShoppingBag, accent: "#0077A8", trend: stats.trends?.retailRevenue ?? null },
+        { label: "Omset Retail",    value: rupiah(stats.retailRevenue), icon: ShoppingBag, accent: "#0077A8", trend: stats.trends?.retailRevenue ?? null },
         { label: "Langganan Aktif", value: stats.activeSubscriptions.toLocaleString("id-ID"), icon: IdCard, accent: "#D97706", trend: stats.trends?.activeSubscriptions ?? null },
         { label: "Tingkat Refund",  value: `${stats.refundRate}%`, icon: Undo2, accent: "#DC2626", trend: null },
         { label: "Rata-rata Rating", value: `${Number.isFinite(stats.avgRating) ? stats.avgRating.toFixed(1) : "0.0"} / 5.0`, icon: Star, accent: "#D97706", trend: null },
@@ -198,107 +222,109 @@ export default function AdminDashboardPage() {
   // panels resolve independently: one slow endpoint held the whole console
   // back, and one failed endpoint emptied it. Each panel now reports itself.
   return (
-    <div className="dash-container flex flex-col gap-8">
-      {/* ── Greeting — clean, matching Student/Trainer pattern ── */}
-      <section className="space-y-2">
-        <div className="mb-2 flex items-center gap-2 text-green-700">
+    <AdminPageContainer>
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <header className="flex flex-col gap-2">
+        <p className="flex items-center gap-2 text-green-700">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-600" aria-hidden="true" />
           <span className="text-[11px] font-semibold uppercase tracking-wider">Sistem Online</span>
-        </div>
-        <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">{greeting}, Admin 👋</h1>
-        <div className="flex items-center gap-2 text-text-secondary">
-          <CalendarDays size={18} aria-hidden="true" />
-          <span className="text-sm">
-            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} • Overview performa akademi hari ini.
+        </p>
+        <h1 className="font-display text-2xl font-extrabold text-text-primary md:text-3xl">
+          {greeting}, Admin 👋
+        </h1>
+        <p className="flex items-center gap-2 text-sm text-text-secondary">
+          <CalendarDays size={18} className="shrink-0" aria-hidden="true" />
+          <span className="min-w-0">
+            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            {" • Overview performa akademi hari ini."}
           </span>
-        </div>
+        </p>
+      </header>
+
+      {/* ── Primary KPIs ───────────────────────────────────────────────── */}
+      <section aria-labelledby="kpi-utama" className="flex flex-col gap-4">
+        <h2 id="kpi-utama" className="sr-only">Ringkasan utama</h2>
+        {statsPanel.kind === "loading" ? (
+          <AdminMetricGridSkeleton />
+        ) : statsPanel.kind === "error" ? (
+          /* Rendering "Rp 0" here would be a claim about the business. We do not
+             have one to make — the request failed. */
+          <div className="rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface-card">
+            <AdminPanelError label="statistik" onRetry={loadStats} />
+          </div>
+        ) : (
+          <>
+            <AdminMetricGrid>
+              {PRIMARY_KPIS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
+                <StatCard
+                  key={label}
+                  label={label}
+                  value={value}
+                  icon={Icon}
+                  iconColor={accent}
+                  iconBg={tint}
+                  trend={trend}
+                />
+              ))}
+            </AdminMetricGrid>
+            <AdminMetricGrid>
+              {SECONDARY_KPIS.map((m) => (
+                <SecondaryMetric key={m.label} {...m} />
+              ))}
+            </AdminMetricGrid>
+          </>
+        )}
       </section>
 
-      {/* ── 4 Primary KPI Cards — same as Student/Trainer ── */}
-      {statsPanel.kind === "loading" ? (
-        <DashboardLoading label="Memuat statistik…" />
-      ) : statsPanel.kind === "error" ? (
-        /* Rendering "Rp 0" here would be a claim about the business. We do not
-           have one to make — the request failed. */
-        <PanelError label="statistik" onRetry={loadStats} />
-      ) : (
-        <section className="dash-grid">
-          {PRIMARY_KPIS.map(({ label, value, icon: Icon, accent, tint, trend }) => (
-            <StatCard
-              key={label}
-              className="col-span-12 sm:col-span-6 xl:col-span-3"
-              label={label}
-              value={value}
-              icon={Icon}
-              iconColor={accent}
-              iconBg={tint}
-              trend={trend}
-            />
-          ))}
-        </section>
-      )}
-
-      {/* ── 4 Secondary KPIs — compact inline panel ── */}
-      {SECONDARY_KPIS.length > 0 && (
-        <Card className="rounded-[var(--radius-card)] p-5">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {SECONDARY_KPIS.map(({ label, value, icon: Icon, accent, trend }) => (
-              <div key={label} className="flex items-center gap-3">
-                <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-                  style={{ background: accent + "18", color: accent }}
-                >
-                  <Icon size={16} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs text-text-muted">{label}</p>
-                  <p className="text-sm font-bold text-text-primary">{value}</p>
-                  {trend && <p className="text-[10px] font-medium text-green-600">{trend}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* ── Leads Baru — full-width hero card (moved from cramped sidebar) ── */}
-      <div
-        className="relative overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e3"
+      {/* ── Leads ──────────────────────────────────────────────────────────
+          The badge used to be `absolute right-4 top-4` over content that
+          reflows, and the icon, title, a 5xl number and its caption all sat in
+          one non-wrapping flex row. Between roughly 700px and 900px the CTA
+          group ran into the badge. Three explicit tracks cannot overlap: they
+          stack below md and sit side by side above it. */}
+      <section
+        aria-labelledby="leads-heading"
+        className="rounded-[var(--radius-card)] p-6 text-white shadow-e2"
         style={{ background: "linear-gradient(145deg, #16283e 0%, #0c4a5a 55%, #045b66 100%)" }}
       >
-        <span className="absolute right-4 top-4 z-10 rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white/80 backdrop-blur-sm">
-          Real-time
-        </span>
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
-              <Mail size={22} aria-hidden="true" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-bold text-white">Leads Baru</h2>
-              <p className="mt-0.5 text-xs text-white/75">
+        <div className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-white/15">
+            <Mail size={22} aria-hidden="true" />
+          </span>
+
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 id="leads-heading" className="font-display text-lg font-bold text-white">
+                Leads Baru
+              </h2>
+              <span className="rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white/80">
+                Real-time
+              </span>
+            </div>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              {/* "—" for both loading and error, never "0": a zero here would
+                  read as "no one enquired today", which we cannot vouch for. */}
+              <span className="font-display text-4xl font-extrabold leading-none tabular-nums">
+                {leadsPanel.kind === "ready" ? leadsPanel.data.toLocaleString("id-ID") : "—"}
+              </span>
+              <span className="text-xs text-white/75">
                 {leadsPanel.kind === "loading"
                   ? "Memuat…"
                   : leadsPanel.kind === "error"
                   ? "Gagal memuat jumlah leads"
                   : leadsPanel.data === 0
                   ? "Tidak ada leads baru saat ini"
-                  : "Leads baru menunggu follow-up"}
-              </p>
+                  : "orang menunggu follow-up"}
+              </span>
             </div>
-            {/* "—" for both loading and error, never "0": a zero here would
-                read as "no one enquired today", which we cannot vouch for. */}
-            <span className="font-display text-4xl font-extrabold leading-none sm:text-5xl">
-              {leadsPanel.kind === "ready" ? leadsPanel.data : "—"}
-            </span>
-            <span className="hidden text-[11px] font-semibold uppercase tracking-wider text-white/70 sm:inline">Orang Terdeteksi</span>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex flex-wrap items-center gap-3 md:justify-end">
             {leadsPanel.kind === "error" && (
               <button
                 type="button"
                 onClick={loadLeads}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-xs font-bold text-white backdrop-blur-sm transition hover:bg-white/25"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-[var(--radius-md)] bg-white/15 px-4 text-sm font-bold text-white transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               >
                 Coba Lagi
               </button>
@@ -306,57 +332,88 @@ export default function AdminDashboardPage() {
             {leadsPanel.kind === "ready" && leadsPanel.data > 0 && (
               <Link
                 href="/admin/leads?status=new"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/95"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[var(--radius-md)] bg-white px-5 text-sm font-bold text-accent-cyan-strong shadow-e1 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               >
                 Tindak Lanjuti <ArrowRight size={16} aria-hidden="true" />
               </Link>
             )}
             <Link
               href="/admin/leads"
-              className={`inline-flex items-center justify-center gap-1 text-xs font-semibold transition hover:text-white ${
-                leadsPanel.kind === "ready" && leadsPanel.data > 0 ? "text-white/80" : "rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-accent-cyan-strong shadow-e1 hover:bg-white/95"
-              }`}
+              className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-[var(--radius-md)] px-3 text-sm font-semibold text-white/85 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             >
               Kelola Leads <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
         </div>
-        <div className="pointer-events-none absolute -bottom-12 -right-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" aria-hidden="true" />
-      </div>
+      </section>
 
-      {/* ── Transaksi Terbaru + Kursus Terpopuler — 2-col but now more spacious ── */}
-      <section className="dash-grid">
-        {/* Transaksi Terbaru */}
-        <div className="col-span-12 lg:col-span-8">
-          <div className="overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1">
-            <div className="flex items-center justify-between gap-3 border-b border-solid border-border-default px-6 py-5">
-              <div>
-                <h2 className="font-display text-lg font-bold text-text-primary">Transaksi Terbaru</h2>
-                <p className="mt-0.5 text-sm text-text-secondary">Memantau transaksi yang masuk secara berkala.</p>
-              </div>
-              <Link href="/admin/transaksi" className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-accent-cyan-strong hover:underline">
-                Semua Pesanan <ArrowRight size={14} aria-hidden="true" />
-              </Link>
+      {/* ── Transaksi + Kursus Terpopuler ───────────────────────────────────
+          The old split was `lg:col-span-8` / `lg:col-span-4`. At a 1024px
+          viewport, minus the 240px sidebar and padding, that left ~480px for a
+          four-column table and ~240px for the course list — both unusable. The
+          2:1 split now waits for 2xl, where there is genuinely room, and the
+          right rail never drops below 320px. */}
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+        <AdminPanel
+          title="Transaksi Terbaru"
+          description="Memantau transaksi yang masuk secara berkala."
+          action={
+            <Link
+              href="/admin/transaksi"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
+            >
+              Semua Pesanan <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          }
+        >
+          {ordersPanel.kind === "loading" ? (
+            <AdminPanelSkeleton rows={6} />
+          ) : ordersPanel.kind === "error" ? (
+            <AdminPanelError label="transaksi" onRetry={loadOrders} />
+          ) : orders.length === 0 ? (
+            <div className="p-6">
+              <EmptyState
+                icon={ShoppingBag}
+                title="Belum ada transaksi"
+                description="Transaksi yang masuk akan muncul di sini."
+              />
             </div>
+          ) : (
+            <>
+              {/* Below md the four columns cannot coexist without a horizontal
+                  scrollbar inside the card, so the same rows become a list. */}
+              <ul className="divide-y divide-border-default md:hidden">
+                {orders.map((order) => (
+                  <li key={order.id} className="flex flex-col gap-2 px-5 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-text-primary" title={order.user.name}>
+                          {order.user.name}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-text-secondary" title={order.user.email}>
+                          {order.user.email}
+                        </p>
+                      </div>
+                      <Badge variant={STATUS_VARIANT[order.status] ?? "neutral"} className="shrink-0 uppercase tracking-wide">
+                        {order.status}
+                      </Badge>
+                    </div>
+                    <p className="truncate text-sm text-text-primary" title={order.items[0]?.itemTitle ?? undefined}>
+                      {order.items[0]?.itemTitle ?? "—"}
+                    </p>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="text-xs text-text-muted">
+                        {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                      <span className="whitespace-nowrap text-sm font-bold tabular-nums text-text-primary">
+                        {rupiah(Number(order.finalAmount))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
 
-            {ordersPanel.kind === "loading" ? (
-              <div className="p-6">
-                <DashboardLoading label="Memuat transaksi…" />
-              </div>
-            ) : ordersPanel.kind === "error" ? (
-              <div className="p-6">
-                <PanelError label="transaksi" onRetry={loadOrders} />
-              </div>
-            ) : orders.length === 0 ? (
-              <div className="p-6">
-                <EmptyState
-                  icon={ShoppingBag}
-                  title="Belum ada transaksi"
-                  description="Transaksi yang masuk akan muncul di sini."
-                />
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+              <div className="hidden md:block">
                 <Table>
                   <THead>
                     <TR className="hover:bg-surface-sunken">
@@ -374,17 +431,24 @@ export default function AdminDashboardPage() {
                         <TR key={order.id}>
                           <TD>
                             <div className="flex items-center gap-3">
-                              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-extrabold text-white">
+                              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xs font-extrabold text-white" aria-hidden="true">
                                 {order.user.name.slice(0, 2).toUpperCase()}
                               </span>
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold text-text-primary">{order.user.name}</p>
-                                <p className="mt-0.5 truncate text-xs text-text-secondary">{order.user.email}</p>
+                                <p className="truncate text-sm font-semibold text-text-primary" title={order.user.name}>
+                                  {order.user.name}
+                                </p>
+                                <p className="mt-0.5 truncate text-xs text-text-secondary" title={order.user.email}>
+                                  {order.user.email}
+                                </p>
                               </div>
                             </div>
                           </TD>
-                          <TD>
-                            <p className="max-w-[220px] truncate text-sm text-text-primary">{title}</p>
+                          <TD className="min-w-0">
+                            {/* `title` so a truncated course name is still
+                                reachable — the old cell clipped at 220px with
+                                no way to read the rest. */}
+                            <p className="truncate text-sm text-text-primary" title={title}>{title}</p>
                             <p className="mt-0.5 text-xs text-text-muted">
                               {new Date(order.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                             </p>
@@ -392,8 +456,8 @@ export default function AdminDashboardPage() {
                           <TD className="text-center">
                             <Badge variant={variant} className="uppercase tracking-wide">{order.status}</Badge>
                           </TD>
-                          <TD className="whitespace-nowrap text-right text-sm font-bold text-text-primary">
-                            Rp {Number(order.finalAmount).toLocaleString("id-ID")}
+                          <TD className="whitespace-nowrap text-right text-sm font-bold tabular-nums text-text-primary">
+                            {rupiah(Number(order.finalAmount))}
                           </TD>
                         </TR>
                       );
@@ -401,77 +465,89 @@ export default function AdminDashboardPage() {
                   </TBody>
                 </Table>
               </div>
-            )}
-          </div>
-        </div>
+            </>
+          )}
+        </AdminPanel>
 
-        {/* Kursus Terpopuler */}
-        <div className="col-span-12 lg:col-span-4">
-          <Card className="h-full p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 font-display text-base font-bold text-text-primary">
-                <TrendingUp size={18} className="text-accent-purple" aria-hidden="true" /> Kursus Terpopuler
-              </h2>
-              <Link href="/admin/kursus" className="inline-flex items-center gap-1 text-xs font-semibold text-accent-cyan-strong hover:underline">
-                Kelola <ChevronRight size={14} aria-hidden="true" />
-              </Link>
-            </div>
-            {coursesPanel.kind === "loading" ? (
-              <DashboardLoading label="Memuat kursus…" />
-            ) : coursesPanel.kind === "error" ? (
-              <PanelError label="kursus terpopuler" onRetry={loadCourses} />
-            ) : courses.length === 0 ? (
+        <AdminPanel
+          title="Kursus Terpopuler"
+          icon={TrendingUp}
+          action={
+            <Link
+              href="/admin/kursus"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
+            >
+              Kelola <ChevronRight size={14} aria-hidden="true" />
+            </Link>
+          }
+        >
+          {coursesPanel.kind === "loading" ? (
+            <AdminPanelSkeleton rows={5} />
+          ) : coursesPanel.kind === "error" ? (
+            <AdminPanelError label="kursus terpopuler" onRetry={loadCourses} />
+          ) : courses.length === 0 ? (
+            <div className="p-6">
               <EmptyState icon={BookOpen} title="Belum ada kursus" />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {courses.map((course, i) => {
-                  const pct = Math.max((course.totalEnrolled / maxEnrolled) * 100, 4);
-                  return (
-                    <div key={course.id} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-xs font-bold text-text-secondary">
-                        #{i + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-text-primary">{course.title}</p>
-                        <p className="mt-0.5 truncate text-xs text-text-secondary">{course.trainer?.name ?? "Trainer Jago"}</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-                            <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="flex flex-shrink-0 items-center gap-1 text-[11px] font-medium text-text-secondary">
-                            <GraduationCap size={12} aria-hidden="true" /> {course.totalEnrolled}
+            </div>
+          ) : (
+            <ol className="flex flex-col gap-4 p-6">
+              {courses.map((course, i) => {
+                const pct = Math.max((course.totalEnrolled / maxEnrolled) * 100, 4);
+                const rating = parseFloat(course.avgRating);
+                return (
+                  <li key={course.id} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-surface-sunken text-xs font-bold text-text-secondary">
+                      {i + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate text-sm font-semibold text-text-primary" title={course.title}>
+                          {course.title}
+                        </p>
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-600">
+                          <Star size={12} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+                          <span className="tabular-nums">
+                            {Number.isFinite(rating) ? rating.toFixed(1) : "0.0"}
                           </span>
-                        </div>
+                        </span>
                       </div>
-                      <span className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-xs font-semibold text-amber-600">
-                        <Star size={12} className="fill-amber-400 text-amber-400" aria-hidden="true" />
-                        {Number.isFinite(parseFloat(course.avgRating)) ? parseFloat(course.avgRating).toFixed(1) : "0.0"}
-                      </span>
+                      <p className="mt-0.5 truncate text-xs text-text-secondary" title={course.trainer?.name ?? undefined}>
+                        {course.trainer?.name ?? "Trainer Jago"}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        {/* Relative bar only — the API gives no target, so this
+                            compares the five against each other and nothing
+                            more. `aria-hidden` because the count beside it is
+                            the accessible value. */}
+                        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-sunken" aria-hidden="true">
+                          <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium tabular-nums text-text-secondary">
+                          <GraduationCap size={12} aria-hidden="true" />
+                          {course.totalEnrolled.toLocaleString("id-ID")}
+                          <span className="sr-only"> peserta</span>
+                        </span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </Card>
-        </div>
-      </section>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </AdminPanel>
+      </div>
 
-      {/* ── Akses Cepat / Quick Actions — col-span-4 = 3 per row, even grid ── */}
-      <section className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold text-text-primary">Akses Cepat</h2>
-        <div className="dash-grid">
+      {/* ── Akses Cepat ────────────────────────────────────────────────── */}
+      <section aria-labelledby="akses-cepat" className="flex flex-col gap-4">
+        <h2 id="akses-cepat" className="font-display text-lg font-bold text-text-primary">
+          Akses Cepat
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 lg:gap-6">
           {QUICK_ACTIONS.map(({ href, label, icon: Icon, desc }) => (
-            <QuickActionCard
-              key={href}
-              className="col-span-6 sm:col-span-4 xl:col-span-4"
-              href={href}
-              label={label}
-              icon={Icon}
-              description={desc}
-            />
+            <QuickActionCard key={href} href={href} label={label} icon={Icon} description={desc} />
           ))}
         </div>
       </section>
-    </div>
+    </AdminPageContainer>
   );
 }
