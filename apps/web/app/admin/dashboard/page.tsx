@@ -356,17 +356,30 @@ export default function AdminDashboardPage() {
       {/* ── Transaksi + Kursus Terpopuler ───────────────────────────────────
           The old split was `lg:col-span-8` / `lg:col-span-4`. At a 1024px
           viewport, minus the 240px sidebar and padding, that left ~480px for a
-          four-column table and ~240px for the course list — both unusable. The
-          2:1 split now waits for 2xl, where there is genuinely room, and the
-          right rail never drops below 320px. */}
-      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+          four-column table and ~240px for the course list — both unusable.
+
+          The threshold is 1440px, chosen by measurement rather than by taking a
+          stock breakpoint. Content width after the sidebar and padding, then
+          the two tracks once the 24px gap is removed:
+
+            1280px → 976px  → 635 / 317   rail under its 320px floor: unsafe
+            1360px → 1056px → 688 / 344   table under the ~700px it wants
+            1440px → 1136px → 741 / 371   both comfortable
+            1536px → 1232px → 805 / 403   (Tailwind's 2xl)
+
+          Waiting for 2xl left 1136px of width carrying a single table that
+          needs about 740, and made the page 2243px tall instead of 1603 — 640px
+          of extra scrolling that bought nothing. At 1280 the rail genuinely
+          cannot fit, so it stacks; that is the right answer there, not a
+          compromise. */}
+      <div className="grid grid-cols-1 gap-6 min-[1440px]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <AdminPanel
           title="Transaksi Terbaru"
           description="Memantau transaksi yang masuk secara berkala."
           action={
             <Link
               href="/admin/transaksi"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
+              className="-my-2 inline-flex items-center gap-1 rounded-[var(--radius-md)] py-2 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
             >
               Semua Pesanan <ArrowRight size={14} aria-hidden="true" />
             </Link>
@@ -481,7 +494,7 @@ export default function AdminDashboardPage() {
           action={
             <Link
               href="/admin/kursus"
-              className="inline-flex items-center gap-1 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
+              className="-my-2 inline-flex items-center gap-1 rounded-[var(--radius-md)] py-2 text-sm font-semibold text-accent-cyan-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40"
             >
               Kelola <ChevronRight size={14} aria-hidden="true" />
             </Link>
