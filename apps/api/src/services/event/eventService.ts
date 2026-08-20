@@ -255,10 +255,18 @@ export async function getPublishedEventBySlug(slug: string) {
   return event;
 }
 
-/** The signed-in user's registration for a given event slug (null when none). */
+/**
+ * The signed-in user's registration for a given event slug (null when none).
+ *
+ * BL-68: the slug is resolved through `getPublishedEventBySlug`, not a bare
+ * `findUnique`. Resolving any status here leaked the existence of draft and
+ * cancelled events to any authenticated user — a 200 (with `data: null`) meant
+ * "this slug exists", a 404 meant it did not, so the public detail endpoint's
+ * uniform 404 could be bypassed by asking this endpoint instead. Both entry
+ * points now draw the same line.
+ */
 export async function getUserRegistration(slug: string, userId: string) {
-  const event = await prisma.event.findUnique({ where: { slug } });
-  if (!event) throw new AppError(404, "Event tidak ditemukan.");
+  const event = await getPublishedEventBySlug(slug);
 
   return prisma.eventRegistration.findUnique({
     where: { eventId_userId: { eventId: event.id, userId } },
