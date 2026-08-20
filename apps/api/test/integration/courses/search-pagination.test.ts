@@ -19,7 +19,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
 }));
 
 vi.mock("../../../src/services/search/meilisearch.js", () => ({
-  searchCourses: vi.fn().mockResolvedValue([]),
+  searchCourses: vi.fn().mockResolvedValue({ hits: [], total: 0 }),
   indexCourse: vi.fn().mockResolvedValue(undefined),
   deleteCourseFromIndex: vi.fn().mockResolvedValue(undefined),
   ensureCourseIndexSettings: vi.fn().mockResolvedValue(undefined),
@@ -64,7 +64,10 @@ const ALL = Array.from({ length: MATCH_COUNT }, (_, i) => fakeCourse(i + 1));
 beforeEach(() => {
   vi.clearAllMocks();
   // Meilisearch matches 12 courses; Prisma hydrates all 12.
-  mockSearch.mockResolvedValue(ALL.map((c) => ({ id: c.id, slug: c.slug, title: c.title })));
+  mockSearch.mockResolvedValue({
+    hits: ALL.map((c) => ({ id: c.id, slug: c.slug, title: c.title })),
+    total: MATCH_COUNT,
+  });
   mockPrisma.course.findMany.mockResolvedValue(ALL);
   mockPrisma.course.count.mockResolvedValue(MATCH_COUNT);
 });
@@ -111,10 +114,13 @@ describe("GET /api/courses?q= — Meilisearch branch pagination", () => {
 
   it("preserves Meilisearch relevance order", async () => {
     // Prisma returns rows in its own order; the service must re-order by hit.
-    mockSearch.mockResolvedValue([
-      { id: "c3", slug: "marketing-3", title: "Marketing 3" },
-      { id: "c1", slug: "marketing-1", title: "Marketing 1" },
-    ]);
+    mockSearch.mockResolvedValue({
+      hits: [
+        { id: "c3", slug: "marketing-3", title: "Marketing 3" },
+        { id: "c1", slug: "marketing-1", title: "Marketing 1" },
+      ],
+      total: 2,
+    });
     mockPrisma.course.findMany.mockResolvedValue([fakeCourse(1), fakeCourse(3)]);
 
     const res = await request(app).get("/api/courses?q=marketing");
@@ -127,7 +133,7 @@ describe("GET /api/courses?q= — Meilisearch branch pagination", () => {
   });
 
   it("falls back to the Prisma ILIKE branch when Meilisearch has no hits", async () => {
-    mockSearch.mockResolvedValue([]);
+    mockSearch.mockResolvedValue({ hits: [], total: 0 });
     mockPrisma.course.findMany.mockResolvedValue(ALL.slice(0, 5));
     mockPrisma.course.count.mockResolvedValue(MATCH_COUNT);
 

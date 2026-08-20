@@ -15,7 +15,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
 }));
 
 vi.mock("../../../src/services/search/meilisearch.js", () => ({
-  searchCourses: vi.fn().mockResolvedValue([]),
+  searchCourses: vi.fn().mockResolvedValue({ hits: [], total: 0 }),
   indexCourse: vi.fn().mockResolvedValue(undefined),
   deleteCourseFromIndex: vi.fn().mockResolvedValue(undefined),
 }));

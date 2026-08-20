@@ -11,7 +11,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
 }));
 
 vi.mock("../../../src/services/search/meilisearch.js", () => ({
-  searchCourses: vi.fn().mockResolvedValue([]),
+  searchCourses: vi.fn().mockResolvedValue({ hits: [], total: 0 }),
   indexCourse: vi.fn().mockResolvedValue(undefined),
   deleteCourseFromIndex: vi.fn().mockResolvedValue(undefined),
   // BL-63: events are searched through the same module.
@@ -95,7 +95,7 @@ describe("GET /api/search", () => {
   });
 
   it("falls back to Prisma search when Meilisearch returns empty", async () => {
-    mockSearch.mockResolvedValue([]);
+    mockSearch.mockResolvedValue({ hits: [], total: 0 });
     const res = await request(app).get("/api/search?q=marketing");
     expect(res.status).toBe(200);
     expect(res.body.data.courses).toHaveLength(1);
@@ -103,7 +103,7 @@ describe("GET /api/search", () => {
   });
 
   it("returns Meilisearch results when available", async () => {
-    mockSearch.mockResolvedValue([{ id: "c1", slug: "marketing-101", title: "Marketing 101" }]);
+    mockSearch.mockResolvedValue({ hits: [{ id: "c1", slug: "marketing-101", title: "Marketing 101" }], total: 1 });
     mockPrisma.course.findMany.mockResolvedValue([fakeCourse]);
     const res = await request(app).get("/api/search?q=marketing");
     expect(res.status).toBe(200);

@@ -64,10 +64,12 @@ export async function deleteCourseFromIndex(courseId: string): Promise<void> {
   }
 }
 
+export type CourseSearchResult = { hits: { id: string; slug: string; title: string }[]; total: number };
+
 export async function searchCourses(
   query: string,
   opts?: { limit?: number; offset?: number; filter?: string },
-): Promise<{ id: string; slug: string; title: string }[]> {
+): Promise<CourseSearchResult> {
   try {
     const client = getMeiliClient();
     const result = await client.index(COURSE_INDEX).search(query, {
@@ -76,9 +78,17 @@ export async function searchCourses(
       filter: opts?.filter,
       attributesToRetrieve: ["id", "slug", "title", "shortDesc", "thumbnailUrl", "price", "avgRating", "categoryName"],
     });
-    return result.hits as { id: string; slug: string; title: string }[];
+    const hits = result.hits as { id: string; slug: string; title: string }[];
+    // Meilisearch reports the full match count as `estimatedTotalHits` for
+    // offset/limit pagination and as `totalHits` for page/hitsPerPage
+    // pagination. Both are read so the total stays correct if the pagination
+    // mode ever changes; the page size is only a last-resort floor for a server
+    // that reports neither. Mirrors `searchEvents` below.
+    const paging = result as unknown as { estimatedTotalHits?: number; totalHits?: number };
+    const total = paging.estimatedTotalHits ?? paging.totalHits ?? hits.length;
+    return { hits, total };
   } catch {
-    return [];
+    return { hits: [], total: 0 };
   }
 }
 

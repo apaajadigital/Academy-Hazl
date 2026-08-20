@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// The whole match set is larger than the page Meilisearch returns — that gap is
+// what `total` exists to report, so the fixture keeps the two different.
+const MOCK_TOTAL_HITS = 42;
+
 const mockIndex = {
   addDocuments: vi.fn().mockResolvedValue({}),
   deleteDocument: vi.fn().mockResolvedValue({}),
-  search: vi.fn().mockResolvedValue({ hits: [{ id: "c1", slug: "kursus-a", title: "Kursus A" }] }),
+  search: vi.fn().mockResolvedValue({
+    hits: [{ id: "c1", slug: "kursus-a", title: "Kursus A" }],
+    estimatedTotalHits: MOCK_TOTAL_HITS,
+  }),
   updateSearchableAttributes: vi.fn().mockResolvedValue({}),
   updateFilterableAttributes: vi.fn().mockResolvedValue({}),
   updateSortableAttributes: vi.fn().mockResolvedValue({}),
@@ -93,18 +100,31 @@ describe("meilisearch service", () => {
     expect(mockIndex.deleteDocument).toHaveBeenCalledWith("c1");
   });
 
-  it("searchCourses returns hits array", async () => {
+  it("searchCourses returns hits with the full match total", async () => {
     const { searchCourses } = await import("../../src/services/search/meilisearch.js");
-    const results = await searchCourses("kursus", { limit: 10, offset: 0 });
-    expect(Array.isArray(results)).toBe(true);
-    expect(results[0].id).toBe("c1");
+    const result = await searchCourses("kursus", { limit: 10, offset: 0 });
+    expect(Array.isArray(result.hits)).toBe(true);
+    expect(result.hits[0].id).toBe("c1");
+    expect(result.total).toBe(MOCK_TOTAL_HITS);
   });
 
-  it("searchCourses returns empty array on error", async () => {
+  it("searchCourses falls back to totalHits, then to the page size", async () => {
+    const { searchCourses } = await import("../../src/services/search/meilisearch.js");
+
+    // page/hitsPerPage pagination mode reports `totalHits` instead.
+    mockIndex.search.mockResolvedValueOnce({ hits: [{ id: "c1" }], totalHits: 9 });
+    expect((await searchCourses("kursus")).total).toBe(9);
+
+    // A server reporting neither must not collapse the total to zero.
+    mockIndex.search.mockResolvedValueOnce({ hits: [{ id: "c1" }, { id: "c2" }] });
+    expect((await searchCourses("kursus")).total).toBe(2);
+  });
+
+  it("searchCourses returns an empty result on error", async () => {
     mockIndex.search.mockRejectedValueOnce(new Error("Search failed"));
     const { searchCourses } = await import("../../src/services/search/meilisearch.js");
-    const results = await searchCourses("error-test");
-    expect(results).toEqual([]);
+    const result = await searchCourses("error-test");
+    expect(result).toEqual({ hits: [], total: 0 });
   });
 
   it("ensureCourseIndexSettings updates all attribute settings", async () => {

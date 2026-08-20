@@ -16,7 +16,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
 }));
 
 vi.mock("../../../src/services/search/meilisearch.js", () => ({
-  searchCourses: vi.fn().mockResolvedValue([]),
+  searchCourses: vi.fn().mockResolvedValue({ hits: [], total: 0 }),
   indexCourse: vi.fn().mockResolvedValue(undefined),
   deleteCourseFromIndex: vi.fn().mockResolvedValue(undefined),
   ensureCourseIndexSettings: vi.fn().mockResolvedValue(undefined),
@@ -66,7 +66,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockPrisma.course.findMany.mockResolvedValue([freeCourse]);
   mockPrisma.course.count.mockResolvedValue(1);
-  vi.mocked(searchCourses).mockResolvedValue([]);
+  vi.mocked(searchCourses).mockResolvedValue({ hits: [], total: 0 });
 });
 
 describe("GET /api/courses?free=true", () => {
@@ -162,7 +162,7 @@ describe("GET /api/courses?free=true", () => {
   });
 
   it("applies the constraint on the Meilisearch hit path too", async () => {
-    vi.mocked(searchCourses).mockResolvedValue([{ slug: "dasar-branding" }] as never);
+    vi.mocked(searchCourses).mockResolvedValue({ hits: [{ slug: "dasar-branding" }], total: 1 } as never);
 
     await request(app).get("/api/courses?free=true&q=branding");
 
