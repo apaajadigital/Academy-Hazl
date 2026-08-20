@@ -6,6 +6,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { successResponse, AppError } from "../types/index.js";
 import { logger } from "../lib/logger.js";
+import { escapeLike } from "../lib/escapeLike.js";
 import {
   EBOOK_DOWNLOAD_TTL_SECONDS,
   isLocalUploadPath,
@@ -42,12 +43,13 @@ router.get("/", async (req, res, next) => {
       status: "published",
       ...(category ? { category } : {}),
       // Mirrors modules/admin/ebooks.ts: case-insensitive contains over
-      // title + author, so public and admin search behave identically.
+      // title + author, so public and admin search behave identically — both
+      // sides share `escapeLike` so a fix on one cannot silently skip the other.
       ...(search
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { author: { contains: search, mode: "insensitive" as const } },
+              { title: { contains: escapeLike(search), mode: "insensitive" as const } },
+              { author: { contains: escapeLike(search), mode: "insensitive" as const } },
             ],
           }
         : {}),

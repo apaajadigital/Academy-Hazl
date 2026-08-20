@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validateBody } from "../../middleware/validateBody.js";
 import { prisma } from "../../db/prisma.js";
 import { AppError, successResponse } from "../../types/index.js";
+import { escapeLike } from "../../lib/escapeLike.js";
 
 const router = Router();
 
@@ -21,11 +22,13 @@ router.get("/ebooks", async (req: Request, res: Response, next: NextFunction) =>
 
     const where = {
       ...(status ? { status } : {}),
+      // BL-108: `%`/`_` are LIKE wildcards, not literals — escape before they
+      // reach `contains`. Kept identical to routes/ebooks.ts (public list).
       ...(search
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { author: { contains: search, mode: "insensitive" as const } },
+              { title: { contains: escapeLike(search), mode: "insensitive" as const } },
+              { author: { contains: escapeLike(search), mode: "insensitive" as const } },
             ],
           }
         : {}),
