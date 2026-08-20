@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
+import PortalSidebar from "@/components/lms/PortalSidebar";
 import { API_BASE } from "@/lib/api/base";
 
 type TenantBranding = {
@@ -66,7 +67,19 @@ export default async function LmsPortalLayout({
         </div>
       )}
 
-      {children}
+      {/* The portal rail lives here, not in page.tsx, so every sub-route under
+          /lms/[tenantSlug] gets the same navigation and it survives client-side
+          navigation instead of remounting per page. Branding comes from the
+          server fetch above — no client waterfall before the logo paints. */}
+      <div className="flex min-h-screen bg-surface-page">
+        <PortalSidebar
+          slug={tenantSlug}
+          name={tenant?.name ?? null}
+          logoUrl={tenant?.logoUrl ?? null}
+          primaryColor={primary}
+        />
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
     </>
   );
 }

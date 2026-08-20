@@ -5,16 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   BookOpen,
-  Home,
   Trophy,
-  GraduationCap,
-  ArrowLeft,
   ArrowRight,
   CalendarDays,
   Check,
-  Settings,
 } from "lucide-react";
-import { Avatar, Badge, Card } from "@/components/ui";
+import { Badge, Card } from "@/components/ui";
 import { getValidToken } from "@/lib/auth/token";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,94 +35,10 @@ type TenantInfo = {
   slug: string;
   logoUrl: string | null;
   primaryColor: string;
-  /** True when the caller administers this tenant; served by `/api/lms/portal/me`. */
-  isAdmin?: boolean;
 };
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
-
-function Sidebar({
-  slug,
-  tenant,
-  isTenantAdmin,
-}: {
-  slug: string;
-  tenant: TenantInfo | null;
-  /** True only when the capability probe confirmed LMS-admin rights (see page). */
-  isTenantAdmin: boolean;
-}) {
-  const primary = tenant?.primaryColor ?? "#0077A8";
-  const navItems = [
-    { href: `/lms/${slug}`,              icon: Home,     label: "Kursus Saya" },
-    { href: `/lms/${slug}/certificates`, icon: Trophy,   label: "Sertifikat" },
-    // The admin console is otherwise unreachable by click. It is appended only
-    // for confirmed admins — showing it to an employee would promise a page the
-    // API answers with 403.
-    ...(isTenantAdmin
-      ? [{ href: `/lms/${slug}/admin`, icon: Settings, label: "Konsol Admin" }]
-      : []),
-  ];
-
-  return (
-    <aside className="sticky top-0 flex min-h-screen w-64 flex-shrink-0 flex-col border-r border-border-default bg-surface-card">
-      {/* Company brand — tenant logo + name (white-label branding hook) */}
-      <div className="border-b border-border-default px-4 py-5">
-        <div className="flex items-center gap-3 rounded-xl bg-surface-sunken p-3">
-          <Avatar
-            src={tenant?.logoUrl ?? undefined}
-            name={tenant?.name ?? slug}
-            size="md"
-            className="rounded-xl border-0"
-            style={tenant?.logoUrl ? undefined : { background: primary, color: "#ffffff" }}
-          />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-text-primary">{tenant?.name ?? slug}</p>
-            <p className="text-[11px] text-text-secondary">LMS Portal</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-3">
-        {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = typeof window !== "undefined" && window.location.pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="mb-0.5 flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all"
-              style={{
-                background: isActive ? `${primary}15` : "transparent",
-                color: isActive ? primary : "var(--text-secondary)",
-              }}
-            >
-              <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Back links */}
-      <div className="flex flex-col gap-2 border-t border-border-default px-4 py-4">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-1.5 text-[11px] text-text-secondary transition-colors hover:text-accent-cyan-strong"
-        >
-          <ArrowLeft size={13} aria-hidden="true" />
-          Kembali ke Dashboard
-        </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-accent-cyan-strong"
-        >
-          <GraduationCap size={13} aria-hidden="true" />
-          Jago Akademi
-        </Link>
-      </div>
-    </aside>
-  );
-}
+// The portal rail moved to app/lms/[tenantSlug]/layout.tsx (components/lms/PortalSidebar)
+// so every sub-route shares one nav.
 
 // ─── Welcome banner + progress summary ─────────────────────────────────────────
 
@@ -249,7 +161,6 @@ export default function LmsPortalHomePage() {
   const [courses, setCourses] = useState<CourseProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
-  const [isTenantAdmin, setIsTenantAdmin] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -263,14 +174,7 @@ export default function LmsPortalHomePage() {
       const [meData, coursesData] = await Promise.all([meRes.json(), coursesRes.json()]);
 
       const myTenant: TenantInfo | undefined = meData.data?.find((t: TenantInfo) => t.slug === tenantSlug);
-      if (myTenant) {
-        setTenant(myTenant);
-        // `/api/lms/portal/me` reports `isAdmin` per tenant (derived from the same
-        // UserRole rows `requireLmsAdmin` checks). Compare strictly so an older API
-        // response omitting the field hides the console link instead of offering
-        // one that would land on a 403.
-        setIsTenantAdmin(myTenant.isAdmin === true);
-      }
+      if (myTenant) setTenant(myTenant);
       setCourses(coursesData.data ?? []);
       setLoading(false);
     };
@@ -280,12 +184,7 @@ export default function LmsPortalHomePage() {
   const primary = tenant?.primaryColor ?? "#0077A8";
 
   return (
-    <div className="flex min-h-screen bg-surface-page">
-      {/* Sidebar */}
-      <Sidebar slug={tenantSlug} tenant={tenant} isTenantAdmin={isTenantAdmin} />
-
-      {/* Main */}
-      <main className="min-w-0 flex-1 px-6 py-7 md:px-8">
+    <main className="px-6 py-7 md:px-8">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <span
@@ -327,6 +226,5 @@ export default function LmsPortalHomePage() {
           </>
         )}
       </main>
-    </div>
   );
 }
