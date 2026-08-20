@@ -15,7 +15,7 @@ import { app } from "../../../src/app.js";
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     course: { findUnique: vi.fn() },
-    courseEnrollment: { findUnique: vi.fn() },
+    courseEnrollment: { findUnique: vi.fn(), upsert: vi.fn() },
     event: { findUnique: vi.fn(), updateMany: vi.fn() },
     eventRegistration: { findUnique: vi.fn(), create: vi.fn(), upsert: vi.fn() },
     coupon: { findUnique: vi.fn() },
@@ -51,6 +51,7 @@ vi.mock("../../../src/services/coupon/couponService.js", () => ({
 }));
 
 const { prisma } = await import("../../../src/db/prisma.js");
+const { createDokuOrder } = await import("../../../src/services/payment/dokuService.js");
 
 const FULL_PRICE = 299000;
 const SALE_PRICE = 149000;
@@ -74,6 +75,7 @@ beforeEach(() => {
     user: { name: "Test User", email: "user@test.com" },
   } as never);
   vi.mocked(prisma.paymentTransaction.create).mockResolvedValue({} as never);
+  vi.mocked(prisma.courseEnrollment.upsert).mockResolvedValue({} as never);
 });
 
 /** The `data` object handed to prisma.order.create for the single checkout call. */
@@ -126,5 +128,42 @@ describe("POST /api/checkout — course salePrice (BL-53)", () => {
 
     expect(res.status).toBe(200);
     expect(orderCreateData()?.totalAmount).toBe(FULL_PRICE);
+    expect(createDokuOrder).toHaveBeenCalled();
+  });
+
+  /**
+   * salePrice = 0 is the case a truthiness ternary gets wrong: zero is falsy, so
+   * `salePrice ? salePrice : price` silently bills the FULL price for a course
+   * the catalog advertises as free. This is not hypothetical — BL-53 records a
+   * `price=250000, salePrice=0` course that showed up under /kelas-gratis and
+   * still charged Rp 250.000. Only `??` distinguishes "discounted to zero" from
+   * "no discount set".
+   */
+  it("treats salePrice = 0 as free and never calls DOKU", async () => {
+    vi.mocked(prisma.course.findUnique).mockResolvedValue({
+      ...baseCourse,
+      salePrice: 0,
+    } as never);
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "course", itemId: "course-1" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.free).toBe(true);
+    expect(res.body.data.finalAmount).toBe(0);
+    expect(res.body.data.paymentUrl).toBeNull();
+
+    // The regression: a Rp 0 course must never reach the payment gateway.
+    expect(createDokuOrder).not.toHaveBeenCalled();
+
+    // ...and the order must record Rp 0, not the list price it was discounted from.
+    const data = orderCreateData();
+    expect(data?.totalAmount).toBe(0);
+    expect(data?.finalAmount).toBe(0);
+    expect(data?.status).toBe("paid");
+
+    // Access is granted inline, because no webhook will ever arrive to grant it.
+    expect(prisma.courseEnrollment.upsert).toHaveBeenCalled();
   });
 });
