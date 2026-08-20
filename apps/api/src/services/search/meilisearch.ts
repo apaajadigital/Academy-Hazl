@@ -13,6 +13,21 @@ export function getMeiliClient(): Meilisearch {
   return _client;
 }
 
+/**
+ * Size of the whole match set behind a paginated search.
+ *
+ * Meilisearch reports it as `estimatedTotalHits` for offset/limit pagination and
+ * as `totalHits` for page/hitsPerPage pagination. Both are read so the total
+ * stays correct if the pagination mode ever changes; the page size is only a
+ * last-resort floor for a server that reports neither. Shared by every
+ * `{ hits, total }` search below so no index can regress to the BL-63b bug of
+ * reporting the current page as the total.
+ */
+function readTotalHits(result: unknown, pageSize: number): number {
+  const paging = result as { estimatedTotalHits?: number; totalHits?: number };
+  return paging.estimatedTotalHits ?? paging.totalHits ?? pageSize;
+}
+
 export const COURSE_INDEX = "courses";
 
 export async function indexCourse(course: {
@@ -221,14 +236,7 @@ export async function searchEvents(
       ],
     });
     const hits = result.hits as EventSearchHit[];
-    // Meilisearch reports the full match count as `estimatedTotalHits` for
-    // offset/limit pagination and as `totalHits` for page/hitsPerPage
-    // pagination. Both are read so the total stays correct if the pagination
-    // mode ever changes; the page size is only a last-resort floor for a server
-    // that reports neither.
-    const paging = result as unknown as { estimatedTotalHits?: number; totalHits?: number };
-    const total = paging.estimatedTotalHits ?? paging.totalHits ?? hits.length;
-    return { hits, total };
+    return { hits, total: readTotalHits(result, hits.length) };
   } catch {
     return { hits: [], total: 0 };
   }
@@ -241,6 +249,108 @@ export async function ensureEventIndexSettings(): Promise<void> {
     await index.updateSearchableAttributes(["title", "description", "speakerName", "location", "venue"]);
     await index.updateFilterableAttributes(["type", "status", "isFeatured"]);
     await index.updateSortableAttributes(["startDate"]);
+  } catch {
+    // Meilisearch may not be running in all environments
+  }
+}
+
+// ─── E-Books (BL-103) ─────────────────────────────────────────────────────────
+
+export const EBOOK_INDEX = "ebooks";
+
+/**
+ * Input accepted by `indexEbook`. Named type for the same reason as
+ * `IndexEventInput`: the job payload in jobs/processors/searchIndex.ts derives
+ * from it, so the queue payload can never drift from the document shape.
+ * Decimal columns arrive as strings — the caller stringifies them at the service
+ * boundary so this module never depends on the Prisma runtime types.
+ *
+ * `fileUrl` is deliberately ABSENT. The index answers public search queries, and
+ * a document attribute is only ever one `attributesToRetrieve` edit away from
+ * being served; the download URL is gated behind a purchase check in
+ * routes/ebooks.ts and must never be reachable through search.
+ */
+export type IndexEbookInput = {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  author?: string | null;
+  category?: string | null;
+  status: string;
+  coverUrl?: string | null;
+  pages?: number | null;
+  price: string | number;
+  salePrice?: string | number | null;
+  totalSold?: number;
+};
+
+export async function indexEbook(ebook: IndexEbookInput): Promise<void> {
+  try {
+    const client = getMeiliClient();
+    const index = client.index(EBOOK_INDEX);
+    await index.addDocuments([
+      {
+        id: ebook.id,
+        slug: ebook.slug,
+        title: ebook.title,
+        description: ebook.description ?? "",
+        author: ebook.author ?? "",
+        category: ebook.category ?? "",
+        status: ebook.status,
+        coverUrl: ebook.coverUrl ?? "",
+        pages: ebook.pages ?? null,
+        price: Number(ebook.price),
+        salePrice: ebook.salePrice === null || ebook.salePrice === undefined ? null : Number(ebook.salePrice),
+        totalSold: ebook.totalSold ?? 0,
+      },
+    ]);
+  } catch {
+    // Meilisearch is optional — indexing failure must never crash the API
+  }
+}
+
+export async function deleteEbookFromIndex(ebookId: string): Promise<void> {
+  try {
+    const client = getMeiliClient();
+    await client.index(EBOOK_INDEX).deleteDocument(ebookId);
+  } catch {
+    // silent
+  }
+}
+
+export type EbookSearchHit = { id: string; slug: string; title: string };
+
+/** A page of ebook hits PLUS the size of the whole match set — see
+ *  `EventSearchResult` for why the total is reported separately (BL-63b). */
+export type EbookSearchResult = { hits: EbookSearchHit[]; total: number };
+
+export async function searchEbooks(
+  query: string,
+  opts?: { limit?: number; offset?: number; filter?: string },
+): Promise<EbookSearchResult> {
+  try {
+    const client = getMeiliClient();
+    const result = await client.index(EBOOK_INDEX).search(query, {
+      limit: opts?.limit ?? 20,
+      offset: opts?.offset ?? 0,
+      filter: opts?.filter,
+      attributesToRetrieve: ["id", "slug", "title", "author", "category", "coverUrl", "price", "salePrice", "pages"],
+    });
+    const hits = result.hits as EbookSearchHit[];
+    return { hits, total: readTotalHits(result, hits.length) };
+  } catch {
+    return { hits: [], total: 0 };
+  }
+}
+
+export async function ensureEbookIndexSettings(): Promise<void> {
+  try {
+    const client = getMeiliClient();
+    const index = client.index(EBOOK_INDEX);
+    await index.updateSearchableAttributes(["title", "description", "author", "category"]);
+    await index.updateFilterableAttributes(["status", "category"]);
+    await index.updateSortableAttributes(["price", "totalSold"]);
   } catch {
     // Meilisearch may not be running in all environments
   }
