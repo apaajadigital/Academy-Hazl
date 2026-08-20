@@ -174,6 +174,48 @@ describe("POST /api/enrollments — paid-course guard (BL-54)", () => {
     );
   });
 
+  /**
+   * The behavioural counterpart to the query-shape assertion above. That test
+   * pins the `where` object; this one pins the OUTCOME by making the mock behave
+   * like the database: a fake order table holding only a PENDING order for this
+   * user and course, filtered by the same `status` the service asks for.
+   *
+   * Both are needed. A query-shape assertion still passes if someone later widens
+   * the lookup (adding `OR: [{status:"pending"}]`, say) while keeping the original
+   * keys present — the exploit would be back and the test would stay green. Here
+   * a widened lookup returns the pending order and the 403 turns into a 201.
+   *
+   * This is the realistic exploit shape: start a checkout to create an order, then
+   * abandon payment and POST to /api/enrollments while the order sits pending.
+   */
+  it("rejects a paid course when the user's only order is still pending", async () => {
+    vi.mocked(prisma.course.findUnique).mockResolvedValue(PAID_COURSE as never);
+
+    const ordersInDb = [
+      { id: "order-pending", userId: "user-1", status: "pending", courseId: COURSE_ID },
+    ];
+    vi.mocked(prisma.order.findFirst).mockImplementation((async (args?: {
+      where?: { userId?: string; status?: string };
+    }) => {
+      const where = args?.where ?? {};
+      return (
+        ordersInDb.find(
+          (o) =>
+            (where.userId === undefined || o.userId === where.userId) &&
+            (where.status === undefined || o.status === where.status)
+        ) ?? null
+      );
+    }) as never);
+
+    const res = await request(app)
+      .post("/api/enrollments")
+      .set(AUTH)
+      .send({ courseId: COURSE_ID });
+
+    expect(res.status).toBe(403);
+    expect(prisma.courseEnrollment.create).not.toHaveBeenCalled();
+  });
+
   it("still allows a free course without any order", async () => {
     vi.mocked(prisma.course.findUnique).mockResolvedValue(COURSE as never);
     vi.mocked(prisma.order.findFirst).mockResolvedValue(null as never);
