@@ -6,6 +6,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { successResponse, AppError } from "../types/index.js";
 import { logger } from "../lib/logger.js";
+import { escapeLike } from "../lib/escapeLike.js";
 import {
   EBOOK_DOWNLOAD_TTL_SECONDS,
   isLocalUploadPath,
@@ -38,16 +39,21 @@ router.get("/", async (req, res, next) => {
     const { page, limit, category, search } = ListQuerySchema.parse(req.query);
     const skip = (page - 1) * limit;
 
+    // BL-108: escape LIKE metacharacters before the term reaches `contains`.
+    // This route is public and unauthenticated, so `?search=%` would otherwise
+    // hand anyone an unfiltered full-table scan.
+    const term = search ? escapeLike(search) : undefined;
+
     const where = {
       status: "published",
       ...(category ? { category } : {}),
       // Mirrors modules/admin/ebooks.ts: case-insensitive contains over
       // title + author, so public and admin search behave identically.
-      ...(search
+      ...(term
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { author: { contains: search, mode: "insensitive" as const } },
+              { title: { contains: term, mode: "insensitive" as const } },
+              { author: { contains: term, mode: "insensitive" as const } },
             ],
           }
         : {}),

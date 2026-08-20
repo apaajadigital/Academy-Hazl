@@ -3,6 +3,7 @@ import { z } from "zod";
 import { validateBody } from "../../middleware/validateBody.js";
 import { prisma } from "../../db/prisma.js";
 import { AppError, successResponse } from "../../types/index.js";
+import { escapeLike } from "../../lib/escapeLike.js";
 
 const router = Router();
 
@@ -19,13 +20,17 @@ router.get("/ebooks", async (req: Request, res: Response, next: NextFunction) =>
     const { page, limit, search, status } = EbookListSchema.parse(req.query);
     const skip = (page - 1) * limit;
 
+    // BL-108: escape LIKE metacharacters so `?search=%` filters instead of
+    // matching every row. Kept in sync with the public routes/ebooks.ts mirror.
+    const term = search ? escapeLike(search) : undefined;
+
     const where = {
       ...(status ? { status } : {}),
-      ...(search
+      ...(term
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { author: { contains: search, mode: "insensitive" as const } },
+              { title: { contains: term, mode: "insensitive" as const } },
+              { author: { contains: term, mode: "insensitive" as const } },
             ],
           }
         : {}),
