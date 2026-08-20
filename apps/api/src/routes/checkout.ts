@@ -133,7 +133,11 @@ router.post("/", authenticate, async (req, res, next) => {
           venue: event.venue,
           eventType: event.type,
         }).catch(() => {});
-        return res.json(successResponse({ orderId: null, paymentUrl: null, finalAmount: 0, free: true }));
+        // pendingUrl is null, not absent: free items are fulfilled inline so there
+        // is nothing to settle, but the response shape stays uniform (BL-56).
+        return res.json(
+          successResponse({ orderId: null, paymentUrl: null, pendingUrl: null, finalAmount: 0, free: true })
+        );
       }
     }
 
@@ -267,7 +271,9 @@ router.post("/", authenticate, async (req, res, next) => {
       // e-ticket from the event branch above, since the ticket code is the only
       // way in at check-in.)
 
-      return res.json(successResponse({ orderId: order.id, paymentUrl: null, finalAmount: 0, free: true }));
+      return res.json(
+        successResponse({ orderId: order.id, paymentUrl: null, pendingUrl: null, finalAmount: 0, free: true })
+      );
     }
 
     const order = await prisma.order.create({
@@ -313,6 +319,12 @@ router.post("/", authenticate, async (req, res, next) => {
       failureUrl = `${env.WEB_URL}/payment/failed?orderId=${order.id}&returnUrl=${encodeURIComponent(returnPath)}`;
     }
 
+    // BL-56: async payment methods (VA / bank transfer) are not settled when the
+    // buyer leaves DOKU, so they must land on the pending page that shows the
+    // transfer instructions and expiry countdown. Unlike failureUrl this is never
+    // conditional — every paid order can be settled asynchronously.
+    const pendingUrl = `${env.WEB_URL}/payment/pending?orderId=${order.id}`;
+
     const { paymentUrl } = await createDokuOrder(
       invoiceNumber,
       [{ name: itemTitle, price: Math.round(finalAmount), quantity: 1 }],
@@ -320,7 +332,8 @@ router.post("/", authenticate, async (req, res, next) => {
       callbackUrl,
       order.user.name,
       order.user.email,
-      failureUrl
+      failureUrl,
+      pendingUrl
     );
 
     // Store transaction record
@@ -345,7 +358,7 @@ router.post("/", authenticate, async (req, res, next) => {
       paymentUrl,
     }).catch(() => {});
 
-    return res.json(successResponse({ orderId: order.id, paymentUrl, finalAmount }));
+    return res.json(successResponse({ orderId: order.id, paymentUrl, pendingUrl, finalAmount }));
   } catch (err) {
     next(err);
   }

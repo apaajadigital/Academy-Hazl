@@ -53,7 +53,13 @@ export async function createDokuOrder(
   customerName: string,
   customerEmail: string,
   /** Optional URL to redirect the user to if payment fails on DOKU's hosted page */
-  failureUrl?: string
+  failureUrl: string | undefined,
+  /**
+   * URL to redirect the user to when the payment is still awaiting settlement
+   * (VA / bank transfer). Required — an async payment method that has nowhere to
+   * return to strands the buyer without their transfer instructions (BL-56).
+   */
+  pendingUrl: string
 ): Promise<DokuCreateOrderResult> {
   if (!env.DOKU_CLIENT_ID || !env.DOKU_SECRET_KEY) {
     // Dev fallback: return a mock payment URL (always succeeds in dev)
@@ -79,6 +85,9 @@ export async function createDokuOrder(
       auto_redirect: true,
       // Redirect user to failed page if payment is cancelled/failed on DOKU's page
       ...(failureUrl && { failure_return_url: failureUrl }),
+      // Async methods (VA / bank transfer) settle later, so DOKU returns the user
+      // here instead of to callback_url. Sent unconditionally — see BL-56.
+      pending_return_url: pendingUrl,
     },
     payment: { payment_due_date: 60 },
     customer: {
