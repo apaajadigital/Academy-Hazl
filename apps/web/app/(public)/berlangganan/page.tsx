@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Zap, Building2, Star, ChevronDown, Sparkles } from "lucide-react";
+import { getApiBase } from "@/lib/api/base";
 
 export const metadata: Metadata = {
   title: "Berlangganan — Akses Semua Konten Premium",
@@ -11,7 +13,44 @@ export const metadata: Metadata = {
 
 // ─── Plan data ────────────────────────────────────────────────────────────────
 
-const PLANS = [
+/**
+ * View model this page renders. `/api/subscription/plans` is the single source of
+ * truth for pricing (BL-85), but it carries no presentation fields — icon, colour,
+ * CTA and href are derived here from the plan id.
+ */
+type PlanView = {
+  id: string;
+  name: string;
+  icon: LucideIcon;
+  badge: string | null;
+  priceMonthly: number | null;
+  priceAnnual: number | null;
+  /** Secondary pricing line under the headline price (billing cadence, savings). */
+  note: string | null;
+  desc: string;
+  color: string;
+  features: string[];
+  cta: string;
+  href: string;
+};
+
+/** Shape returned by GET /api/subscription/plans. */
+type ApiPlan = {
+  id: string;
+  name: string;
+  price: number;
+  durationDays: number;
+  pricePerMonth?: number;
+  savings?: number;
+  features: string[];
+  badge: string | null;
+};
+
+/**
+ * Last-known plan table, used only when the API is unreachable or returns nothing.
+ * A pricing page that 500s is worse than one showing slightly stale numbers.
+ */
+const PLANS: PlanView[] = [
   {
     id: "starter",
     name: "Starter",
@@ -19,6 +58,7 @@ const PLANS = [
     badge: null,
     priceMonthly: 99_000,
     priceAnnual: 79_000,
+    note: "atau Rp 79.000/bln jika bayar tahunan",
     desc: "Untuk individu yang ingin mulai belajar.",
     color: "var(--brand-cyan-strong)",
     features: [
@@ -38,6 +78,7 @@ const PLANS = [
     badge: "Paling Populer",
     priceMonthly: 199_000,
     priceAnnual: 159_000,
+    note: "atau Rp 159.000/bln jika bayar tahunan",
     desc: "Untuk profesional yang serius berkembang.",
     color: "var(--brand-pink-strong)",
     features: [
@@ -59,6 +100,7 @@ const PLANS = [
     badge: null,
     priceMonthly: null,
     priceAnnual: null,
+    note: null,
     desc: "Untuk tim & perusahaan dengan kebutuhan khusus.",
     color: "#B45309",
     features: [
@@ -73,6 +115,111 @@ const PLANS = [
     href: "/contact?subject=Enterprise",
   },
 ];
+
+/** Presentation-only fields, keyed by plan id. The API owns pricing; this owns look & feel. */
+const PLAN_PRESENTATION: Record<
+  string,
+  { icon: LucideIcon; color: string; desc: string; cta: string; href: string }
+> = {
+  monthly: {
+    icon: Zap,
+    color: "var(--brand-cyan-strong)",
+    desc: "Fleksibel, bayar per bulan tanpa komitmen panjang.",
+    cta: "Mulai Bulanan",
+    href: "/daftar?plan=monthly",
+  },
+  annual: {
+    icon: Star,
+    color: "var(--brand-pink-strong)",
+    desc: "Komitmen setahun dengan harga per bulan termurah.",
+    cta: "Mulai Tahunan",
+    href: "/daftar?plan=annual",
+  },
+  starter: {
+    icon: Zap,
+    color: "var(--brand-cyan-strong)",
+    desc: "Untuk individu yang ingin mulai belajar.",
+    cta: "Mulai Starter",
+    href: "/daftar?plan=starter",
+  },
+  pro: {
+    icon: Star,
+    color: "var(--brand-pink-strong)",
+    desc: "Untuk profesional yang serius berkembang.",
+    cta: "Mulai Pro",
+    href: "/daftar?plan=pro",
+  },
+  enterprise: {
+    icon: Building2,
+    color: "#B45309",
+    desc: "Untuk tim & perusahaan dengan kebutuhan khusus.",
+    cta: "Hubungi Kami",
+    href: "/contact?subject=Enterprise",
+  },
+};
+
+const rupiah = (n: number) => n.toLocaleString("id-ID");
+
+/**
+ * Narrow untrusted JSON into an ApiPlan. The web app has no Zod dependency, so
+ * this is a hand-rolled guard — a malformed entry must be dropped rather than
+ * reach the JSX, where a missing `price` or `features` would throw at render.
+ */
+function isApiPlan(value: unknown): value is ApiPlan {
+  if (typeof value !== "object" || value === null) return false;
+  const p = value as Record<string, unknown>;
+  return (
+    typeof p.id === "string" &&
+    typeof p.name === "string" &&
+    typeof p.price === "number" &&
+    Number.isFinite(p.price) &&
+    typeof p.durationDays === "number" &&
+    Array.isArray(p.features) &&
+    p.features.every((f) => typeof f === "string")
+  );
+}
+
+/**
+ * Maps an API plan onto the view model. The API bills per period while the card
+ * headline is always a per-month figure, so annual plans show `pricePerMonth`
+ * and disclose the real amount charged in `note`.
+ */
+function toPlanView(plan: ApiPlan): PlanView {
+  const presentation = PLAN_PRESENTATION[plan.id] ?? {
+    icon: Sparkles,
+    color: "var(--brand-cyan-strong)",
+    desc: "",
+    cta: `Pilih ${plan.name}`,
+    href: `/daftar?plan=${encodeURIComponent(plan.id)}`,
+  };
+
+  const isAnnual = plan.durationDays >= 365;
+  const note = isAnnual
+    ? `Ditagih Rp ${rupiah(plan.price)}/tahun` +
+      (typeof plan.savings === "number" && plan.savings > 0
+        ? ` — hemat Rp ${rupiah(plan.savings)}`
+        : "")
+    : plan.durationDays === 30
+      ? "Ditagih setiap bulan"
+      : `Ditagih Rp ${rupiah(plan.price)} per ${plan.durationDays} hari`;
+
+  return {
+    id: plan.id,
+    name: plan.name,
+    icon: presentation.icon,
+    badge: plan.badge ?? null,
+    // Headline is per-month; an annual plan's own price is the yearly charge.
+    priceMonthly: plan.pricePerMonth ?? plan.price,
+    // Each API plan is a single cadence, so there is no second price to toggle to.
+    priceAnnual: null,
+    note,
+    desc: presentation.desc,
+    color: presentation.color,
+    features: plan.features,
+    cta: presentation.cta,
+    href: presentation.href,
+  };
+}
 
 const FAQS = [
   {
