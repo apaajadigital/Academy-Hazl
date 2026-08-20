@@ -208,7 +208,7 @@ export default function PesananDashboardPage() {
                       </TD>
                       <TD>
                         <div className="flex items-center justify-center gap-3">
-                          <Link href={`/pesanan/${order.id}`} className="whitespace-nowrap text-sm font-semibold text-accent-cyan-strong hover:underline">
+                          <Link href={`/dashboard/pesanan/${order.id}`} className="whitespace-nowrap text-sm font-semibold text-accent-cyan-strong hover:underline">
                             Lihat Detail
                           </Link>
                           {order.status === "pending" && (
