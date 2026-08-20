@@ -275,9 +275,38 @@ router.patch("/admin/refunds/:refundId", async (req, res, next) => {
                 where: { courseId: item.itemId, userId: order.userId },
               });
             } else if (item.itemType === "event") {
+              // BL-66 (refund revoked a ticket another order paid for): matching
+              // on (eventId, userId) alone found whatever seat the buyer holds
+              // NOW — the row is unique per (event, buyer), so it need not be the
+              // one this order granted. Reachable via the "event_full" auto-refund
+              // (jobs/processors/webhook.ts): that order writes no registration and
+              // parks in `refund_pending`, so if the buyer re-purchases the event
+              // under a NEW order, approving the stale refund deleted the second
+              // order's PAID ticket. Scoping to orderId undoes only what THIS order
+              // granted; both paid write paths stamp it, and free registrations
+              // (null orderId, no order at all) are correctly never matched.
               const removed = await tx.eventRegistration.deleteMany({
-                where: { eventId: item.itemId, userId: order.userId },
+                where: { eventId: item.itemId, userId: order.userId, orderId: order.id },
               });
+
+              if (removed.count === 0) {
+                // A no-op delete is normal (event_full never held a seat), but if
+                // a registration exists under a DIFFERENT order the refund revoked
+                // nothing — surface it so "nothing to revoke" is distinguishable
+                // from "the seat belongs to another order".
+                const foreign = await tx.eventRegistration.findFirst({
+                  where: { eventId: item.itemId, userId: order.userId },
+                  select: { id: true, orderId: true },
+                });
+                if (foreign) {
+                  logger.warn("BL-66: refund revoked no registration — seat belongs to another order", {
+                    eventId: item.itemId,
+                    orderId: order.id,
+                    registrationId: foreign.id,
+                    registrationOrderId: foreign.orderId,
+                  });
+                }
+              }
 
               // BL-58 (event seats leak permanently): Event.totalSold is only ever
               // incremented (checkout free/100%-coupon paths + webhook fulfillment)
@@ -292,8 +321,11 @@ router.patch("/admin/refunds/:refundId", async (req, res, next) => {
               // That is what makes this safe for the auto-refund path in
               // jobs/processors/webhook.ts ("event_full"): there the atomic
               // reservation matched 0 rows, so totalSold was never incremented and no
-              // registration exists — count is 0 and we release nothing instead of
-              // double-decrementing a seat this order never held.
+              // registration was written under this order — count is 0 and we release
+              // nothing instead of double-decrementing a seat this order never held.
+              // The orderId scope above is what actually guarantees that: without it
+              // a registration the buyer later bought under a DIFFERENT order was
+              // counted here and released a seat that order still holds (BL-66).
               if (removed.count > 0) {
                 // updateMany with a `totalSold >= n` predicate does the decrement
                 // atomically AND floors it at zero: if the counter is somehow lower
