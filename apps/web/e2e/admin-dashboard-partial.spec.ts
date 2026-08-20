@@ -65,7 +65,10 @@ const SHOWS = {
   stats: /120/,
   orders: /Budi Pembeli/,
   courses: /Kursus Terpopuler Uji/,
-  leads: /Orang Terdeteksi/,
+  // The redesign replaced the bare label "Orang Terdeteksi" with a line that
+  // says what the number means. This copy renders only when the panel is
+  // ready AND the count is above zero — which is exactly "leads data landed".
+  leads: /orang menunggu follow-up/i,
 };
 
 const ERROR_OF = {
@@ -147,6 +150,21 @@ async function serve(
   });
 }
 
+/**
+ * The visible instance of `re`.
+ *
+ * The transactions panel renders its rows twice: a card list below `md` and a
+ * semantic table above it, with CSS hiding whichever does not apply. A bare
+ * `.first()` picks whichever comes first in the DOM — the mobile list — and
+ * then fails `toBeVisible()` at a desktop viewport even though the content is
+ * plainly on screen. Filtering to the visible one asks the real question at any
+ * viewport, and still fails when nothing is visible (the locator resolves to
+ * zero elements, so `toBeVisible()` reports "element(s) not found").
+ */
+function shown(page: Page, re: RegExp) {
+  return page.getByText(re).filter({ visible: true }).first();
+}
+
 const ALL: Panel[] = ["stats", "orders", "courses", "leads"];
 
 async function serveAll(page: Page, overrides: Partial<Record<Panel, "abort" | "500" | "malformed" | "empty">> = {}) {
@@ -165,7 +183,7 @@ test.describe("Admin dashboard survives partial API failure", () => {
     await page.goto("/admin/dashboard", { waitUntil: "domcontentloaded" });
 
     for (const p of ALL) {
-      await expect(page.getByText(SHOWS[p]).first()).toBeVisible({ timeout: 20_000 });
+      await expect(shown(page, SHOWS[p])).toBeVisible({ timeout: 20_000 });
     }
     // Assert on the panel error copy, not on role="alert": Next's App Router
     // injects its own aria-live route announcer with that role, so counting
@@ -185,7 +203,7 @@ test.describe("Admin dashboard survives partial API failure", () => {
       // The whole point: everything else is untouched.
       for (const other of ALL.filter((p) => p !== failing)) {
         await expect(
-          page.getByText(SHOWS[other]).first(),
+          shown(page, SHOWS[other]),
           `${other} was lost to a ${failing} failure`,
         ).toBeVisible({ timeout: 20_000 });
       }
@@ -198,8 +216,8 @@ test.describe("Admin dashboard survives partial API failure", () => {
 
     await expect(page.getByText(ERROR_OF.stats).first()).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(ERROR_OF.leads).first()).toBeVisible();
-    await expect(page.getByText(SHOWS.orders).first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(SHOWS.courses).first()).toBeVisible();
+    await expect(shown(page, SHOWS.orders)).toBeVisible({ timeout: 20_000 });
+    await expect(shown(page, SHOWS.courses)).toBeVisible();
   });
 
   test("all four fail — four honest errors, and no crash", async ({ page }) => {
@@ -227,7 +245,7 @@ test.describe("Admin dashboard survives partial API failure", () => {
     await expect(page.getByText("Total Pendapatan")).toHaveCount(0);
     // …and it must not take the page down, which is what it used to do.
     await expect(page.getByText("Terjadi Kesalahan", { exact: true })).toHaveCount(0);
-    await expect(page.getByText(SHOWS.orders).first()).toBeVisible();
+    await expect(shown(page, SHOWS.orders)).toBeVisible();
   });
 
   test("valid empty responses are empty states, not errors", async ({ page }) => {
@@ -252,9 +270,9 @@ test.describe("Admin dashboard survives partial API failure", () => {
 
     // Orders arrive while stats is still in flight — impossible under the old
     // single Promise.all, which made every widget wait for the slowest.
-    await expect(page.getByText(SHOWS.orders).first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(SHOWS.stats).first()).toHaveCount(0);
-    await expect(page.getByText(SHOWS.stats).first()).toBeVisible({ timeout: 20_000 });
+    await expect(shown(page, SHOWS.orders)).toBeVisible({ timeout: 20_000 });
+    await expect(shown(page, SHOWS.stats)).toHaveCount(0);
+    await expect(shown(page, SHOWS.stats)).toBeVisible({ timeout: 20_000 });
   });
 
   test("retrying one widget recovers it and leaves the others alone", async ({ page }) => {
@@ -271,15 +289,15 @@ test.describe("Admin dashboard survives partial API failure", () => {
 
     await page.goto("/admin/dashboard", { waitUntil: "domcontentloaded" });
     await expect(page.getByText(ERROR_OF.stats).first()).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(SHOWS.orders).first()).toBeVisible();
+    await expect(shown(page, SHOWS.orders)).toBeVisible();
 
     await page.getByRole("button", { name: /Coba Lagi/i }).first().click();
 
-    await expect(page.getByText(SHOWS.stats).first()).toBeVisible({ timeout: 20_000 });
+    await expect(shown(page, SHOWS.stats)).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(ERROR_OF.stats)).toHaveCount(0);
     // The retry really re-requested, and the healthy panel never reloaded away.
     expect(statsAttempts).toBeGreaterThan(1);
-    await expect(page.getByText(SHOWS.orders).first()).toBeVisible();
+    await expect(shown(page, SHOWS.orders)).toBeVisible();
   });
 
   test("no unhandled rejection when every endpoint is dead", async ({ page }) => {

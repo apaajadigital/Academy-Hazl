@@ -22,7 +22,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { Card, StatCard, DashboardLoading, DashboardError, PageHeader, Button } from "@/components/ui";
+import { StatCard, DashboardLoading, DashboardError, PageHeader, Button } from "@/components/ui";
+import { AdminPageContainer, AdminMetricGrid, AdminPanel } from "@/components/admin";
 import { getValidToken } from "@/lib/auth/token";
 import type { ChartPoint, OrderDist, TopCourse } from "./Charts";
 
@@ -98,17 +99,17 @@ export default function SystemHealthPage() {
 
   if (loading) {
     return (
-      <div className="dash-container">
+      <AdminPageContainer>
         <DashboardLoading label="Memuat data sistem…" />
-      </div>
+      </AdminPageContainer>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="dash-container py-16">
+      <AdminPageContainer>
         <DashboardError message={error ?? "Data tidak tersedia"} onRetry={fetchData} />
-      </div>
+      </AdminPageContainer>
     );
   }
 
@@ -122,7 +123,7 @@ export default function SystemHealthPage() {
   ];
 
   return (
-    <div className="dash-container flex flex-col gap-6">
+    <AdminPageContainer>
       {/* Header */}
       <PageHeader
         breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Kesehatan Sistem</span></span>}
@@ -140,11 +141,10 @@ export default function SystemHealthPage() {
       />
 
       {/* KPI Summary — unified StatCard on the 12-col dash grid */}
-      <div className="dash-grid">
+      <AdminMetricGrid className="xl:grid-cols-3">
         {kpiCards.map((k) => (
           <StatCard
             key={k.label}
-            className="col-span-12 sm:col-span-6 xl:col-span-3"
             label={k.label}
             value={k.value}
             icon={k.icon}
@@ -152,70 +152,35 @@ export default function SystemHealthPage() {
             iconBg={k.bg}
           />
         ))}
-      </div>
+      </AdminMetricGrid>
 
       {/* Charts Row 1: Revenue + User Growth — framed layered-white cards with header rule */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-            <TrendingUp size={18} className="text-accent-cyan-strong" aria-hidden="true" />
-            <h2 className="text-[15px] font-bold text-text-primary">Tren Revenue (12 Bulan)</h2>
-          </div>
-          <div className="p-6">
+        <AdminPanel title="Tren Revenue (12 Bulan)" icon={TrendingUp} iconClassName="text-accent-cyan-strong" bodyClassName="p-6">
             <LineChart data={data.revenue.chart} valueKey="amount" color="#0077A8" gradientId="revGrad" prefix="Rp " />
-          </div>
-        </Card>
-        <Card className="overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-            <Users size={18} className="text-accent-purple" aria-hidden="true" />
-            <h2 className="text-[15px] font-bold text-text-primary">Pertumbuhan User (12 Bulan)</h2>
-          </div>
-          <div className="p-6">
+          </AdminPanel>
+        <AdminPanel title="Pertumbuhan User (12 Bulan)" icon={Users} iconClassName="text-accent-purple" bodyClassName="p-6">
             <BarChart data={data.users.chart} valueKey="count" color="#7C3AED" />
-          </div>
-        </Card>
+          </AdminPanel>
       </div>
 
       {/* Charts Row 2: Enrollment + Order Distribution */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-            <GraduationCap size={18} className="text-green-600" aria-hidden="true" />
-            <h2 className="text-[15px] font-bold text-text-primary">Tren Enrollment (12 Bulan)</h2>
-          </div>
-          <div className="p-6">
+        <AdminPanel title="Tren Enrollment (12 Bulan)" icon={GraduationCap} iconClassName="text-green-600" bodyClassName="p-6">
             <LineChart data={data.enrollments.chart} valueKey="count" color="#059669" gradientId="enrGrad" />
-          </div>
-        </Card>
-        <Card className="overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-            <PieChart size={18} className="text-accent-cyan-strong" aria-hidden="true" />
-            <h2 className="text-[15px] font-bold text-text-primary">Distribusi Status Order</h2>
-          </div>
-          <div className="p-6">
+          </AdminPanel>
+        <AdminPanel title="Distribusi Status Order" icon={PieChart} iconClassName="text-accent-cyan-strong" bodyClassName="p-6">
             <DonutChart data={data.orders.distribution} />
-          </div>
-        </Card>
+          </AdminPanel>
       </div>
 
       {/* Top Courses */}
-      <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-          <Trophy size={18} className="text-amber-500" aria-hidden="true" />
-          <h2 className="text-[15px] font-bold text-text-primary">Top 5 Kursus Terpopuler</h2>
-        </div>
-        <div className="p-6">
+      <AdminPanel title="Top 5 Kursus Terpopuler" icon={Trophy} iconClassName="text-amber-500" bodyClassName="p-6">
           <HorizontalBarChart data={data.topCourses} />
-        </div>
-      </Card>
+        </AdminPanel>
 
       {/* Database Overview */}
-      <Card className="overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-solid border-border-default px-6 py-4">
-          <Database size={18} className="text-accent-cyan-strong" aria-hidden="true" />
-          <h2 className="text-[15px] font-bold text-text-primary">Database Overview</h2>
-        </div>
-        <div className="p-6">
+      <AdminPanel title="Database Overview" icon={Database} iconClassName="text-accent-cyan-strong" bodyClassName="p-6">
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
             {Object.entries(data.dbOverview).map(([key, count]) => {
               const meta = DB_LABELS[key] ?? { label: key, icon: Database, color: "#6B7280" };
@@ -229,8 +194,7 @@ export default function SystemHealthPage() {
               );
             })}
           </div>
-        </div>
-      </Card>
+        </AdminPanel>
 
       {/* ─── Chart-internal styles (SVG/CSS primitives used by the chart
              components above — page shell now uses the UI kit + tokens) ──── */}
@@ -270,6 +234,6 @@ export default function SystemHealthPage() {
         .sh-db-count { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
         .sh-db-label { font-size: 10px; color: #9CA3AF; text-transform: uppercase; font-weight: 600; margin-top: 2px; letter-spacing: 0.04em; }
       `}</style>
-    </div>
+    </AdminPageContainer>
   );
 }
