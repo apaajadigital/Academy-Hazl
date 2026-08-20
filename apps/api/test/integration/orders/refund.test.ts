@@ -16,7 +16,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
       count: vi.fn(),
     },
     courseEnrollment: { deleteMany: vi.fn() },
-    eventRegistration: { deleteMany: vi.fn() },
+    eventRegistration: { deleteMany: vi.fn(), findFirst: vi.fn() },
     event: { updateMany: vi.fn(), findUnique: vi.fn() },
     affiliateCommission: { update: vi.fn() },
     affiliate: { findUnique: vi.fn(), update: vi.fn() },
@@ -75,6 +75,8 @@ beforeEach(() => {
   );
   vi.mocked(prisma.courseEnrollment.deleteMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.eventRegistration.deleteMany).mockResolvedValue({ count: 1 } as never);
+  // BL-66 diagnostic lookup: no foreign registration unless a test says otherwise.
+  vi.mocked(prisma.eventRegistration.findFirst).mockResolvedValue(null as never);
   // BL-58: seat release succeeds by default (event row matches the `gte` guard).
   vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.affiliateCommission.update).mockResolvedValue({} as never);
@@ -230,7 +232,8 @@ describe("PATCH /api/orders/admin/refunds/:refundId", () => {
       expect.objectContaining({ where: { courseId: "course-1", userId: "user-1" } }),
     );
     expect(prisma.eventRegistration.deleteMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { eventId: "event-1", userId: "user-1" } }),
+      // BL-66: scoped to the refunded order, not just (event, buyer).
+      expect.objectContaining({ where: { eventId: "event-1", userId: "user-1", orderId: "order-1" } }),
     );
     // Commission reversed + affiliate balance decremented (not yet paid out).
     expect(prisma.affiliateCommission.update).toHaveBeenCalledWith(
@@ -378,5 +381,145 @@ describe("BL-58 — approved refund releases event seats", () => {
     expect(event.totalSold).toBe(9);
     // checkout.ts / webhook.ts quota guard now admits a new buyer again.
     expect(event.totalSold < event.quota).toBe(true);
+  });
+});
+
+// ─── BL-66 regression: a refund may only revoke the ticket IT paid for ─────────
+// The delete used to match on (eventId, userId) alone. EventRegistration is
+// unique per (event, buyer), so that predicate found "whatever seat the buyer
+// holds right now" — not necessarily the seat this order granted. The reachable
+// path is the "event_full" auto-refund: jobs/processors/webhook.ts parks the
+// oversold order in `refund_pending` WITHOUT writing a registration, the buyer
+// re-purchases the same event once seats free up and gets a real ticket under a
+// NEW order, and approving the stale auto-refund then deleted that second,
+// fully-paid ticket and released a seat the refunded order never held.
+describe("BL-66 — approved refund only revokes its own order's registration", () => {
+  // The registration table is modelled for real so these tests assert the
+  // OUTCOME (whose ticket survives), not merely the shape of the query. The
+  // mock also honours a missing orderId the way Prisma would — an unscoped
+  // deleteMany wipes the buyer's row — so the old predicate genuinely fails here.
+  let registrations: { id: string; eventId: string; userId: string; orderId: string | null }[] = [];
+
+  const staleOrder = {
+    ...mockPaidOrder,
+    // The oversold order: refund raised automatically, never held a seat.
+    status: "refund_pending",
+    couponId: null,
+    items: [{ itemType: "event", itemId: "event-1" }],
+    commissions: [],
+  };
+
+  beforeEach(() => {
+    vi.mocked(authenticate).mockImplementation(async (req, _res, next) => {
+      (req as never as { user: unknown }).user = {
+        id: "admin-1",
+        email: "admin@test.com",
+        name: "Admin",
+        roles: ["super_admin"],
+      };
+      next();
+    });
+    vi.mocked(prisma.refund.findUnique).mockResolvedValue(mockRefund as never);
+    vi.mocked(prisma.refund.update).mockResolvedValue({ ...mockRefund, status: "approved" } as never);
+    vi.mocked(prisma.order.update).mockResolvedValue({ ...staleOrder, status: "refunded" } as never);
+    vi.mocked(prisma.order.findUnique).mockResolvedValue(staleOrder as never);
+
+    // The buyer's only seat — paid for under a DIFFERENT order than the one
+    // being refunded (mockRefund.orderId === "order-1").
+    registrations = [{ id: "reg-2", eventId: "event-1", userId: "user-1", orderId: "order-2" }];
+
+    vi.mocked(prisma.eventRegistration.deleteMany).mockImplementation((async (args: {
+      where: { eventId: string; userId: string; orderId?: string };
+    }) => {
+      const { eventId, userId, orderId } = args.where;
+      const kept = registrations.filter(
+        (r) =>
+          !(
+            r.eventId === eventId &&
+            r.userId === userId &&
+            // orderId absent = the pre-fix predicate: matches any owner.
+            (orderId === undefined || r.orderId === orderId)
+          ),
+      );
+      const count = registrations.length - kept.length;
+      registrations = kept;
+      return { count };
+    }) as never);
+
+    vi.mocked(prisma.eventRegistration.findFirst).mockImplementation((async (args: {
+      where: { eventId: string; userId: string };
+    }) =>
+      registrations.find(
+        (r) => r.eventId === args.where.eventId && r.userId === args.where.userId,
+      ) ?? null) as never);
+  });
+
+  const approve = () =>
+    request(app).patch("/api/orders/admin/refunds/refund-1").send({ status: "approved" });
+
+  it("leaves a ticket bought under another order intact", async () => {
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    // The seat order-2 paid for must survive: the buyer keeps the ticket they
+    // were never refunded for.
+    expect(registrations).toEqual([
+      { id: "reg-2", eventId: "event-1", userId: "user-1", orderId: "order-2" },
+    ]);
+    expect(prisma.eventRegistration.deleteMany).toHaveBeenCalledWith({
+      where: { eventId: "event-1", userId: "user-1", orderId: "order-1" },
+    });
+  });
+
+  it("does not release a seat the refunded order never held", async () => {
+    // BL-58's floor only protects against underflow; here the seat is still
+    // legitimately occupied by order-2, so nothing may be given back at all.
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(prisma.event.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("logs the mismatch so the no-op refund is not silent", async () => {
+    const { logger } = await import("../../../src/lib/logger.js");
+    const warnSpy = vi.spyOn(logger, "warn");
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("BL-66"),
+      expect.objectContaining({
+        eventId: "event-1",
+        orderId: "order-1",
+        registrationOrderId: "order-2",
+      }),
+    );
+  });
+
+  it("still revokes and releases the seat when the registration is this order's", async () => {
+    registrations = [{ id: "reg-1", eventId: "event-1", userId: "user-1", orderId: "order-1" }];
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(registrations).toEqual([]);
+    expect(prisma.event.updateMany).toHaveBeenCalledWith({
+      where: { id: "event-1", totalSold: { gte: 1 } },
+      data: { totalSold: { decrement: 1 } },
+    });
+  });
+
+  it("does not warn when the buyer simply holds no registration", async () => {
+    // Plain event_full auto-refund: no seat was ever reserved for anyone.
+    const { logger } = await import("../../../src/lib/logger.js");
+    const warnSpy = vi.spyOn(logger, "warn");
+    registrations = [];
+
+    const res = await approve();
+
+    expect(res.status).toBe(200);
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(prisma.event.updateMany).not.toHaveBeenCalled();
   });
 });
