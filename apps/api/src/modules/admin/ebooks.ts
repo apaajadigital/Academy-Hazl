@@ -20,17 +20,15 @@ router.get("/ebooks", async (req: Request, res: Response, next: NextFunction) =>
     const { page, limit, search, status } = EbookListSchema.parse(req.query);
     const skip = (page - 1) * limit;
 
-    // BL-108: escape LIKE metacharacters so `?search=%` filters instead of
-    // matching every row. Kept in sync with the public routes/ebooks.ts mirror.
-    const term = search ? escapeLike(search) : undefined;
-
     const where = {
       ...(status ? { status } : {}),
-      ...(term
+      // BL-108: `%`/`_` are LIKE wildcards, not literals — escape before they
+      // reach `contains`. Kept identical to routes/ebooks.ts (public list).
+      ...(search
         ? {
             OR: [
-              { title: { contains: term, mode: "insensitive" as const } },
-              { author: { contains: term, mode: "insensitive" as const } },
+              { title: { contains: escapeLike(search), mode: "insensitive" as const } },
+              { author: { contains: escapeLike(search), mode: "insensitive" as const } },
             ],
           }
         : {}),

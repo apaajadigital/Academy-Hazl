@@ -39,21 +39,17 @@ router.get("/", async (req, res, next) => {
     const { page, limit, category, search } = ListQuerySchema.parse(req.query);
     const skip = (page - 1) * limit;
 
-    // BL-108: escape LIKE metacharacters before the term reaches `contains`.
-    // This route is public and unauthenticated, so `?search=%` would otherwise
-    // hand anyone an unfiltered full-table scan.
-    const term = search ? escapeLike(search) : undefined;
-
     const where = {
       status: "published",
       ...(category ? { category } : {}),
       // Mirrors modules/admin/ebooks.ts: case-insensitive contains over
-      // title + author, so public and admin search behave identically.
-      ...(term
+      // title + author, so public and admin search behave identically — both
+      // sides share `escapeLike` so a fix on one cannot silently skip the other.
+      ...(search
         ? {
             OR: [
-              { title: { contains: term, mode: "insensitive" as const } },
-              { author: { contains: term, mode: "insensitive" as const } },
+              { title: { contains: escapeLike(search), mode: "insensitive" as const } },
+              { author: { contains: escapeLike(search), mode: "insensitive" as const } },
             ],
           }
         : {}),
