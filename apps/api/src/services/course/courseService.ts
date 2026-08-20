@@ -86,16 +86,16 @@ export async function listCourses(filter: CourseListFilter = {}) {
     //    itself left the caller with `hits.length` as the only count available,
     //    which equals the page size — so the UI computed totalPages = 1 and
     //    every result past page 1 became unreachable. Meilisearch does report
-    //    the real figure as `estimatedTotalHits`, but `searchCourses()` (owned
-    //    by services/search/meilisearch.ts, outside this change) returns the
-    //    hits array only. Counting the candidates here is the accurate option
-    //    that does not depend on that signature; when the helper starts
-    //    returning `{ hits, total }` the way `searchEvents` already does, this
-    //    can go back to server-side paging and read the total from it.
+    //    the real figure as `estimatedTotalHits`, and `searchCourses()` now
+    //    surfaces it as `total` — but that figure counts index matches, which
+    //    is still the wrong number here (see 2). Counting the candidates that
+    //    survive the Prisma filter is the accurate one.
     // 2. Format/free/status are not in the search index, so they are re-applied
     //    on the Prisma fetch. Filtering AFTER slicing a page (the old order)
-    //    both under-filled pages and counted rows that were then dropped.
-    const hits = await searchCourses(q, {
+    //    both under-filled pages and counted rows that were then dropped. That
+    //    is also why the helper's `total` is deliberately not used: it would
+    //    count hits this filter then discards.
+    const { hits } = await searchCourses(q, {
       limit: SEARCH_CANDIDATE_CAP,
       offset: 0,
       filter: `status = "${status}"`,

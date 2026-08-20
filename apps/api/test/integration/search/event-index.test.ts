@@ -31,7 +31,7 @@ vi.mock("../../../src/services/search/meilisearch.js", () => ({
   // The shared search-index processor also imports the course helpers.
   indexCourse: vi.fn().mockResolvedValue(undefined),
   deleteCourseFromIndex: vi.fn().mockResolvedValue(undefined),
-  searchCourses: vi.fn().mockResolvedValue([]),
+  searchCourses: vi.fn().mockResolvedValue({ hits: [], total: 0 }),
 }));
 
 import { prisma } from "../../../src/db/prisma.js";
