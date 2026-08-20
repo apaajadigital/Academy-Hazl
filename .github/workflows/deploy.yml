@@ -94,6 +94,7 @@ jobs:
             NEXT_PUBLIC_FEATURE_ALUMNI=${{ vars.NEXT_PUBLIC_FEATURE_ALUMNI }}
             NEXT_PUBLIC_FEATURE_PORTFOLIO=${{ vars.NEXT_PUBLIC_FEATURE_PORTFOLIO }}
             NEXT_PUBLIC_WA_NUMBER=${{ vars.NEXT_PUBLIC_WA_NUMBER }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
           tags: |
             ${{ env.IMAGE_BASE }}/web:${{ steps.meta.outputs.version }}
             ${{ env.IMAGE_BASE }}/web:latest
