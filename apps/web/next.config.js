@@ -253,8 +253,14 @@ export default withSentryConfig(nextConfig, {
   // Plugin chatter is only useful when it is actually uploading something.
   silent: !process.env.SENTRY_AUTH_TOKEN,
 
-  // Strips Sentry's own console logging from the client bundle in production.
-  disableLogger: true,
+  // NOT set: `disableLogger`. It claimed to strip Sentry's own console logging
+  // from the client bundle, but it never did so here and printed a deprecation
+  // warning on every build — "Use webpack.treeshake.removeDebugLogging instead.
+  // (Not supported with Turbopack.)". Next.js 16 builds with Turbopack, so the
+  // replacement is unavailable and the old option is a no-op; keeping it only
+  // bought a warning that is scheduled to become an error. Sentry's debug
+  // logging stays in the bundle either way — dropping the option changes the
+  // output not at all, only the log.
 
   // No build-stats phone-home from CI/host builds.
   telemetry: false,
