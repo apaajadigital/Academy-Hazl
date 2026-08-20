@@ -129,7 +129,12 @@ function CheckoutContent() {
             setItem({
               id: course.id,
               title: course.title,
-              price: Number(course.price),
+              // BL-53: must mirror the server's course pricing rule in
+              // routes/checkout.ts — an explicit salePrice wins, only null falls
+              // back to price. Reading `price` alone quoted the undiscounted
+              // amount here while the API billed the sale price, so the summary
+              // on this page disagreed with what the buyer was actually charged.
+              price: Number(course.salePrice ?? course.price),
               // Courses store their image in `thumbnailUrl` — there is no
               // `coverUrl` column on Course (that name belongs to Event/Ebook),
               // so reading it always fell through to the emoji placeholder.

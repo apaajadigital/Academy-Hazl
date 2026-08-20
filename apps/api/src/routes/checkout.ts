@@ -50,7 +50,6 @@ router.post("/", authenticate, async (req, res, next) => {
     if (itemType === "course") {
       const course = await prisma.course.findUnique({ where: { id: itemId } });
       if (!course) throw new AppError(404, "Kursus tidak ditemukan.");
-      if (course.price === null) throw new AppError(400, "Kursus ini gratis, tidak perlu checkout.");
 
       const alreadyEnrolled = await prisma.courseEnrollment.findUnique({
         where: { courseId_userId: { courseId: itemId, userId } },
@@ -60,9 +59,16 @@ router.post("/", authenticate, async (req, res, next) => {
       itemTitle = course.title;
       // BL-53: courses were the only item type billed at full `price`, ignoring
       // `salePrice` — so every discounted course charged the undiscounted amount
-      // while the catalog advertised the sale. Same precedence as ebook (below)
-      // and event: an explicit salePrice wins, null falls back to price.
-      price = course.salePrice ? Number(course.salePrice) : Number(course.price);
+      // while the catalog advertised the sale. Same precedence as ebook (below):
+      // an explicit salePrice wins, only null falls back to price.
+      //
+      // `??` and not a truthiness ternary: `salePrice = 0` is a legitimate value
+      // (a course discounted to free) and a ternary treats it as "unset", billing
+      // the full price — the exact shape of the original bug. Prisma hands back a
+      // Decimal object, which is truthy even at zero, so the ternary happened to
+      // work against a live DB and only broke once the value crossed a boundary
+      // that turned it into a plain number. `??` is correct for both.
+      price = Number(course.salePrice ?? course.price);
       itemSlug = course.slug;
     } else if (itemType === "ebook") {
       const ebook = await prisma.eBook.findUnique({ where: { id: itemId } });
