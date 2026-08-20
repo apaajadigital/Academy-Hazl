@@ -105,6 +105,25 @@ describe("POST /api/checkout", () => {
     expect(res.body.data.orderId).toBe("order-1");
   });
 
+  // ── BL-56: pending redirect for async payment methods ──────────────────────
+  // DOKU was only ever given a success and a (conditional) failure URL. A buyer
+  // paying by VA/bank transfer leaves the gateway before settlement, so with no
+  // pending_return_url they never reached /payment/pending — the page holding
+  // their VA number, expiry countdown and status polling.
+  it("always sends a pendingUrl to DOKU and returns it (BL-56)", async () => {
+    const { createDokuOrder } = await import("../../../src/services/payment/dokuService.js");
+
+    const res = await request(app)
+      .post("/api/checkout")
+      .send({ itemType: "course", itemId: "course-1" });
+
+    expect(res.status).toBe(200);
+    // WEB_URL is pinned to localhost:3000 by vitest.config.ts.
+    expect(res.body.data.pendingUrl).toBe("http://localhost:3000/payment/pending?orderId=order-1");
+    // Unconditional, unlike failureUrl which is skipped when the item has no slug.
+    expect(vi.mocked(createDokuOrder).mock.calls[0]?.at(-1)).toBe(res.body.data.pendingUrl);
+  });
+
   it("returns 400 when itemType is invalid", async () => {
     const res = await request(app)
       .post("/api/checkout")
