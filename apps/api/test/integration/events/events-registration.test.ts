@@ -165,6 +165,55 @@ describe("GET /api/events/:slug/registration", () => {
     expect(res.body.success).toBe(false);
     expect(vi.mocked(prisma.eventRegistration.findUnique)).not.toHaveBeenCalled();
   });
+
+  // ─── BL-68: unpublished events must be indistinguishable from missing ones ───
+  //
+  // The endpoint used to resolve the slug with a bare `findUnique`, so a draft
+  // or cancelled event answered 200 while a nonexistent slug answered 404 —
+  // enough of a difference to enumerate unannounced events from any logged-in
+  // account. Both now answer 404, matching GET /api/events/:slug.
+  it.each(["draft", "cancelled"])(
+    "returns 404 for a %s event instead of leaking its existence",
+    async (status) => {
+      vi.mocked(prisma.event.findUnique).mockResolvedValue({ ...EVENT, status } as never);
+
+      const res = await request(app)
+        .get("/api/events/workshop-ui-ux/registration")
+        .set(STUDENT_AUTH);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      // The registration lookup must not run either: a timing/behaviour
+      // difference would leak the same fact the status code no longer does.
+      expect(vi.mocked(prisma.eventRegistration.findUnique)).not.toHaveBeenCalled();
+    },
+  );
+
+  it("answers a draft event exactly like a missing one", async () => {
+    vi.mocked(prisma.event.findUnique).mockResolvedValue({ ...EVENT, status: "draft" } as never);
+    const draftRes = await request(app)
+      .get("/api/events/workshop-ui-ux/registration")
+      .set(STUDENT_AUTH);
+
+    vi.mocked(prisma.event.findUnique).mockResolvedValue(null);
+    const missingRes = await request(app)
+      .get("/api/events/tidak-ada/registration")
+      .set(STUDENT_AUTH);
+
+    expect(draftRes.status).toBe(missingRes.status);
+    expect(draftRes.body).toEqual(missingRes.body);
+  });
+
+  it("still serves a published event", async () => {
+    vi.mocked(prisma.eventRegistration.findUnique).mockResolvedValue(REGISTRATION as never);
+
+    const res = await request(app)
+      .get("/api/events/workshop-ui-ux/registration")
+      .set(STUDENT_AUTH);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.ticketCode).toBe("TKT-0001");
+  });
 });
 
 // ─── GET /api/events/admin/:id/registrations ──────────────────────────────────
