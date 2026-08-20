@@ -57,6 +57,12 @@ ARG NEXT_PUBLIC_FEATURE_ALUMNI
 ARG NEXT_PUBLIC_FEATURE_PORTFOLIO
 # Same build-time inlining applies to the WhatsApp contact override.
 ARG NEXT_PUBLIC_WA_NUMBER
+# Browser Sentry DSN (BL-17). NEXT_PUBLIC_* ⇒ inlined at BUILD time, so without
+# this ARG the client SDK would initialise with an undefined DSN and stay silently
+# disabled no matter what the host .env said. The SERVER DSN is deliberately not
+# here: instrumentation.ts reads process.env.SENTRY_DSN at runtime, so it is
+# supplied by compose `environment:` and can be rotated without a rebuild.
+ARG NEXT_PUBLIC_SENTRY_DSN
 
 ENV NEXT_TELEMETRY_DISABLED=1
 

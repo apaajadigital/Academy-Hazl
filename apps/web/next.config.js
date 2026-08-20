@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -231,4 +232,30 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry wrapper (BL-17). Adds the bundler plugin that injects the client
+// instrumentation, tunnels/strips debug IDs, and — only when credentials exist —
+// uploads source maps.
+//
+// Every option below is read from the environment rather than hardcoded so a
+// build with no Sentry account configured stays a plain Next.js build: the
+// plugin no-ops instead of failing.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Source map upload needs an auth token. Without one the plugin would still
+  // generate (and then delete) maps on every build for nothing, so skip the
+  // whole step — this is the normal case for local and PR builds.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+
+  // Plugin chatter is only useful when it is actually uploading something.
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+
+  // Strips Sentry's own console logging from the client bundle in production.
+  disableLogger: true,
+
+  // No build-stats phone-home from CI/host builds.
+  telemetry: false,
+});
