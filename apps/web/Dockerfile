@@ -16,15 +16,15 @@ COPY packages/ ./packages/
 # @import "tailwindcss" is never processed and the site ships with zero utility
 # classes (the BL-35 production CSS outage). --include=dev forces devDeps in
 # regardless of NODE_ENV; the explicit env keeps intent obvious.
-RUN NODE_ENV=development npm ci --include=dev --workspaces --include-workspace-root
+RUN NODE_ENV=development npm ci --include=dev
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 FROM base AS builder
 WORKDIR /app
 
-# Copy both root and workspace node_modules (next binary lives in apps/web/node_modules)
+# npm workspaces hoist to the root node_modules, so this single copy carries the
+# next binary and every workspace dep.
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 
 # Copy source files AFTER node_modules to avoid overwriting them
 COPY package.json package-lock.json* ./
