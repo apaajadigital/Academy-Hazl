@@ -4,6 +4,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { authorize } from "../middleware/authorize.js";
 import { validateBody } from "../middleware/validateBody.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
+import { mediaUrlSchema } from "../lib/mediaUrl.js";
 import { successResponse } from "../types/index.js";
 import * as eventService from "../services/event/eventService.js";
 
@@ -71,7 +72,9 @@ const eventSchema = z.object({
   price: z.number().min(0).default(0),
   salePrice: z.number().min(0).optional(),
   quota: z.number().int().min(1).optional(),
-  coverUrl: z.string().url().optional(),
+  // Accepts an external link OR an `/uploads/...` path from POST /api/upload/image
+  // (the admin "Upload dari perangkat" button) — see lib/mediaUrl.ts.
+  coverUrl: mediaUrlSchema.optional(),
   speakerName: z.string().optional(),
   speakerBio: z.string().optional(),
   isFeatured: z.boolean().default(false),
