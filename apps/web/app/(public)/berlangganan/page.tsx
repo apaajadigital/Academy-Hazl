@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Zap, Building2, Star, ChevronDown, Sparkles } from "lucide-react";
-import { getApiBase } from "@/lib/api/base";
 
 export const metadata: Metadata = {
   title: "Berlangganan — Akses Semua Konten Premium",
@@ -164,8 +163,12 @@ const rupiah = (n: number) => n.toLocaleString("id-ID");
  * Narrow untrusted JSON into an ApiPlan. The web app has no Zod dependency, so
  * this is a hand-rolled guard — a malformed entry must be dropped rather than
  * reach the JSX, where a missing `price` or `features` would throw at render.
+ *
+ * Underscore-prefixed because BL-85 landed this guard without wiring the fetch
+ * into the page component yet; it is staged, not dead. Drop the prefix (and
+ * re-add the `getApiBase` import) when the fetch is hooked up — BL-122.
  */
-function isApiPlan(value: unknown): value is ApiPlan {
+function _isApiPlan(value: unknown): value is ApiPlan {
   if (typeof value !== "object" || value === null) return false;
   const p = value as Record<string, unknown>;
   return (
@@ -183,8 +186,11 @@ function isApiPlan(value: unknown): value is ApiPlan {
  * Maps an API plan onto the view model. The API bills per period while the card
  * headline is always a per-month figure, so annual plans show `pricePerMonth`
  * and disclose the real amount charged in `note`.
+ *
+ * Underscore-prefixed for the same reason as `_isApiPlan` — staged for the
+ * not-yet-wired API fetch (BL-122).
  */
-function toPlanView(plan: ApiPlan): PlanView {
+function _toPlanView(plan: ApiPlan): PlanView {
   const presentation = PLAN_PRESENTATION[plan.id] ?? {
     icon: Sparkles,
     color: "var(--brand-cyan-strong)",
