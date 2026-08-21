@@ -192,6 +192,7 @@ model CourseSection {
 
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  @@index([courseId])
   @@map("course_sections")
 }
 
@@ -211,6 +212,7 @@ model CourseLesson {
   progress CourseLessonProgress[]
   quiz     Quiz?
 
+  @@index([sectionId])
   @@map("course_lessons")
 }
 
