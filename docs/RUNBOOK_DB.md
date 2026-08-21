@@ -40,6 +40,12 @@ docker compose -f docker-compose.vps.yml run --rm api npx prisma migrate status
 | 11 | `20260729000001_user_roles_global_unique` | Partial unique `user_roles(userId, role) WHERE tenantId IS NULL` | ✅ applied (30 Jul 2026) — ⚠️ drift disengaja, §1.2 |
 | 12 | `20260729000002_refund_status_index` | `refunds(status)` | ✅ applied (30 Jul 2026) |
 | 13 | `20260729000003_orderitem_item_lookup_index` | Index lookup `order_items` (BL-98) | ✅ applied (30 Jul 2026) |
+| 14 | `20260804000000_quiz_question_types` | Tipe soal kuis | ❓ status tak terverifikasi — dibuat setelah audit 30 Jul, tak pernah dicek `migrate status` |
+| 15 | `20260821000000_course_section_lesson_fk_index` | `course_sections(courseId)`, `course_lessons(sectionId)` (BL-123) | ⏳ belum di-apply (dibuat 21 Agu 2026) |
+
+> ⚠️ **CURRENT 13/13 itu potret 30 Jul 2026, bukan keadaan sekarang.** Sejak itu #14–15 masuk repo
+> tanpa `migrate deploy` menyusul, jadi DB produksi kemungkinan besar **2 migration tertinggal**.
+> Sesuai peringatan di bawah, angka ini pun asersi — jalankan `migrate status` sebelum mempercayainya.
 
 > ✅ **30 Jul 2026 — DB produksi CURRENT: 13/13 applied.** `migrate deploy` menerapkan #10–13
 > berurutan tanpa error; pre-flight duplikat `user_roles` dan audit role ber-tenant keduanya
