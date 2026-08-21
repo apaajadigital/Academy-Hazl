@@ -98,7 +98,7 @@ export async function createDokuOrder(
 
   const signature = sign(env.DOKU_CLIENT_ID, requestId, timestamp, body, env.DOKU_SECRET_KEY);
 
-  const res = await fetch(`${baseUrl()}/checkout/v1/orders`, {
+  const res = await fetch(`${baseUrl()}/checkout/v1/payment`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
