@@ -16,7 +16,7 @@ COPY packages/ ./packages/
 # @import "tailwindcss" is never processed and the site ships with zero utility
 # classes (the BL-35 production CSS outage). --include=dev forces devDeps in
 # regardless of NODE_ENV; the explicit env keeps intent obvious.
-RUN NODE_ENV=development npm ci --include=dev
+RUN NODE_ENV=development npm ci --include=dev --workspaces --include-workspace-root
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 FROM base AS builder
