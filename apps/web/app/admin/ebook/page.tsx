@@ -27,6 +27,7 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { ImageUploadField } from "@/components/admin";
 import { getValidToken } from "@/lib/auth/token";
 
 type EBook = {
@@ -425,13 +426,11 @@ export default function AdminEbookPage() {
                 onChange={(e) => setFormFileUrl(e.target.value)}
                 placeholder="https://drive.google.com/..."
               />
-              <Input
+              <ImageUploadField
                 containerClassName="md:col-span-2"
-                label="URL Cover Image Buku"
-                type="text"
+                label="Cover Image Buku"
                 value={formCoverUrl}
-                onChange={(e) => setFormCoverUrl(e.target.value)}
-                placeholder="https://media.jago.id/..."
+                onChange={setFormCoverUrl}
               />
               <Textarea
                 containerClassName="md:col-span-2"
