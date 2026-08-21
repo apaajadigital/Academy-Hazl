@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { CheckCircle2, Zap, Building2, Star, ChevronDown, Sparkles } from "lucide-react";
+import { fetchList } from "@/lib/api/listResource";
 
 export const metadata: Metadata = {
   title: "Berlangganan — Akses Semua Konten Premium",
@@ -163,12 +164,8 @@ const rupiah = (n: number) => n.toLocaleString("id-ID");
  * Narrow untrusted JSON into an ApiPlan. The web app has no Zod dependency, so
  * this is a hand-rolled guard — a malformed entry must be dropped rather than
  * reach the JSX, where a missing `price` or `features` would throw at render.
- *
- * Underscore-prefixed because BL-85 landed this guard without wiring the fetch
- * into the page component yet; it is staged, not dead. Drop the prefix (and
- * re-add the `getApiBase` import) when the fetch is hooked up — BL-122.
  */
-function _isApiPlan(value: unknown): value is ApiPlan {
+function isApiPlan(value: unknown): value is ApiPlan {
   if (typeof value !== "object" || value === null) return false;
   const p = value as Record<string, unknown>;
   return (
@@ -186,11 +183,8 @@ function _isApiPlan(value: unknown): value is ApiPlan {
  * Maps an API plan onto the view model. The API bills per period while the card
  * headline is always a per-month figure, so annual plans show `pricePerMonth`
  * and disclose the real amount charged in `note`.
- *
- * Underscore-prefixed for the same reason as `_isApiPlan` — staged for the
- * not-yet-wired API fetch (BL-122).
  */
-function _toPlanView(plan: ApiPlan): PlanView {
+function toPlanView(plan: ApiPlan): PlanView {
   const presentation = PLAN_PRESENTATION[plan.id] ?? {
     icon: Sparkles,
     color: "var(--brand-cyan-strong)",
@@ -225,6 +219,28 @@ function _toPlanView(plan: ApiPlan): PlanView {
     cta: presentation.cta,
     href: presentation.href,
   };
+}
+
+/**
+ * Server-side plan fetch (BL-85/BL-122). `fetchList` already collapses every
+ * no-usable-list outcome — network rejection, non-2xx, unparseable body, wrong
+ * envelope — into `ok: false`, so this only has to decide what to render then.
+ *
+ * That decision is `PLANS`: unlike a catalogue page, an empty pricing page tells
+ * the visitor nothing and sells nothing, so last-known pricing beats a blank
+ * grid. Entries failing `isApiPlan` are dropped, and dropping every entry lands
+ * on the same fallback.
+ */
+async function getPlans(): Promise<PlanView[]> {
+  const result = await fetchList<PlanView>(
+    "/api/subscription/plans",
+    (rows) => rows.filter(isApiPlan).map(toPlanView),
+    // Cache briefly; `AbortSignal.timeout` so an unreachable API fails fast
+    // instead of hanging the build, matching the other public server pages.
+    (input) => fetch(input, { next: { revalidate: 300 }, signal: AbortSignal.timeout(8000) }),
+  );
+
+  return result.ok && result.items.length > 0 ? result.items : PLANS;
 }
 
 const FAQS = [
@@ -288,7 +304,9 @@ function PriceDisplay({
 
 // ─── Server Component (no useState needed — FAQ uses CSS <details>) ──────────
 
-export default function BerlanggananPage() {
+export default async function BerlanggananPage() {
+  const plans = await getPlans();
+
   return (
     // A plain <div>, not <main>: the (public) layout already wraps children in
     // <main id="main-content">, and nesting a second <main> breaks the single
@@ -346,7 +364,7 @@ export default function BerlanggananPage() {
       {/* Plans */}
       <section className="mx-auto max-w-6xl px-6 pb-12 pt-16">
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {PLANS.map((plan) => {
+          {plans.map((plan) => {
             const Icon = plan.icon;
             const featured = Boolean(plan.badge);
             return (
@@ -394,11 +412,13 @@ export default function BerlanggananPage() {
                     annual={plan.priceAnnual}
                     isAnnual={false}
                   />
-                  {plan.priceMonthly && (
-                    <p className="mt-1.5 text-xs text-text-muted">
-                      atau Rp {plan.priceAnnual!.toLocaleString("id-ID")}/bln jika bayar tahunan
-                    </p>
-                  )}
+                  {/*
+                    Render the mapped `note`, not a hardcoded annual line: an API
+                    plan is a single cadence, so its `priceAnnual` is null and the
+                    old `priceAnnual!` deref threw at render the moment real plans
+                    reached the JSX.
+                  */}
+                  {plan.note && <p className="mt-1.5 text-xs text-text-muted">{plan.note}</p>}
                 </div>
 
                 <ul className="flex flex-1 flex-col gap-2.5">
