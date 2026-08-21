@@ -5,6 +5,7 @@ import { validateBody } from "../../middleware/validateBody.js";
 import { prisma } from "../../db/prisma.js";
 import { enqueueSearchIndex } from "../../jobs/queues.js";
 import { logger } from "../../lib/logger.js";
+import { mediaUrlSchema } from "../../lib/mediaUrl.js";
 import { AppError, successResponse } from "../../types/index.js";
 
 const router = Router();
@@ -166,6 +167,11 @@ const AdminCourseUpdateSchema = z.object({
     .regex(/^\d{8,15}$/, "onboardingContact harus 8-15 digit angka.")
     .nullable()
     .optional(),
+  // Course cover. The column has existed since the initial schema but no admin
+  // endpoint ever wrote to it, so a cover could only be set straight in the
+  // database. Accepts an external link or an `/uploads/...` path from the admin
+  // upload button; explicit null clears it.
+  thumbnailUrl: mediaUrlSchema.nullable().optional(),
 });
 
 router.patch("/courses/:id", validateBody(AdminCourseUpdateSchema), async (req: Request, res: Response, next: NextFunction) => {
@@ -173,9 +179,8 @@ router.patch("/courses/:id", validateBody(AdminCourseUpdateSchema), async (req: 
     const course = await prisma.course.findUnique({ where: { id: req.params.id } });
     if (!course) return next(new AppError(404, "Kursus tidak ditemukan."));
 
-    const { status, isFeatured, adminFeedback, format, waGroupLink, onboardingContact } = req.body as z.infer<
-      typeof AdminCourseUpdateSchema
-    >;
+    const { status, isFeatured, adminFeedback, format, waGroupLink, onboardingContact, thumbnailUrl } =
+      req.body as z.infer<typeof AdminCourseUpdateSchema>;
     const data: Record<string, unknown> = {};
     if (status === "published") {
       data.status = "published";
@@ -199,6 +204,7 @@ router.patch("/courses/:id", validateBody(AdminCourseUpdateSchema), async (req: 
     if (format !== undefined) data.format = format;
     if (waGroupLink !== undefined) data.waGroupLink = waGroupLink;
     if (onboardingContact !== undefined) data.onboardingContact = onboardingContact;
+    if (thumbnailUrl !== undefined) data.thumbnailUrl = thumbnailUrl;
 
     const updated = await prisma.course.update({
       where: { id: req.params.id },

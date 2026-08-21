@@ -109,7 +109,16 @@ app.use("/uploads", (req, res, next) => {
 });
 
 // Serve uploaded files (dev only — use CDN/R2 in production)
-app.use("/uploads", express.static(path.join(process.cwd(), env.UPLOAD_DIR)));
+//
+// `path.resolve`, NOT `path.join`: UPLOAD_DIR is an ABSOLUTE path on the VPS
+// (`/app/uploads` in docker-compose.vps.yml) while the container's cwd is
+// `/app/apps/api`. `join` concatenates the two into `/app/apps/api/app/uploads`,
+// a directory that does not exist — so every file multer wrote to
+// `/app/uploads/...` (multer uses `env.UPLOAD_DIR` directly) 404'd in
+// production. `resolve` discards the cwd when the second argument is already
+// absolute and behaves identically to `join` for the relative dev default
+// ("uploads"), which is also what lib/ebookFile.ts already does.
+app.use("/uploads", express.static(path.resolve(process.cwd(), env.UPLOAD_DIR)));
 
 app.use("/api", healthRouter);
 // H2: auth-wide limiter so refresh/reset/verify/OAuth endpoints don't fall
