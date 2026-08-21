@@ -1,0 +1,72 @@
+# Build-context exclusions for apps/web/Dockerfile and apps/api/Dockerfile.
+# Both compose services build with `context: .`, so every path below is
+# evaluated once against the repository root.
+#
+# WHY THIS FILE EXISTS (BL-17)
+# There was no .dockerignore at all, which is harmless on GitHub Actions — a
+# fresh `actions/checkout` has no node_modules, no .next, no .env — but not on a
+# developer machine, where `docker compose build web` uploads the entire working
+# tree (~1.1 GB here: 868 MB node_modules + 200 MB apps/web/.next + 23 MB .git)
+# and then bakes host artefacts into the image via the builder stage's
+# `COPY apps/web ./apps/web` / `COPY packages ./packages`.
+#
+# That asymmetry is why a Docker build can fail locally while CI stays green,
+# and it got sharper with @sentry/nextjs: it is the first dependency in this
+# tree that ships an OS-specific binary package (@sentry/cli-win32-x64 with a
+# sentry-cli.exe on Windows vs @sentry/cli-linux-x64 needed inside the image).
+# @sentry/cli detects exactly this and aborts with "…installed on one platform
+# (for example Windows or MacOS) and then the node_modules folder is reused on
+# another operating system (for example Linux in Docker). To fix this, avoid
+# copying the node_modules folder" (@sentry/cli/js/helper.js).
+
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+# Never let a host-installed tree cross into a Linux image. Both Dockerfiles
+# install their own via `npm ci` in the deps stage and copy it forward from
+# there; anything from the context can only shadow it with foreign binaries.
+**/node_modules
+
+# ─── Build outputs regenerated inside the image ───────────────────────────────
+# The builder stages run `npm run build -w apps/web` and `npm run build` in
+# apps/api, so a stale host copy is dead weight at best and a confusing cache
+# hit at worst. NOTE: packages/*/dist is deliberately NOT listed — no Dockerfile
+# builds the workspace packages, so their dist must stay available from the
+# context.
+apps/web/.next
+apps/api/dist
+**/.turbo
+
+# ─── Local environment files ──────────────────────────────────────────────────
+# apps/api/.env holds real development secrets (DATABASE_URL, JWT_SECRET, DOKU
+# keys) and currently lands in the api builder layer. apps/web/.env.local is
+# worse than untidy: Next.js loads it during `next build`, so any NEXT_PUBLIC_*
+# the deploy forgot to pass as a build arg is silently filled in from a
+# developer's laptop and inlined into the production bundle.
+.env
+.env.*
+apps/*/.env
+apps/*/.env.*
+
+# ─── Repository metadata and CI config ────────────────────────────────────────
+# Never COPYed by either Dockerfile; excluded purely so the context transfer
+# stays small.
+.git
+.gitignore
+.gitattributes
+.github
+.editorconfig
+
+# ─── Test and report artefacts ────────────────────────────────────────────────
+apps/web/test-results
+apps/web/playwright-report
+apps/web/blob-report
+apps/api/coverage
+apps/web/coverage
+
+# ─── Documentation and compose files ──────────────────────────────────────────
+# Also never COPYed; kept out of the context for the same reason as .git.
+# (apps/web/Dockerfile and apps/api/Dockerfile are deliberately NOT excluded —
+# dockerignore patterns are root-relative, not recursive, so a bare `Dockerfile`
+# line would be a no-op here and only mislead the next reader.)
+docs
+.dockerignore
+docker-compose*.yml
