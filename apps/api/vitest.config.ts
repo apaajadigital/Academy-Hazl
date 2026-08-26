@@ -28,6 +28,11 @@ export default defineConfig({
       // Set here (before dotenv, which never overrides existing vars) so tests
       // are deterministic without external infrastructure.
       REDIS_URL: "",
+      // Pinned so signature tests are deterministic. Without these, dotenv fills
+      // them from the developer's apps/api/.env (real sandbox credentials), and
+      // the suite would pass or fail depending on whose machine it runs on.
+      DOKU_CLIENT_ID: "CLIENT-TEST",
+      DOKU_SECRET_KEY: "shh-test-secret-key",
     },
     include: ["src/**/*.test.ts", "test/**/*.test.ts"],
     coverage: {
