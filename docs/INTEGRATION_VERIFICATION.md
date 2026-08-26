@@ -51,6 +51,60 @@ docker compose -f docker-compose.prod.yml ps        # api, worker, web, nginx, p
 
 **Hardening note found during this pass (not yet fixed, needs reviewer sign-off since it touches payment code):** `verifyDokuWebhook` in `apps/api/src/services/payment/dokuService.ts:103` compares signatures with `===` (not constant-time). Low practical risk for a base64 HMAC-SHA256 over the network, but flagged per the project's security-review rule for cryptographic code. Tracked as BL-34 — recommend `crypto.timingSafeEqual` in a dedicated small PR.
 
+### 1.9 Prosedur aktivasi DOKU sandbox di host (26 Agu 2026, BL-137)
+
+> 🖐️ **Human-gated (SSOT §9.6).** Seluruh langkah menyentuh host produksi atau DOKU Back Office.
+> Prasyarat: PR #54 (`fix/bl137-doku-signature`) sudah ter-merge ke `main` — tanpa itu, deploy justru
+> menayangkan skema signature yang salah.
+
+**Jebakan yang wajib diketahui lebih dulu:** `docker-compose.vps.yml:77` dan `:131` menyetel
+`DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}` — defaultnya **PRODUKSI**. Bila `.env` host
+tidak menyetelnya eksplisit, container menembak DOKU produksi memakai kredensial sandbox dan gagal
+**401 tanpa gejala yang jelas**. `DOKU_IS_PRODUCTION` tidak diteruskan compose sama sekali, jadi
+`DOKU_BASE_URL` adalah satu-satunya kendali sandbox-vs-produksi di host.
+
+```bash
+# 1. Env di host — tambahkan KETIGA baris; yang ketiga bukan opsional (lihat jebakan di atas).
+cd /var/www/jago-akademi
+# edit .env:
+#   DOKU_CLIENT_ID=BRN-....
+#   DOKU_SECRET_KEY=SK-....
+#   DOKU_BASE_URL=https://api-sandbox.doku.com
+
+# 2. Ambil kode terbaru + deploy api & worker (BUKAN docker-compose.prod.yml — lihat BL-43)
+git pull --ff-only origin main
+docker compose -f docker-compose.vps.yml build --no-cache api
+docker compose -f docker-compose.vps.yml up -d --force-recreate api worker
+
+# 3. Buktikan env benar-benar sampai ke container (jangan percaya .env saja)
+docker compose -f docker-compose.vps.yml exec api sh -lc 'echo "$DOKU_BASE_URL"'
+# HARUS mencetak https://api-sandbox.doku.com — bila mencetak api.doku.com, STOP.
+
+# 4. Smoke test dari host, memakai kredensial yang sama dengan container
+node scripts/doku-smoke.mjs /var/www/jago-akademi/.env
+# HARUS: HTTP 200 + "message":["SUCCESS"] + url staging.doku.com/checkout-link-v2/...
+```
+
+**5. 🖐️ Daftarkan Notification URL di DOKU Back Office sandbox** (hanya bisa dilakukan pemilik akun):
+
+| Field | Nilai |
+|---|---|
+| Notification URL | `https://jagoakademi.com/api/webhooks/doku` |
+
+⚠️ Path ini **bukan** sekadar alamat tujuan — DOKU menandatanganinya sebagai komponen `Request-Target`,
+dan `verifyDokuWebhook` menyusun ulang komponen itu dari `req.originalUrl`. Mendaftarkan path yang
+berbeda (mis. lewat subdomain, atau dengan trailing slash) membuat **setiap** notifikasi ditolak 401.
+
+**6. Uji end-to-end** — checkout Rp 10.000 lewat situs, bayar di simulator sandbox DOKU, lalu:
+
+```bash
+docker compose -f docker-compose.vps.yml logs --tail=100 api | grep -i doku
+# order harus berpindah ke status paid + enrollment terbentuk
+```
+
+Sampai langkah 6 benar-benar lulus, **jalur pembayaran belum boleh dinyatakan selesai** — checkout yang
+sudah terbukti 200 hanya membuktikan separuh alurnya (lihat peringatan di blok koreksi di atas).
+
 ## 2. Resend (transactional email)
 
 | Step | Action | Expected | Status |
