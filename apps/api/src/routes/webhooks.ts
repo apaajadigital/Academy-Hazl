@@ -14,7 +14,12 @@ router.post("/doku", async (req, res, next) => {
     const rawBody: Buffer | undefined = (req as unknown as { rawBody?: Buffer }).rawBody;
     const bodyStr = rawBody ? rawBody.toString("utf8") : JSON.stringify(req.body);
 
-    if (!verifyDokuWebhook(clientId, requestId, timestamp, bodyStr, signature)) {
+    // DOKU signs Request-Target = the path of the notification URL registered in
+    // the DOKU dashboard (e.g. /api/webhooks/doku). nginx proxies /api/* without
+    // rewriting, so originalUrl matches what DOKU signed.
+    const requestTarget = req.originalUrl.split("?")[0] ?? req.originalUrl;
+
+    if (!verifyDokuWebhook(clientId, requestId, timestamp, requestTarget, bodyStr, signature)) {
       return res.status(401).json({ error: "Invalid signature" });
     }
 

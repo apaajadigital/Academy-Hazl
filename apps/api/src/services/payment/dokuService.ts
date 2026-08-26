@@ -23,15 +23,40 @@ function baseUrl() {
   return env.DOKU_IS_PRODUCTION ? PRODUCTION_URL : SANDBOX_URL;
 }
 
-function sign(clientId: string, requestId: string, timestamp: string, body: string, secretKey: string): string {
-  const bodyHash = createHash("sha256").update(body, "utf8").digest("base64");
+/**
+ * DOKU non-SNAP signature (developers.doku.com → Signature Component from
+ * Request Header). Components are, in this exact order and labelling:
+ *   Client-Id, Request-Id, Request-Timestamp, Request-Target, Digest
+ * where Digest is the base64 SHA-256 of the raw JSON body and Request-Target is
+ * the path only (no host, no query). The header value carries an `HMACSHA256=`
+ * prefix; the bare base64 is rejected by DOKU.
+ */
+function sign(
+  clientId: string,
+  requestId: string,
+  timestamp: string,
+  requestTarget: string,
+  body: string,
+  secretKey: string
+): string {
+  const digest = createHash("sha256").update(body, "utf8").digest("base64");
   const components = [
     `Client-Id:${clientId}`,
     `Request-Id:${requestId}`,
     `Request-Timestamp:${timestamp}`,
-    `Request-Body:${bodyHash}`,
+    `Request-Target:${requestTarget}`,
+    `Digest:${digest}`,
   ].join("\n");
-  return createHmac("sha256", secretKey).update(components).digest("base64");
+  return `${SIGNATURE_PREFIX}${createHmac("sha256", secretKey).update(components).digest("base64")}`;
+}
+
+/** Path DOKU signs for the Checkout request. */
+const CHECKOUT_TARGET = "/checkout/v1/payment";
+
+const SIGNATURE_PREFIX = "HMACSHA256=";
+
+function stripPrefix(sig: string): string {
+  return sig.startsWith(SIGNATURE_PREFIX) ? sig.slice(SIGNATURE_PREFIX.length) : sig;
 }
 
 export type DokuOrderItem = {
@@ -96,7 +121,14 @@ export async function createDokuOrder(
     },
   });
 
-  const signature = sign(env.DOKU_CLIENT_ID, requestId, timestamp, body, env.DOKU_SECRET_KEY);
+  const signature = sign(
+    env.DOKU_CLIENT_ID,
+    requestId,
+    timestamp,
+    CHECKOUT_TARGET,
+    body,
+    env.DOKU_SECRET_KEY
+  );
 
   const res = await fetch(`${baseUrl()}/checkout/v1/payment`, {
     method: "POST",
@@ -115,14 +147,21 @@ export async function createDokuOrder(
     throw new Error(`DOKU API error ${res.status}: ${err}`);
   }
 
-  const data = (await res.json()) as { payment: { url: string } };
-  return { invoiceNumber, paymentUrl: data.payment.url };
+  // DOKU wraps the Checkout payload in a top-level `response` object.
+  const data = (await res.json()) as { response?: { payment?: { url?: string } } };
+  const paymentUrl = data.response?.payment?.url;
+  if (!paymentUrl) {
+    throw new Error(`DOKU API returned no payment url: ${JSON.stringify(data)}`);
+  }
+  return { invoiceNumber, paymentUrl };
 }
 
 export function verifyDokuWebhook(
   clientId: string,
   requestId: string,
   timestamp: string,
+  /** Path DOKU called us on, e.g. `/api/webhooks/doku` — part of the signature. */
+  requestTarget: string,
   rawBody: string,
   receivedSignature: string
 ): boolean {
@@ -131,6 +170,8 @@ export function verifyDokuWebhook(
   // unsigned webhook when running for real.
   if (!env.DOKU_SECRET_KEY) return env.NODE_ENV !== "production";
   if (!receivedSignature) return false;
-  const expected = sign(clientId, requestId, timestamp, rawBody, env.DOKU_SECRET_KEY);
-  return safeEqual(expected, receivedSignature);
+  const expected = sign(clientId, requestId, timestamp, requestTarget, rawBody, env.DOKU_SECRET_KEY);
+  // Compare the bare base64: DOKU documents the `HMACSHA256=` prefix, but
+  // tolerating its absence costs nothing (the prefix carries no secret).
+  return safeEqual(stripPrefix(expected), stripPrefix(receivedSignature));
 }
