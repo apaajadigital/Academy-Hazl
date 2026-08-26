@@ -31,6 +31,24 @@ docker compose -f docker-compose.prod.yml ps        # api, worker, web, nginx, p
 | 1.7 | Buyer receives payment-success email + invoice (§2) | inbox | 🖐️ needs RESEND_API_KEY + live order |
 | 1.8 | Switch to **production** DOKU creds; repeat 1.1–1.4 with a **real minimal** transaction | live payment fulfilled | ⛔ **DEFERRED per reviewer instruction (2 Jul 2026) — do not run until explicitly authorized. No real-money transaction has been executed.** |
 
+> 🔴 **KOREKSI 26 Agu 2026 (BL-137) — baris 1.5 di atas menyesatkan.** "Signature verification ✅ verified"
+> hanya benar untuk **jalur negatif**. Jalur positif tak pernah diuji terhadap DOKU sungguhan, dan skema
+> yang diimplementasikan **salah**: komponen `Request-Body:<sha256>` (seharusnya `Request-Target:<path>` +
+> `Digest:<sha256>`), header tanpa awalan `HMACSHA256=`, dan respons dibaca di `data.payment.url`
+> (seharusnya `data.response.payment.url`). Unit test lama menyalin skema dari implementasi sehingga tak
+> mungkin menangkapnya. Sudah diperbaiki; lihat BL-137 di `docs/BACKLOG.md`.
+>
+> **Terverifikasi 26 Agu 2026 terhadap sandbox DOKU nyata** (kredensial `BRN-0280-…`, `api-sandbox.doku.com`):
+> `POST /checkout/v1/payment` → **HTTP 200 `{"message":["SUCCESS"]}`** dengan `response.payment.url` menunjuk
+> `staging.doku.com/checkout-link-v2/…` dan 23 metode pembayaran aktif. Diuji dua kali: (a) lewat
+> `scripts/doku-smoke.mjs` (replika mandiri, tanpa app/DB), dan (b) lewat `createDokuOrder()` yang sebenarnya
+> di `dokuService.ts` — keduanya 200, `isMock: false`. **Ulangi kapan saja:** `node scripts/doku-smoke.mjs`.
+>
+> ⚠️ **Yang MASIH belum terverifikasi:** notifikasi/webhook DOKU yang sungguhan. `Request-Target` untuk
+> webhook diambil dari `req.originalUrl` (`/api/webhooks/doku`) berdasarkan spesifikasi, tetapi belum pernah
+> dibuktikan dengan satu pun notifikasi asli — butuh Notification URL terdaftar di DOKU Back Office + host
+> publik. Sampai itu terjadi, baris 1.2–1.4 tetap 🖐️.
+
 **Hardening note found during this pass (not yet fixed, needs reviewer sign-off since it touches payment code):** `verifyDokuWebhook` in `apps/api/src/services/payment/dokuService.ts:103` compares signatures with `===` (not constant-time). Low practical risk for a base64 HMAC-SHA256 over the network, but flagged per the project's security-review rule for cryptographic code. Tracked as BL-34 — recommend `crypto.timingSafeEqual` in a dedicated small PR.
 
 ## 2. Resend (transactional email)
