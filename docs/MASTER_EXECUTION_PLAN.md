@@ -61,8 +61,8 @@ tercatat terbuka di `docs/BACKLOG.md` tetapi **sudah selesai**.
 | BL-122 | Lint **bersih**; CI PR #54 hijau termasuk job Lint | `npx eslint app/(public)/berlangganan/page.tsx --max-warnings 0` → exit 0 |
 | BL-53, BL-54, BL-56 | Ketiganya **sudah masuk `main`** | `git branch -r --contains` |
 | TD-31 (Redis) | Redis **hidup**, worker jalan | `/api/ready` → `redis: "ok"` |
-| Cron certbot | Sudah benar (`--webroot` + deploy-hook `systemctl reload nginx`) | `/etc/cron.d/certbot-renew` |
-| BL-137 | Skema signature **diperbaiki, ter-merge, ter-deploy, terverifikasi di produksi** | lihat `docs/INTEGRATION_VERIFICATION.md` §1.10 |
+| Cron certbot | Konfigurasi **benar** (`--webroot` + deploy-hook `systemctl reload nginx`). ⚠️ Belum pernah terbukti **berjalan** — sertifikat live `notBefore=2 Jul`, `notAfter=30 Sep`, jadi renewal pertama di bawah konfigurasi ini baru jatuh ~1 Sep. Buktinya masih inspeksi konfigurasi, bukan renewal yang terobservasi. | `/etc/cron.d/certbot-renew` |
+| BL-137 | Skema signature **diperbaiki, ter-merge, ter-deploy, terverifikasi di produksi** | ⚠️ Buktinya (`docs/INTEGRATION_VERIFICATION.md` §1.10) **belum ada di `main`** — masih tertahan di branch `docs/bl137-prod-verification` (PR #55). Perbaikan kodenya ada di `main`; catatannya belum. Siapa pun yang mengecek `main` akan menyimpulkan verifikasi produksi tidak pernah terjadi. |
 
 **Coverage — angka BL-11 sudah basi.** Diukur ulang 26 Agu 2026 (`npx vitest run --coverage`):
 
@@ -74,11 +74,18 @@ tercatat terbuka di `docs/BACKLOG.md` tetapi **sudah selesai**.
 | `authenticate.ts` | 92% | **91,7%** | ✅ |
 | `checkout.ts` | 64% | **90,3%** | ✅ |
 | `orders.ts` | 75% | **84,6%** | ✅ |
+| **`services/certificate`** | — | **1,36%** | ❌ **produk yang dibeli siswa, praktis nol** |
+| **`modules/trainer/*`** | — | **11,9% stmt / 0% branch** | ❌ students, quiz, curriculum, certificates |
 | **`dokuService.ts`** | — | **44,7%** | ❌ **jalur uang, praktis tak teruji** |
 | `affiliate.ts` | 35% | 49,4% | ❌ |
 | `subscription.ts` | 53% | 61,9% | ❌ |
 | `modules/admin/coupons.ts` | — | 16,1% | ❌ |
 | `modules/admin/reviews.ts` | — | 22,7% | ❌ |
+
+⚠️ **Baca tabel ini dengan hati-hati: angka `routes/*` tidak mewakili modul di belakangnya.**
+`routes/trainer.ts` memang 94,4%, tetapi `modules/trainer/*` yang dipanggilnya duduk di 11,9% stmt
+dan **0% branch**, dan `services/certificate` di 1,36%. Permukaan trainer/sertifikat bersinggungan
+langsung dengan payout, jadi jangan simpulkan ia sehat dari angka route-nya saja.
 
 Global: **69,7% stmt / 58,4% branch / 71,6% func / 71,2% lines**. Ratchet di
 `apps/api/vitest.config.ts` ada di 61/58/49/60 — branch hanya lewat tipis.
@@ -525,7 +532,7 @@ sebagai selesai.
 | Sub | Item | Target |
 |---|---|---|
 | 5.1 | **Pin dependency** (TASK-003) | `apps/api` **25 caret**, `packages/eslint-config` 11, `packages/ui` 4, root 2. `apps/web` sudah bersih. Pin exact, commit lockfile, `npm ci` reproducible. ⚠️ Catatan SSOT tentang `apps/web` sudah terbalik — perbaiki catatannya sekalian. |
-| 5.2 | **BL-11 / BL-41 coverage** | Yang masih di bawah 80%: `dokuService` 44,7% (ditangani Wave 1.7), `affiliate` 49,4%, `subscription` 61,9%, `admin/coupons` 16,1%, `admin/reviews` 22,7%. Naikkan ratchet setiap kali naik. |
+| 5.2 | **BL-11 / BL-41 coverage** | Yang masih di bawah 80%: `dokuService` 44,7% (ditangani Wave 1.7), **`services/certificate` 1,36%**, **`modules/trainer/*` 11,9% stmt / 0% branch**, `affiliate` 49,4%, `subscription` 61,9%, `admin/coupons` 16,1%, `admin/reviews` 22,7%. Naikkan ratchet setiap kali naik. **Prioritaskan `services/certificate` dan `modules/trainer/*`** — keduanya bersinggungan dengan payout dan dengan produk yang dibeli siswa, dan keduanya tak pernah tercatat di BL-11. |
 | 5.3 | **BL-15 npm audit** | 1 high + 1 moderate tanpa forward-fix. SSOT menuntut audit bersih. Keputusan owner: terima dan pantau, atau cari mitigasi. |
 | 5.4 | **BL-12 Zod boundary** | `parsePageParams` belum diadopsi di semua tempat; query/param belum tervalidasi menyeluruh. |
 | 5.5 | **BL-80 test non-deterministik** | 1–6 kegagalan acak di bawah beban CPU. Kriteria SSOT: test harus deterministik. Cari akar penyebabnya, jangan naikkan timeout. |
