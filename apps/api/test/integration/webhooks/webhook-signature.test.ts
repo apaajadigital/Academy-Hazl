@@ -42,7 +42,17 @@ function dokuSign(requestId: string, timestamp: string, target: string, body: st
   return `HMACSHA256=${createHmac("sha256", SECRET).update(components).digest("base64")}`;
 }
 
-function post(target: string, body: string, requestId = "req-1", timestamp = "2026-08-26T10:00:00Z") {
+/**
+ * BL-145: the route now checks that the SIGNED timestamp is recent, so this
+ * suite can no longer pin a fixed date — a hardcoded stamp would start failing
+ * the moment it aged past the window. Second resolution, matching what DOKU
+ * sends and what dokuService produces for outbound requests.
+ */
+function freshTimestamp(): string {
+  return new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function post(target: string, body: string, requestId = "req-1", timestamp = freshTimestamp()) {
   return request(app)
     .post("/api/webhooks/doku")
     .set("Content-Type", "application/json")
@@ -80,7 +90,7 @@ describe("POST /api/webhooks/doku — signature gate over the real route (BL-137
 
   it("rejects a body tampered with after signing", async () => {
     const requestId = "req-2";
-    const timestamp = "2026-08-26T10:00:00Z";
+    const timestamp = freshTimestamp();
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set("Content-Type", "application/json")
@@ -98,16 +108,37 @@ describe("POST /api/webhooks/doku — signature gate over the real route (BL-137
       .set("Content-Type", "application/json")
       .set("Client-Id", CLIENT_ID)
       .set("Request-Id", "req-3")
-      .set("Request-Timestamp", "2026-08-26T10:00:00Z")
+      .set("Request-Timestamp", freshTimestamp())
       .send(payload);
     expect(res.status).toBe(401);
+  });
+
+  // BL-145 over the real route: a genuinely signed notification whose timestamp
+  // is old must be refused. Without this the same captured request could be
+  // replayed forever — and a replayed FAILED/EXPIRED is the direct trigger for
+  // BL-138, no race required.
+  it("rejects a correctly signed notification that is being replayed later", async () => {
+    const stale = new Date(Date.now() - 72 * 3_600_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+    const res = await post(TARGET, payload, "req-replay", stale);
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: "stale_timestamp" });
+  });
+
+  // The window has to stay wide enough for DOKU's own redeliveries, which carry
+  // the ORIGINAL timestamp. A notification a few hours old is a retry, not an
+  // attack — rejecting it would drop a real payment.
+  it("still accepts a redelivery from hours ago", async () => {
+    const earlier = new Date(Date.now() - 6 * 3_600_000).toISOString().replace(/\.\d{3}Z$/, "Z");
+    const res = await post(TARGET, payload, "req-retry", earlier);
+    // Past the signature and freshness gates; dies on the unknown invoice.
+    expect(res.status).toBe(404);
   });
 
   it("rejects the pre-BL-137 signature scheme (Request-Body, no HMACSHA256= prefix)", async () => {
     // Guards the regression directly: if anyone reintroduces the old scheme,
     // this flips to 200 and the suite fails.
     const requestId = "req-4";
-    const timestamp = "2026-08-26T10:00:00Z";
+    const timestamp = freshTimestamp();
     const digest = createHash("sha256").update(payload, "utf8").digest("base64");
     const legacy = createHmac("sha256", SECRET)
       .update(

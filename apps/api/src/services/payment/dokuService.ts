@@ -156,6 +156,40 @@ export async function createDokuOrder(
   return { invoiceNumber, paymentUrl };
 }
 
+/**
+ * How far off DOKU's stated notification time is from ours, in seconds.
+ * Positive = the notification is in the past (the normal case). Returns null
+ * when the timestamp is absent or unparseable.
+ */
+export function dokuTimestampSkewSeconds(timestamp: string): number | null {
+  if (!timestamp) return null;
+  const stamped = Date.parse(timestamp);
+  if (Number.isNaN(stamped)) return null;
+  return (Date.now() - stamped) / 1000;
+}
+
+/**
+ * BL-145 — reject a notification whose signed timestamp is outside the window
+ * we are willing to honour.
+ *
+ * Before this, `Request-Timestamp` was fed into the signature and then never
+ * looked at again, so any notification DOKU ever sent stayed valid forever: a
+ * captured FAILED/EXPIRED delivery could be replayed at any point in the future.
+ *
+ * The window is intentionally wide, and the reasoning lives on
+ * `DOKU_WEBHOOK_MAX_AGE_SECONDS` in config/env.ts — rejecting a real payment
+ * notification is a worse outcome than tolerating a replay that BL-138's atomic
+ * claim already renders harmless.
+ */
+export function isDokuTimestampFresh(timestamp: string): boolean {
+  const skew = dokuTimestampSkewSeconds(timestamp);
+  // Unparseable or missing: the signature covers this field, so a value we
+  // cannot read means we cannot reason about the notification at all.
+  if (skew === null) return false;
+  if (skew < 0) return -skew <= env.DOKU_WEBHOOK_MAX_FUTURE_SECONDS;
+  return skew <= env.DOKU_WEBHOOK_MAX_AGE_SECONDS;
+}
+
 export function verifyDokuWebhook(
   clientId: string,
   requestId: string,

@@ -43,6 +43,10 @@ vi.mock("../../../src/services/payment/dokuService.js", () => ({
     paymentUrl: "http://localhost:3000/payment/success?order=JA-TEST123&mock=1",
   }),
   verifyDokuWebhook: vi.fn().mockReturnValue(true),
+  // BL-145: freshness has its own coverage (test/unit/dokuTimestamp.test.ts and
+  // webhook-signature.test.ts over the real route); stubbed open here.
+  isDokuTimestampFresh: vi.fn().mockReturnValue(true),
+  dokuTimestampSkewSeconds: vi.fn().mockReturnValue(0),
 }));
 
 vi.mock("../../../src/services/notification/emailService.js", () => ({
