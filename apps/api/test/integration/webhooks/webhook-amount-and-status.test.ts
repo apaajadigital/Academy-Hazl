@@ -19,7 +19,7 @@ import { app } from "../../../src/app.js";
 
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
-    paymentTransaction: { findFirst: vi.fn(), update: vi.fn() },
+    paymentTransaction: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },
@@ -94,7 +94,7 @@ const post = (body: unknown) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(mockTransaction as never);
+  vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue(mockTransaction as never);
   vi.mocked(prisma.paymentTransaction.update).mockResolvedValue({} as never);
   vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder as never);
   vi.mocked(prisma.order.update).mockResolvedValue({} as never);
@@ -237,8 +237,20 @@ describe("BL-142 — status handling", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
+  // BL-140: the lookup must be findUnique. findFirst is what turned a colliding
+  // invoice number into "whichever row Postgres returned", silently resolving a
+  // settled payment to the wrong order instead of failing.
+  it("resolves the invoice through the unique index, not an arbitrary first row", async () => {
+    await post(notification());
+
+    expect(prisma.paymentTransaction.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { gatewayTxId: "JA-ORDER1" } }),
+    );
+    expect(prisma.paymentTransaction.findFirst).not.toHaveBeenCalled();
+  });
+
   it("rejects an invoice number no transaction was ever created for", async () => {
-    vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(null as never);
+    vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue(null as never);
 
     const res = await post(notification());
 

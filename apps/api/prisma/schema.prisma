@@ -357,7 +357,12 @@ model PaymentTransaction {
   id            String   @id @default(uuid())
   orderId       String
   gateway       String
-  gatewayTxId   String?
+  // BL-140: the gateway's identifier for this payment. Unique because a
+  // duplicate here means two orders share one payment identity, and the
+  // webhook then resolves a settled payment to an arbitrary one of them.
+  // Nullable stays: Postgres allows many NULLs under a unique index, and a
+  // transaction row can exist before the gateway has named it.
+  gatewayTxId   String?  @unique
   paymentMethod String?
   amount        Decimal  @db.Decimal(12, 2)
   status        String   @default("pending")

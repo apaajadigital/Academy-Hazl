@@ -4,7 +4,7 @@ import { app } from "../../../src/app.js";
 
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
-    paymentTransaction: { findFirst: vi.fn(), update: vi.fn() },
+    paymentTransaction: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },
@@ -59,7 +59,7 @@ const mockOrder = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(mockTransaction as never);
+  vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue(mockTransaction as never);
   vi.mocked(prisma.order.findUnique).mockResolvedValue(mockOrder as never);
   vi.mocked(prisma.order.update).mockResolvedValue({} as never);
   // The paid flip is an atomic claim (updateMany with a status predicate); by
@@ -609,7 +609,7 @@ describe("POST /api/webhooks/doku", () => {
   // (or whose invoice was mistyped) disappeared for good. The correct answer is
   // a non-2xx that keeps DOKU retrying.
   it("refuses an unknown invoice number instead of acknowledging it", async () => {
-    vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.order.findUnique).mockResolvedValue(null);
 
     const res = await request(app)
