@@ -101,39 +101,36 @@ beforeEach(() => {
   } as never);
   vi.mocked(prisma.paymentTransaction.update).mockResolvedValue({} as never);
 
-  vi.mocked(prisma.order.findUnique).mockImplementation(
-    async () =>
-      ({
-        id: "order-1",
-        userId: "user-1",
-        // A stale read when the test asks for one — this is the whole race.
-        status: store.snapshotStatus ?? store.status,
-        finalAmount: ORDER_AMOUNT,
-        items: [{ itemType: "course", itemId: "course-1", itemTitle: "Kursus Test", quantity: 1 }],
-        user: { name: "Test User", email: "test@test.com", profile: null },
-      }) as never,
-  );
+  vi.mocked(prisma.order.findUnique).mockImplementation((async () => ({
+    id: "order-1",
+    userId: "user-1",
+    // A stale read when the test asks for one — this is the whole race.
+    status: store.snapshotStatus ?? store.status,
+    finalAmount: ORDER_AMOUNT,
+    items: [{ itemType: "course", itemId: "course-1", itemTitle: "Kursus Test", quantity: 1 }],
+    user: { name: "Test User", email: "test@test.com", profile: null },
+  })) as never);
 
   // A real conditional write: the predicate decides, not the caller.
-  vi.mocked(prisma.order.updateMany).mockImplementation(async (args: unknown) => {
-    const { where, data } = args as {
-      where: { status?: { notIn?: string[] } };
-      data: { status?: string };
-    };
-    const blocked = where.status?.notIn ?? [];
-    if (blocked.includes(currentStatus())) return { count: 0 } as never;
-    if (data.status) store.status = data.status;
-    return { count: 1 } as never;
-  });
+  vi.mocked(prisma.order.updateMany).mockImplementation((async (args: {
+    where: { status?: { notIn?: string[] } };
+    data: { status?: string };
+  }) => {
+    const blocked = args.where.status?.notIn ?? [];
+    if (blocked.includes(currentStatus())) return { count: 0 };
+    if (args.data.status) store.status = args.data.status;
+    return { count: 1 };
+  }) as never);
 
   // An UNCONDITIONAL write, exactly like the real one. Any code path that still
   // reaches for `update` to set a terminal status will clobber the row and the
   // assertions below will catch it.
-  vi.mocked(prisma.order.update).mockImplementation(async (args: unknown) => {
-    const { data } = args as { data: { status?: string } };
-    if (data.status) store.status = data.status;
-    return {} as never;
-  });
+  vi.mocked(prisma.order.update).mockImplementation((async (args: {
+    data: { status?: string };
+  }) => {
+    if (args.data.status) store.status = args.data.status;
+    return {};
+  }) as never);
 
   vi.mocked(prisma.course.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.courseEnrollment.upsert).mockResolvedValue({} as never);
