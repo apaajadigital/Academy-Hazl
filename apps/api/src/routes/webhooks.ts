@@ -1,7 +1,12 @@
 import { Router } from "express";
-import { verifyDokuWebhook } from "../services/payment/dokuService.js";
+import {
+  verifyDokuWebhook,
+  isDokuTimestampFresh,
+  dokuTimestampSkewSeconds,
+} from "../services/payment/dokuService.js";
 import { intakeDokuNotification } from "../services/payment/webhookIntake.js";
 import { enqueueWebhook } from "../jobs/queues.js";
+import { logger } from "../lib/logger.js";
 
 const router = Router();
 
@@ -23,6 +28,26 @@ router.post("/doku", async (req, res, next) => {
     if (!verifyDokuWebhook(clientId, requestId, timestamp, requestTarget, bodyStr, signature)) {
       return res.status(401).json({ error: "Invalid signature" });
     }
+
+    // BL-145: the signature covers `Request-Timestamp`, but nothing ever read it
+    // back — so a correctly signed notification stayed valid forever and could be
+    // replayed at will. Checked only AFTER the signature, so an unauthenticated
+    // caller learns nothing about our clock.
+    //
+    // The skew is logged on every accepted notification, not just rejected ones:
+    // the window in config/env.ts is deliberately wide because DOKU's retry
+    // horizon has never been measured, and this log is what will make it
+    // measurable from real traffic (BL-150).
+    const skewSeconds = dokuTimestampSkewSeconds(timestamp);
+    if (!isDokuTimestampFresh(timestamp)) {
+      logger.error("doku notification timestamp outside the accepted window", {
+        requestId,
+        timestamp,
+        skewSeconds,
+      });
+      return res.status(401).json({ error: "stale_timestamp" });
+    }
+    logger.info("doku notification timestamp skew", { requestId, skewSeconds });
 
     // BL-139/BL-142: validate, record `gatewayRaw`, and match the settled amount
     // against the order BEFORE anything is queued. This has to happen inline —

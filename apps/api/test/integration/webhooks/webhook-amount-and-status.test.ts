@@ -36,6 +36,11 @@ vi.mock("../../../src/db/prisma.js", () => ({
 
 vi.mock("../../../src/services/payment/dokuService.js", () => ({
   verifyDokuWebhook: vi.fn().mockReturnValue(true),
+  // BL-145: freshness is exercised for real in test/unit/dokuTimestamp.test.ts
+  // and over the real route in webhook-signature.test.ts; here it is stubbed
+  // open so these cases stay about fulfillment.
+  isDokuTimestampFresh: vi.fn().mockReturnValue(true),
+  dokuTimestampSkewSeconds: vi.fn().mockReturnValue(0),
 }));
 
 vi.mock("../../../src/services/notification/emailService.js", () => ({
@@ -305,7 +310,7 @@ describe("BL-142 — status handling", () => {
     const res = await post(notification({ transaction: { status: "EXPIRED" } }));
 
     expect(res.status).toBe(200);
-    expect(prisma.order.update).toHaveBeenCalledWith(
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: "expired" } }),
     );
   });

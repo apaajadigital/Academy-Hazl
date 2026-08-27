@@ -24,6 +24,34 @@ const envSchema = z.object({
   // Optional explicit base URL; overrides the sandbox/production URL derived
   // from DOKU_IS_PRODUCTION (reconciles docker-compose which sets DOKU_BASE_URL).
   DOKU_BASE_URL: z.string().optional(),
+  /**
+   * BL-145 — replay window for webhook notifications, in seconds.
+   *
+   * How this number was chosen, because guessing it wrong is expensive in both
+   * directions. The clock difference between DOKU and us WAS measured (sandbox,
+   * 27 Aug 2026, five samples of the HTTP `Date` header): under 2 seconds. What
+   * was NOT measured is DOKU's retry horizon — how long it keeps redelivering a
+   * notification that still carries its ORIGINAL `Request-Timestamp`. Measuring
+   * that needs a real inbound notification on the host, which is human-gated.
+   *
+   * So the default is deliberately far wider than any plausible retry horizon
+   * rather than a tight window that would reject legitimate redeliveries — and
+   * we now cause redeliveries on purpose (BL-142 answers non-2xx). It still ends
+   * the "replayable forever" property BL-145 is about, and BL-138's atomic claim
+   * means a replay inside the window can no longer revoke a paid order anyway.
+   *
+   * Tighten it once the real distribution is visible: every notification logs
+   * its measured skew (`doku notification timestamp skew`). See BL-150.
+   */
+  DOKU_WEBHOOK_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86_400),
+  /**
+   * How far into the future a notification timestamp may sit before we refuse
+   * it. Covers host clock drift, not DOKU behaviour — measured skew was ~1s, so
+   * 15 minutes is generous. Kept separate from the age window on purpose: a
+   * future-dated timestamp means one of the two clocks is wrong, which is a very
+   * different problem from a late redelivery.
+   */
+  DOKU_WEBHOOK_MAX_FUTURE_SECONDS: z.coerce.number().int().positive().default(900),
   // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("noreply@jagoakademi.com"),

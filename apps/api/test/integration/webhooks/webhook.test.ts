@@ -20,6 +20,11 @@ vi.mock("../../../src/db/prisma.js", () => ({
 
 vi.mock("../../../src/services/payment/dokuService.js", () => ({
   verifyDokuWebhook: vi.fn().mockReturnValue(true),
+  // BL-145: freshness is exercised for real in test/unit/dokuTimestamp.test.ts
+  // and over the real route in webhook-signature.test.ts; here it is stubbed
+  // open so these cases stay about fulfillment.
+  isDokuTimestampFresh: vi.fn().mockReturnValue(true),
+  dokuTimestampSkewSeconds: vi.fn().mockReturnValue(0),
 }));
 
 vi.mock("../../../src/services/notification/emailService.js", () => ({
@@ -547,8 +552,16 @@ describe("POST /api/webhooks/doku", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.received).toBe(true);
-    expect(prisma.order.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "failed" }) })
+    // BL-138: the terminal flip is an atomic claim now, not a plain update. The
+    // status predicate is the assertion that matters — without it a stale read
+    // lets a late FAILED overwrite a paid order.
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] },
+        }),
+        data: expect.objectContaining({ status: "failed" }),
+      })
     );
     expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
   });
@@ -563,8 +576,13 @@ describe("POST /api/webhooks/doku", () => {
       });
 
     expect(res.status).toBe(200);
-    expect(prisma.order.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "expired" }) })
+    expect(prisma.order.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] },
+        }),
+        data: expect.objectContaining({ status: "expired" }),
+      })
     );
   });
 
