@@ -10,7 +10,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     courseEnrollment: { upsert: vi.fn() },
     eventRegistration: { upsert: vi.fn() },
     event: { update: vi.fn(), updateMany: vi.fn(), findUnique: vi.fn() },
-    refund: { create: vi.fn() },
+    refund: { create: vi.fn(), upsert: vi.fn() },
     affiliate: { findFirst: vi.fn(), update: vi.fn() },
     affiliateCommission: { create: vi.fn() },
     coupon: { update: vi.fn() },
@@ -70,6 +70,7 @@ beforeEach(() => {
   vi.mocked(prisma.event.findUnique).mockResolvedValue({ quota: 100, title: "Webinar" } as never);
   vi.mocked(prisma.event.updateMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.refund.create).mockResolvedValue({} as never);
+  vi.mocked(prisma.refund.upsert).mockResolvedValue({} as never);
   vi.mocked(prisma.affiliate.findFirst).mockResolvedValue(null as never);
   vi.mocked(prisma.affiliate.update).mockResolvedValue({} as never);
   vi.mocked(prisma.affiliateCommission.create).mockResolvedValue({} as never);
@@ -95,7 +96,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-ORDER1" },
-        transaction: { status: "SUCCESS" },
+        transaction: { status: "SUCCESS", amount: 299000 },
         channel: { id: "VIRTUAL_ACCOUNT_BCA" },
       });
 
@@ -141,10 +142,16 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
-    expect(prisma.paymentTransaction.update).not.toHaveBeenCalled();
+    // BL-139: the intake writes `gatewayRaw` on every notification, so the bare
+    // "update was never called" assertion no longer isolates fulfillment. What
+    // must not happen is the settlement write — flipping the transaction to
+    // "success" is the loser's side-effect this regression is about.
+    expect(prisma.paymentTransaction.update).not.toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ status: "success" }) }),
+    );
     expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
     expect(prisma.coupon.update).not.toHaveBeenCalled();
     expect(prisma.affiliateCommission.create).not.toHaveBeenCalled();
@@ -159,7 +166,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-ORDER1" },
-        transaction: { status: "SUCCESS" },
+        transaction: { status: "SUCCESS", amount: 299000 },
         channel: { id: "VIRTUAL_ACCOUNT_BCA" },
       });
 
@@ -171,11 +178,15 @@ describe("POST /api/webhooks/doku", () => {
   });
 
   // Regression: a SUCCESS webhook for an order the user already cancelled must
-  // NOT grant fulfillment (coupon accounting is inconsistent) — it is flagged
-  // for manual review via logger.warn and exits gracefully (no retry loop).
+  // NOT grant fulfillment (coupon accounting is inconsistent) — it is parked in
+  // the pending-refund queue and exits gracefully (no retry loop).
+  //
+  // BL-142 raised the bar here: a logger.warn alone was not an obligation to pay
+  // anybody back, so the case is now asserted through the Refund row as well.
+  // The dedicated coverage lives in webhook-amount-and-status.test.ts.
   it("does not fulfill a cancelled order and flags it for manual review", async () => {
     const { logger } = await import("../../../src/lib/logger.js");
-    const warnSpy = vi.spyOn(logger, "warn");
+    const errorSpy = vi.spyOn(logger, "error");
     vi.mocked(prisma.order.findUnique).mockResolvedValue({ ...mockOrder, status: "cancelled" } as never);
 
     const res = await request(app)
@@ -183,7 +194,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-ORDER1" },
-        transaction: { status: "SUCCESS" },
+        transaction: { status: "SUCCESS", amount: 299000 },
         channel: { id: "VIRTUAL_ACCOUNT_BCA" },
       });
 
@@ -193,10 +204,14 @@ describe("POST /api/webhooks/doku", () => {
     expect(prisma.order.updateMany).not.toHaveBeenCalled();
     expect(prisma.courseEnrollment.upsert).not.toHaveBeenCalled();
     expect(prisma.coupon.update).not.toHaveBeenCalled();
-    // A human is alerted: payment arrived for a cancelled order → manual refund.
-    expect(warnSpy).toHaveBeenCalledWith(
+    // A human is alerted AND the debt is recorded: payment arrived for a
+    // cancelled order → pending refund the admin flow can act on.
+    expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("cancelled"),
       expect.objectContaining({ orderId: "order-1" }),
+    );
+    expect(prisma.refund.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { orderId: "order-1" } }),
     );
   });
 
@@ -210,7 +225,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(prisma.eventRegistration.upsert).toHaveBeenCalled();
@@ -236,7 +251,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(prisma.refund.create).toHaveBeenCalledWith(
@@ -264,7 +279,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     // Exactly one quota-guarded reservation attempt, and it changed nothing.
@@ -302,7 +317,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(sendEventRegistrationConfirmed).toHaveBeenCalledWith(
@@ -332,7 +347,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(sendEventFullRefund).toHaveBeenCalled();
@@ -347,7 +362,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(sendEventRegistrationConfirmed).not.toHaveBeenCalled();
@@ -371,7 +386,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(prisma.eventRegistration.upsert).toHaveBeenCalled();
@@ -395,7 +410,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(prisma.affiliateCommission.create).toHaveBeenCalled();
@@ -426,7 +441,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     // Course fields are fetched once, filtered to private_class only (no N+1).
@@ -464,7 +479,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     expect(sendPrivateClassWelcome).toHaveBeenCalled();
@@ -482,7 +497,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     expect(res.status).toBe(200);
     // Regular behavior unchanged: payment-success sent, onboarding untouched.
@@ -507,7 +522,7 @@ describe("POST /api/webhooks/doku", () => {
     const res = await request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 299000 } });
 
     // Notification failures are best-effort: webhook still 200 (no DOKU retry
     // loop) and fulfillment side-effects are intact.
@@ -527,7 +542,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-ORDER1" },
-        transaction: { status: "FAILED" },
+        transaction: { status: "FAILED", amount: 299000 },
       });
 
     expect(res.status).toBe(200);
@@ -544,7 +559,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-ORDER1" },
-        transaction: { status: "EXPIRED" },
+        transaction: { status: "EXPIRED", amount: 299000 },
       });
 
     expect(res.status).toBe(200);
@@ -562,7 +577,7 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-FAKE" },
-        transaction: { status: "SUCCESS" },
+        transaction: { status: "SUCCESS", amount: 299000 },
       });
 
     expect(res.status).toBe(401);
@@ -570,7 +585,12 @@ describe("POST /api/webhooks/doku", () => {
     expect(prisma.order.updateMany).not.toHaveBeenCalled();
   });
 
-  it("gracefully handles unknown invoice number", async () => {
+  // BL-142: this case used to assert HTTP 200 for an invoice we have no record
+  // of — "gracefully" meant DOKU marked the notification delivered and never
+  // sent it again, so a settled payment whose PaymentTransaction row was missing
+  // (or whose invoice was mistyped) disappeared for good. The correct answer is
+  // a non-2xx that keeps DOKU retrying.
+  it("refuses an unknown invoice number instead of acknowledging it", async () => {
     vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.order.findUnique).mockResolvedValue(null);
 
@@ -579,11 +599,11 @@ describe("POST /api/webhooks/doku", () => {
       .set(webhookHeaders)
       .send({
         order: { invoice_number: "JA-UNKNOWN" },
-        transaction: { status: "SUCCESS" },
+        transaction: { status: "SUCCESS", amount: 299000 },
       });
 
-    expect(res.status).toBe(200);
-    expect(res.body.received).toBe(true);
+    expect(res.status).toBe(404);
+    expect(res.body.received).toBeUndefined();
     expect(prisma.order.update).not.toHaveBeenCalled();
     expect(prisma.order.updateMany).not.toHaveBeenCalled();
   });

@@ -60,6 +60,29 @@ A breach = unauthorized access/disclosure/loss of personal data. Treat as **P1**
 
 > Legal review pending (BL-21). Cross-border processors (Cloudflare/Resend/Sentry) are in scope — see `docs/PDP_COMPLIANCE_AUDIT.md` (BL-22).
 
+## DOKU webhook — what each response code means (BL-139, BL-142)
+
+`POST /api/webhooks/doku` used to answer `200 {received:true}` to almost everything, so a
+notification we could not process was consumed silently and DOKU never sent it again. Since Wave 1.1
+only a notification that was **actually** processed gets a 200; everything else is a non-2xx that
+DOKU will retry. When one of these shows up in the logs, this is what it means:
+
+| Code | `error` | What happened | First move |
+|---|---|---|---|
+| 401 | `Invalid signature` | Signature failed. Wrong `DOKU_SECRET_KEY`/`DOKU_CLIENT_ID` on the host, or the notification is not from DOKU. | Compare the container's credentials against DOKU Back Office (`docs/INTEGRATION_VERIFICATION.md` §1.9). |
+| 400 | `invalid_payload` | Body failed Zod validation — no `invoice_number`, no `status`, or a non-numeric amount. | Read `gatewayRaw`; if the shape is legitimate DOKU output, our schema is too narrow. |
+| 400 | `amount_missing` | SUCCESS/REFUND/CHARGEBACK carrying no amount at all. We refuse to fulfill a payment whose value we cannot see. | Check whether the channel really omits the amount before widening anything. |
+| 404 | `unknown_invoice` | No `PaymentTransaction` has this `gatewayTxId`. Money may have been settled for an order we cannot find. | 🔴 Investigate: search orders by amount + timestamp. Do not dismiss as noise. |
+| 409 | `amount_mismatch` | DOKU settled a different amount than the order asks for. **Nothing was fulfilled.** Both numbers are in the log line. | 🔴 Treat as a money incident (P1/P2). `gatewayRaw` holds the full notification. |
+| 422 | `unhandled_status` | A status this integration has no branch for. | Add the branch — do not silence it. |
+| 500 | `order_missing` | The transaction exists but its order is gone. Data integrity problem. | 🔴 Investigate before replying to DOKU. |
+
+Every one of these writes a `logger.error` with `invoiceNumber` and `txStatus`, and the full
+notification is stored in `PaymentTransaction.gatewayRaw` — including for notifications we reject,
+which is exactly when the evidence matters. A `REFUND`/`CHARGEBACK`, and a payment that lands on an
+already-cancelled order, answer 200 but create a **pending `Refund` row**: access is revoked and the
+affiliate commission reversed only once an admin approves it (BL-149).
+
 ## Common commands
 
 > ⛔ **Compose produksi = `docker-compose.vps.yml`.** Jangan pernah menjalankan `up`/`build` dengan
