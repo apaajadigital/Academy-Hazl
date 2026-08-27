@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../db/prisma.js";
 import { logger } from "../../lib/logger.js";
 import { processEmail } from "./email.js";
@@ -14,6 +15,33 @@ async function safeNotify(fn: () => Promise<void>): Promise<void> {
 }
 
 /**
+ * Park money we owe back in the pending-refund queue (BL-142).
+ *
+ * `upsert` rather than `create`: Refund.orderId is unique, so a redelivered DOKU
+ * notification would otherwise crash on the unique constraint and retry forever.
+ * `update: {}` means the FIRST reason recorded for an order wins — a later
+ * notification must not silently rewrite the history of why we owe the money.
+ */
+async function recordPendingRefund(input: {
+  orderId: string;
+  userId: string;
+  amount: Prisma.Decimal | number;
+  reason: string;
+}): Promise<void> {
+  await prisma.refund.upsert({
+    where: { orderId: input.orderId },
+    create: {
+      orderId: input.orderId,
+      userId: input.userId,
+      amount: input.amount,
+      reason: input.reason,
+      status: "pending",
+    },
+    update: {},
+  });
+}
+
+/**
  * DOKU payment fulfillment (TASK-022). Extracted from the webhook route so it can
  * run on the worker. Idempotent: a SUCCESS for an already-fulfilled order returns
  * early, and — for deliveries that race past that read — the order is claimed
@@ -21,12 +49,24 @@ async function safeNotify(fn: () => Promise<void>): Promise<void> {
  * affiliate commissions and notifications happen at most once per order.
  */
 export async function processWebhookPayment(job: WebhookJob): Promise<void> {
-  const { invoiceNumber, txStatus, channelId } = job;
+  const { invoiceNumber, channelId } = job;
+
+  // BL-142: normalise here as well as in the intake service. The worker can pick
+  // up a job enqueued by an older deploy, and this function is the last place
+  // that decides what a status means.
+  const txStatus = String(job.txStatus).trim().toUpperCase();
 
   const transaction = await prisma.paymentTransaction.findFirst({
     where: { gatewayTxId: invoiceNumber },
   });
-  if (!transaction) return;
+  if (!transaction) {
+    // BL-142: this used to `return`, which the route reported as success — a
+    // notification for an invoice we have no record of vanished without a trace.
+    // Throwing lets BullMQ retry and, once retries are exhausted, keeps the job
+    // in the dead-letter set where it can be inspected.
+    logger.error("webhook job for an unknown invoice", { invoiceNumber, txStatus });
+    throw new Error(`webhook: no payment transaction for invoice ${invoiceNumber}`);
+  }
 
   const order = await prisma.order.findUnique({
     where: { id: transaction.orderId },
@@ -35,7 +75,33 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
       items: true,
     },
   });
-  if (!order) return;
+  if (!order) {
+    logger.error("webhook job for a transaction whose order is gone", {
+      invoiceNumber,
+      txStatus,
+      orderId: transaction.orderId,
+    });
+    throw new Error(`webhook: order ${transaction.orderId} not found`);
+  }
+
+  // BL-139: the intake service already compared the settled amount before this
+  // job was queued. Re-checking here is deliberate defence in depth — the intake
+  // read and this one are separate transactions, and a job can outlive the
+  // deploy that created it. Rounded on both sides because checkout.ts sends
+  // `Math.round(finalAmount)` to DOKU while the order keeps the raw Decimal.
+  if (job.amount != null) {
+    const expectedAmount = Math.round(Number(order.finalAmount));
+    if (Math.round(job.amount) !== expectedAmount) {
+      logger.error("webhook job amount does not match the order", {
+        invoiceNumber,
+        txStatus,
+        orderId: order.id,
+        expectedAmount,
+        receivedAmount: job.amount,
+      });
+      throw new Error(`webhook: amount mismatch on order ${order.id}`);
+    }
+  }
 
   if (txStatus === "SUCCESS") {
     // Fast-path idempotency check — already fulfilled, nothing more to do.
@@ -49,10 +115,21 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
     // A cancelled order must never be flipped to paid: the user already released
     // the coupon slot and abandoned the purchase, so granting fulfillment here
     // would leave coupon/commission accounting inconsistent. The money DID move
-    // though, so flag it for a human instead of throwing (a throw would just
-    // retry-loop the job without fixing anything).
+    // though, so it must land somewhere a human actually looks.
+    //
+    // BL-142: this used to be a `logger.warn` and nothing else. A warning in a
+    // log stream is not an obligation to refund anybody — the buyer's money sat
+    // with us with no record that we owed it back. It now writes a pending
+    // Refund, which is the row the admin approval flow in routes/orders.ts is
+    // driven by, so the money enters the same queue as every other refund.
     if (order.status === "cancelled") {
-      logger.warn("payment received for a cancelled order — needs manual review/refund", {
+      await recordPendingRefund({
+        orderId: order.id,
+        userId: order.userId,
+        amount: order.finalAmount,
+        reason: "paid_after_cancel",
+      });
+      logger.error("payment received for a cancelled order — pending refund created", {
         orderId: order.id,
         invoiceNumber,
       });
@@ -344,5 +421,38 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
       where: { id: transaction.id },
       data: { status: "failed" },
     });
+  } else if (txStatus === "REFUND" || txStatus === "CHARGEBACK") {
+    // BL-142: a gateway-initiated reversal used to fall off the end of this
+    // function in complete silence — the money went back to the buyer while the
+    // order stayed "paid" and access stayed granted.
+    //
+    // Scope note (BL-149): this records the reversal as a pending Refund so it
+    // enters the existing admin approval flow, which is what actually revokes
+    // enrollments and reverses the affiliate commission (routes/orders.ts).
+    // Doing that automatically, without a human, is a larger change than this PR
+    // — see BL-149 in docs/BACKLOG.md. Until then a reversal is visible and
+    // actionable, but access is revoked only once an admin approves.
+    await recordPendingRefund({
+      orderId: order.id,
+      userId: order.userId,
+      amount: order.finalAmount,
+      reason: txStatus === "REFUND" ? "gateway_refund" : "gateway_chargeback",
+    });
+    logger.error("gateway-initiated reversal received — pending refund created", {
+      orderId: order.id,
+      invoiceNumber,
+      txStatus,
+    });
+  } else {
+    // BL-142: the explicit default. Anything that reaches here is a status the
+    // intake service accepted but this function has no branch for, which is a
+    // bug in one of the two — so it must be loud and it must be retried, never
+    // acknowledged as processed.
+    logger.error("webhook job carried an unhandled status", {
+      orderId: order.id,
+      invoiceNumber,
+      txStatus,
+    });
+    throw new Error(`webhook: unhandled status ${txStatus} for order ${order.id}`);
   }
 }

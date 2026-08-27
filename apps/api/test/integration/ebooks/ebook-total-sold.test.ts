@@ -23,7 +23,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     coupon: { findUnique: vi.fn(), update: vi.fn() },
     order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     paymentTransaction: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
-    refund: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    refund: { create: vi.fn(), upsert: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     affiliate: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     affiliateCommission: { create: vi.fn(), update: vi.fn() },
     $transaction: vi.fn(),
@@ -193,7 +193,7 @@ describe("BL-97 — paid webhook fulfillment counts the sale", () => {
     request(app)
       .post("/api/webhooks/doku")
       .set(webhookHeaders)
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status, amount: 99000 } });
 
   it("increments totalSold when the payment succeeds", async () => {
     const res = await postWebhook("SUCCESS");
@@ -376,7 +376,7 @@ describe("BL-97 — approved refund does NOT touch the ebook sales counter", () 
         "request-timestamp": new Date().toISOString(),
         signature: "mock-signature",
       })
-      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS" } });
+      .send({ order: { invoice_number: "JA-ORDER1" }, transaction: { status: "SUCCESS", amount: 99000 } });
 
     expect(ebook.totalSold).toBe(6);
 

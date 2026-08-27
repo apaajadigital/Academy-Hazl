@@ -16,7 +16,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     courseEnrollment: { upsert: vi.fn() },
     eventRegistration: { upsert: vi.fn() },
     event: { update: vi.fn(), updateMany: vi.fn(), findUnique: vi.fn() },
-    refund: { create: vi.fn() },
+    refund: { create: vi.fn(), upsert: vi.fn() },
     affiliate: { findFirst: vi.fn() },
     affiliateCommission: { create: vi.fn() },
     coupon: { update: vi.fn() },
@@ -55,7 +55,7 @@ function post(target: string, body: string, requestId = "req-1", timestamp = "20
 
 const payload = JSON.stringify({
   order: { invoice_number: "JA-UNKNOWN" },
-  transaction: { status: "SUCCESS" },
+  transaction: { status: "SUCCESS", amount: 299000 },
   channel: { id: "VIRTUAL_ACCOUNT_BCA" },
 });
 
@@ -63,9 +63,14 @@ describe("POST /api/webhooks/doku — signature gate over the real route (BL-137
   it("accepts a notification signed exactly the way DOKU signs it", async () => {
     // Signed with the path DOKU is registered to call, which is what the route
     // must reconstruct from req.originalUrl.
+    //
+    // 404, not 200: the signature is accepted (a rejected one answers 401 and
+    // never reaches intake), and the request then dies on the deliberately
+    // unknown invoice this suite mocks. Before BL-142 that unknown invoice
+    // answered 200 — which is exactly why the assertion had to change here.
     const res = await post(TARGET, payload);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ received: true });
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: "unknown_invoice" });
   });
 
   it("rejects a notification signed for a different request target", async () => {
