@@ -78,6 +78,35 @@ DOKU will retry. When one of these shows up in the logs, this is what it means:
 | 422 | `unhandled_status` | A status this integration has no branch for. | Add the branch — do not silence it. |
 | 500 | `order_missing` | The transaction exists but its order is gone. Data integrity problem. | 🔴 Investigate before replying to DOKU. |
 
+### Payment reconciliation sweep (BL-144)
+
+Everything above describes notifications that *arrive*. The sweep is what covers the ones that do
+not. Every `RECONCILE_INTERVAL_MINUTES` (default 15) the worker takes up to `RECONCILE_BATCH_SIZE`
+orders that are still `pending` past their `expiredAt`, asks DOKU's Check Status API
+(`GET /orders/v1/status/{invoice}`) what actually happened, and drives each one to its true state
+**through the same webhook processor** — same atomic claim, same amount check.
+
+It runs on the worker, not the API, and it needs Redis. If Redis is down the worker logs
+`reconciliation sweep NOT scheduled — no Redis connection` at startup and **the safety net is
+simply absent** — nothing else will tell you.
+
+```bash
+# Did it register at boot?
+docker logs jago-worker 2>&1 | grep 'reconciliation sweep'
+
+# What did the last sweeps find?
+docker logs jago-worker 2>&1 | grep 'reconcile: sweep finished' | tail -5
+```
+
+The line that matters most is `reconcile: DOKU had a settled payment we never fulfilled`. It is
+logged at **error** level on purpose: each one is a buyer who paid and got nothing until the sweep
+caught it. A steady trickle means notifications are not reaching us — check that the DOKU webhook is
+still registered against `https://jagoakademi.com/api/webhooks/doku` before assuming the sweep has
+it covered.
+
+`stillPending` in the summary counts orders DOKU says are *still payable* despite our own expiry
+having passed. Those are deliberately left alone — see BL-151.
+
 ### Measuring the replay window before tightening it (BL-145 → BL-150)
 
 `DOKU_WEBHOOK_MAX_AGE_SECONDS` defaults to **86400** (24 h) and that number is provisional, not

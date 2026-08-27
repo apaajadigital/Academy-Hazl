@@ -52,6 +52,18 @@ const envSchema = z.object({
    * different problem from a late redelivery.
    */
   DOKU_WEBHOOK_MAX_FUTURE_SECONDS: z.coerce.number().int().positive().default(900),
+  /**
+   * BL-144 — how often the payment reconciliation sweep runs, in minutes.
+   *
+   * 15 is a compromise, not a measurement: short enough that a buyer whose
+   * notification was lost is not left staring at "menunggu pembayaran" for an
+   * hour, long enough that the sweep is not inquiring against DOKU constantly
+   * for orders that will resolve on their own. Every run is capped by
+   * RECONCILE_BATCH_SIZE, so the inquiry rate has a hard ceiling either way.
+   */
+  RECONCILE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(15),
+  /** Maximum orders inquired about per sweep — a ceiling on DOKU calls per run. */
+  RECONCILE_BATCH_SIZE: z.coerce.number().int().positive().default(100),
   // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("noreply@jagoakademi.com"),
