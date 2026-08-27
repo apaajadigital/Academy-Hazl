@@ -42,6 +42,7 @@ async function initQueues(): Promise<QueueSet> {
     [QUEUE.CERTIFICATE]: make(QUEUE.CERTIFICATE),
     [QUEUE.SEARCH_INDEX]: make(QUEUE.SEARCH_INDEX),
     [QUEUE.WEBHOOK]: make(QUEUE.WEBHOOK),
+    [QUEUE.RECONCILE]: make(QUEUE.RECONCILE),
   };
 }
 
@@ -128,6 +129,44 @@ export function enqueueWebhook(data: WebhookJob): Promise<void> {
     // Reliable: an inline failure propagates so the route returns 500 and DOKU retries.
     bestEffort: false,
   });
+}
+
+/**
+ * Register the reconciliation sweep as a BullMQ repeatable job (BL-144).
+ *
+ * Called once at worker startup. The jobId is fixed, so restarting the worker
+ * re-registers the same schedule rather than stacking a second one — and a
+ * deploy that changes the interval replaces the old pattern instead of running
+ * both. No-op without Redis: there is nothing to schedule against, and pretending
+ * otherwise would leave the sweep silently unscheduled in production if Redis
+ * were ever dropped.
+ */
+export async function scheduleReconciliation(intervalMinutes: number): Promise<boolean> {
+  const queue = await getQueue(QUEUE.RECONCILE);
+  if (!queue) {
+    logger.warn("reconciliation sweep NOT scheduled — no Redis connection");
+    return false;
+  }
+  // Clear stale patterns first: BullMQ keys a repeatable by its pattern, so an
+  // interval change would otherwise leave the previous cadence running forever.
+  const existing = await queue.getRepeatableJobs();
+  await Promise.all(
+    existing
+      .filter((job) => job.name === "sweep")
+      .map((job) => queue.removeRepeatableByKey(job.key)),
+  );
+  await queue.add(
+    "sweep",
+    {},
+    {
+      repeat: { every: intervalMinutes * 60_000 },
+      jobId: "reconcile:sweep",
+      removeOnComplete: { count: 50 },
+      removeOnFail: { count: 200 },
+    },
+  );
+  logger.info("reconciliation sweep scheduled", { intervalMinutes });
+  return true;
 }
 
 /** Close all queues for graceful shutdown (no-op if never initialized). */
