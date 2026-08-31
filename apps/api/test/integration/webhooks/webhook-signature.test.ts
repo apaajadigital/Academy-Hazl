@@ -10,7 +10,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     // Unknown invoice: fulfillment short-circuits, so this suite asserts the
     // signature gate alone without touching any other collaborator.
-    paymentTransaction: { findFirst: vi.fn().mockResolvedValue(null), update: vi.fn() },
+    paymentTransaction: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(null), update: vi.fn() },
     order: { findUnique: vi.fn().mockResolvedValue(null), update: vi.fn(), updateMany: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },

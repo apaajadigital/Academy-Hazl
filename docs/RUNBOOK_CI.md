@@ -27,6 +27,7 @@ All four are currently green: API+web typecheck 0 errors, lint clean, both build
 
 | Diukur | Perintah | Hasil |
 |---|---|---|
+| 26 Agu 2026 (branch `fix/bl137-doku-signature`, basis `bd19788`) | `cd apps/api && npx vitest run` | **93 file / 868 test lulus, 0 gagal** (termasuk suite baru `webhook-signature.test.ts`; `hash.test.ts` yang 21 Agu timeout kini lulus) |
 | 21 Aug 2026 (branch `docs/overnight-doc-sync`) | `cd apps/api && npx vitest run` | **89 file / 854 test lulus** (7 gagal: `hash.test.ts` timeout bcrypt — non-blocker logic, resource constraint) |
 | 31 Jul 2026 (branch `fix/post-deploy-remediation`, basis `22611e2` + BL-116) | `cd apps/api && npx vitest run` | **86 file / 774 test lulus** |
 | 29 Jul 2026 (`ce1e4b8` + remediasi lintas-sesi) | `cd apps/api && npx vitest run` | 85 file / 765 test lulus |

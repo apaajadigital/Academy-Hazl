@@ -71,7 +71,10 @@ const mockCourse = {
 };
 
 const mockOrder = {
-  id: "order-1",
+  // A real UUID, as Prisma's @default(uuid()) produces. BL-140 derives the
+  // invoice number from the WHOLE order id, so a placeholder like "order-1"
+  // is no longer a valid stand-in — and that strictness is the point.
+  id: "11111111-1111-4111-8111-111111111111",
   status: "pending",
   finalAmount: 299000,
   user: { name: "Test User", email: "user@test.com" },
@@ -102,7 +105,7 @@ describe("POST /api/checkout", () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.data.paymentUrl).toBeDefined();
-    expect(res.body.data.orderId).toBe("order-1");
+    expect(res.body.data.orderId).toBe("11111111-1111-4111-8111-111111111111");
   });
 
   // ── BL-56: pending redirect for async payment methods ──────────────────────
@@ -119,9 +122,56 @@ describe("POST /api/checkout", () => {
 
     expect(res.status).toBe(200);
     // WEB_URL is pinned to localhost:3000 by vitest.config.ts.
-    expect(res.body.data.pendingUrl).toBe("http://localhost:3000/payment/pending?orderId=order-1");
+    expect(res.body.data.pendingUrl).toBe("http://localhost:3000/payment/pending?orderId=11111111-1111-4111-8111-111111111111");
     // Unconditional, unlike failureUrl which is skipped when the item has no slug.
     expect(vi.mocked(createDokuOrder).mock.calls[0]?.at(-1)).toBe(res.body.data.pendingUrl);
+  });
+
+  // ── BL-140 / BL-148: invoice identity over the real route ──────────────────
+  // The unit suite proves buildInvoiceNumber is collision-free and DOKU-shaped.
+  // These prove checkout actually USES it — the gap §0.2 warns about, where a
+  // correct helper sits beside a route that never calls it.
+
+  it("stores the collision-free invoice number on the payment transaction (BL-140)", async () => {
+    const { buildInvoiceNumber } = await import(
+      "../../../src/services/payment/invoiceNumber.js"
+    );
+
+    await request(app).post("/api/checkout").send({ itemType: "course", itemId: "course-1" });
+
+    expect(prisma.paymentTransaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          gatewayTxId: buildInvoiceNumber("11111111-1111-4111-8111-111111111111", "paid"),
+        }),
+      }),
+    );
+  });
+
+  it("sends DOKU the same invoice number it stores (BL-140)", async () => {
+    // If these two ever diverge, every notification for the order is an unknown
+    // invoice and the payment can never be matched back.
+    const { createDokuOrder } = await import("../../../src/services/payment/dokuService.js");
+
+    await request(app).post("/api/checkout").send({ itemType: "course", itemId: "course-1" });
+
+    const sentInvoice = vi.mocked(createDokuOrder).mock.calls[0]?.[0];
+    const stored = vi.mocked(prisma.paymentTransaction.create).mock.calls[0]?.[0] as {
+      data: { gatewayTxId: string };
+    };
+    expect(sentInvoice).toBe(stored.data.gatewayTxId);
+  });
+
+  it("sends DOKU an invoice number with no symbols, within 30 chars (BL-148)", async () => {
+    const { createDokuOrder } = await import("../../../src/services/payment/dokuService.js");
+
+    await request(app).post("/api/checkout").send({ itemType: "course", itemId: "course-1" });
+
+    const sentInvoice = vi.mocked(createDokuOrder).mock.calls[0]?.[0] as string;
+    // The old form was `JA-DEADBEEF`: the hyphen is what KKI rejects.
+    expect(sentInvoice).not.toContain("-");
+    expect(sentInvoice).toMatch(/^[A-Z0-9]+$/);
+    expect(sentInvoice.length).toBeLessThanOrEqual(30);
   });
 
   it("returns 400 when itemType is invalid", async () => {
@@ -423,7 +473,7 @@ describe("POST /api/checkout", () => {
     });
     vi.mocked(prisma.order.create).mockResolvedValue({
       ...mockOrder,
-      id: "order-evt",
+      id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
       status: "paid",
       finalAmount: 0,
     } as never);
@@ -441,7 +491,7 @@ describe("POST /api/checkout", () => {
         expect.objectContaining({
           eventTitle: "Workshop Offline",
           ticketCode: "TKT-COUPON-002",
-          orderId: "order-evt",
+          orderId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
           eventType: "offline",
         }),
       ),

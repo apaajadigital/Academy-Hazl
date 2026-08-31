@@ -110,7 +110,8 @@ export async function intakeDokuNotification(rawPayload: unknown): Promise<Webho
     return reject(422, "unhandled_status");
   }
 
-  const transaction = await prisma.paymentTransaction.findFirst({
+  // BL-140: findUnique — see the note in jobs/processors/webhook.ts.
+  const transaction = await prisma.paymentTransaction.findUnique({
     where: { gatewayTxId: invoiceNumber },
     select: { id: true, orderId: true },
   });

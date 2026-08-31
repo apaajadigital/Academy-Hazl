@@ -56,7 +56,10 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
   // that decides what a status means.
   const txStatus = String(job.txStatus).trim().toUpperCase();
 
-  const transaction = await prisma.paymentTransaction.findFirst({
+  // BL-140: findUnique, not findFirst. The column is unique now, and findFirst
+  // is what turned a colliding invoice number into "some row, who knows which"
+  // instead of an error — a payment silently fulfilling the wrong order.
+  const transaction = await prisma.paymentTransaction.findUnique({
     where: { gatewayTxId: invoiceNumber },
   });
   if (!transaction) {

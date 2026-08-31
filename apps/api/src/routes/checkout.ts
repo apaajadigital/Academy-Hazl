@@ -3,6 +3,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { validateCoupon, incrementCouponUsage } from "../services/coupon/couponService.js";
 import { createDokuOrder } from "../services/payment/dokuService.js";
+import { buildInvoiceNumber } from "../services/payment/invoiceNumber.js";
 import { isEventEnded } from "../services/event/eventService.js";
 import { enqueueEmail } from "../jobs/queues.js";
 import { successResponse, errorResponse, AppError } from "../types/index.js";
@@ -208,7 +209,9 @@ router.post("/", authenticate, async (req, res, next) => {
         data: {
           orderId: order.id,
           gateway: "free",
-          gatewayTxId: `FREE-${order.id.slice(0, 8).toUpperCase()}`,
+          // BL-140/BL-148: the free path had the same 8-hex truncation as the
+          // paid one, so two free orders could share an identity too.
+          gatewayTxId: buildInvoiceNumber(order.id, "free"),
           amount: 0,
           status: "success",
         },
@@ -310,8 +313,12 @@ router.post("/", authenticate, async (req, res, next) => {
     // processor (order.couponId), so an abandoned/failed pending order no longer
     // consumes a coupon slot. Free orders (fulfilled above) still count inline.
 
-    // Create DOKU payment
-    const invoiceNumber = `JA-${order.id.slice(0, 8).toUpperCase()}`;
+    // Create DOKU payment.
+    //
+    // BL-140/BL-148: this used to be `JA-${order.id.slice(0, 8)}` — 32 bits of a
+    // UUID behind a hyphen DOKU rejects for KKI. The identifier now encodes the
+    // WHOLE order id, so two orders cannot collide, and carries no symbols.
+    const invoiceNumber = buildInvoiceNumber(order.id, "paid");
     const callbackUrl = `${env.WEB_URL}/payment/success?orderId=${order.id}`;
 
     // Build a failure URL so DOKU can redirect the user back to the checkout
