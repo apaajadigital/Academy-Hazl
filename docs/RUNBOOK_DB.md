@@ -118,6 +118,54 @@ pernah membandingkan dengan `schema.prisma`. Alasan lengkap ditulis di header fi
 - Migration harus **backward-compatible** dengan image versi sebelumnya (rollback image tidak membatalkan migration): tambah kolom nullable → backfill → baru NOT NULL di migration berikutnya; jangan DROP kolom yang masih dibaca versi lama.
 - Migration destruktif (DROP/ALTER TYPE) → review manusia + restore drill terbaru.
 
+## 1.3 🖐️ Pre-flight WAJIB untuk `20260827000000_payment_transaction_gateway_tx_id_unique` (BL-140)
+
+Migration ini membuat **unique index** pada `payment_transactions."gatewayTxId"`. Ia **akan gagal
+di tengah `migrate deploy`** kalau ada satu saja nilai duplikat — dan kegagalan di tengah deploy
+jauh lebih mahal daripada satu query lima detik.
+
+**Jalankan ini SEBELUM `migrate deploy`. Harus 0 baris:**
+
+```sql
+SELECT "gatewayTxId", COUNT(*) AS n
+FROM payment_transactions
+WHERE "gatewayTxId" IS NOT NULL
+GROUP BY "gatewayTxId"
+HAVING COUNT(*) > 1
+ORDER BY n DESC;
+```
+
+**Kalau ada hasil, JANGAN dihapus atau di-rename sembarangan** — setiap baris duplikat berarti dua
+order berbagi satu identitas pembayaran, yaitu persis kerusakan BL-140. Yang harus dilakukan:
+
+1. Untuk tiap `gatewayTxId` duplikat, ambil ordernya:
+   ```sql
+   SELECT pt.id, pt."orderId", pt.status, pt.amount, pt."createdAt", o.status AS order_status
+   FROM payment_transactions pt JOIN orders o ON o.id = pt."orderId"
+   WHERE pt."gatewayTxId" = '<nilai>' ORDER BY pt."createdAt";
+   ```
+2. Tentukan mana yang **benar-benar dibayar** — tanyakan ke DOKU, jangan menebak dari DB kita:
+   `GET /orders/v1/status/<gatewayTxId>` (lihat `docs/RUNBOOK_INCIDENT.md`).
+3. Baris yang bukan pemilik pembayaran itu adalah order yang **tak pernah dipenuhi padahal mungkin
+   sudah membayar**. Itu keputusan uang → eskalasi ke owner, bukan diselesaikan oleh migration.
+
+**Ukur dulu ukuran tabelnya**, karena `CREATE UNIQUE INDEX` non-CONCURRENTLY mengunci
+`payment_transactions` (ACCESS EXCLUSIVE) selama pembuatan:
+
+```sql
+SELECT COUNT(*) FROM payment_transactions;
+```
+
+Pada volume sekarang penguncian itu hitungan milidetik. Kalau tabel sudah ratusan ribu baris,
+hentikan dan pindahkan ke jendela maintenance — jangan dijalankan begitu saja.
+
+> **Kenapa tidak `CONCURRENTLY`:** Prisma membungkus setiap migration dalam satu transaksi, dan
+> `CREATE INDEX CONCURRENTLY` tidak bisa jalan di dalam transaksi.
+
+**Baris lama tetap sah.** Invoice format lama (`JA-XXXXXXXX`) tidak diubah oleh migration ini dan
+tetap bisa ditemukan webhook maupun rekonsiliasi — identifier disimpan, bukan dihitung ulang. Format
+baru hanya berlaku untuk order yang dibuat setelah deploy.
+
 ## 2. Backup
 
 > 🔴 **INSIDEN 4–6 Agu 2026 — backup terjadwal DIAM-DIAM nol keluaran selama 3 malam.**

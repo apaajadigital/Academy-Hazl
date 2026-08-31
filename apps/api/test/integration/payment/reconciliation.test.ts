@@ -21,7 +21,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     order: { findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-    paymentTransaction: { findFirst: vi.fn(), update: vi.fn() },
+    paymentTransaction: { findUnique: vi.fn(), update: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },
     eventRegistration: { upsert: vi.fn() },
@@ -77,7 +77,7 @@ beforeEach(() => {
 
   vi.mocked(prisma.order.findMany).mockResolvedValue([sweepCandidate] as never);
 
-  vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue({
+  vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue({
     id: "tx-1",
     orderId: "order-1",
     gatewayTxId: "JA-ORDER1",

@@ -69,7 +69,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(prisma.courseEnrollment.findUnique).mockResolvedValue(null);
   vi.mocked(prisma.order.create).mockResolvedValue({
-    id: "order-1",
+    id: "11111111-1111-4111-8111-111111111111",
     status: "pending",
     finalAmount: SALE_PRICE,
     user: { name: "Test User", email: "user@test.com" },

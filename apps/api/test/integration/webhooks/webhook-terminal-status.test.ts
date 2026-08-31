@@ -18,7 +18,7 @@ import { app } from "../../../src/app.js";
 
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
-    paymentTransaction: { findFirst: vi.fn(), update: vi.fn() },
+    paymentTransaction: { findUnique: vi.fn(), update: vi.fn() },
     order: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     course: { findMany: vi.fn() },
     courseEnrollment: { upsert: vi.fn() },
@@ -94,7 +94,7 @@ beforeEach(() => {
   store.status = "pending";
   store.snapshotStatus = null;
 
-  vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue({
+  vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue({
     id: "tx-1",
     orderId: "order-1",
     gatewayTxId: "JA-ORDER1",

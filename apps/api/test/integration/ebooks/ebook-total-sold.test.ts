@@ -22,7 +22,7 @@ vi.mock("../../../src/db/prisma.js", () => ({
     eventRegistration: { findUnique: vi.fn(), create: vi.fn(), upsert: vi.fn(), deleteMany: vi.fn() },
     coupon: { findUnique: vi.fn(), update: vi.fn() },
     order: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
-    paymentTransaction: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+    paymentTransaction: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     refund: { create: vi.fn(), upsert: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     affiliate: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     affiliateCommission: { create: vi.fn(), update: vi.fn() },
@@ -88,7 +88,7 @@ beforeEach(() => {
   vi.mocked(prisma.eBook.updateMany).mockResolvedValue({ count: 1 } as never);
   vi.mocked(prisma.course.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.order.create).mockResolvedValue({
-    id: "order-1",
+    id: "11111111-1111-4111-8111-111111111111",
     status: "paid",
     finalAmount: 0,
     user: { name: "Test User", email: "user@test.com" },
@@ -129,7 +129,7 @@ describe("BL-97 — free ebook checkout counts the sale", () => {
     // No coupon → finalAmount > 0 → a pending order + DOKU redirect. Counting
     // here would credit a sale for money that has not arrived yet.
     vi.mocked(prisma.order.create).mockResolvedValue({
-      id: "order-2",
+      id: "22222222-2222-4222-8222-222222222222",
       status: "pending",
       finalAmount: 99000,
       user: { name: "Test User", email: "user@test.com" },
@@ -183,7 +183,7 @@ describe("BL-97 — paid webhook fulfillment counts the sale", () => {
   };
 
   beforeEach(() => {
-    vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue({
+    vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue({
       id: "tx-1",
       orderId: "order-1",
       gatewayTxId: "JA-ORDER1",
@@ -359,7 +359,7 @@ describe("BL-97 — approved refund does NOT touch the ebook sales counter", () 
     }) as never);
 
     // Purchase (paid webhook fulfillment).
-    vi.mocked(prisma.paymentTransaction.findFirst).mockResolvedValue({
+    vi.mocked(prisma.paymentTransaction.findUnique).mockResolvedValue({
       id: "tx-1",
       orderId: "order-1",
       gatewayTxId: "JA-ORDER1",

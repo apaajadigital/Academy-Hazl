@@ -1,0 +1,21 @@
+-- BL-140: PaymentTransaction.gatewayTxId must identify exactly one payment.
+--
+-- Until now the column had no constraint and the webhook resolved it with
+-- `findFirst`, so two orders that happened to produce the same invoice number
+-- (the old scheme used only the first 8 hex characters of the order UUID)
+-- silently resolved a settled payment to whichever row Postgres returned first.
+--
+-- 🖐️ RUN THE PRE-FLIGHT FIRST. This index cannot be created while duplicates
+-- exist, and the migration will abort mid-deploy if any are present. See
+-- docs/RUNBOOK_DB.md §1.3 for the duplicate query and how to resolve a hit.
+--
+-- The new identifier encodes the whole order id, so it cannot collide by
+-- construction. This index exists to make that a guarantee the database
+-- enforces rather than a property we merely believe.
+--
+-- Note on locking: a plain CREATE UNIQUE INDEX takes an ACCESS EXCLUSIVE lock
+-- on payment_transactions for the duration. That is acceptable at this table's
+-- size (see the runbook for the row count to confirm before running). It is NOT
+-- created CONCURRENTLY because Prisma wraps migrations in a transaction and
+-- CONCURRENTLY cannot run inside one.
+CREATE UNIQUE INDEX "payment_transactions_gatewayTxId_key" ON "payment_transactions"("gatewayTxId");
