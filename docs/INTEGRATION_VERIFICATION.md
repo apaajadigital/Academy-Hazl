@@ -105,6 +105,51 @@ docker compose -f docker-compose.vps.yml logs --tail=100 api | grep -i doku
 Sampai langkah 6 benar-benar lulus, **jalur pembayaran belum boleh dinyatakan selesai** — checkout yang
 sudah terbukti 200 hanya membuktikan separuh alurnya (lihat peringatan di blok koreksi di atas).
 
+
+### 1.10 Verifikasi PRODUKSI pasca-deploy BL-137 (26 Agu 2026)
+
+> Dijalankan terhadap host live `jagoakademi.com` setelah PR #54 (`bd19788`) ter-merge dan
+> di-deploy. Semua angka di bawah **diukur**, bukan disalin.
+
+| Yang diperiksa | Cara | Hasil |
+|---|---|---|
+| Kode yang ter-deploy | `git log` di `/var/www/jago-akademi` | `bd19788` ✅ |
+| Image benar-benar dibangun ulang | `grep` di `dist/` **dalam container** | `Request-Target` ada, `HMACSHA256` ada, `Request-Body` **hilang** ✅ |
+| Sandbox vs produksi | `echo $DOKU_BASE_URL` di dalam container | `https://api-sandbox.doku.com` ✅ |
+| Checkout ke DOKU | `node scripts/doku-smoke.mjs` **dari host** | `HTTP 200 {"message":["SUCCESS"]}`, `client_id` yang digemakan = `BRN-0280-…` ✅ |
+| Webhook menerima skema DOKU | POST bertanda tangan sah ke `/api/webhooks/doku` | `200 {"received":true}` ✅ |
+| Webhook menolak skema lama | POST dengan komponen `Request-Body` pra-BL-137 | `401 Invalid signature` ✅ |
+| Webhook menolak tanpa tanda tangan | POST tanpa header `Signature` | `401 Invalid signature` ✅ |
+| Secret produksi = secret sandbox terdaftar | tanda tangan dibuat di laptop memakai secret sandbox, dikirim ke endpoint live | `200 {"received":true}` ✅ |
+
+Baris terakhir yang paling penting dan paling mudah disalahpahami. **Webhook yang balas 200 saja
+tidak membuktikan kredensialnya benar** — server memverifikasi memakai secret apa pun yang
+dipegangnya, jadi menandatangani dengan secret host sendiri akan selalu lolos. Uji yang sah adalah
+menandatangani dengan secret **akun sandbox yang didaftarkan di DOKU Back Office** dari mesin lain,
+lalu mengirimkannya ke endpoint live. Itulah yang dilakukan baris terakhir.
+
+Seluruh probe memakai `invoice_number` yang tidak mungkin ada (`PROBE-DOES-NOT-EXIST`), sehingga
+fulfillment berhenti di awal dan tidak ada satu baris pun yang berubah. Skrip probe dihapus dari host
+setelah dipakai.
+
+**Temuan saat proses ini** — host sempat memegang akun DOKU yang **berbeda** (`BRN-0229-…`) dari
+sandbox yang didaftarkan (`BRN-0280-…`), dan DOKU menolaknya dengan `400 invalid_client_id`. Gejalanya
+menipu: webhook tetap membalas 200 untuk tanda tangan yang dibuat dengan secret host sendiri, jadi
+sekilas tampak sehat padahal notifikasi DOKU yang asli pasti ditolak. Kredensial sudah disamakan dan
+container di-`--force-recreate`; `.env` lama dicadangkan ke `/root/env-backup-<timestamp>.env`
+(**sengaja di luar direktori repo** — lihat BL-118 soal dump dan `.env.bak` yang tak ter-gitignore).
+Siapa pemilik `BRN-0229-…` belum diketahui; jangan hapus backup itu sampai jelas.
+
+⚠️ **Yang MASIH belum terbukti:** satu transaksi sandbox sungguhan dari ujung ke ujung — checkout dari
+situs, bayar di simulator DOKU, notifikasi asli dari DOKU diterima, order berpindah ke `paid`, dan
+enrollment terbentuk. Yang sudah terbukti adalah **kedua ujungnya secara terpisah**. Jangan menyatakan
+jalur pembayaran selesai sampai satu notifikasi yang benar-benar dikirim DOKU terlihat memenuhi sebuah
+order. Perhatikan juga BL-138 dan BL-139 (dua blocker jalur uang) sebelum uang sungguhan masuk.
+
+📌 Respons sandbox dari host menawarkan **31 metode pembayaran**, termasuk `PEER_TO_PEER_KREDIVO`,
+`PEER_TO_PEER_AKULAKU`, `PEER_TO_PEER_INDODANA`, dan `PEER_TO_PEER_BRI_CERIA` — persis kondisi yang
+dicatat BL-147: paylater ditawarkan padahal field wajibnya tidak pernah dikirim.
+
 ## 2. Resend (transactional email)
 
 | Step | Action | Expected | Status |
