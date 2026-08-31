@@ -70,12 +70,61 @@ DOKU will retry. When one of these shows up in the logs, this is what it means:
 | Code | `error` | What happened | First move |
 |---|---|---|---|
 | 401 | `Invalid signature` | Signature failed. Wrong `DOKU_SECRET_KEY`/`DOKU_CLIENT_ID` on the host, or the notification is not from DOKU. | Compare the container's credentials against DOKU Back Office (`docs/INTEGRATION_VERIFICATION.md` §1.9). |
+| 401 | `stale_timestamp` | Correctly signed, but the signed `Request-Timestamp` is outside the replay window (BL-145). Either a genuine replay, or **the host clock has drifted**. | Read `skewSeconds` in the log line. A large positive skew on *every* notification means our clock is wrong — check NTP before touching the window. |
 | 400 | `invalid_payload` | Body failed Zod validation — no `invoice_number`, no `status`, or a non-numeric amount. | Read `gatewayRaw`; if the shape is legitimate DOKU output, our schema is too narrow. |
 | 400 | `amount_missing` | SUCCESS/REFUND/CHARGEBACK carrying no amount at all. We refuse to fulfill a payment whose value we cannot see. | Check whether the channel really omits the amount before widening anything. |
 | 404 | `unknown_invoice` | No `PaymentTransaction` has this `gatewayTxId`. Money may have been settled for an order we cannot find. | 🔴 Investigate: search orders by amount + timestamp. Do not dismiss as noise. |
 | 409 | `amount_mismatch` | DOKU settled a different amount than the order asks for. **Nothing was fulfilled.** Both numbers are in the log line. | 🔴 Treat as a money incident (P1/P2). `gatewayRaw` holds the full notification. |
 | 422 | `unhandled_status` | A status this integration has no branch for. | Add the branch — do not silence it. |
 | 500 | `order_missing` | The transaction exists but its order is gone. Data integrity problem. | 🔴 Investigate before replying to DOKU. |
+
+### Payment reconciliation sweep (BL-144)
+
+Everything above describes notifications that *arrive*. The sweep is what covers the ones that do
+not. Every `RECONCILE_INTERVAL_MINUTES` (default 15) the worker takes up to `RECONCILE_BATCH_SIZE`
+orders that are still `pending` past their `expiredAt`, asks DOKU's Check Status API
+(`GET /orders/v1/status/{invoice}`) what actually happened, and drives each one to its true state
+**through the same webhook processor** — same atomic claim, same amount check.
+
+It runs on the worker, not the API, and it needs Redis. If Redis is down the worker logs
+`reconciliation sweep NOT scheduled — no Redis connection` at startup and **the safety net is
+simply absent** — nothing else will tell you.
+
+```bash
+# Did it register at boot?
+docker logs jago-worker 2>&1 | grep 'reconciliation sweep'
+
+# What did the last sweeps find?
+docker logs jago-worker 2>&1 | grep 'reconcile: sweep finished' | tail -5
+```
+
+The line that matters most is `reconcile: DOKU had a settled payment we never fulfilled`. It is
+logged at **error** level on purpose: each one is a buyer who paid and got nothing until the sweep
+caught it. A steady trickle means notifications are not reaching us — check that the DOKU webhook is
+still registered against `https://jagoakademi.com/api/webhooks/doku` before assuming the sweep has
+it covered.
+
+`stillPending` in the summary counts orders DOKU says are *still payable* despite our own expiry
+having passed. Those are deliberately left alone — see BL-151.
+
+### Measuring the replay window before tightening it (BL-145 → BL-150)
+
+`DOKU_WEBHOOK_MAX_AGE_SECONDS` defaults to **86400** (24 h) and that number is provisional, not
+tuned. The clock difference between DOKU and us was measured — five samples of the sandbox HTTP
+`Date` header on 27 Aug 2026, all under 2 seconds. What was **not** measured is DOKU's retry
+horizon: a redelivery carries its *original* `Request-Timestamp`, so a window narrower than that
+horizon silently rejects real payment notifications. That is a worse failure than tolerating a
+replay, which BL-138's atomic claim already renders harmless.
+
+Every accepted notification logs its skew, so the real distribution becomes visible from traffic:
+
+```bash
+docker logs jago-api 2>&1 | grep 'doku notification timestamp skew' \
+  | grep -o '"skewSeconds":[0-9.-]*' | cut -d: -f2 | sort -n | tail -20
+```
+
+Take the largest skew seen across at least a week that includes a retry, add generous headroom, and
+only then lower the value. Do not lower it on the strength of a quiet day.
 
 Every one of these writes a `logger.error` with `invoiceNumber` and `txStatus`, and the full
 notification is stored in `PaymentTransaction.gatewayRaw` — including for notifications we reject,
