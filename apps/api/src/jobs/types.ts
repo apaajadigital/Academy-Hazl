@@ -6,6 +6,7 @@ export const QUEUE = {
   CERTIFICATE: "certificate",
   SEARCH_INDEX: "search-index",
   WEBHOOK: "webhook",
+  RECONCILE: "reconcile",
 } as const;
 
 export type QueueName = (typeof QUEUE)[keyof typeof QUEUE];
@@ -59,3 +60,10 @@ export type WebhookJob = {
   channelId?: string;
   amount?: number | null;
 };
+
+/**
+ * Payment reconciliation sweep (BL-144). Carries no payload — the sweep decides
+ * its own batch from the database — but BullMQ needs a data shape, and an
+ * explicit empty object beats `unknown` at the worker boundary.
+ */
+export type ReconcileJob = Record<string, never>;

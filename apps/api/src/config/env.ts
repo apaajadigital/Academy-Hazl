@@ -24,6 +24,46 @@ const envSchema = z.object({
   // Optional explicit base URL; overrides the sandbox/production URL derived
   // from DOKU_IS_PRODUCTION (reconciles docker-compose which sets DOKU_BASE_URL).
   DOKU_BASE_URL: z.string().optional(),
+  /**
+   * BL-145 — replay window for webhook notifications, in seconds.
+   *
+   * How this number was chosen, because guessing it wrong is expensive in both
+   * directions. The clock difference between DOKU and us WAS measured (sandbox,
+   * 27 Aug 2026, five samples of the HTTP `Date` header): under 2 seconds. What
+   * was NOT measured is DOKU's retry horizon — how long it keeps redelivering a
+   * notification that still carries its ORIGINAL `Request-Timestamp`. Measuring
+   * that needs a real inbound notification on the host, which is human-gated.
+   *
+   * So the default is deliberately far wider than any plausible retry horizon
+   * rather than a tight window that would reject legitimate redeliveries — and
+   * we now cause redeliveries on purpose (BL-142 answers non-2xx). It still ends
+   * the "replayable forever" property BL-145 is about, and BL-138's atomic claim
+   * means a replay inside the window can no longer revoke a paid order anyway.
+   *
+   * Tighten it once the real distribution is visible: every notification logs
+   * its measured skew (`doku notification timestamp skew`). See BL-150.
+   */
+  DOKU_WEBHOOK_MAX_AGE_SECONDS: z.coerce.number().int().positive().default(86_400),
+  /**
+   * How far into the future a notification timestamp may sit before we refuse
+   * it. Covers host clock drift, not DOKU behaviour — measured skew was ~1s, so
+   * 15 minutes is generous. Kept separate from the age window on purpose: a
+   * future-dated timestamp means one of the two clocks is wrong, which is a very
+   * different problem from a late redelivery.
+   */
+  DOKU_WEBHOOK_MAX_FUTURE_SECONDS: z.coerce.number().int().positive().default(900),
+  /**
+   * BL-144 — how often the payment reconciliation sweep runs, in minutes.
+   *
+   * 15 is a compromise, not a measurement: short enough that a buyer whose
+   * notification was lost is not left staring at "menunggu pembayaran" for an
+   * hour, long enough that the sweep is not inquiring against DOKU constantly
+   * for orders that will resolve on their own. Every run is capped by
+   * RECONCILE_BATCH_SIZE, so the inquiry rate has a hard ceiling either way.
+   */
+  RECONCILE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(15),
+  /** Maximum orders inquired about per sweep — a ceiling on DOKU calls per run. */
+  RECONCILE_BATCH_SIZE: z.coerce.number().int().positive().default(100),
   // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("noreply@jagoakademi.com"),

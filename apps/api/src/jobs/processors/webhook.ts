@@ -409,14 +409,45 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
       });
     }
   } else if (txStatus === "FAILED" || txStatus === "EXPIRED") {
-    // M-webhook: never overwrite an already-paid order. A late FAILED/EXPIRED
-    // webhook (or one racing a SUCCESS) must not revoke a completed purchase.
-    if (order.status === "paid") return;
-
-    await prisma.order.update({
-      where: { id: order.id },
+    // BL-138: this branch used to guard with the status read at the top of the
+    // function — taken OUTSIDE any transaction — and then write unconditionally.
+    // The SUCCESS branch was hardened with an atomic claim precisely because
+    // that read goes stale; this one never was, and it is the branch that can
+    // take access away.
+    //
+    // The killing interleaving is ordinary, not exotic: queues.ts puts txStatus
+    // into the jobId, so SUCCESS and EXPIRED are two DIFFERENT jobs that run
+    // concurrently (worker concurrency 5). EXPIRED reads "pending", SUCCESS
+    // claims and fulfills, EXPIRED then writes "expired" over it. The buyer has
+    // paid, the coupon is burnt and the commission booked, but ebook downloads
+    // (routes/ebooks.ts) and the right to review (routes/reviews.ts) gate on
+    // `status === "paid"` — so the purchase silently loses its access.
+    //
+    // Mirroring the SUCCESS claim closes it: the database decides, not a stale
+    // read. `refund_pending` is in the excluded set for a separate reason — the
+    // event-full auto-refund above parks the order there and leaves a Refund row
+    // that drives admin approval (routes/orders.ts). Overwriting that status
+    // orphans the Refund row and strands the approval flow.
+    const claimed = await prisma.order.updateMany({
+      where: {
+        id: order.id,
+        status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] },
+      },
       data: { status: txStatus === "FAILED" ? "failed" : "expired" },
     });
+    if (claimed.count === 0) {
+      // The order reached a state this notification must not disturb. Nothing
+      // was written — including the transaction row below, which must follow the
+      // same verdict: flagging the payment "failed" while the order is paid
+      // would hand reconciliation (Wave 1.5) a contradiction that looks exactly
+      // like a real anomaly.
+      logger.info("terminal webhook status refused — order already settled", {
+        invoiceNumber,
+        txStatus,
+        orderId: order.id,
+      });
+      return;
+    }
     await prisma.paymentTransaction.update({
       where: { id: transaction.id },
       data: { status: "failed" },
