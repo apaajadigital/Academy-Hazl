@@ -43,5 +43,19 @@ export type SearchIndexJob =
   | { type: "index-course"; course: IndexCourseInput }
   | { type: "delete-course"; courseId: string };
 
-/** DOKU payment fulfillment; processed idempotently (skip already-paid orders). */
-export type WebhookJob = { invoiceNumber: string; txStatus: string; channelId?: string };
+/**
+ * DOKU payment fulfillment; processed idempotently (skip already-paid orders).
+ *
+ * BL-139: `amount` is the value DOKU says it actually settled, carried through
+ * from the notification so the processor can re-check it against the order
+ * inside the fulfillment transaction. It is optional and nullable on purpose:
+ * FAILED/EXPIRED notifications move no money and need not state an amount, and
+ * a job enqueued by a pre-BL-139 deploy must still be processable after a
+ * rolling restart rather than crashing the worker.
+ */
+export type WebhookJob = {
+  invoiceNumber: string;
+  txStatus: string;
+  channelId?: string;
+  amount?: number | null;
+};
