@@ -59,16 +59,46 @@ type DispatchOpts<T> = {
   jobName: string;
   data: T;
   jobId?: string;
+  /**
+   * Remove a same-id job that is already in the failed set before enqueueing
+   * (BL-141). `queue.add` is a no-op when a job with that id still exists in ANY
+   * state, so without this a permanently-failed job blocks every later delivery.
+   */
+  reclaimFailedJobId?: boolean;
   /** Best-effort jobs swallow errors on the inline path (fire-and-forget). */
   bestEffort: boolean;
 };
 
+/**
+ * Drop a job that is sitting in the failed set under `jobId` so a retry can be
+ * enqueued under the same id (BL-141).
+ *
+ * Only `failed` is reclaimed. A job that is still waiting, active, or delayed is
+ * a delivery already in flight and must be left alone — removing it would drop
+ * work rather than unblock it.
+ *
+ * Never throws: this runs on the notification path, and failing to tidy up the
+ * dead-letter must not cost us the enqueue that follows.
+ */
+async function reclaimFailedJob(queue: Queue, jobId: string, queueName: string): Promise<void> {
+  try {
+    const existing = await queue.getJob(jobId);
+    if (!existing) return;
+    if ((await existing.getState()) !== "failed") return;
+    await existing.remove();
+    logger.warn("reclaimed a failed job so the retry can be queued", { queue: queueName, jobId });
+  } catch (err) {
+    logger.warn("could not reclaim failed job", { queue: queueName, jobId, err: String(err) });
+  }
+}
+
 async function dispatch<T>(opts: DispatchOpts<T>): Promise<void> {
-  const { queueName, processor, jobName, data, jobId, bestEffort } = opts;
+  const { queueName, processor, jobName, data, jobId, reclaimFailedJobId, bestEffort } = opts;
 
   const queue = await getQueue(queueName);
   if (queue) {
     try {
+      if (jobId && reclaimFailedJobId) await reclaimFailedJob(queue, jobId, queueName);
       await queue.add(jobName, data, jobId ? { jobId } : undefined);
       return;
     } catch (err) {
@@ -125,7 +155,18 @@ export function enqueueWebhook(data: WebhookJob): Promise<void> {
     processor: processWebhookPayment,
     jobName: "doku-payment",
     data,
-    jobId: `webhook:${data.invoiceNumber}:${data.txStatus}`,
+    // BL-141: the jobId used to be just invoice+status, which made every retry of
+    // a given notification collapse onto one job. Combined with the dead-letter
+    // retention below, a job that exhausted its attempts stayed in the failed set
+    // forever and silently swallowed every subsequent DOKU delivery. DOKU's
+    // Request-Id differs per delivery, so retries now get their own job.
+    // Idempotency does NOT depend on this: the processor claims the order
+    // atomically, so duplicate jobs are safe by construction.
+    jobId: data.requestId
+      ? `webhook:${data.invoiceNumber}:${data.txStatus}:${data.requestId}`
+      : `webhook:${data.invoiceNumber}:${data.txStatus}`,
+    // A failed job must never block a fresh delivery of the same notification.
+    reclaimFailedJobId: true,
     // Reliable: an inline failure propagates so the route returns 500 and DOKU retries.
     bestEffort: false,
   });

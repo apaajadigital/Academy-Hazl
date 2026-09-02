@@ -64,7 +64,7 @@ router.post("/doku", async (req, res, next) => {
     // to the webhook queue so DOKU gets a fast ack; it is processed idempotently.
     // With Redis disabled (dev/test) it runs inline within this await, so a
     // processor throw surfaces here as a 500 and DOKU retries.
-    await enqueueWebhook(intake.job);
+    await enqueueWebhook({ ...intake.job, requestId });
 
     return res.json({ received: true });
   } catch (err) {

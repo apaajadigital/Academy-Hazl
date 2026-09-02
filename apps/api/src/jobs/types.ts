@@ -59,6 +59,12 @@ export type WebhookJob = {
   txStatus: string;
   channelId?: string;
   amount?: number | null;
+  /**
+   * DOKU's Request-Id for this delivery (BL-141). Part of the BullMQ jobId so
+   * two deliveries of the same invoice+status are two jobs, not one — a retry
+   * must never be deduplicated against an earlier attempt that already failed.
+   */
+  requestId?: string;
 };
 
 /**
