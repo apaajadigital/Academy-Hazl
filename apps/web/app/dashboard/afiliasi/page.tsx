@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Handshake, Wallet, Zap, Landmark, BarChart3, Rocket,
   MousePointerClick, Target, PiggyBank, Copy, Check, Banknote, Inbox,
@@ -11,6 +12,7 @@ import {
   EmptyState, Input, Button, DashboardLoading,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { getToken } from "@/lib/auth/token";
 
 type AffiliateProfile = {
   id: string;
@@ -28,7 +30,9 @@ type AffiliateProfile = {
     status: string;
     createdAt: string;
     order: { id: string; finalAmount: string };
-    referredUser: { name: string };
+    // Optional on purpose: the API selects it, but a commission whose referred
+    // user was deleted still has to render rather than take the page down.
+    referredUser?: { name: string } | null;
   }[];
 };
 
@@ -85,6 +89,7 @@ export default function AfiliasiPage() {
   const [profile, setProfile] = useState<AffiliateProfile | null>(null);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
   const [tab, setTab] = useState<"komisi" | "penarikan">("komisi");
   const [form, setForm] = useState<WithdrawForm>({ amount: "", bankName: "", accountNo: "", accountName: "" });
@@ -92,27 +97,60 @@ export default function AfiliasiPage() {
   const [msg, setMsg] = useState("");
   const [msgType, setMsgType] = useState<"success" | "error">("success");
   const [copied, setCopied] = useState(false);
+  const router = useRouter();
 
   const referralLink =
     typeof window !== "undefined" && profile
       ? `${window.location.origin}/?ref=${profile.code}`
       : "";
 
+  // BL-125: every one of these calls used to go out WITHOUT an Authorization
+  // header. `authenticate` runs on the whole affiliate router, so all four
+  // returned 401 and the entire menu was dead — and because the failures were
+  // swallowed below, it rendered as "you have no commissions yet" rather than as
+  // an error anyone would report.
   useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.replace("/masuk");
+      return;
+    }
+    const auth = { Authorization: `Bearer ${token}` };
+
     Promise.all([
-      fetch("/api/affiliate/me").then((r) => r.json()),
-      fetch("/api/affiliate/withdrawals").then((r) => r.json()).catch(() => ({ data: [] })),
-    ]).then(([aff, wd]) => {
-      if (aff.success && aff.data) setProfile(aff.data);
-      if (wd.success) setWithdrawals(wd.data ?? []);
-    }).finally(() => setLoading(false));
-  }, []);
+      fetch("/api/affiliate/me", { headers: auth }).then((r) => r.json()),
+      fetch("/api/affiliate/withdrawals", { headers: auth }).then((r) => r.json()),
+    ])
+      .then(([aff, wd]) => {
+        // A failed profile load is an error, not an empty state. Rendering it as
+        // "not registered yet" would invite the user to re-register an account
+        // they already have.
+        if (!aff.success) {
+          setError(aff.error?.message ?? "Gagal memuat data afiliasi.");
+          return;
+        }
+        if (aff.data) setProfile(aff.data);
+        if (wd.success) setWithdrawals(wd.data ?? []);
+        else setError(wd.error?.message ?? "Gagal memuat riwayat penarikan.");
+      })
+      .catch(() => setError("Gagal memuat data afiliasi."))
+      .finally(() => setLoading(false));
+  }, [router]);
 
   async function register() {
     setRegistering(true);
-    const res = await fetch("/api/affiliate/register", { method: "POST" });
+    const token = getToken();
+    if (!token) {
+      router.replace("/masuk");
+      return;
+    }
+    const res = await fetch("/api/affiliate/register", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
     const data = await res.json();
     if (data.success) setProfile({ ...data.data, commissions: [] });
+    else setError(data.error?.message ?? "Gagal mendaftar program afiliasi.");
     setRegistering(false);
   }
 
@@ -120,9 +158,14 @@ export default function AfiliasiPage() {
     e.preventDefault();
     setSubmitting(true);
     setMsg("");
+    const token = getToken();
+    if (!token) {
+      router.replace("/masuk");
+      return;
+    }
     const res = await fetch("/api/affiliate/withdrawals", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ ...form, amount: parseFloat(form.amount) }),
     });
     const data = await res.json();
@@ -149,6 +192,19 @@ export default function AfiliasiPage() {
 
   if (loading) {
     return <DashboardLoading />;
+  }
+
+  // BL-125: a load failure must be visible. Falling through to the "join the
+  // affiliate program" screen below would tell an affiliate who already has an
+  // account — and unpaid commissions — that they have none.
+  if (error) {
+    return (
+      <div className="dash-container flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="font-display text-lg font-bold text-text-primary">Gagal memuat data afiliasi</p>
+        <p className="max-w-md text-sm text-text-secondary">{error}</p>
+        <Button onClick={() => window.location.reload()}>Coba lagi</Button>
+      </div>
+    );
   }
 
   if (!profile) {
@@ -308,7 +364,7 @@ export default function AfiliasiPage() {
                 <TBody>
                   {profile.commissions.map((c) => (
                     <TR key={c.id}>
-                      <TD className="font-semibold text-text-primary">{c.referredUser.name}</TD>
+                      <TD className="font-semibold text-text-primary">{c.referredUser?.name ?? "—"}</TD>
                       <TD className="text-right text-text-secondary">{rp(c.grossAmount)}</TD>
                       <TD className="text-right font-bold text-green-600">+{rp(c.commissionAmt)}</TD>
                       <TD className="text-center">

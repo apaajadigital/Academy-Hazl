@@ -18,7 +18,16 @@ router.get("/me", async (req: Request, res: Response, next: NextFunction) => {
         commissions: {
           orderBy: { createdAt: "desc" },
           take: 20,
-          include: { order: { select: { id: true, finalAmount: true } } },
+          include: {
+            order: { select: { id: true, finalAmount: true } },
+            // BL-125: the commission table on /dashboard/afiliasi renders
+            // `referredUser.name`, and this include was missing — so the page
+            // crashed on the first commission an affiliate ever earned. Only id
+            // and name are selected, matching /commissions below: this is
+            // another user's record, and the affiliate has no business receiving
+            // their email.
+            referredUser: { select: { id: true, name: true } },
+          },
         },
       },
     });
