@@ -209,17 +209,20 @@ router.post("/:orderId/cancel", async (req, res, next) => {
         throw new AppError(409, "Pesanan sudah diproses dan tidak dapat dibatalkan.");
       }
 
-      // Only after the cancel is confirmed do we release the coupon slot, inside
-      // the same transaction so a failure rolls both back together.
-      if (order.couponId) {
-        const coupon = await tx.coupon.findUnique({ where: { id: order.couponId } });
-        if (coupon && coupon.usageCount > 0) {
-          await tx.coupon.update({
-            where: { id: order.couponId },
-            data: { usageCount: { decrement: 1 } },
-          });
-        }
-      }
+      // BL-143(a): cancelling a PENDING order must NOT touch the coupon.
+      //
+      // This used to decrement usageCount, which made sense when a pending order
+      // consumed a slot at creation. The M-coupon change moved the increment to
+      // payment success (checkout.ts, jobs/processors/webhook.ts), so a pending
+      // order has never taken a slot — and the decrement became a free credit.
+      // Because it only guarded against underflow (`usageCount > 0`), a
+      // create-then-cancel loop walked the counter down to 0 and pinned it
+      // there, after which validateCoupon's limit check could never fire again:
+      // the coupon became usable without limit.
+      //
+      // Nothing replaces it. The slot is released by never having been taken.
+      // A PAID order that is later refunded is different — that one did consume
+      // a slot, and the refund path below still returns it.
     });
 
     return res.json(successResponse({ id: orderId, status: "cancelled" }));

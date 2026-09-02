@@ -5,7 +5,7 @@ import { app } from "../../../src/app.js";
 vi.mock("../../../src/db/prisma.js", () => ({
   prisma: {
     order: { findUnique: vi.fn(), updateMany: vi.fn() },
-    coupon: { findUnique: vi.fn(), update: vi.fn() },
+    coupon: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }));
@@ -58,16 +58,35 @@ describe("POST /api/orders/:orderId/cancel", () => {
     });
   });
 
-  it("releases the coupon slot only after the cancel wins", async () => {
+  // BL-143(a): this test used to assert the OPPOSITE — that cancelling a pending
+  // order decrements usageCount. That assertion locked in the bug. A pending
+  // order never consumed a slot (the increment moved to payment success with the
+  // M-coupon change), so the decrement handed out a free credit every time, and
+  // a create-then-cancel loop drove the counter to 0 and pinned it there —
+  // after which validateCoupon's limit check could never fire again.
+  it("does NOT touch the coupon when a pending order is cancelled", async () => {
     vi.mocked(prisma.order.findUnique).mockResolvedValue({ ...pendingOrder, couponId: "coupon-1" } as never);
 
     const res = await request(app).post("/api/orders/order-1/cancel");
 
     expect(res.status).toBe(200);
-    expect(prisma.coupon.update).toHaveBeenCalledWith({
-      where: { id: "coupon-1" },
-      data: { usageCount: { decrement: 1 } },
-    });
+    expect(prisma.coupon.update).not.toHaveBeenCalled();
+    expect(prisma.coupon.updateMany).not.toHaveBeenCalled();
+    // Not even a read: there is nothing to decide about a slot never taken.
+    expect(prisma.coupon.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("cancelling repeatedly can never walk usageCount down", async () => {
+    vi.mocked(prisma.order.findUnique).mockResolvedValue({ ...pendingOrder, couponId: "coupon-1" } as never);
+
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app).post("/api/orders/order-1/cancel");
+      expect(res.status).toBe(200);
+    }
+
+    // The create-then-cancel loop that made a limited coupon unlimited.
+    expect(prisma.coupon.update).not.toHaveBeenCalled();
+    expect(prisma.coupon.updateMany).not.toHaveBeenCalled();
   });
 
   it("returns 400 when the order is not pending", async () => {
