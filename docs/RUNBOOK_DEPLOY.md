@@ -327,6 +327,52 @@ git tag v1.0.0 && git push origin v1.0.0
 ```
 Pipeline: build+push GHCR → **tunggu approval** environment `production` → SSH: pull → `prisma migrate deploy` → `up -d --wait` (healthcheck-gated ≈ zero-downtime) → smoke test.
 
+## 7.1 🖐️ Verifikasi daftar metode pembayaran (BL-147) — WAJIB sebelum produksi
+
+`payment.payment_method_types` membatasi metode yang **ditampilkan** DOKU. Menghilangkannya
+berarti "tampilkan semua" — pada akun ini **31 metode**, termasuk empat paylater
+(`PEER_TO_PEER_KREDIVO`, `_AKULAKU`, `_INDODANA`, `_BRI_CERIA`) yang field
+conditional-mandatory-nya tidak pernah kita kirim. Pembeli yang memilihnya kena **case code 02
+"Invalid Mandatory Field"** — setelah baris `orders` dan `payment_transactions` terlanjur dibuat.
+
+> 🔴 **Daftar default di `config/env.ts` BELUM dikonfirmasi ke akun merchant ini.** Hanya
+> `VIRTUAL_ACCOUNT_BCA` yang punya bukti langsung (muncul sebagai `channel.id` pada notifikasi
+> nyata). Sisanya ditranskripsikan dari daftar non-SNAP DOKU. Metode yang **tidak diaktifkan**
+> di akun ini adalah satu-satunya mode gagal yang bisa diperkenalkan daftar ini — dan jauh lebih
+> murah ditemukan di sandbox daripada di produksi.
+
+**Langkah (sandbox, sebelum menyalakan di produksi):**
+
+1. Pastikan host memakai sandbox: `DOKU_BASE_URL=https://api-sandbox.doku.com`.
+2. Buat satu checkout dari situs, lalu buka `payment.url` yang dikembalikan.
+3. Catat metode yang **benar-benar tampil** di halaman DOKU. Bandingkan dengan daftar di
+   `.env` / default `config/env.ts`.
+4. Yang harus benar:
+   - **tidak ada** metode paylater di halaman itu;
+   - setiap metode yang kita daftarkan tampil, atau — bila tidak tampil — memang belum
+     diaktifkan DOKU untuk akun ini;
+   - checkout **tidak** ditolak dengan error hanya karena satu kode tak dikenal.
+5. Bila ada kode yang ditolak atau tak dikenal, **hapus kode itu dari daftar**, jangan
+   mengosongkan seluruh daftar:
+
+   ```bash
+   cd /var/www/jago-akademi
+   # sunting DOKU_PAYMENT_METHOD_TYPES di .env, lalu:
+   docker compose -f docker-compose.vps.yml up -d --force-recreate api
+   ```
+
+   Tidak perlu rebuild — nilainya dibaca saat runtime, bukan di-bake saat build.
+
+6. Bila perlu mengembalikan perilaku lama untuk sementara, set nilainya ke literal **`ALL`**.
+   Mengosongkannya **tidak** membuka semua metode: kosong berarti daftar default yang aman.
+   Ini disengaja — `docker-compose.vps.yml` menulis `${DOKU_PAYMENT_METHOD_TYPES:-}`, jadi
+   container menerima string kosong, dan "kosong = buka semua" akan diam-diam menghidupkan
+   kembali seluruh 31 metode di setiap host yang belum menyetel variabel ini.
+
+**Kode paylater ditolak saat startup.** Menambahkan `PEER_TO_PEER_*` ke daftar membuat API
+gagal boot dengan pesan yang menyebut field apa saja yang harus dikirim lebih dulu — bukan
+gagal diam-diam di checkout pembeli.
+
 ## 8. Rollback drill (wajib diuji sekali saat gate)
 
 Versi sebelumnya tercatat di `.last-deploy-api|web`:

@@ -27,6 +27,7 @@ All four are currently green: API+web typecheck 0 errors, lint clean, both build
 
 | Diukur | Perintah | Hasil |
 |---|---|---|
+| 2 Sep 2026 (branch `fix/wave2-payment-methods`, basis `6d6b855`) | `cd apps/api && npx vitest run` | **108 file / 1130 test lulus, 0 gagal** (BL-147: `paymentMethodTypes` 12 + 4 kasus baru di `dokuCreateOrder`). Coverage: stmt 79,64% · branch 68,84% · func 80,66% · lines 81,13%. |
 | 2 Sep 2026 (branch `test/wave1-money-path-coverage`, basis `ab0e793`) | `cd apps/api && npx vitest run` | **107 file / 1114 test lulus, 0 gagal** (Wave 1.7: `dokuCreateOrder` 21, `certificateService` 14, trainer curriculum 32 / quiz 76 / roster 15). Coverage global: stmt 79,51% · branch 68,65% · func 80,56% · lines 80,98%; ratchet dinaikkan ke 79/68/80/80 + per-file lock. |
 | 26 Agu 2026 (branch `fix/bl137-doku-signature`, basis `bd19788`) | `cd apps/api && npx vitest run` | **93 file / 868 test lulus, 0 gagal** (termasuk suite baru `webhook-signature.test.ts`; `hash.test.ts` yang 21 Agu timeout kini lulus) |
 | 21 Aug 2026 (branch `docs/overnight-doc-sync`) | `cd apps/api && npx vitest run` | **89 file / 854 test lulus** (7 gagal: `hash.test.ts` timeout bcrypt — non-blocker logic, resource constraint) |

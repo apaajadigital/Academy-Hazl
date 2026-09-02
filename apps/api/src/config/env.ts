@@ -1,6 +1,106 @@
 import "dotenv/config";
 import { z } from "zod";
 
+/**
+ * BL-147 — which payment methods DOKU is allowed to display at checkout.
+ *
+ * Omitting `payment.payment_method_types` means "show everything", and a sandbox
+ * response from the host confirmed everything is 31 methods — including
+ * PEER_TO_PEER_KREDIVO / _AKULAKU / _INDODANA / _BRI_CERIA. Those paylater
+ * methods have conditional-mandatory fields we do not send (line_items.id, .sku,
+ * .category, .url, .image_url, .type, plus customer phone/address/postcode/
+ * city/state and shipping/billing_address). A buyer who picks one hits DOKU case
+ * code 02 "Invalid Mandatory Field" — AFTER the order row and paymentTransaction
+ * have already been created, so we are left holding a pending order for a
+ * payment that could never have started.
+ *
+ * 🖐️ THESE CODES ARE NOT YET CONFIRMED AGAINST THIS MERCHANT ACCOUNT. Only
+ * VIRTUAL_ACCOUNT_BCA has positive evidence in our own data (it arrives as
+ * `channel.id` on real notifications). The rest are transcribed from DOKU's
+ * published non-SNAP method list and MUST be checked against the sandbox before
+ * this reaches production — the procedure is in docs/RUNBOOK_DEPLOY.md §7.1.
+ * That is exactly what Wave 2.4 (real end-to-end sandbox run) is for. A method
+ * the merchant has not enabled is the one failure mode this list can introduce,
+ * and it is cheaper to find in sandbox than in production.
+ *
+ * Set DOKU_PAYMENT_METHOD_TYPES to change the list without a deploy. Unset or
+ * empty means this default. The literal value "ALL" — and only that — omits the
+ * field and restores DOKU's show-everything behaviour, which reinstates the
+ * BL-147 hazard and therefore has to be typed on purpose.
+ */
+export const DEFAULT_DOKU_PAYMENT_METHOD_TYPES = [
+  // Virtual account — the dominant method here, and the only family with
+  // first-hand confirmation (BCA).
+  "VIRTUAL_ACCOUNT_BCA",
+  "VIRTUAL_ACCOUNT_BANK_MANDIRI",
+  "VIRTUAL_ACCOUNT_BRI",
+  "VIRTUAL_ACCOUNT_BNI",
+  "VIRTUAL_ACCOUNT_BANK_PERMATA",
+  "VIRTUAL_ACCOUNT_BANK_SYARIAH_MANDIRI",
+  "VIRTUAL_ACCOUNT_DOKU",
+  // Card. BL-148 shaped invoice_number for this: no symbols, max 30 chars.
+  "CREDIT_CARD",
+  // E-wallet.
+  "EMONEY_OVO",
+  "EMONEY_SHOPEEPAY",
+  "EMONEY_DANA",
+  "QRIS",
+] as const;
+
+/** Paylater family. Excluded until the conditional-mandatory fields are sent. */
+const PAYLATER_PREFIX = "PEER_TO_PEER_";
+
+/**
+ * Explicit opt-out. Needed because "unset" and "empty" must BOTH mean the safe
+ * default, not the open one: `docker-compose.vps.yml` writes
+ * `${DOKU_PAYMENT_METHOD_TYPES:-}`, which puts an EMPTY STRING in the container
+ * env rather than leaving the variable absent. Zod's `.default()` only fires on
+ * `undefined`, so treating empty as "show everything" would have silently
+ * reinstated all 31 methods — including the paylater ones — on any host that
+ * had not set the variable. Going open must be something someone typed.
+ */
+const SHOW_ALL_SENTINEL = "ALL";
+
+const paymentMethodTypes = z
+  .string()
+  .default("")
+  .transform((raw) => {
+    const trimmed = raw.trim();
+    if (trimmed.toUpperCase() === SHOW_ALL_SENTINEL) return [];
+    if (trimmed === "") return [...DEFAULT_DOKU_PAYMENT_METHOD_TYPES];
+    return trimmed
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  })
+  .superRefine((list, ctx) => {
+    for (const code of list) {
+      // Shape only — deliberately NOT an allowlist of known DOKU codes. Pinning
+      // an enum here would mean asserting a third-party protocol detail from
+      // memory (the BL-137 mistake) and would also stop an operator enabling a
+      // newly-activated method without a deploy, which is the point of this var.
+      if (!/^[A-Z0-9_]+$/.test(code)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `"${code}" is not a DOKU method code (expected UPPER_SNAKE_CASE).`,
+        });
+      }
+      // The one value judgement worth encoding: paylater cannot work with the
+      // body we send, so enabling it can only produce case-02 failures on
+      // orders we have already written.
+      if (code.startsWith(PAYLATER_PREFIX)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `"${code}" is a paylater method (BL-147). It requires line_items.id/.sku/.category/` +
+            `.url/.image_url/.type and customer address fields that dokuService does not send, so ` +
+            `a buyer choosing it fails with case code 02 AFTER the order is created. Send those ` +
+            `fields first, then allow it.`,
+        });
+      }
+    }
+  });
+
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(4000),
@@ -24,6 +124,8 @@ const envSchema = z.object({
   // Optional explicit base URL; overrides the sandbox/production URL derived
   // from DOKU_IS_PRODUCTION (reconciles docker-compose which sets DOKU_BASE_URL).
   DOKU_BASE_URL: z.string().optional(),
+  /** BL-147 — see DEFAULT_DOKU_PAYMENT_METHOD_TYPES above. Empty = that default; "ALL" = show all. */
+  DOKU_PAYMENT_METHOD_TYPES: paymentMethodTypes,
   /**
    * BL-145 — replay window for webhook notifications, in seconds.
    *
