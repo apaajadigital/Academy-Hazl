@@ -75,6 +75,9 @@ services:
       DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
       DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
       DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
+      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
+      # paylater). Change it here to re-scope checkout without a rebuild.
+      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_KEY: ${MEILISEARCH_KEY}
       UPLOAD_DIR: /app/uploads
@@ -129,6 +132,9 @@ services:
       DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
       DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
       DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
+      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
+      # paylater). Change it here to re-scope checkout without a rebuild.
+      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_KEY: ${MEILISEARCH_KEY}
       UPLOAD_DIR: /app/uploads

@@ -11,6 +11,7 @@ vi.mock("../../src/config/env.js", () => ({
     DOKU_CLIENT_ID: "CLIENT-TEST",
     DOKU_SECRET_KEY: "shh-test-secret-key",
     DOKU_IS_PRODUCTION: false,
+    DOKU_PAYMENT_METHOD_TYPES: ["VIRTUAL_ACCOUNT_BCA", "CREDIT_CARD"],
   },
 }));
 
@@ -196,7 +197,10 @@ describe("createDokuOrder — request shape", () => {
       { name: "Kursus React", price: 299000, quantity: 1 },
       { name: "E-Book Vue", price: 50000, quantity: 2 },
     ]);
-    expect(body.payment).toEqual({ payment_due_date: 60 });
+    expect(body.payment).toEqual({
+      payment_due_date: 60,
+      payment_method_types: ["VIRTUAL_ACCOUNT_BCA", "CREDIT_CARD"],
+    });
     expect(body.customer).toEqual({ name: "Test User", email: "test@test.com" });
   });
 
@@ -223,6 +227,83 @@ describe("createDokuOrder — request shape", () => {
       "failure_return_url",
       "https://jagoakademi.com/payment/failed",
     );
+  });
+});
+
+describe("createDokuOrder — payment_method_types (BL-147)", () => {
+  it("restricts what DOKU may display to the configured list", async () => {
+    mockReply(okReply);
+
+    await call();
+
+    // Omitting this field means "show everything" — 31 methods on this account,
+    // four of them paylater that cannot possibly succeed with the body we send.
+    expect(sentBody().payment).toHaveProperty("payment_method_types", [
+      "VIRTUAL_ACCOUNT_BCA",
+      "CREDIT_CARD",
+    ]);
+  });
+
+  it("offers no paylater method", async () => {
+    mockReply(okReply);
+
+    await call();
+
+    const types = (sentBody().payment as unknown as { payment_method_types: string[] })
+      .payment_method_types;
+    expect(types.some((t) => t.startsWith("PEER_TO_PEER_"))).toBe(false);
+  });
+
+  it("signs the body INCLUDING the method list", async () => {
+    mockReply(okReply);
+
+    await call();
+
+    // The digest covers the whole body, so adding this field must not desync the
+    // signature — a mismatch here is a 401 with no useful message.
+    const [, init] = lastCall();
+    expect(init.body).toContain("payment_method_types");
+    expect(init.headers.Signature).toBe(
+      referenceSignPost(
+        CLIENT_ID,
+        init.headers["Request-Id"] as string,
+        init.headers["Request-Timestamp"] as string,
+        CHECKOUT_TARGET,
+        init.body,
+        SECRET,
+      ),
+    );
+  });
+
+  it("omits the field entirely when the list is empty, restoring DOKU's default", async () => {
+    vi.resetModules();
+    vi.doMock("../../src/config/env.js", () => ({
+      env: {
+        WEB_URL: "http://localhost:3004",
+        DOKU_CLIENT_ID: CLIENT_ID,
+        DOKU_SECRET_KEY: SECRET,
+        DOKU_IS_PRODUCTION: false,
+        DOKU_PAYMENT_METHOD_TYPES: [],
+      },
+    }));
+    const { createDokuOrder: openCreate } = await import("../../src/services/payment/dokuService.js");
+    mockReply(okReply);
+
+    await openCreate(
+      "JA-OPEN1",
+      ITEMS,
+      399000,
+      "https://jagoakademi.com/payment/success",
+      "Test User",
+      "test@test.com",
+      undefined,
+      "https://jagoakademi.com/payment/pending",
+    );
+
+    // An empty key would be a different request from no key at all.
+    expect(sentBody().payment).toEqual({ payment_due_date: 60 });
+    vi.doUnmock("../../src/config/env.js");
+    vi.resetModules();
   });
 });
 
@@ -355,6 +436,7 @@ describe("createDokuOrder — dev fallback without credentials", () => {
         DOKU_CLIENT_ID: "",
         DOKU_SECRET_KEY: "",
         DOKU_IS_PRODUCTION: false,
+        DOKU_PAYMENT_METHOD_TYPES: [],
       },
     }));
     const { createDokuOrder: devCreate } = await import("../../src/services/payment/dokuService.js");
@@ -387,6 +469,7 @@ describe("createDokuOrder — host selection", () => {
         DOKU_CLIENT_ID: CLIENT_ID,
         DOKU_SECRET_KEY: SECRET,
         DOKU_IS_PRODUCTION: true,
+        DOKU_PAYMENT_METHOD_TYPES: [],
       },
     }));
     const { createDokuOrder: prodCreate } = await import("../../src/services/payment/dokuService.js");
@@ -417,6 +500,7 @@ describe("createDokuOrder — host selection", () => {
         DOKU_SECRET_KEY: SECRET,
         DOKU_IS_PRODUCTION: true,
         DOKU_BASE_URL: "https://api-sandbox.doku.com",
+        DOKU_PAYMENT_METHOD_TYPES: [],
       },
     }));
     const { createDokuOrder: overrideCreate } = await import(

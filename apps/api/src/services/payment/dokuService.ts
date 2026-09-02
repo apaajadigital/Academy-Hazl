@@ -115,7 +115,18 @@ export async function createDokuOrder(
       // here instead of to callback_url. Sent unconditionally — see BL-56.
       pending_return_url: pendingUrl,
     },
-    payment: { payment_due_date: 60 },
+    payment: {
+      payment_due_date: 60,
+      // BL-147: restrict what DOKU displays. Omitting this field means "show
+      // everything", which included four paylater methods whose
+      // conditional-mandatory fields we never send — a buyer picking one hits
+      // case code 02 after we have already written the order and the
+      // paymentTransaction. Configured via DOKU_PAYMENT_METHOD_TYPES; an empty
+      // list omits the field and restores DOKU's show-everything behaviour.
+      ...(env.DOKU_PAYMENT_METHOD_TYPES.length > 0 && {
+        payment_method_types: env.DOKU_PAYMENT_METHOD_TYPES,
+      }),
+    },
     customer: {
       name: customerName,
       email: customerEmail,
