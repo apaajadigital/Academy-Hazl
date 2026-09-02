@@ -9,7 +9,25 @@
 > - **Compose file live:** `docker-compose.vps.yml` (**bukan** `docker-compose.prod.yml`). Seluruh perintah operasional di runbook ini sudah memakai `vps.yml` (disapu 29 Jul 2026). `docker-compose.prod.yml` kini hanya disebut sebagai **peringatan** atau saat merujuk isi file itu sendiri — **jangan** menjalankan perintah `up`/`build` dengannya di host ini (BL-43).
 > - **API URL:** `api.jagoakademi.com` **tidak resolve** dan tidak pernah dipakai (BL-33). API dijangkau lewat `https://jagoakademi.com/api/*`. `NEXT_PUBLIC_API_URL=https://jagoakademi.com` — sama dengan origin web, dan itu **benar** di sini karena nginx host yang memisahkan `/api/` (§3.1).
 > - **Reverse proxy:** **nginx level-host** (systemd, di luar Docker) meng-handle TLS + proxy ke container. **Tidak ada Cloudflare / CDN** di depan domain → tidak ada cache CDN yang perlu di-purge; recreate container = langsung live.
-> - **Stack berjalan:** `web` (`:3010→3000`), `api` (`:4010→4000`), `postgres`, `meilisearch`. (redis/BullMQ & CD GitHub Actions belum di-deploy; repo belum punya secret CD.)
+> - **Stack berjalan:** `web` (`:3010→3000`), `api` (`:4010→4000`), `postgres`, `meilisearch`,
+>   **`redis`**, **`worker`**. (CD GitHub Actions belum di-deploy; repo belum punya secret CD.)
+>
+>   🔴 **KOREKSI 31 Agu 2026 — baris ini dulu menyatakan "redis/BullMQ belum di-deploy". Itu sudah
+>   tidak benar sejak entah kapan, dan kesalahannya mahal.** Terukur di host: `docker compose ps`
+>   menampilkan `redis` dan `worker` **running**; `REDIS_URL=redis://redis:6379` terisi di container
+>   `api` **dan** `worker`; `/api/ready` mengembalikan `redis: "ok"`.
+>
+>   Mengapa ini penting sampai perlu blok sendiri: rekonsiliasi pembayaran (BL-144) adalah
+>   **repeatable job BullMQ** yang didaftarkan `scheduleReconciliation()` di `worker.ts` — bukan di
+>   `api`. Jalur webhook lain punya jalur inline saat Redis absen (`dispatch()` di `queues.ts`),
+>   **tetapi BL-144 tidak punya**. Jadi tanpa `redis` + `worker` yang benar-benar jalan, satu-satunya
+>   mekanisme yang memulihkan order yang notifikasinya hilang tidak akan pernah berjalan — diam-diam,
+>   tanpa gejala.
+>
+>   ⚠️ **`/api/ready` yang membalas 200 TIDAK membuktikan Redis hidup.** `routes/health.ts:44-53`
+>   mengembalikan `redis: "skipped"` (bukan `"ok"`) bila queue dimatikan, dan `ready` dihitung
+>   `redis !== "error"` — jadi `"skipped"` tetap menghasilkan 200 + `ready: true`. **Baca nilai
+>   `deps.redis`, jangan status HTTP-nya.**
 > - **Deploy rutin manual (proven):** `cd /var/www/jago-akademi && git pull --ff-only origin main && docker compose -f docker-compose.vps.yml build --no-cache web && docker compose -f docker-compose.vps.yml up -d --force-recreate web`.
 > - **⛔ INSIDEN 17 Jul 2026 (BL-43) — jangan diulang:** menjalankan `docker compose -f docker-compose.prod.yml up` di host ini me-recreate `web`/`api` **tanpa published port** (file prod memakai topologi nginx-in-Docker) → host-nginx tak bisa mencapai `127.0.0.1:3010/4010` → **502 sitewide**, plus container nginx yatim crash-loop. **Pemulihan:** `docker compose -f docker-compose.vps.yml up -d --force-recreate api worker web`, lalu `docker rm -f jago-akademi-nginx-1` (container nginx Docker TIDAK dipakai di host ini). Selalu verifikasi pasca-up: `docker port jago-akademi-web-1` harus menampilkan `3010`.
 
