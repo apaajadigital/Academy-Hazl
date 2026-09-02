@@ -3,6 +3,7 @@ import { prisma } from "../../db/prisma.js";
 import { logger } from "../../lib/logger.js";
 import { processEmail } from "./email.js";
 import { notifyPrivateClassWelcome } from "../../services/notification/whatsappService.js";
+import { claimCouponUsage } from "../../services/coupon/couponService.js";
 import type { WebhookJob } from "../types.js";
 
 /** Best-effort notification: a failed email/WA must not fail payment fulfillment. */
@@ -279,11 +280,27 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
 
       // M-coupon: consume coupon usage only on payment success, not at pending
       // order creation, so abandoned/failed checkouts never burn a coupon slot.
+      //
+      // BL-143(b): the claim is guarded (usageCount < usageLimit, evaluated
+      // inside the UPDATE) because validateCoupon's limit check happens when the
+      // pending order is created and cannot bind under concurrency — every buyer
+      // in a burst passes it before any of them has consumed a slot.
+      //
+      // Losing the guard does NOT stop fulfillment. The buyer has already paid,
+      // at a price that already had the discount applied; withholding access now
+      // would repeat BL-138 with a different trigger. So we fulfil, leave the
+      // counter truthful (never above the limit), and make the overrun loud —
+      // it is a business decision to make about a discount already granted, not
+      // a condition this processor may resolve on its own.
       if (order.couponId) {
-        await tx.coupon.update({
-          where: { id: order.couponId },
-          data: { usageCount: { increment: 1 } },
-        });
+        const claimed = await claimCouponUsage(tx, order.couponId);
+        if (!claimed) {
+          logger.error("coupon usage limit exceeded — order fulfilled anyway, discount already granted", {
+            couponId: order.couponId,
+            orderId: order.id,
+            invoiceNumber,
+          });
+        }
       }
 
       // Affiliate commission (now safe from double-count thanks to the guard above).

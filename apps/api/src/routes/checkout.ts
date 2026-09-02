@@ -7,6 +7,7 @@ import { buildInvoiceNumber } from "../services/payment/invoiceNumber.js";
 import { isEventEnded } from "../services/event/eventService.js";
 import { enqueueEmail } from "../jobs/queues.js";
 import { successResponse, errorResponse, AppError } from "../types/index.js";
+import { logger } from "../lib/logger.js";
 import { env } from "../config/env.js";
 import { z } from "zod";
 
@@ -203,7 +204,17 @@ router.post("/", authenticate, async (req, res, next) => {
         include: { user: { select: { name: true, email: true } } },
       });
 
-      if (couponId) await incrementCouponUsage(couponId);
+      // BL-143(b): guarded like the paid path in jobs/processors/webhook.ts, and
+      // for the same reason — validateCoupon ran before this line and cannot
+      // bind under concurrency. The order above is already created as `paid` and
+      // fulfilled, so a lost guard must not fail the request; it means the slot
+      // went to someone else between validation and here.
+      if (couponId && !(await incrementCouponUsage(couponId))) {
+        logger.error("coupon usage limit exceeded on free checkout — order fulfilled anyway", {
+          couponId,
+          orderId: order.id,
+        });
+      }
 
       await prisma.paymentTransaction.create({
         data: {
