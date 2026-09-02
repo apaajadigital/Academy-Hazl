@@ -49,14 +49,33 @@ export default defineConfig({
       // incremental goal tracked in docs/BACKLOG.md (BL-11), reached by adding
       // tests over successive PRs, not all at once (SSOT GAP-04 guidance).
       thresholds: {
-        // Ratcheted up after TASK-022 added queue/webhook coverage (never lower).
-        lines: 61,
-        functions: 58,
-        branches: 49,
-        statements: 60,
+        // Ratcheted up after Wave 1.7 covered the money path (never lower).
+        // Measured 2 Sep 2026: lines 80.98, functions 80.56, branches 68.65,
+        // statements 79.51 — each pinned a point or two below to leave room for
+        // ordinary refactors without letting real regressions through.
+        lines: 80,
+        functions: 80,
+        branches: 68,
+        statements: 79,
         // Critical middleware is already strong — lock it high to prevent drift.
         "src/middleware/authenticate.ts": { lines: 90, functions: 100, branches: 85, statements: 90 },
         "src/middleware/authorize.ts": { lines: 80, functions: 80, branches: 70, statements: 80 },
+        // Wave 1.7 targets. These are the money path and the product a student
+        // buys; they went from 1–12% to the numbers below, and a per-file lock is
+        // what stops that from quietly eroding again. The global gate alone would
+        // not notice: a file this size can fall back to 10% while the project
+        // average barely moves.
+        "src/services/payment/dokuService.ts": { lines: 95, functions: 100, branches: 85, statements: 92 },
+        "src/services/certificate/certificateService.ts": {
+          lines: 100,
+          functions: 100,
+          branches: 85,
+          statements: 98,
+        },
+        "src/modules/trainer/curriculum.ts": { lines: 98, functions: 100, branches: 72, statements: 90 },
+        "src/modules/trainer/quiz.ts": { lines: 96, functions: 100, branches: 80, statements: 89 },
+        "src/modules/trainer/students.ts": { lines: 100, functions: 100, branches: 82, statements: 94 },
+        "src/modules/trainer/certificates.ts": { lines: 100, functions: 100, branches: 72, statements: 93 },
       },
     },
   },
