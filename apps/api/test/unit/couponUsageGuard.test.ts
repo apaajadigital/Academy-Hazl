@@ -92,11 +92,14 @@ describe("claimCouponUsage — the limit is enforced inside the UPDATE (BL-143b)
     // first ten and count=0 after that; the service must report that faithfully
     // rather than smoothing it over.
     let remaining = 10;
-    vi.mocked(prisma.coupon.updateMany).mockImplementation(async () => {
+    // Cast the whole implementation, not its return value: an async function
+    // returning `as never` is a Promise<never>, which is not a PrismaPromise —
+    // the shape tsconfig.test.json checks and `tsc --noEmit` alone does not.
+    vi.mocked(prisma.coupon.updateMany).mockImplementation((async () => {
       const won = remaining > 0;
       if (won) remaining -= 1;
-      return { count: won ? 1 : 0 } as never;
-    });
+      return { count: won ? 1 : 0 };
+    }) as never);
 
     const results = await Promise.all(
       Array.from({ length: 20 }, () => claimCouponUsage(prisma as never, "coupon-1")),
