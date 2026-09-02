@@ -17,6 +17,9 @@ import { env } from "./config/env.js";
  * Each Worker gets its own Redis connection (BullMQ uses blocking commands).
  */
 
+/** Mirrors defaultJobOptions.attempts in jobs/queues.ts. */
+const defaultAttempts = 5;
+
 async function makeWorker<T>(name: string, handler: (data: T) => Promise<void>, concurrency: number): Promise<Worker> {
   const connection = await createRedisConnection();
   if (!connection) throw new Error("REDIS_URL is required to run the worker");
@@ -26,9 +29,22 @@ async function makeWorker<T>(name: string, handler: (data: T) => Promise<void>, 
     concurrency,
   });
   worker.on("completed", (job) => logger.info("job completed", { queue: name, jobId: job.id }));
-  worker.on("failed", (job, err) =>
-    logger.error("job failed", { queue: name, jobId: job?.id, attempts: job?.attemptsMade, err: err.message }),
-  );
+  worker.on("failed", (job, err) => {
+    // BL-141: distinguish a retry that will happen again from one that has run
+    // out of attempts. Only the latter is a dead letter — work that will never
+    // be retried unless a human intervenes — and only that deserves to page.
+    // Logging both at the same level made the signal unreadable, which is why
+    // the failed set could grow unnoticed in the first place.
+    const attempts = job?.attemptsMade ?? 0;
+    const maxAttempts = job?.opts?.attempts ?? defaultAttempts;
+    const exhausted = attempts >= maxAttempts;
+    const ctx = { queue: name, jobId: job?.id, attempts, maxAttempts, err: err.message };
+    if (exhausted) {
+      logger.error("job dead-lettered: attempts exhausted, no further retry", ctx);
+    } else {
+      logger.warn("job failed, will retry", ctx);
+    }
+  });
   worker.on("error", (err) => logger.error("worker error", { queue: name, err: err.message }));
   return worker;
 }
