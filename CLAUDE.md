@@ -66,11 +66,13 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 ### 🖐️ Awaiting reviewer (human-gated, SSOT §9.6)
 1. 🟡 **BL-114 — MITIGASI TERPASANG 31 Jul 2026 (belum ter-deploy):** `/mentor` di-gate `NEXT_PUBLIC_FEATURE_MENTOR` default OFF (404 + keluar dari sitemap/Navbar/Footer) di branch `fix/post-deploy-remediation`. **Live site masih menayangkan mentor fiktif sampai branch ini di-merge + deploy.** Keputusan konten final tetap milik owner (hapus data / ganti mentor nyata ber-consent → flip flag) — `docs/BACKLOG.md` BL-114
 2. ✅ **SELESAI 30 Jul 2026 — `prisma migrate deploy` sudah dijalankan, DB prod CURRENT 13/13.** Pre-flight (duplikat `user_roles` + audit role ber-tenant) dua-duanya 0 baris, backup `jago-2026-07-30-0621.sql.gz`, keempat migration 29 Jul ter-apply berurutan. Klaim lama "≥7 pending termasuk private-class & alumni" **salah** — #7–9 ternyata sudah applied sejak sebelumnya; yang pending hanya 4. Detail + jebakan "image basi bikin `migrate status` berbohong" di `docs/RUNBOOK_DB.md` §1.1
-3. Backup cron + restore drill + index audit — `docs/RUNBOOK_DB.md` (backup manual sudah terbukti jalan 30 Jul; **cron & restore drill masih belum**)
+3. 🟢 **KOREKSI 9 Sep 2026 — cron backup SUDAH jalan dan terverifikasi offsite; klaim "cron masih belum" salah.** Terukur di host: `/etc/cron.d/jago-backup` 02:15 harian → `VALIDATED tables=45`, `OFFSITE_OK r2:jago-backups`, `offsite=verified` (terakhir 9 Sep 02:15). **Yang benar-benar tersisa: restore drill + index audit.** Ditemukan sekalian: cron duplikat pukul 02:00 memangkas retensi 30 hari jadi 14 — `docs/BACKLOG.md` BL-160
 4. **Perbaiki cron certbot** (deploy-hook ke nginx **host**, hapus domain yang tak resolve dari `-d`) — TLS bisa kedaluwarsa senyap — `docs/RUNBOOK_DEPLOY.md` §4
 5. Set `SENTRY_DSN` + uptime/alert monitors (arahkan ke `https://jagoakademi.com/api/health`) — `docs/RUNBOOK_INCIDENT.md`
 6. **Daftarkan webhook DOKU ke `https://jagoakademi.com/api/webhooks/doku`** dan jalankan live integration matrix (sandbox→prod) — host lama `api.jagoakademi.com` tidak resolve ⇒ pembayaran tak pernah terkonfirmasi — `docs/INTEGRATION_VERIFICATION.md`
-7. Soft Launch Go/No-Go (Playbook 10B)
+7. **Aktifkan CD — tersisa 1 langkah.** Kunci CI ✅ terpasang di host (terverifikasi login `root@srv1693732`), 4 secret `DEPLOY_*` ✅ terdaftar, 11 variable ✅ terisi, `deploy.yml` ✅ bisa `docker login` GHCR sendiri. **Belum: Environment `production`** — `gh api -X PUT repos/haluanitcore/Jago-Akademi-Website1/environments/production`. Detail `docs/RUNBOOK_ACCESS.md` §4; cek `bash scripts/ops/jago.sh doctor`
+8. ✅ **SELESAI 9 Sep 2026 — deploy dijalankan, produksi kini sejajar `main@6f2638f`.** Menutup BL-157 (11 commit tertinggal, termasuk BL-147) **dan BL-161** (RCE tanpa autentikasi lewat `/_next/image`). Terverifikasi di dalam container: `next=16.3.4`, `sharp=0.35.4`, `heif=1.23.2`. Jalur rebuild manual (terbukti), bukan CD — CD masih belum pernah dieksekusi. Temuan baru saat deploy: **BL-162** (bind mount uploads yang tak pernah masuk git)
+9. Soft Launch Go/No-Go (Playbook 10B)
 
 ## Perintah Cepat
 

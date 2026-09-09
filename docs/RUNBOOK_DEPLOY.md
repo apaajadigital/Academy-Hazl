@@ -300,25 +300,51 @@ docker compose -f docker-compose.vps.yml up -d --force-recreate web
 
 ### Verifikasi pasca-deploy (bukti sukses — host-independent, bisa dari mana saja)
 ```bash
-# 1. Ambil URL file CSS yang di-link homepage
-CSS=$(curl -fsS https://jagoakademi.com | grep -oE '/_next/static/[^"]*\.css' | head -1)
-# 2. Header + ukuran: harus 200, text/css, dan JAUH lebih besar dari 18KB (build benar ≈ 100KB+)
-curl -sSI "https://jagoakademi.com${CSS}" | grep -iE 'HTTP|content-type|content-length'
-# 3. Utility HARUS ada sekarang (sebelumnya MISSING):
-curl -fsS "https://jagoakademi.com${CSS}" | grep -oE '\.flex\{|\.mx-auto|\.grid-cols-1' | sort -u
-# 4. Direktif Tailwind mentah TIDAK boleh muncul lagi (dulu bocor = plugin tak jalan):
-curl -fsS "https://jagoakademi.com${CSS}" | grep -c '@config\|@plugin'   # harus 0
+# Periksa SETIAP chunk CSS yang di-link homepage, bukan hanya yang pertama.
+for CSS in $(curl -fsS https://jagoakademi.com | grep -oE '/_next/static/[^"]*\.css' | sort -u); do
+  size=$(curl -sS -o /dev/null -w '%{size_download}' "https://jagoakademi.com${CSS}")
+  util=$(curl -fsS "https://jagoakademi.com${CSS}" | grep -ohE '\.flex\{|\.mx-auto|\.grid-cols-1' | sort -u | tr '\n' ' ')
+  leak=$(curl -fsS "https://jagoakademi.com${CSS}" | grep -c '@config\|@plugin')
+  echo "${size} bytes  ${CSS}  utilities:[${util:-NONE}]  leak:${leak}"
+done
 ```
-Sukses = CSS 200 `text/css`, ukuran ~100KB+, `.flex{`/`.mx-auto`/`.grid-cols-1` muncul, `@config`/`@plugin` = 0, dan homepage tampil ber-styling di browser.
+
+Sukses = **salah satu** chunk berukuran ~100KB+ memuat `.flex{`/`.mx-auto`/`.grid-cols-1`, `leak` = 0 di semua chunk, dan homepage tampil ber-styling di browser.
+
+> 🔴 **KOREKSI 9 Sep 2026 — versi lama perintah ini menghasilkan alarm palsu.** Dulu ia memakai
+> `grep … | head -1`, yaitu "periksa chunk CSS pertama". Sejak build Next 16.3.4 homepage me-link
+> **dua** chunk, dan yang pertama adalah bundle kecil (~9,6 KB, font/vendor) yang memang **tidak
+> pernah** memuat utility Tailwind. Dijalankan apa adanya sesaat setelah deploy 9 Sep, perintah lama
+> melaporkan `utilities: NONE` pada situs yang sebenarnya sehat — chunk utama 116.576 byte memuat
+> ketiganya. Bentuk lama akan membuat operator menyimpulkan BL-35 kambuh **di tengah insiden**, lalu
+> me-rollback deploy yang benar. Periksa semua chunk, jangan yang pertama.
 
 > Catatan: rebuild ini adalah jalur deploy rutin manual yang dipakai saat ini (terverifikasi 8 Jul 2026, deploy fix QA C-1/H-1/M-1 dari `main @ 581fb5f`).
 
 ## 6. 🖐️ GitHub — aktifkan CD
 
-Repo → Settings:
-1. **Environments → New: `production`** → centang *Required reviewers* (Anda) → ini gate approval tiap deploy.
-2. **Secrets and variables → Actions → Secrets**: `DEPLOY_HOST` (IP), `DEPLOY_USER`, `DEPLOY_SSH_KEY` (private key), `DEPLOY_PATH` (`/var/www/jago-akademi`).
-3. **Variables**: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_MIXPANEL_TOKEN`.
+> **Otoritatif sekarang: [`RUNBOOK_ACCESS.md`](./RUNBOOK_ACCESS.md)** — inventaris kunci, apa yang
+> sudah terpasang, dan tiga langkah operator yang tersisa. Ringkasan status per **9 Sep 2026**:
+
+| Butuh | Status |
+|-------|--------|
+| **Variables** (`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_PROXY_TARGET`, 8× `NEXT_PUBLIC_FEATURE_*`) | ✅ **sudah diisi** (11 variable) |
+| **Secrets** `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_PATH` / `DEPLOY_SSH_KEY` | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.2 |
+| **Kunci CI di `authorized_keys` host** | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.1 |
+| **Environment `production`** | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.3 |
+
+⚠️ Dua koreksi terhadap versi lama bagian ini:
+
+1. ***Required reviewers* tidak tersedia** di repo privat pada plan Free (API menjawab
+   `403 Upgrade to GitHub Pro`). Environment tetap wajib dibuat — job `deploy` merujuknya — tetapi
+   gate manusianya berasal dari pemicu workflow (tag `v*` / `workflow_dispatch`), bukan dari
+   reviewer. Jangan menuliskannya seolah approval berlapis sudah aktif.
+2. **Daftar variable lama kurang sembilan yang menentukan tampilan situs**: `API_PROXY_TARGET` dan
+   delapan `NEXT_PUBLIC_FEATURE_*`. Keduanya di-inline saat build image, jadi CD yang berjalan tanpa
+   itu menghasilkan image dengan rewrite `/api/*` runtuh ke dirinya sendiri dan semua fitur mati —
+   bukan kegagalan yang berisik, melainkan situs yang salah dan tampak normal.
+
+Cek kesiapan kapan saja: `bash scripts/ops/jago.sh doctor`.
 
 ## 7. Deploy rutin (otomatis, human-approved)
 
