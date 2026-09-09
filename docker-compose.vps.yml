@@ -89,7 +89,7 @@ services:
       # APP_VERSION in the host .env at deploy time (released git sha or tag).
       APP_VERSION: ${APP_VERSION:-}
     volumes:
-      - uploads:/app/uploads
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"]
       interval: 30s
@@ -143,7 +143,7 @@ services:
       # project, so it needs the same release stamp or its errors are unversioned.
       APP_VERSION: ${APP_VERSION:-}
     volumes:
-      - uploads:/app/uploads
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
 
   web:
     build:
@@ -197,4 +197,14 @@ volumes:
   postgres_data:
   meilisearch_data:
   redis_data:
+  # Only used when UPLOADS_PATH is unset (dev, and any host that wants Docker to
+  # own the storage). Production sets UPLOADS_PATH and gets a bind mount instead.
+  #
+  # BL-162: this host ran `/var/www/jago-uploads:/app/uploads` for months as an
+  # UNCOMMITTED edit to this file. `git pull` failed on it loudly, which is how
+  # it was finally found; `git checkout --` on it succeeds SILENTLY, and the next
+  # `up -d` then remounts this empty named volume. The app loses sight of every
+  # uploaded file without emitting one error. Set UPLOADS_PATH in the host .env
+  # instead of editing this file — a working-tree edit is not configuration, it
+  # is a landmine with a countdown.
   uploads:
