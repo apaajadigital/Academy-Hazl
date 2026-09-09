@@ -323,54 +323,136 @@ else
   skip "pemeriksaan .gitignore" "bukan git repo / git tidak tersedia"
 fi
 
-head_ "16. restore.sh — ambang disamakan ke 45 (validasi TERISOLASI, bukan integrasi)"
+head_ "16. restore.sh — drill harus BISA GAGAL (validasi TERISOLASI, bukan integrasi)"
 # NOT an integration test. `docker` is faked, so no Postgres is started and no
-# restore actually happens: this exercises restore.sh's threshold logic and its
-# choice of target database, nothing more. A genuine drill needs Docker+Postgres
-# and is reported separately as NOT RUN.
+# restore actually happens. What this DOES exercise is the property the drill
+# lacked until BL-163: that a backup which restores an empty or short database
+# is REJECTED. The old script printed "restore drill PASSED" for exactly that.
 grep -q 'MIN_TABLES="${MIN_TABLES:-45}"' "$RS" \
   && ok "default restore = 45 (selaras dengan backup.sh)" \
   || no "default restore 45" "$(grep -n 'MIN_TABLES=' "$RS" | head -1)"
 grep -q 'MIN_TABLES="${MIN_TABLES:-40}"' "$RS" && no "masih ada default 40" "drift" || ok "tidak ada sisa default 40"
 
-restore_case() {                 # $1 = nama, $2 = jumlah tabel yang "dipulihkan"
+# BL-163 regressions: each of these three lines is a defect that made the drill
+# incapable of failing. Assert on the source, because their absence is silent.
+grep -q 'ON_ERROR_STOP=1 -q' "$RS" \
+  && ok "restore memakai ON_ERROR_STOP (psql tak lagi exit 0 saat semua statement gagal)" \
+  || no "ON_ERROR_STOP hilang" "psql akan exit 0 walau restore gagal total"
+grep -q "table_type='BASE TABLE'" "$RS" \
+  && ok "hitung tabel dibatasi BASE TABLE (view tidak ikut menggenapi ambang)" \
+  || no "BASE TABLE hilang" "view bisa menutupi tabel yang hilang"
+grep -q 'readonly LIVE_DB=' "$RS" \
+  && ok "LIVE_DB konstan, tidak bisa di-override environment" \
+  || no "LIVE_DB bisa di-override" "SCRATCH_DB=jago_akademi kembali bisa men-drop produksi"
+
+# $1 = nama kasus, $2 = tabel hasil restore, $3 = baris drill, $4 = baris live
+# (drill == live  -> MATCH; drill < live -> backup kehilangan baris -> WAJIB gagal)
+restore_case() {
   local d; d=$(newcase "$1"); mkdir -p "$d/bin"
+  # restore.sh kini menolak COMPOSE_DIR tanpa compose file (dulu ia meledak dengan
+  # error bash mentah). Tanpa file boneka ini setiap kasus "DITOLAK" di bawah akan
+  # lulus karena alasan yang salah — persis yang terjadi saat tes ini pertama ditulis.
+  : > "$d/docker-compose.vps.yml"
   gzip -c "$ROOT/f45.sql" > "$d/backups/jago-2026-08-04-105100.sql.gz"
   cat > "$d/bin/docker" <<'EOF'
 #!/bin/sh
 echo "$*" >> "$DOCKER_LOG"
 case "$*" in
-  *information_schema.tables*) echo " $RESTORE_TABLES "; exit 0 ;;
-  *"users="*)                  echo "users=0"; exit 0 ;;
-  *" -q"*)                     cat >/dev/null 2>&1; exit 0 ;;
+  *createdb*)      exit 0 ;;
+  *"DROP DATABASE"*) exit 0 ;;
+  # Restore: harus dikenali SEBELUM dispatch per-database, dan WAJIB menghabiskan
+  # stdin. Kalau tidak, `gunzip -c | docker …` kena SIGPIPE dan `pipefail` membuat
+  # setiap kasus gagal dengan sebab yang menyesatkan. Query memakai -Atc, restore
+  # memakai -q, jadi keduanya tak pernah bertabrakan.
+  *" -q"*)         cat >/dev/null 2>&1; exit 0 ;;
+esac
+# Jawaban berbeda tergantung database yang dibuka — itulah inti drill baru.
+case "$*" in
+  *"-d jago_akademi"*)
+    case "$*" in
+      *information_schema.tables*) echo 45 ;;
+      *pg_indexes*)                echo 100 ;;
+      *"WHERE"*)                   echo "$LIVE_ROWS" ;;
+      *count*)                     echo 999 ;;
+      *)                           echo 0 ;;
+    esac
+    exit 0 ;;
+  *"-d jago_restore_test"*)
+    case "$*" in
+      *information_schema.tables*) echo "$RESTORE_TABLES" ;;
+      *pg_indexes*)                echo 100 ;;
+      *"max("*)                    echo "2026-08-04 10:51:00" ;;
+      *"WHERE"*)                   echo "$DRILL_ROWS" ;;
+      *)                           echo 0 ;;
+    esac
+    exit 0 ;;
+esac
+case "$*" in
+  *" -q"*) cat >/dev/null 2>&1; exit 0 ;;
 esac
 exit 0
 EOF
   chmod +x "$d/bin/docker"
   : > "$d/dockerlog"
   env PATH="$d/bin:$PATH" COMPOSE_DIR="$d" BACKUP_DIR="$d/backups" \
-      RESTORE_TABLES="$2" DOCKER_LOG="$d/dockerlog" \
+      RESTORE_TABLES="$2" DRILL_ROWS="$3" LIVE_ROWS="$4" DOCKER_LOG="$d/dockerlog" \
       bash "$RS" >"$d/log" 2>&1
   echo "$?|$d"
 }
 
-r=$(restore_case r44 44); rc=${r%%|*}; d=${r#*|}
-[ "$rc" != 0 ] && ok "fixture 44 tabel DITOLAK (exit $rc)" || no "44 ditolak" "rc=0"
+r=$(restore_case r44 44 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "44 tabel DITOLAK (exit $rc)" || no "44 ditolak" "rc=0"
 grep -q 'backup looks incomplete (44 tables)' "$d/log" && ok "sebab eksplisit 44 tabel" || no "sebab 44" "$(tail -2 "$d/log")"
 
-r=$(restore_case r45 45); rc=${r%%|*}; d=${r#*|}
-[ "$rc" = 0 ] && ok "fixture 45 tabel LOLOS validasi struktur" || no "45 lolos" "rc=$rc ; $(tail -2 "$d/log")"
-grep -q 'restore drill PASSED' "$d/log" && ok "lanjut ke tahap berikutnya" || no "lanjut" "$(tail -2 "$d/log")"
+# Inti BL-163: dump schema-only. 45 tabel utuh, NOL baris, produksi punya data.
+# Versi lama mencetak "restore drill PASSED" untuk kasus ini.
+r=$(restore_case rempty 45 0 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "dump schema-only (45 tabel, 0 baris) DITOLAK — regresi utama BL-163" \
+               || no "schema-only lolos" "drill masih tak bisa gagal: $(tail -2 "$d/log")"
+grep -q 'NOT a proven recovery point' "$d/log" && ok "sebab eksplisit: bukan titik pemulihan" || no "sebab schema-only" "$(tail -2 "$d/log")"
 
-# The whole point of a drill is that it cannot harm production. Assert it by
-# reading back every docker invocation, not by trusting the script's comments.
-if grep -q -- '-d jago_akademi' "$d/dockerlog"; then
-  no "MENYENTUH database produksi" "$(grep -- '-d jago_akademi' "$d/dockerlog" | head -1)"
+# Backup kehilangan sebagian baris yang SUDAH ADA saat dump diambil.
+r=$(restore_case rshort 45 5 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "backup kehilangan baris (5 vs 7 pada cutoff sama) DITOLAK" \
+               || no "kehilangan baris lolos" "$(tail -2 "$d/log")"
+
+r=$(restore_case rok 45 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" = 0 ] && ok "backup sehat LOLOS" || no "sehat ditolak" "rc=$rc ; $(tail -2 "$d/log")"
+grep -q 'restore drill PASSED' "$d/log" && ok "melaporkan PASSED" || no "PASSED" "$(tail -2 "$d/log")"
+
+# Drill sekarang MEMBACA produksi — itu satu-satunya cara menjawab "benarkah kita
+# bisa pulih". Jadi asersinya bukan lagi "jangan pernah sebut jago_akademi",
+# melainkan yang sebenarnya penting: produksi tidak pernah jadi sasaran TULIS,
+# dan setiap sesi ke sana dibuka read-only yang ditegakkan server.
+if grep -qE 'createdb.*jago_akademi|DROP DATABASE[^;]*jago_akademi|-d jago_akademi[^|]*-q$' "$d/dockerlog"; then
+  no "MENULIS ke database produksi" "$(grep -E 'createdb.*jago_akademi|DROP DATABASE[^;]*jago_akademi' "$d/dockerlog" | head -1)"
 else
-  ok "tidak pernah menargetkan database produksi (jago_akademi)"
+  ok "produksi tidak pernah jadi sasaran createdb/DROP/restore"
 fi
-grep -q 'jago_restore_test' "$d/dockerlog" && ok "hanya memakai scratch DB jago_restore_test" || no "scratch DB" "tak terlihat di log docker"
-grep -q 'DROP DATABASE IF EXISTS jago_restore_test' "$d/dockerlog" && ok "scratch DB di-drop (cleanup)" || no "cleanup scratch" "tidak ada DROP"
+if grep -q -- '-d jago_akademi' "$d/dockerlog"; then
+  if grep -- '-d jago_akademi' "$d/dockerlog" | grep -qv 'default_transaction_read_only=on'; then
+    no "sesi ke produksi TANPA read-only" "$(grep -- '-d jago_akademi' "$d/dockerlog" | grep -v 'default_transaction_read_only=on' | head -1)"
+  else
+    ok "setiap sesi ke produksi dibuka read-only (ditegakkan server)"
+  fi
+else
+  no "drill tidak membaca produksi" "tanpa itu ia hanya membuktikan 'ada perintah yang jalan'"
+fi
+grep -q 'jago_restore_test' "$d/dockerlog" && ok "hanya menulis ke scratch DB jago_restore_test" || no "scratch DB" "tak terlihat di log docker"
+grep -q 'DROP DATABASE IF EXISTS jago_restore_test WITH (FORCE)' "$d/dockerlog" \
+  && ok "scratch DB di-drop WITH (FORCE) — koneksi nyangkut tak bisa menyisakannya" \
+  || no "cleanup scratch" "tidak ada DROP ... WITH (FORCE)"
+
+# SCRATCH_DB tak lagi bisa diarahkan ke produksi, dan tak bisa menyuntik SQL.
+for bad in jago_akademi "x; DROP DATABASE jago_akademi" postgres; do
+  d2=$(newcase "guard$(echo "$bad" | tr -cd 'a-z')"); mkdir -p "$d2/backups"; : > "$d2/docker-compose.vps.yml"
+  gzip -c "$ROOT/f45.sql" > "$d2/backups/jago-2026-08-04-105100.sql.gz"
+  out=$(env COMPOSE_DIR="$d2" BACKUP_DIR="$d2/backups" SCRATCH_DB="$bad" bash "$RS" 2>&1 || true)
+  case "$out" in
+    *"refusing"*) ok "SCRATCH_DB='$bad' ditolak sebelum koneksi dibuka" ;;
+    *)            no "SCRATCH_DB='$bad' TIDAK ditolak" "$(echo "$out" | head -1)" ;;
+  esac
+done
 
 echo
 echo "==================================================="
