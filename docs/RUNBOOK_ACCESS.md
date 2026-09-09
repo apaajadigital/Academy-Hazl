@@ -80,10 +80,17 @@ seluruh flag memang `false` saat ini. `API_PROXY_TARGET` mengikuti `apps/web/nex
 
 ## 4. 🖐️ Langkah operator
 
-> **Status 9 Sep 2026: §4.1 ✅ · §4.2 ✅ · §4.3 ⬜ tersisa.** Kunci CI sudah ada di
-> `authorized_keys` host dan terbukti bisa login (`root@srv1693732`); keempat secret `DEPLOY_*`
-> sudah terdaftar. Yang belum: Environment `production`. Langkah-langkah di bawah dipertahankan
-> sebagai prosedur untuk rotasi kunci dan untuk host pengganti — bukan sebagai pekerjaan tertunda.
+> **Status 9 Sep 2026: §4.1 ✅ · §4.2 ✅ · §4.3 ✅ — rantai akses LENGKAP.** `jago.sh doctor` hijau
+> di seluruh baris kecuali WARN registry, dan WARN itu memang keadaan yang benar: CD login sendiri
+> tiap run. Langkah-langkah di bawah dipertahankan sebagai prosedur **rotasi kunci** dan bootstrap
+> host pengganti — bukan pekerjaan tertunda.
+>
+> Environment `production` dibuat lewat API dan responsnya mengonfirmasi keterbatasan yang dicatat
+> di §4.3: `"protection_rules": []`, `"can_admins_bypass": true`. Tidak ada required reviewer di
+> sana — gate manusianya murni dari pemicu workflow.
+>
+> ⚠️ **Tersambung ≠ bisa dipakai.** `deploy.yml` butuh job build yang lolos CI, dan CI masih
+> diblokir audit gate (BL-158, dua RCE Next.js). Urutan yang benar: bump Next → CI hijau → deploy.
 
 ### 4.1 Pasang kunci CI di host ✅
 
@@ -123,7 +130,7 @@ gh secret set DEPLOY_SSH_KEY --repo $R < ~/.ssh/jago_ci_deploy_ed25519
 Setelah itu **hapus kunci privat dari laptop** — ia tak dibutuhkan lagi di sana:
 `rm ~/.ssh/jago_ci_deploy_ed25519`. (Simpan `.pub` untuk pencabutan.)
 
-### 4.3 Buat Environment `production` ⬜
+### 4.3 Buat Environment `production` ✅
 
 Satu baris, tak perlu browser:
 
