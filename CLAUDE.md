@@ -71,7 +71,7 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 5. Set `SENTRY_DSN` + uptime/alert monitors (arahkan ke `https://jagoakademi.com/api/health`) — `docs/RUNBOOK_INCIDENT.md`
 6. **Daftarkan webhook DOKU ke `https://jagoakademi.com/api/webhooks/doku`** dan jalankan live integration matrix (sandbox→prod) — host lama `api.jagoakademi.com` tidak resolve ⇒ pembayaran tak pernah terkonfirmasi — `docs/INTEGRATION_VERIFICATION.md`
 7. **Aktifkan CD — tersisa 1 langkah.** Kunci CI ✅ terpasang di host (terverifikasi login `root@srv1693732`), 4 secret `DEPLOY_*` ✅ terdaftar, 11 variable ✅ terisi, `deploy.yml` ✅ bisa `docker login` GHCR sendiri. **Belum: Environment `production`** — `gh api -X PUT repos/haluanitcore/Jago-Akademi-Website1/environments/production`. Detail `docs/RUNBOOK_ACCESS.md` §4; cek `bash scripts/ops/jago.sh doctor`
-8. 🟠 **BL-157 — VPS tertinggal 11 commit dari `origin/main`** (`fa0b7e5` vs `bddaa9e`, terukur 9 Sep 2026). PR #65–#68 sudah merge + CI hijau tetapi **belum pernah menyentuh produksi**, termasuk BL-147 (metode paylater yang gagal di DOKU masih ditawarkan ke pembeli live). Deploy = keputusan owner, jalur uang — `docs/BACKLOG.md` BL-157
+8. ✅ **SELESAI 9 Sep 2026 — deploy dijalankan, produksi kini sejajar `main@6f2638f`.** Menutup BL-157 (11 commit tertinggal, termasuk BL-147) **dan BL-161** (RCE tanpa autentikasi lewat `/_next/image`). Terverifikasi di dalam container: `next=16.3.4`, `sharp=0.35.4`, `heif=1.23.2`. Jalur rebuild manual (terbukti), bukan CD — CD masih belum pernah dieksekusi. Temuan baru saat deploy: **BL-162** (bind mount uploads yang tak pernah masuk git)
 9. Soft Launch Go/No-Go (Playbook 10B)
 
 ## Perintah Cepat
