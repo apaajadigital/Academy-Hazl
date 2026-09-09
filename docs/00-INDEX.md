@@ -60,6 +60,7 @@
 | Deploy (otoritatif) | [RUNBOOK_DEPLOY.md](./RUNBOOK_DEPLOY.md) | **Sumber kebenaran deploy** — topologi live, DNS/SSL, rollback. Mengalahkan `10-DEPLOYMENT-GUIDE.md` bila bertentangan. |
 | Deploy rilis Jul 2026 | [RUNBOOK_DEPLOY_RELEASE_JUL2026.md](./RUNBOOK_DEPLOY_RELEASE_JUL2026.md) | Langkah rilis QA-remediation + gotcha proxy `/api/*` |
 | DB | [RUNBOOK_DB.md](./RUNBOOK_DB.md) | Migration (**inventaris 13 migration §1.1**) + backup + restore |
+| Akses & kunci | [RUNBOOK_ACCESS.md](./RUNBOOK_ACCESS.md) | **Inventaris kredensial** GitHub/VPS, rotasi, dan `scripts/ops/jago.sh` (status + drift) |
 | CI | [RUNBOOK_CI.md](./RUNBOOK_CI.md) | CI gate + branch protection |
 | Queue | [RUNBOOK_QUEUE.md](./RUNBOOK_QUEUE.md) | BullMQ worker ops |
 | Incident | [RUNBOOK_INCIDENT.md](./RUNBOOK_INCIDENT.md) | Observability + SLA + response |

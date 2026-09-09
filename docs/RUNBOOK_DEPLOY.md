@@ -315,10 +315,28 @@ Sukses = CSS 200 `text/css`, ukuran ~100KB+, `.flex{`/`.mx-auto`/`.grid-cols-1` 
 
 ## 6. 🖐️ GitHub — aktifkan CD
 
-Repo → Settings:
-1. **Environments → New: `production`** → centang *Required reviewers* (Anda) → ini gate approval tiap deploy.
-2. **Secrets and variables → Actions → Secrets**: `DEPLOY_HOST` (IP), `DEPLOY_USER`, `DEPLOY_SSH_KEY` (private key), `DEPLOY_PATH` (`/var/www/jago-akademi`).
-3. **Variables**: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_MIXPANEL_TOKEN`.
+> **Otoritatif sekarang: [`RUNBOOK_ACCESS.md`](./RUNBOOK_ACCESS.md)** — inventaris kunci, apa yang
+> sudah terpasang, dan tiga langkah operator yang tersisa. Ringkasan status per **9 Sep 2026**:
+
+| Butuh | Status |
+|-------|--------|
+| **Variables** (`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `API_PROXY_TARGET`, 8× `NEXT_PUBLIC_FEATURE_*`) | ✅ **sudah diisi** (11 variable) |
+| **Secrets** `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_PATH` / `DEPLOY_SSH_KEY` | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.2 |
+| **Kunci CI di `authorized_keys` host** | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.1 |
+| **Environment `production`** | 🖐️ belum — `RUNBOOK_ACCESS.md` §4.3 |
+
+⚠️ Dua koreksi terhadap versi lama bagian ini:
+
+1. ***Required reviewers* tidak tersedia** di repo privat pada plan Free (API menjawab
+   `403 Upgrade to GitHub Pro`). Environment tetap wajib dibuat — job `deploy` merujuknya — tetapi
+   gate manusianya berasal dari pemicu workflow (tag `v*` / `workflow_dispatch`), bukan dari
+   reviewer. Jangan menuliskannya seolah approval berlapis sudah aktif.
+2. **Daftar variable lama kurang sembilan yang menentukan tampilan situs**: `API_PROXY_TARGET` dan
+   delapan `NEXT_PUBLIC_FEATURE_*`. Keduanya di-inline saat build image, jadi CD yang berjalan tanpa
+   itu menghasilkan image dengan rewrite `/api/*` runtuh ke dirinya sendiri dan semua fitur mati —
+   bukan kegagalan yang berisik, melainkan situs yang salah dan tampak normal.
+
+Cek kesiapan kapan saja: `bash scripts/ops/jago.sh doctor`.
 
 ## 7. Deploy rutin (otomatis, human-approved)
 

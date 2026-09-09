@@ -106,15 +106,33 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # `packages: read` is what makes GITHUB_TOKEN able to pull THIS private
+    # repo's GHCR images. It is not decorative: the host has no standing
+    # registry credential at all (verified 9 Sep 2026 — there is no
+    # ~/.docker/config.json on the VPS), so without the login step below the
+    # very first `docker compose pull` answers 401 and the deploy dies after
+    # the approval gate has already been spent.
+    permissions:
+      contents: read
+      packages: read
     # Configure this environment in GitHub with required reviewers → human gate.
     environment: production
     steps:
       - name: Deploy over SSH (pull → migrate → up → prune)
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Run-scoped token: GitHub revokes it when the job ends. Deliberately
+          # NOT a long-lived PAT parked in the host's ~/.docker/config.json —
+          # that file is world-readable to anyone who reaches root on the box
+          # and would outlive any incident by months.
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Only these two cross into the remote shell; nothing else is exported.
+          envs: GHCR_USER,GHCR_TOKEN
           script_stop: true
           script: |
             set -euo pipefail
@@ -122,6 +140,11 @@ jobs:
             export API_IMAGE=${{ env.IMAGE_BASE }}/api:${{ needs.build-push.outputs.version }}
             export WEB_IMAGE=${{ env.IMAGE_BASE }}/web:${{ needs.build-push.outputs.version }}
             echo "$API_IMAGE" > .last-deploy-api && echo "$WEB_IMAGE" > .last-deploy-web
+            # Registry auth for the pull below. `--password-stdin` keeps the token
+            # out of the host process list; the trap drops the credential file
+            # again on every exit path, success or failure.
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             # BL-43: this host runs docker-compose.vps.yml + a HOST-level nginx.
             # docker-compose.prod.yml describes the old nginx-in-Docker topology
             # and publishes NO host ports on web/api — running it here detaches

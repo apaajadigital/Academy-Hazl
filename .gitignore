@@ -57,7 +57,12 @@ yarn-error.log*
 *.pem
 
 # AI agents
-.claude/
+# Everything under .claude/ is local scratch EXCEPT settings.json: the shared
+# permission allowlist (which ops commands may run unprompted, and the deny
+# rules that keep an agent off `git push origin main` / `gh pr merge`) is a
+# project rule, not a per-machine preference, so it is versioned.
+.claude/*
+!.claude/settings.json
 .gemini/
 jago_akademi_clarification_questions.docx.pdf
 
