@@ -38,7 +38,7 @@ disengaja: mencabut satu jalur tidak boleh mematikan tiga lainnya.
 |---|-----------|--------------|------------------|-------------------|
 | 1 | **Token `gh` CLI** (OAuth, akun `haluanitcore`, scope `repo`, `workflow`, `gist`, `read:org`) | Windows keyring laptop | Push, PR, Actions, secrets/variables repo | ✅ Aktif, terverifikasi |
 | 2 | **`~/.ssh/id_jago_vps`** — kunci ops pribadi<br>`SHA256:0um9+TPg8On/cL64vJPnPqbkzAgwZtRpfGf0YTR3u4I` | Laptop, tanpa passphrase | `root@212.85.26.131` (SSH interaktif, ops harian) | ✅ Terpasang di host, terverifikasi (`ssh jago-vps`) |
-| 3 | **`~/.ssh/jago_ci_deploy_ed25519`** — kunci CI khusus<br>`SHA256:30lf7vkkzivagciJD/SjXNjxy+Facc15Kt4bNew0rPk` | Laptop (sementara) → tujuan: GitHub secret `DEPLOY_SSH_KEY` | `root@…` untuk workflow Deploy | 🖐️ **Dibuat, BELUM dipasang** — lihat §4 |
+| 3 | **`~/.ssh/jago_ci_deploy_ed25519`** — kunci CI khusus<br>`SHA256:30lf7vkkzivagciJD/SjXNjxy+Facc15Kt4bNew0rPk` | GitHub secret `DEPLOY_SSH_KEY` (+ salinan di laptop, lihat catatan §4.2) | `root@…` untuk workflow Deploy | ✅ **Terpasang 9 Sep 2026**, terverifikasi: login sebagai `root` di `srv1693732` dengan kunci ini |
 | 4 | **Deploy key repo di VPS** | `~/.ssh/` pada host | `git pull` dari repo privat ini | ✅ Sudah ada sejak sebelumnya, terverifikasi (`ssh -T git@github.com` → *"Hi haluanitcore/Jago-Akademi-Website1!"*) |
 | 5 | **`secrets.GITHUB_TOKEN`** (otomatis, umur satu run) | Tidak disimpan di mana pun | `docker login ghcr.io` di host saat deploy | ✅ Dipakai oleh `deploy.yml` sejak perubahan ini |
 
@@ -78,12 +78,14 @@ seluruh flag memang `false` saat ini. `API_PROXY_TARGET` mengikuti `apps/web/nex
 
 ---
 
-## 4. 🖐️ Langkah operator yang tersisa
+## 4. 🖐️ Langkah operator
 
-Tiga langkah. Sampai ketiganya selesai, workflow **Deploy** belum bisa jalan — CI (`ci.yml`) tidak
-terpengaruh dan tetap hijau seperti biasa.
+> **Status 9 Sep 2026: §4.1 ✅ · §4.2 ✅ · §4.3 ⬜ tersisa.** Kunci CI sudah ada di
+> `authorized_keys` host dan terbukti bisa login (`root@srv1693732`); keempat secret `DEPLOY_*`
+> sudah terdaftar. Yang belum: Environment `production`. Langkah-langkah di bawah dipertahankan
+> sebagai prosedur untuk rotasi kunci dan untuk host pengganti — bukan sebagai pekerjaan tertunda.
 
-### 4.1 Pasang kunci CI di host
+### 4.1 Pasang kunci CI di host ✅
 
 ```bash
 # dari laptop ini
@@ -94,7 +96,7 @@ ssh jago-vps "grep -qF 'jago-ci-deploy@github-actions' ~/.ssh/authorized_keys \
 ssh -i ~/.ssh/jago_ci_deploy_ed25519 -o IdentitiesOnly=yes root@212.85.26.131 'hostname'
 ```
 
-### 4.2 Daftarkan 4 secret di repo
+### 4.2 Daftarkan 4 secret di repo ✅
 
 ```bash
 R=haluanitcore/Jago-Akademi-Website1
@@ -104,12 +106,32 @@ printf '/var/www/jago-akademi'| gh secret set DEPLOY_PATH --repo $R
 gh secret set DEPLOY_SSH_KEY --repo $R < ~/.ssh/jago_ci_deploy_ed25519
 ```
 
+> ⚠️ **Di PowerShell pakai `--body`, jangan pipe.** Pipe di PowerShell menambahkan newline di ujung
+> nilai, jadi `DEPLOY_HOST` berisi `212.85.26.131` + newline — dan ssh-action gagal resolve host
+> dengan pesan yang sama sekali tidak menunjuk ke penyebabnya. Bentuk yang benar:
+>
+> ```powershell
+> $R = "haluanitcore/Jago-Akademi-Website1"
+> gh secret set DEPLOY_HOST --repo $R --body "212.85.26.131"
+> gh secret set DEPLOY_USER --repo $R --body "root"
+> gh secret set DEPLOY_PATH --repo $R --body "/var/www/jago-akademi"
+> Get-Content ~/.ssh/jago_ci_deploy_ed25519 -Raw | gh secret set DEPLOY_SSH_KEY --repo $R
+> ```
+>
+> Khusus file kunci privat, pipe justru benar — newline-nya memang bagian dari file.
+
 Setelah itu **hapus kunci privat dari laptop** — ia tak dibutuhkan lagi di sana:
 `rm ~/.ssh/jago_ci_deploy_ed25519`. (Simpan `.pub` untuk pencabutan.)
 
-### 4.3 Buat Environment `production`
+### 4.3 Buat Environment `production` ⬜
 
-Repo → **Settings → Environments → New environment** → nama `production`.
+Satu baris, tak perlu browser:
+
+```bash
+gh api -X PUT repos/haluanitcore/Jago-Akademi-Website1/environments/production
+```
+
+Atau lewat UI: Repo → **Settings → Environments → New environment** → nama `production`.
 
 > ⚠️ **Repo ini privat di plan Free**, jadi *Required reviewers* (dan branch protection) **tidak
 > tersedia** — API-nya menjawab `403 Upgrade to GitHub Pro`. Gate manusianya karena itu bersandar

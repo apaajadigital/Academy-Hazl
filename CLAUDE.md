@@ -70,7 +70,7 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 4. **Perbaiki cron certbot** (deploy-hook ke nginx **host**, hapus domain yang tak resolve dari `-d`) — TLS bisa kedaluwarsa senyap — `docs/RUNBOOK_DEPLOY.md` §4
 5. Set `SENTRY_DSN` + uptime/alert monitors (arahkan ke `https://jagoakademi.com/api/health`) — `docs/RUNBOOK_INCIDENT.md`
 6. **Daftarkan webhook DOKU ke `https://jagoakademi.com/api/webhooks/doku`** dan jalankan live integration matrix (sandbox→prod) — host lama `api.jagoakademi.com` tidak resolve ⇒ pembayaran tak pernah terkonfirmasi — `docs/INTEGRATION_VERIFICATION.md`
-7. **Aktifkan CD (3 langkah)** — pasang kunci CI di `authorized_keys` host, daftarkan 4 secret `DEPLOY_*`, buat Environment `production`. Variable (11) sudah diisi dan `deploy.yml` sudah bisa `docker login` GHCR sendiri — `docs/RUNBOOK_ACCESS.md` §4. Cek kesiapan: `bash scripts/ops/jago.sh doctor`
+7. **Aktifkan CD — tersisa 1 langkah.** Kunci CI ✅ terpasang di host (terverifikasi login `root@srv1693732`), 4 secret `DEPLOY_*` ✅ terdaftar, 11 variable ✅ terisi, `deploy.yml` ✅ bisa `docker login` GHCR sendiri. **Belum: Environment `production`** — `gh api -X PUT repos/haluanitcore/Jago-Akademi-Website1/environments/production`. Detail `docs/RUNBOOK_ACCESS.md` §4; cek `bash scripts/ops/jago.sh doctor`
 8. 🟠 **BL-157 — VPS tertinggal 11 commit dari `origin/main`** (`fa0b7e5` vs `bddaa9e`, terukur 9 Sep 2026). PR #65–#68 sudah merge + CI hijau tetapi **belum pernah menyentuh produksi**, termasuk BL-147 (metode paylater yang gagal di DOKU masih ditawarkan ke pembeli live). Deploy = keputusan owner, jalur uang — `docs/BACKLOG.md` BL-157
 9. Soft Launch Go/No-Go (Playbook 10B)
 
