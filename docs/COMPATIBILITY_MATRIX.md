@@ -1,13 +1,13 @@
 # Dependency Compatibility Matrix
 
 > Tracks the bleeding-edge stack and critical dependencies pinned to **exact** versions (TASK-003). Fresh `npm install` must be reproducible and match `npm ci` against the committed lockfile. See [ADR-0001](./adr/0001-frontend-stack.md).
-> Last verified: 2 Juli 2026 — build + typecheck + 256 tests green on these versions.
+> Last verified: 9 Sep 2026 (BL-158) — typecheck + lint + build + 1136 API tests + 130 web tests + 12 visual baselines green on these versions. Jumlah test **tidak** disalin ke sini sebagai angka tetap; ukur ulang (lihat `RUNBOOK_CI.md`).
 
 ## Critical Pinned Versions
 
 | Package | Pinned | Scope | Notes |
 |---------|--------|-------|-------|
-| next | 16.2.0 | web | App Router + RSC. Bleeding-edge (RISK-T1). |
+| next | 16.3.4 | web | App Router + RSC. Bleeding-edge (RISK-T1). **Bumped 9 Sep 2026 (BL-158)** dari 16.2.10 — dua RCE tanpa autentikasi (GHSA-p293-qw3h-jr36 CVSS 9.0, GHSA-2xp9-vwfh-vxw4) mengenai seluruh `>=16.0.0 <16.3.3`. Baris ini sebelumnya tertulis `16.2.0` padahal `package.json` sudah `16.2.10` — matrix ini pernah basi, jadi cocokkan ke `package.json`, jangan sebaliknya. |
 | react | 19.2.7 | web | Ref-as-prop, `use()`, form actions available. |
 | react-dom | 19.2.7 | web | Must match react exactly. |
 | @types/react | 19.2.2 | web | Must track react major. |
