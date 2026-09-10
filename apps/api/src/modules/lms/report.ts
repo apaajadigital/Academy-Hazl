@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../../middleware/authenticate.js";
 import { prisma } from "../../db/prisma.js";
 import { successResponse, AppError } from "../../types/index.js";
-import { requireLmsAdmin } from "./guards.js";
+import { requireLmsAdmin, assertBatchInTenant } from "./guards.js";
 
 const router = Router();
 
@@ -57,6 +57,24 @@ router.get("/tenants/:tenantId/reports/completion", authenticate, async (req, re
       // Filter by batchId if provided
       let filtered = rows;
       if (batchId) {
+        // BL-169: resolve the batch THROUGH the tenant first. `lmsBatchMember`
+        // has no tenantId column, so a bare `where: { batchId }` happily reads a
+        // foreign tenant's roster.
+        //
+        // No foreign ROW ever escaped — `rows` above is already tenant-scoped, so
+        // the response only ever contained this tenant's enrolments. What leaked
+        // was the FILTER: an lms_admin of tenant A passing tenant B's batchId
+        // learned which of their own users also sit in that batch. An intersection
+        // oracle over lmsBatchMember, invisible in the response body, which is why
+        // it survived review — every row on screen genuinely belonged to the
+        // caller.
+        //
+        // This was the only nested LMS handler skipping the H1 guard the helpers
+        // below `requireLmsAdmin` exist to enforce.
+        // `tenantId` is `string | undefined` off req.params, but requireLmsAdmin
+        // above already 403s when it is missing, so by here it is present. Same
+        // cast the other nested handlers use (batch.ts:53, :70).
+        await assertBatchInTenant(batchId, tenantId as string);
         const memberIds = (
           await prisma.lmsBatchMember.findMany({ where: { batchId }, select: { userId: true } })
         ).map((m) => m.userId);
