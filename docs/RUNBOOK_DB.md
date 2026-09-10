@@ -364,6 +364,62 @@ hanya: file kini dapat divalidasi sendirian, dan tidak lagi bergantung pada sete
 yang tak terlihat dari isinya. Empat config `logrotate.d` milik host ini melakukan hal yang
 sama. `create 0640 root adm` dipertahankan dan konsisten dengan grup tersebut.
 
+### 2.7 Arsip uploads (BL-164) — dan dua keputusan yang sengaja ditulis
+
+Sejak BL-164, `backup.sh` juga mengarsipkan **file unggahan**. Alasannya bukan kelengkapan
+teoretis: restore database yang sempurna tetap menghasilkan situs di mana setiap **PDF
+sertifikat, berkas e-book, dan gambar unggahan hilang**, sementara kolom `fileUrl`/`coverUrl`
+menunjuk ke berkas yang tak ada — kerusakan yang muncul sebagai halaman rusak, **bukan** sebagai
+error. Berbeda dari Meilisearch, uploads **tidak bisa direkonstruksi dari mana pun**.
+
+| Hal | Nilai |
+|---|---|
+| Sumber | `UPLOADS_PATH` di `.env` host (BL-162) — **tidak** di-hardcode |
+| Nama arsip | `jago-uploads-<STAMP>.tar.gz`, `STAMP` **sama** dengan dump DB pada run itu |
+| Lokasi | `backups/` yang sama, sehingga arsip yang **hilang** langsung terlihat saat `ls` |
+| Offsite | `$R2_REMOTE/uploads/` (DB tetap di `postgres/`), verifikasi identik |
+| Retensi | `RETENTION_DAYS` yang sama — pasangan DB+uploads harus punya umur yang sama, atau kita menyimpan pasangan yang tak bisa dipulihkan bersama |
+
+**Restore:**
+```bash
+tar -xzf backups/jago-uploads-<STAMP>.tar.gz -C "$UPLOADS_PATH"
+```
+`-C` **wajib**. Arsipnya berisi `./…` (bukan `jago-uploads/…`) supaya tidak mengunci layout host
+— konsekuensinya, `tar -xzf` tanpa `-C` akan menumpahkan isinya ke direktori kerja.
+
+**Kenapa hitungan file, bukan ukuran.** Arsip tar kosong ber-gzip hanya ~120 byte dan **lolos**
+`gzip -t` maupun `tar -tzf`. Jadi satu-satunya cek yang bisa membedakan "kita mengarsipkan
+filenya" dari "kita mengarsipkan kekosongan" adalah **jumlah file di dalam arsip dibandingkan
+jumlah file di sumber**. Kalau sumber berisi file dan arsip tidak, arsip itu **tidak diterbitkan**
+dan run berakhir `DEGRADED` — bukan `OK` dengan file kosong yang membuat `ls` terlihat sehat.
+
+**Sumber kosong = sinyal, bukan keadaan normal.** Pada host ini `/var/www/jago-uploads` yang
+kosong adalah tanda tangan BL-162 (aplikasi menulis ke tempat lain), jadi ia degrade secara
+default. `UPLOADS_ALLOW_EMPTY=1` hanya untuk host yang benar-benar baru.
+
+**Kegagalan uploads TIDAK PERNAH menjadi `FAIL`.** Blok ini berjalan paling akhir — setelah dump
+diterbitkan, diverifikasi, dikirim offsite, dan dipangkas — sehingga apa pun yang terjadi di sini
+tak bisa membatalkan backup database yang sudah aman. Backup DB yang baik tanpa arsip uploads
+jauh lebih berharga daripada tidak ada backup sama sekali.
+
+#### Dua keputusan yang ditulis agar tidak terbaca sebagai kelalaian
+
+- **Meilisearch TIDAK di-backup — disengaja.** Index-nya dapat dibangun ulang penuh dari database
+  (`meilisearch.ts`, reindex saat startup/manual). Kehilangannya berarti kehilangan **waktu**,
+  bukan data. Mem-backup volume-nya hanya menambah puluhan MB per malam untuk sesuatu yang bisa
+  diregenerasi.
+- **Redis/BullMQ TIDAK di-backup — disengaja.** Isinya job in-flight yang bersifat ephemeral.
+  Yang perlu bertahan sudah ada di Postgres; job yang hilang akan ditemukan kembali oleh sapuan
+  rekonsiliasi 15 menit (BL-144). Memulihkan antrean lama justru berisiko mengeksekusi ulang job
+  yang sudah selesai.
+
+> **Batas ukuran yang perlu diketahui.** Lock dipegang selama dump **dan** tar. Pada 1,4 MB itu
+> hitungan milidetik. Kalau uploads tumbuh sampai multi-GB, run bisa melewati jendela cron
+> berikutnya dan run kedua keluar `75` (benar, tapi berarti desain ini sudah mentok). Di atas
+> ukuran itu jawabannya `restic`/`rsync` inkremental, bukan tar yang lebih besar. Perhatikan juga
+> arsip uploads menumpuk di disk yang sama dengan dump DB: disk penuh karena uploads akan
+> mematikan dump **malam berikutnya**, bukan malam ini — sehingga penyebabnya lebih sulit dilacak.
+
 ## 3. 🖐️ Restore drill — manual & terkontrol
 
 `scripts/restore.sh` memulihkan backup terbaru ke database **scratch** (`jago_restore_test`),

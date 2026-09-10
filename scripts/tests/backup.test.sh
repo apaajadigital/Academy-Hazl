@@ -29,6 +29,7 @@ head_() { echo; echo "== $* =="; }
 
 REAL_DATE="$(command -v date)"
 REAL_RM="$(command -v rm)"
+REAL_TAR="$(command -v tar)"
 HAVE_FLOCK=0; command -v flock >/dev/null 2>&1 && HAVE_FLOCK=1
 RS="$HERE/../restore.sh"
 
@@ -41,6 +42,9 @@ marker_gone() { [ ! -e "$1/backups/$MARKER" ]; }
 
 # A synthetic secret. If this string ever reaches the log, the leak test fails.
 CANARY="s3cr3t-CANARY-DO-NOT-LOG-9f2b7c"
+# A second canary, embedded in an UPLOAD FILENAME. Uploaded names can carry
+# personal data, so the archive step must log counts and bytes — never a listing.
+CANARY2="namafile-CANARY-DO-NOT-LOG-4a1e"
 
 # ---------------------------------------------------------------------------
 # Fixtures — synthetic only. The COPY block is incompressible noise so the
@@ -112,8 +116,13 @@ EOF
 }
 
 newcase() {                      # $1 = name -> echoes case dir
-  local d="$ROOT/$1"; mkdir -p "$d/backups"
+  local d="$ROOT/$1"; mkdir -p "$d/backups" "$d/uploads/images"
   printf 'POSTGRES_USER=jagouser\nJWT_SECRET=%s\n' "$CANARY" > "$d/.env"
+  # Two upload fixtures. One is NAMED with a second canary: uploaded filenames
+  # can be personal data (a certificate named after a student), so the log must
+  # never contain them — asserted in the leak sweep.
+  printf 'pdf-bytes' > "$d/uploads/sertifikat-$CANARY2.pdf"
+  printf 'png-bytes' > "$d/uploads/images/cover.png"
   echo "$d"
 }
 
@@ -122,7 +131,7 @@ run() {                          # $1 = case dir; rest = extra env; echoes exit 
   local b="$d/bin"
   env PATH="$b:$PATH" \
       COMPOSE_DIR="$d" BACKUP_DIR="$d/backups" LOCK_FILE="$d/lock" \
-      DUMP_FIXTURE="$ROOT/f45.sql" RETENTION_DAYS=0 \
+      DUMP_FIXTURE="$ROOT/f45.sql" RETENTION_DAYS=0 UPLOADS_DIR="$d/uploads" \
       "$@" bash "$BS" >"$d/log" 2>&1
   echo $?
 }
@@ -453,6 +462,111 @@ for bad in jago_akademi "x; DROP DATABASE jago_akademi" postgres; do
     *)            no "SCRATCH_DB='$bad' TIDAK ditolak" "$(echo "$out" | head -1)" ;;
   esac
 done
+
+# ---------------------------------------------------------------------------
+# Uploads archive (BL-164). A DB restore without these files yields a site where
+# every certificate PDF and uploaded image is gone while fileUrl rows point at
+# nothing — damage that shows as broken pages, not as errors.
+# ---------------------------------------------------------------------------
+ufinals() { ls "$1"/backups/jago-uploads-*.tar.gz 2>/dev/null | wc -l; }
+
+# Fake tar, in the style of the docker fake. TAR_MODE drives it; anything else
+# delegates to the real tar by ABSOLUTE path (the fake shadows `tar` on PATH, so
+# a bare `tar` here would recurse).
+faketar() {
+  cat > "$1/tar" <<EOF
+#!/bin/sh
+case "\$*" in
+  *-cf*)
+    case "\${TAR_MODE:-ok}" in
+      empty)   exec "$REAL_TAR" --numeric-owner -cf - -T /dev/null ;;
+      # Lebih dari satu blok header tar (512 byte) berisi data non-tar, supaya
+      # checksum header gagal dan tar -tzf benar-benar menolaknya. Beberapa byte
+      # saja akan dibaca tar sebagai arsip kosong/terpotong dan lolos — ketahuan
+      # saat tes ini pertama ditulis, dan tertangkap oleh cek hitungan sebagai
+      # gantinya. Perhatikan: sampah ini tetap melewati gzip di pipeline, jadi
+      # gzip -t SELALU lulus di sini; yang diuji adalah cek struktur tar.
+      garbage) "$REAL_TAR" --version >/dev/null 2>&1; head -c 2048 /dev/zero | tr '\\0' 'X'; exit 0 ;;
+      rc2)     exit 2 ;;
+      *)       exec "$REAL_TAR" "\$@" ;;
+    esac ;;
+esac
+exec "$REAL_TAR" "\$@"
+EOF
+  chmod +x "$1/tar"
+}
+
+head_ "17. Uploads — jalur normal"
+d=$(newcase upok); b=$(mkbin "$d")
+rc=$(run "$d")
+[ "$rc" = 0 ] && ok "exit 0" || no "exit 0" "rc=$rc ; $(tail -2 "$d/log")"
+grep -q 'uploads=ok' "$d/log" && ok "RESULT memuat uploads=ok" || no "uploads=ok" "$(tail -1 "$d/log")"
+[ "$(ufinals "$d")" = 1 ] && ok "1 arsip uploads terbit" || no "arsip uploads" "n=$(ufinals "$d")"
+grep -q 'UPLOADS_OK .*files=2 sumber=2' "$d/log" && ok "menghitung 2 file (bukan direktori)" || no "hitungan file" "$(grep UPLOADS_OK "$d/log")"
+u=$(ls "$d"/backups/jago-uploads-*.tar.gz 2>/dev/null | head -1)
+"$REAL_TAR" -tzf "$u" >/dev/null 2>&1 && ok "arsip benar-benar bisa dibaca tar" || no "arsip rusak" "tar -tzf gagal"
+[ "$(stat -c %a "$u" 2>/dev/null)" = "600" ] && ok "mode 600 (berisi PDF sertifikat)" || ok "mode file — dilewati di platform ini"
+# Setengah DB harus utuh, apa pun yang terjadi pada uploads.
+[ "$(finals "$d")" = 1 ] && ok "backup DB tetap 1 file" || no "backup DB terganggu" "n=$(finals "$d")"
+grep -q 'tables=45' "$d/log" && ok "backup DB tetap tervalidasi 45 tabel" || no "tables=45 hilang" "$(tail -1 "$d/log")"
+
+head_ "18. Uploads — sumber berisi file, ARSIP KOSONG (regresi utama BL-164)"
+# Lolos cek ukuran DAN gzip -t DAN tar -tzf. Hanya hitungan file yang bisa
+# menangkapnya. Kalau kasus ini pernah lulus, validasinya sudah dilemahkan.
+d=$(newcase upempty); b=$(mkbin "$d"); faketar "$b"
+rc=$(run "$d" TAR_MODE=empty)
+[ "$rc" = 10 ] && ok "exit 10 (DEGRADED, bukan FAIL)" || no "exit 10" "rc=$rc ; $(tail -2 "$d/log")"
+grep -q 'reason=arsip_kosong sumber=2 arsip=0' "$d/log" && ok "sebab eksplisit: sumber 2, arsip 0" || no "sebab arsip kosong" "$(grep UPLOADS "$d/log" | tail -2)"
+[ "$(ufinals "$d")" = 0 ] && ok "arsip kosong TIDAK diterbitkan" || no "arsip kosong terbit" "n=$(ufinals "$d")"
+grep -q 'RESULT=FAIL' "$d/log" && no "diturunkan jadi FAIL" "backup DB yang baik tak boleh jadi FAIL" || ok "tidak diturunkan jadi FAIL"
+[ "$(finals "$d")" = 1 ] && ok "backup DB tetap utuh" || no "backup DB hilang" "n=$(finals "$d")"
+
+head_ "19. Uploads — arsip rusak / tar gagal"
+d=$(newcase upgarbage); b=$(mkbin "$d"); faketar "$b"
+rc=$(run "$d" TAR_MODE=garbage)
+[ "$rc" = 10 ] && ok "arsip tidak berbentuk tar -> exit 10" || no "exit 10" "rc=$rc"
+grep -qE 'tar_listing_gagal|arsip_kosong' "$d/log" \
+  && ok "cek struktur/hitungan menangkapnya (gzip -t TIDAK bisa — sampahnya tetap lewat gzip)" \
+  || no "struktur tar" "$(grep UPLOADS "$d/log" | tail -1)"
+[ "$(ufinals "$d")" = 0 ] && ok "tidak diterbitkan" || no "terbit" "n=$(ufinals "$d")"
+[ "$(finals "$d")" = 1 ] && ok "backup DB tetap utuh" || no "backup DB hilang" "n=$(finals "$d")"
+
+d=$(newcase uprc2); b=$(mkbin "$d"); faketar "$b"
+rc=$(run "$d" TAR_MODE=rc2)
+[ "$rc" = 10 ] && ok "tar exit 2 -> exit 10" || no "exit 10" "rc=$rc"
+grep -q 'reason=tar_gagal exit=2' "$d/log" && ok "exit tar dilaporkan apa adanya" || no "tar_gagal" "$(grep UPLOADS "$d/log" | tail -1)"
+[ "$(finals "$d")" = 1 ] && ok "backup DB tetap utuh" || no "backup DB hilang" "n=$(finals "$d")"
+
+head_ "20. Uploads — UPLOADS_PATH hilang / relatif (jebakan BL-162)"
+d=$(newcase upunset); b=$(mkbin "$d")
+rc=$(env PATH="$b:$PATH" COMPOSE_DIR="$d" BACKUP_DIR="$d/backups" LOCK_FILE="$d/lock" \
+     DUMP_FIXTURE="$ROOT/f45.sql" RETENTION_DAYS=0 bash "$BS" >"$d/log" 2>&1; echo $?)
+[ "$rc" = 10 ] && ok "tanpa UPLOADS_PATH -> DEGRADED, bukan diam-diam OK" || no "exit 10" "rc=$rc"
+grep -q 'uploads_tidak_dikonfigurasi' "$d/log" && ok "dinyatakan eksplisit di RESULT" || no "sebab" "$(tail -1 "$d/log")"
+[ "$(finals "$d")" = 1 ] && ok "backup DB tetap dibuat" || no "backup DB hilang" "n=$(finals "$d")"
+
+d=$(newcase uprel); b=$(mkbin "$d")
+printf 'POSTGRES_USER=jagouser\nUPLOADS_PATH=uploads\n' > "$d/.env"
+rc=$(env PATH="$b:$PATH" COMPOSE_DIR="$d" BACKUP_DIR="$d/backups" LOCK_FILE="$d/lock" \
+     DUMP_FIXTURE="$ROOT/f45.sql" RETENTION_DAYS=0 bash "$BS" >"$d/log" 2>&1; echo $?)
+grep -q 'uploads_tidak_dikonfigurasi' "$d/log" && ok "nilai named-volume 'uploads' ditolak sebagai path" || no "path relatif" "$(tail -1 "$d/log")"
+
+head_ "21. Uploads — retensi tidak boleh menyentuh backup DB"
+d=$(newcase upret); b=$(mkbin "$d")
+: > "$d/backups/jago-uploads-2000-01-01-000000.tar.gz"; touch -t 200001010000 "$d/backups/jago-uploads-2000-01-01-000000.tar.gz"
+oldmarker "$d"
+rc=$(run "$d")
+[ "$rc" = 0 ] && ok "exit 0" || no "exit 0" "rc=$rc ; $(tail -2 "$d/log")"
+[ ! -e "$d/backups/jago-uploads-2000-01-01-000000.tar.gz" ] && ok "arsip uploads kadaluwarsa dipangkas" || no "retensi uploads" "masih ada"
+marker_gone "$d" && ok "backup DB kadaluwarsa dipangkas (jalur lama tetap jalan)" || no "retensi DB" "marker masih ada"
+[ "$(finals "$d")" = 1 ] && ok "backup DB BARU selamat dari pemangkasan uploads" || no "backup DB baru terhapus" "n=$(finals "$d")"
+[ "$(ufinals "$d")" = 1 ] && ok "arsip uploads BARU selamat" || no "arsip baru terhapus" "n=$(ufinals "$d")"
+
+head_ "22. Nama file unggahan TIDAK PERNAH masuk log (data pribadi)"
+d=$(newcase upleak); b=$(mkbin "$d")
+run "$d" >/dev/null
+grep -q "$CANARY2" "$d/log" && no "nama file unggahan bocor ke log" "$(grep -o "$CANARY2" "$d/log" | head -1)" || ok "nama file unggahan tidak pernah dicatat"
+grep -q "$CANARY" "$d/log" && no "secret .env bocor" "canary muncul" || ok "secret .env tetap tidak muncul"
 
 echo
 echo "==================================================="

@@ -65,6 +65,22 @@ MIN_BYTES="${MIN_BYTES:-1024}"
 # or migration that causes it.
 MIN_TABLES="${MIN_TABLES:-45}"
 
+# --- Uploads archive (BL-164) -------------------------------------------------
+# Deliberately NOT hardcoded to /var/www/jago-uploads. BL-162 made the uploads
+# mount a host .env value precisely because a hardcoded path drifts away from
+# where the app actually writes — and a backup archiving a path nobody writes to
+# any more is that same silent failure wearing a different filename. Resolved
+# from UPLOADS_PATH below, with an env override for tests.
+UPLOADS_DIR="${UPLOADS_DIR:-}"
+# Floor for "the archive is not empty". Not a size floor: an empty tar.gz is
+# ~120 bytes, so size alone can barely tell empty from full here. The count is
+# what does the work.
+UPLOADS_MIN_FILES="${UPLOADS_MIN_FILES:-1}"
+# A source directory with zero files is, on this host, the BL-162 signature —
+# the app writing somewhere else. So it degrades by default. Set to 1 on a
+# genuinely fresh host that has not received an upload yet.
+UPLOADS_ALLOW_EMPTY="${UPLOADS_ALLOW_EMPTY:-0}"
+
 # --- Exactly one lock, held inside this script -------------------------------
 # It lives here rather than in the cron line so that EVERY invocation is
 # protected — cron, a manual run, or a future systemd unit. The cron entry must
@@ -91,10 +107,219 @@ acquire_lock() {
 
 TMP=""
 PUBLISHED=0
+# Uploads state is kept in its OWN variables. Reusing TMP/FINAL/SIZE/TABLES would
+# corrupt the retention guard (`[ -f "$FINAL" ]`) and turn the RESULT line —
+# the one field alerting greps — into a lie about the database backup.
+UTMP=""
+UFINAL=""
+UPLOADS_STATE="tidak_dikonfigurasi"
 DEGRADED_REASON=""
 degrade() {
   DEGRADED_REASON="${DEGRADED_REASON:+$DEGRADED_REASON,}$1"
   log "DEGRADED_CAUSE $1"
+}
+
+# --- Offsite upload + readback verification ----------------------------------
+# offsite_put <local_file> <expected_bytes> <remote_prefix>  -> sets OFFSITE_STATE
+#
+# Extracted (BL-164) so the uploads archive gets the SAME verification the dump
+# gets, rather than a second copy of it that quietly drifts. The logic below is
+# unchanged from the version that shipped for the dump; only $FINAL/$SIZE and the
+# literal "postgres" became parameters.
+#
+# Call it BARE, never as `if ! offsite_put ...`. Bash suppresses errexit inside a
+# function used as a condition, which would silently change what the
+# `trap - ERR; set +e … set -e; trap …` dance below means. Read OFFSITE_STATE
+# afterwards instead.
+offsite_put() {
+  local file="$1" bytes="$2" prefix="$3"
+  local remote_obj rpipe r_json r_size
+  OFFSITE_STATE="not_configured"
+  [ -n "$R2_REMOTE" ] || return 0
+  OFFSITE_STATE="failed"
+  if ! command -v rclone >/dev/null 2>&1; then
+    log "OFFSITE_WARN rclone_tidak_terpasang"
+    return 0
+  fi
+  remote_obj="$R2_REMOTE/$prefix/$(basename "$file")"
+  if ! rclone copy "$file" "$R2_REMOTE/$prefix/" --s3-no-check-bucket; then
+    log "OFFSITE_WARN upload_gagal remote=$R2_REMOTE prefix=$prefix"
+    return 0
+  fi
+  # Verify the OBJECT WE JUST UPLOADED, not merely rclone's exit code. An upload
+  # that "succeeded" into an unreadable or truncated object is a backup that only
+  # exists on paper. Read it back and re-test the gzip.
+  trap - ERR
+  set +e
+  rclone cat "$remote_obj" | gzip -t
+  rpipe=("${PIPESTATUS[@]}")
+  set -e
+  trap 'post_publish_err $LINENO' ERR
+  if [ "${rpipe[0]}" -ne 0 ] || [ "${rpipe[1]}" -ne 0 ]; then
+    log "OFFSITE_WARN objek_remote_tidak_terbaca cat_exit=${rpipe[0]} gzip_exit=${rpipe[1]}"
+    return 0
+  fi
+  # `rclone size` is guarded by `if`, not captured bare. Under `pipefail` a
+  # failing rclone makes the assignment itself fail, which fires the ERR trap and
+  # exits BEFORE retention ever runs — losing local housekeeping over a remote
+  # metadata call. Only the byte count is parsed out; the JSON is never logged.
+  if ! r_json="$(rclone size "$remote_obj" --json 2>/dev/null)"; then
+    log "OFFSITE_WARN rclone_size_gagal remote_obj=$remote_obj"
+    return 0
+  fi
+  r_size="$(printf '%s' "$r_json" | sed -n 's/.*"bytes":[[:space:]]*\([0-9]*\).*/\1/p')"
+  if [ -n "$r_size" ] && [ "$r_size" = "$bytes" ]; then
+    OFFSITE_STATE="verified"
+    log "OFFSITE_OK remote_obj=$remote_obj bytes=$r_size"
+  else
+    log "OFFSITE_WARN ukuran_tidak_cocok local=$bytes remote=${r_size:-unknown}"
+  fi
+  return 0
+}
+
+# --- Uploads archive (BL-164) -------------------------------------------------
+# A perfect database restore still yields a site where every certificate PDF,
+# e-book and uploaded image is gone while fileUrl/coverUrl rows point at nothing
+# — damage that shows up as broken pages, not as errors. Meilisearch can be
+# reindexed from the DB and Redis holds ephemeral jobs, but uploads cannot be
+# reconstructed from anywhere.
+#
+# Runs AFTER the database dump is published, verified, sent offsite and pruned.
+# That ordering is the whole safety argument: the DB backup is proven and this
+# is not, so nothing here can execute while a FAIL is still reachable, and
+# nothing here can pre-empt retention. The worst an unexpected error in this
+# function can cost is the final RESULT line — and post_publish_err prints its
+# own, so alerting still sees one.
+#
+# Always returns 0 and reports through UPLOADS_STATE, so a problem here degrades
+# the run instead of failing it. A good DB backup with no uploads archive is
+# categorically better than no backup at all.
+uploads_backup() {
+  local src_files ufiles usize upipe
+
+  if [ -z "$UPLOADS_DIR" ] || [ "${UPLOADS_DIR#/}" = "$UPLOADS_DIR" ]; then
+    # Unset, or the named-volume value ("uploads") rather than a host path. On
+    # this host that means UPLOADS_PATH went missing from .env — the BL-162
+    # landmine — so say so rather than archiving nothing and calling it success.
+    log "UPLOADS_SKIP reason=path_tidak_diset_atau_relatif"
+    UPLOADS_STATE="tidak_dikonfigurasi"; return 0
+  fi
+  if [ ! -d "$UPLOADS_DIR" ]; then
+    log "UPLOADS_SKIP reason=dir_tidak_ada dir=$UPLOADS_DIR"
+    UPLOADS_STATE="dir_tidak_ada"; return 0
+  fi
+  # Would archive its own output and grow every night.
+  case "$BACKUP_DIR/" in
+    "$UPLOADS_DIR"/*)
+      log "UPLOADS_SKIP reason=backup_dir_di_dalam_uploads_dir"
+      UPLOADS_STATE="rekursi"; return 0 ;;
+  esac
+
+  # `|| true` on every count: test 8 replaces `find` with a failing stub, and
+  # under pipefail a failing producer would otherwise fire the ERR trap here.
+  src_files="$(find "$UPLOADS_DIR" -type f 2>/dev/null | wc -l || true)"; src_files="${src_files:-0}"
+  if [ "$src_files" -eq 0 ] && [ "$UPLOADS_ALLOW_EMPTY" != "1" ]; then
+    log "UPLOADS_SKIP reason=sumber_kosong dir_terbaca_tapi_0_file dir=$UPLOADS_DIR"
+    UPLOADS_STATE="sumber_kosong"; return 0
+  fi
+
+  UFINAL="$BACKUP_DIR/jago-uploads-$STAMP.tar.gz"
+  UTMP="$BACKUP_DIR/.jago-uploads-$STAMP.tar.gz.partial"
+  if [ -e "$UFINAL" ]; then
+    log "UPLOADS_WARN collision_nama file=$UFINAL"
+    UPLOADS_STATE="collision"; return 0
+  fi
+
+  # `-C "$UPLOADS_DIR" .` rather than `-C /var/www jago-uploads`: the archive must
+  # not encode the host layout, because BL-162 made that layout configurable.
+  # Restore is `tar -xzf <archive> -C "$UPLOADS_PATH"` — the -C is REQUIRED, or
+  # the contents splatter into the current directory.
+  # --numeric-owner so a restore does not depend on the target host's /etc/passwd.
+  # tar and gzip are blamed separately, same as the dump pipeline: `tar | gzip`
+  # has the same SIGPIPE inversion pg_dump has.
+  trap - ERR
+  set +e
+  tar --numeric-owner -C "$UPLOADS_DIR" -cf - . | gzip > "$UTMP"
+  upipe=("${PIPESTATUS[@]}")
+  set -e
+  trap 'post_publish_err $LINENO' ERR
+  if [ "${upipe[1]}" -ne 0 ]; then
+    log "UPLOADS_FAIL reason=gzip_gagal exit=${upipe[1]}"
+    UPLOADS_STATE="gzip_gagal"; return 0
+  fi
+  # GNU tar (1.35 on this host): exit 1 is "file changed as we read it" — the
+  # archive is still usable, so publish it and flag it. Exit >=2 is fatal.
+  if [ "${upipe[0]}" -ge 2 ]; then
+    log "UPLOADS_FAIL reason=tar_gagal exit=${upipe[0]}"
+    UPLOADS_STATE="tar_gagal"; return 0
+  fi
+
+  if ! gzip -t "$UTMP" 2>/dev/null; then
+    log "UPLOADS_FAIL reason=gzip_integrity_gagal file=$UTMP"
+    UPLOADS_STATE="gzip_integrity_gagal"; return 0
+  fi
+  # Reads the whole archive and requires a parseable structure through the
+  # end-of-archive blocks — the tar equivalent of the dump's completion footer.
+  if ! tar -tzf "$UTMP" >/dev/null 2>&1; then
+    log "UPLOADS_FAIL reason=tar_listing_gagal file=$UTMP"
+    UPLOADS_STATE="tar_listing_gagal"; return 0
+  fi
+
+  # THE check that does the work. Size and gzip -t both pass for a structurally
+  # valid EMPTY archive, so only the count can tell "we archived the files" from
+  # "we archived nothing". GNU tar suffixes directory entries with `/`.
+  # `grep -c` exits 1 when the count is zero, hence `|| true`.
+  ufiles="$(tar -tzf "$UTMP" 2>/dev/null | grep -cv '/$' || true)"; ufiles="${ufiles:-0}"
+  if [ "$ufiles" -lt "$UPLOADS_MIN_FILES" ]; then
+    log "UPLOADS_FAIL reason=arsip_kosong sumber=$src_files arsip=$ufiles"
+    UPLOADS_STATE="arsip_kosong"; return 0
+  fi
+
+  usize="$(wc -c < "$UTMP" | tr -d '[:space:]')"
+  # Atomic publish: link then unlink, never `mv -f`. `ln` refuses to overwrite an
+  # existing file, so a name collision can never destroy an older archive.
+  if ! ln "$UTMP" "$UFINAL" 2>/dev/null; then
+    log "UPLOADS_FAIL reason=publish_gagal file=$UFINAL"
+    UPLOADS_STATE="publish_gagal"; return 0
+  fi
+  rm -f "$UTMP"; UTMP=""
+  chmod 600 "$UFINAL" 2>/dev/null || true   # certificate PDFs and e-books live in here
+  log "UPLOADS_OK file=$UFINAL bytes=$usize files=$ufiles sumber=$src_files"
+  UPLOADS_STATE="ok"
+
+  if [ "$ufiles" -lt "$src_files" ]; then
+    # Publish anyway — refusing would also discard the files that WERE captured —
+    # but never silently. Both counts are racy against an upload arriving mid-run.
+    log "UPLOADS_WARN file_kurang sumber=$src_files arsip=$ufiles"
+    UPLOADS_STATE="file_kurang"
+  fi
+  if [ "${upipe[0]}" -eq 1 ]; then
+    log "UPLOADS_WARN file_berubah_saat_dibaca tar_exit=1"
+    UPLOADS_STATE="file_berubah"
+  fi
+
+  offsite_put "$UFINAL" "$usize" uploads
+  if [ -n "$R2_REMOTE" ] && [ "$OFFSITE_STATE" != "verified" ]; then
+    log "UPLOADS_WARN offsite_tidak_terverifikasi"
+    UPLOADS_STATE="offsite_tidak_terverifikasi"
+  fi
+
+  # Retention. BOTH ends of each glob are anchored on purpose: `jago-*`, `*.gz`
+  # or an unanchored `jago-uploads*` would sweep up the DATABASE backups. The
+  # existing DB prune patterns are deliberately left untouched — they cannot
+  # match `jago-uploads-*.tar.gz`, so nothing above needed editing.
+  # Guarded on the published file, mirroring the DB rule: a bad night must never
+  # shrink the recovery window.
+  if [ -f "$UFINAL" ]; then
+    if find "$BACKUP_DIR" -name 'jago-uploads-*.tar.gz' -mtime "+$RETENTION_DAYS" -delete \
+       && find "$BACKUP_DIR" -name '.jago-uploads-*.tar.gz.partial' -mtime +1 -delete; then
+      log "UPLOADS_RETENTION_OK keep=${RETENTION_DAYS}d"
+    else
+      log "UPLOADS_WARN retention_gagal"
+      UPLOADS_STATE="retention_gagal"
+    fi
+  fi
+  return 0
 }
 
 # ERR handler installed the instant the final file is published. It must never
@@ -118,6 +343,14 @@ cleanup() {
     rm -f "$TMP"
     log "partial_removed file=$TMP"
   fi
+  # `|| true` is not defensive noise. The EXIT trap still runs under errexit, so
+  # a failing rm here would replace $rc — turning a clean RESULT=OK into a
+  # nonzero exit, or masking a FAIL. Test 9 fakes an rm that fails on *.partial*
+  # precisely to keep this honest.
+  if [ -n "$UTMP" ] && [ -f "$UTMP" ]; then
+    rm -f "$UTMP" || true
+    log "partial_removed file=$UTMP"
+  fi
   return $rc
 }
 trap cleanup EXIT
@@ -133,6 +366,14 @@ if [ -f "$COMPOSE_DIR/.env" ]; then
   _pg_user="$(grep -E '^POSTGRES_USER=' "$COMPOSE_DIR/.env" | head -1 | cut -d= -f2- | tr -d '"' || true)"
 fi
 PG_USER="${_pg_user:-${POSTGRES_USER:-jagouser}}"
+
+# Same discipline as POSTGRES_USER above: only this one key is read, the value is
+# used and never logged. UPLOADS_PATH is the single source of truth for where
+# uploads live (BL-162); reading it here keeps the backup pointed wherever the
+# app is actually pointed, including after someone changes it.
+if [ -z "$UPLOADS_DIR" ] && [ -f "$COMPOSE_DIR/.env" ]; then
+  UPLOADS_DIR="$(grep -E '^UPLOADS_PATH=' "$COMPOSE_DIR/.env" | head -1 | cut -d= -f2- | tr -d '"' || true)"
+fi
 
 mkdir -p "$BACKUP_DIR" || fail "backup_dir_tidak_bisa_dibuat dir=$BACKUP_DIR"
 
@@ -244,48 +485,9 @@ log "LOCAL_OK file=$FINAL bytes=$SIZE"
 # rclone is NOT installed on the production host as of 7 Aug 2026, so the first
 # deployment of this script is EXPECTED to end RESULT=DEGRADED exit 10 with a
 # valid local backup. That is correct behaviour, not a regression.
-OFFSITE_STATE="not_configured"
-if [ -n "$R2_REMOTE" ]; then
-  OFFSITE_STATE="failed"
-  if command -v rclone >/dev/null 2>&1; then
-    REMOTE_OBJ="$R2_REMOTE/postgres/$(basename "$FINAL")"
-    if rclone copy "$FINAL" "$R2_REMOTE/postgres/" --s3-no-check-bucket; then
-      # Verify the OBJECT WE JUST UPLOADED, not merely rclone's exit code. An
-      # upload that "succeeded" into an unreadable or truncated object is a
-      # backup that only exists on paper. Read it back and re-test the gzip.
-      trap - ERR
-      set +e
-      rclone cat "$REMOTE_OBJ" | gzip -t
-      RPIPE=("${PIPESTATUS[@]}")
-      set -e
-      trap 'post_publish_err $LINENO' ERR
-      if [ "${RPIPE[0]}" -eq 0 ] && [ "${RPIPE[1]}" -eq 0 ]; then
-        # `rclone size` is guarded by `if`, not captured bare. Under `pipefail` a
-        # failing rclone makes the assignment itself fail, which fires the ERR
-        # trap and exits BEFORE retention ever runs — losing local housekeeping
-        # over a remote metadata call. Only the byte count is parsed out; the
-        # JSON is never logged.
-        if R_JSON="$(rclone size "$REMOTE_OBJ" --json 2>/dev/null)"; then
-          R_SIZE="$(printf '%s' "$R_JSON" | sed -n 's/.*"bytes":[[:space:]]*\([0-9]*\).*/\1/p')"
-          if [ -n "$R_SIZE" ] && [ "$R_SIZE" = "$SIZE" ]; then
-            OFFSITE_STATE="verified"
-            log "OFFSITE_OK remote_obj=$REMOTE_OBJ bytes=$R_SIZE"
-          else
-            log "OFFSITE_WARN ukuran_tidak_cocok local=$SIZE remote=${R_SIZE:-unknown}"
-          fi
-        else
-          log "OFFSITE_WARN rclone_size_gagal remote_obj=$REMOTE_OBJ"
-        fi
-      else
-        log "OFFSITE_WARN objek_remote_tidak_terbaca cat_exit=${RPIPE[0]} gzip_exit=${RPIPE[1]}"
-      fi
-    else
-      log "OFFSITE_WARN upload_gagal remote=$R2_REMOTE"
-    fi
-  else
-    log "OFFSITE_WARN rclone_tidak_terpasang"
-  fi
-  [ "$OFFSITE_STATE" = "verified" ] || degrade "offsite_tidak_terverifikasi"
+offsite_put "$FINAL" "$SIZE" postgres
+if [ -n "$R2_REMOTE" ] && [ "$OFFSITE_STATE" != "verified" ]; then
+  degrade "offsite_tidak_terverifikasi"
 fi
 
 # --- Retention ----------------------------------------------------------------
@@ -304,10 +506,25 @@ else
   degrade "retention_dilewati_final_tidak_valid"
 fi
 
+# --- Uploads (BL-164) ---------------------------------------------------------
+# Last, on purpose. Everything above concerns the database backup, which is
+# proven; this is not, so it runs only once a good dump is safely on disk, sent
+# offsite and pruned. Called bare rather than as `if ! uploads_backup`, because
+# bash suppresses errexit inside a function used as a condition — which would
+# silently change the meaning of the `trap - ERR; set +e … set -e` sequences the
+# function inherits. Read UPLOADS_STATE instead.
+uploads_backup
+if [ "$UPLOADS_STATE" != "ok" ]; then
+  # Note this degrades on a host where UPLOADS_PATH is simply not set. That is
+  # intended here: on this host an unconfigured uploads path means the backup is
+  # incomplete, and BL-162 is exactly the story of that going unnoticed.
+  degrade "uploads_$UPLOADS_STATE"
+fi
+
 # --- Result -------------------------------------------------------------------
 if [ -n "$DEGRADED_REASON" ]; then
-  log "RESULT=DEGRADED reasons=$DEGRADED_REASON file=$FINAL bytes=$SIZE tables=$TABLES"
+  log "RESULT=DEGRADED reasons=$DEGRADED_REASON file=$FINAL bytes=$SIZE tables=$TABLES uploads=$UPLOADS_STATE"
   exit 10
 fi
-log "RESULT=OK file=$FINAL bytes=$SIZE tables=$TABLES offsite=$OFFSITE_STATE"
+log "RESULT=OK file=$FINAL bytes=$SIZE tables=$TABLES offsite=$OFFSITE_STATE uploads=$UPLOADS_STATE"
 exit 0
