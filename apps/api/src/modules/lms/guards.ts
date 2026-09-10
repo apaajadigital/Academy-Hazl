@@ -29,7 +29,17 @@ export async function requireLmsAdmin(
     where: { userId, role: "lms_admin", tenantId },
   });
   if (!role) return res.status(403).json(errorResponse("FORBIDDEN", "Akses ditolak."));
-  next();
+  // BL-168: `return` is load-bearing, not style. This is not Express middleware —
+  // every LMS route does `await requireLmsAdmin(req, res, async () => {...})`, so
+  // only a returned promise gets adopted by that await and lands inside the
+  // route's try/catch. A bare `next()` dropped the handler's promise: the route
+  // completed, the catch went out of scope, and the handler's AppError rejected
+  // afterwards with nobody listening. apps/api registers no unhandledRejection
+  // handler and production runs Node 22, where the default is `throw` — so the
+  // process died. A tenant lms_admin mistyping a batch id was enough to do it.
+  // The super-admin branch above always had its `return` and was never affected,
+  // which is why this only ever bit tenant admins.
+  return next();
 }
 
 // ─── Tenant-scoping helpers (H1) ──────────────────────────────────────────────
