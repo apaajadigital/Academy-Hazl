@@ -44,7 +44,17 @@ TASK-000 → 001 → 002 → (003 ∥ 004 ∥ 011) → (012 ∥ 013) → [QUALIT
 - [~] **Phase 2 QUALITY GATE** — TASK-010..013 kode selesai (error-envelope migration, lms.ts split to 7 modules, security P1 CSP/HSTS/RBAC), both builds green. Next.js audit = accepted risk (BL-15). ⚠️ **Kriteria coverage SSOT §9.12 BELUM terpenuhi** — lihat catatan di bawah.
 - [x] **Phase 3 INFRA (code)** — TASK-020..023 ✅ code complete: deploy config+CD+runbooks, DB baseline migration+indexes+backup, BullMQ queue+worker, observability (Sentry/pino/requestId//ready). 🖐️ Host execution: deploy ✅ sudah jalan; `migrate deploy` ✅ **CURRENT 13/13 per 30 Jul 2026** (`docs/RUNBOOK_DB.md` §1.1). Sisa host: backup cron, restore drill, `SENTRY_DSN`, cron certbot.
 
-  > 🔴 **Koreksi 29 Jul 2026 — klaim "coverage gate enforced" menyesatkan.** Yang ada adalah
+  > 🟢 **KOREKSI 10 Sep 2026 — kriteria coverage kini TERPENUHI untuk modul kritis (BL-11).** Diukur
+  > ulang hari ini, bukan disalin: **auth 97,4%** (dari 61,2%), **lms 88,5%** (dari 69,1%), **orders
+  > 84,2%**, **checkout 90,3%**. Keempat modul kritis SSOT §9.8 lewat 80% pada statements, functions,
+  > dan lines. Ratchet gate dinaikkan ke **stmt 82 / branch 70 / func 84 / lines 84** plus enam kunci
+  > per-file. Suite: **116 file / 1253 test**.
+  >
+  > Yang tersisa dan jujur disebut: **branch coverage lms 74,9%** (di bawah 80) dan `lms/course.ts`
+  > 64,4%. Angka lama di blok di bawah ini — dan di BL-11 — **sudah basi jauh sebelum hari ini**;
+  > membacanya apa adanya membuat task ini sempat di-scope jauh lebih besar dari kenyataan.
+  >
+  > 🔴 **Koreksi 29 Jul 2026 (riwayat) — klaim "coverage gate enforced" menyesatkan.** Yang ada adalah
   > **ratchet gate** (anti-regresi), bukan gate 80%. Threshold nyata di `apps/api/vitest.config.ts:48-51`:
   > **lines 61 / functions 58 / branches 49 / statements 60**. Kriteria SSOT §9.12 menuntut modul
   > kritis (auth, commerce/payment, orders, lms) **≥ 80%**, dan BL-11 mencatat **orders 75%,

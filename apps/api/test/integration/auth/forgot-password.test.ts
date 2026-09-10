@@ -161,6 +161,38 @@ describe("POST /api/auth/forgot-password", () => {
     expect(JSON.stringify(res.body)).not.toContain(persisted.data.resetPasswordToken);
   });
 
+  it("surfaces a database outage as 500 rather than a false success", async () => {
+    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("connection refused"));
+
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: knownUser.email });
+
+    // The generic 200 above exists to hide WHICH addresses are registered — it
+    // must not also hide that the endpoint is broken. Swallowing the throw would
+    // tell every user "instructions sent" while no token was ever minted, and
+    // the outage would only be discovered from support tickets.
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error.code).toBe("INTERNAL_ERROR");
+    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when persisting the reset token fails", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(knownUser as never);
+    vi.mocked(prisma.user.update).mockRejectedValueOnce(new Error("write timeout"));
+
+    const res = await request(app)
+      .post("/api/auth/forgot-password")
+      .send({ email: knownUser.email });
+
+    // A write failure escapes the inner best-effort try/catch (which only wraps
+    // the mailer), so it reaches the handler catch. Documented here because the
+    // status differs from the mailer-failure case above: 500 vs 200.
+    expect(res.status).toBe(500);
+    expect(sendPasswordResetEmail).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for an invalid email", async () => {
     const res = await request(app)
       .post("/api/auth/forgot-password")

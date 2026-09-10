@@ -49,14 +49,16 @@ export default defineConfig({
       // incremental goal tracked in docs/BACKLOG.md (BL-11), reached by adding
       // tests over successive PRs, not all at once (SSOT GAP-04 guidance).
       thresholds: {
-        // Ratcheted up after Wave 1.7 covered the money path (never lower).
-        // Measured 2 Sep 2026: lines 80.98, functions 80.56, branches 68.65,
-        // statements 79.51 — each pinned a point or two below to leave room for
+        // Ratcheted up after BL-11 covered auth + lms (never lower).
+        // Measured 10 Sep 2026: lines 84.90, functions 85.37, branches 71.41,
+        // statements 83.30 — each pinned a point or two below to leave room for
         // ordinary refactors without letting real regressions through.
-        lines: 80,
-        functions: 80,
-        branches: 68,
-        statements: 79,
+        // (Previous rung, 2 Sep: lines 80.98 / funcs 80.56 / branches 68.65 /
+        // stmts 79.51 → gate 80/80/68/79.)
+        lines: 84,
+        functions: 84,
+        branches: 70,
+        statements: 82,
         // Critical middleware is already strong — lock it high to prevent drift.
         "src/middleware/authenticate.ts": { lines: 90, functions: 100, branches: 85, statements: 90 },
         "src/middleware/authorize.ts": { lines: 80, functions: 80, branches: 70, statements: 80 },
@@ -76,6 +78,27 @@ export default defineConfig({
         "src/modules/trainer/quiz.ts": { lines: 96, functions: 100, branches: 80, statements: 89 },
         "src/modules/trainer/students.ts": { lines: 100, functions: 100, branches: 82, statements: 94 },
         "src/modules/trainer/certificates.ts": { lines: 100, functions: 100, branches: 72, statements: 93 },
+        // BL-11 targets: the two critical modules SSOT §9.8 names that were
+        // actually short — auth (61%) and lms (69%). Six files went from
+        // 5.9-63% to 100%, and a per-file lock is what stops that eroding again.
+        // The global gate alone would not notice: oauth.ts could fall back to
+        // 12% and move the project average by well under a point.
+        //
+        // Covering these was not a metrics exercise. report.ts sat at 5.9% and
+        // batch.ts at 17.6%, and writing tests for them is what surfaced BL-168
+        // — a missing `return` in guards.ts that killed the API process for any
+        // tenant admin who mistyped an id. Nothing had ever run that path.
+        "src/modules/auth/oauth.ts": { lines: 98, functions: 100, branches: 90, statements: 98 },
+        "src/modules/auth/session.ts": { lines: 98, functions: 100, branches: 90, statements: 98 },
+        "src/modules/auth/password.ts": { lines: 98, functions: 100, branches: 90, statements: 98 },
+        "src/modules/auth/register.ts": { lines: 98, functions: 100, branches: 90, statements: 98 },
+        "src/modules/lms/report.ts": { lines: 98, functions: 100, branches: 90, statements: 98 },
+        // branches is 75 rather than ~100 because the two uncovered ones are the
+        // `?? "Validasi gagal."` fallbacks on `issues[0]?.message`. safeParse
+        // never returns a ZodError with an empty issues array, so they are
+        // defensively unreachable from HTTP — pinned at what is actually
+        // achievable rather than at a number that would force a fake test.
+        "src/modules/lms/batch.ts": { lines: 98, functions: 100, branches: 70, statements: 98 },
       },
     },
   },
