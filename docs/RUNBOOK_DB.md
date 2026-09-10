@@ -434,7 +434,15 @@ database produksi.**
 ```bash
 cd /var/www/jago-akademi
 COMPOSE_DIR=/var/www/jago-akademi /bin/bash ./scripts/restore.sh
-# → "restore drill PASSED — backup replays cleanly, schema and critical data match live; scratch DB dropped"
+# → "restore drill PASSED — DB replays cleanly and matches live; uploads archive
+#     restores and its bytes match; scratch DB dropped"
+#
+# BL-165: drill ini kini memverifikasi DUA hal. Database yang pulih tanpa filenya
+# bukan situs yang pulih — setiap PDF sertifikat dan gambar akan 404 sementara
+# kolom fileUrl tetap menunjuk ke sana. Arsip uploads di-extract ke direktori
+# sementara, jumlah filenya dibandingkan ke UPLOADS_PATH yang hidup, lalu **byte
+# tiap file** dicocokkan dengan md5 — kardinalitas bukan integritas.
+# `SKIP_UPLOADS=1` melewatinya secara sadar dan tercatat di log, bukan diam-diam.
 ```
 
 Setelah drill: pastikan scratch DB benar-benar hilang —

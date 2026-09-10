@@ -363,6 +363,17 @@ restore_case() {
   # lulus karena alasan yang salah — persis yang terjadi saat tes ini pertama ditulis.
   : > "$d/docker-compose.vps.yml"
   gzip -c "$ROOT/f45.sql" > "$d/backups/jago-2026-08-04-105100.sql.gz"
+  # Uploads half (BL-165). $UP_MODE picks what the archive contains, so the drill
+  # can be shown to FAIL on an archive that restores nothing or restores the
+  # wrong bytes — the two cases a `tar -tzf` alone would wave through.
+  case "${UP_MODE:-ok}" in
+    none) : ;;                                   # no archive at all
+    empty)   "$REAL_TAR" -czf "$d/backups/jago-uploads-2026-08-04-105100.tar.gz" \
+               --files-from /dev/null ;;
+    corrupt) mkdir -p "$d/upsrc/images"; printf 'ISI-BERBEDA' > "$d/upsrc/images/cover.png"
+             "$REAL_TAR" -czf "$d/backups/jago-uploads-2026-08-04-105100.tar.gz" -C "$d/upsrc" . ;;
+    *)       "$REAL_TAR" -czf "$d/backups/jago-uploads-2026-08-04-105100.tar.gz" -C "$d/uploads" . ;;
+  esac
   cat > "$d/bin/docker" <<'EOF'
 #!/bin/sh
 echo "$*" >> "$DOCKER_LOG"
@@ -405,6 +416,7 @@ EOF
   : > "$d/dockerlog"
   env PATH="$d/bin:$PATH" COMPOSE_DIR="$d" BACKUP_DIR="$d/backups" \
       RESTORE_TABLES="$2" DRILL_ROWS="$3" LIVE_ROWS="$4" DOCKER_LOG="$d/dockerlog" \
+      UPLOADS_DIR="$d/uploads" \
       bash "$RS" >"$d/log" 2>&1
   echo "$?|$d"
 }
@@ -428,6 +440,32 @@ r=$(restore_case rshort 45 5 7); rc=${r%%|*}; d=${r#*|}
 r=$(restore_case rok 45 7 7); rc=${r%%|*}; d=${r#*|}
 [ "$rc" = 0 ] && ok "backup sehat LOLOS" || no "sehat ditolak" "rc=$rc ; $(tail -2 "$d/log")"
 grep -q 'restore drill PASSED' "$d/log" && ok "melaporkan PASSED" || no "PASSED" "$(tail -2 "$d/log")"
+grep -q 'uploads restored: 2 files' "$d/log" && ok "arsip uploads ikut diverifikasi (2 file)" || no "verifikasi uploads" "$(grep uploads "$d/log" | tail -1)"
+grep -q 'uploads content compared: 2 file(s), 0 mismatch' "$d/log" \
+  && ok "byte tiap file dibandingkan ke live, bukan sekadar dihitung" \
+  || no "perbandingan byte" "$(grep 'content compared' "$d/log" | tail -1)"
+
+# ── BL-165: tiga cara arsip uploads bisa berbohong ──────────────────────────
+# Ketiganya lolos `gzip -t`. Dua di antaranya juga lolos `tar -tzf`. Hanya
+# perbandingan terhadap live yang bisa membedakannya dari arsip yang sehat.
+r=$(UP_MODE=empty restore_case rupempty 45 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "arsip uploads KOSONG sementara live berisi file -> drill GAGAL" \
+               || no "arsip kosong lolos" "$(tail -2 "$d/log")"
+grep -q 'restored 0 files while live holds 2' "$d/log" && ok "sebab eksplisit: 0 vs 2" || no "sebab arsip kosong" "$(tail -2 "$d/log")"
+grep -q 'restore drill PASSED' "$d/log" && no "tetap mencetak PASSED" "drill tak bisa gagal" || ok "tidak mencetak PASSED"
+
+r=$(UP_MODE=corrupt restore_case rupcorrupt 45 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "isi arsip BERBEDA dari live -> drill GAGAL" || no "isi berbeda lolos" "$(tail -2 "$d/log")"
+grep -q 'CONTENT MISMATCH' "$d/log" && ok "file yang berbeda disebut namanya" || no "mismatch dilaporkan" "$(tail -2 "$d/log")"
+
+r=$(UP_MODE=none restore_case rupnone 45 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" != 0 ] && ok "tidak ada arsip uploads sama sekali -> drill GAGAL" || no "tanpa arsip lolos" "$(tail -2 "$d/log")"
+grep -q 'no uploads archive' "$d/log" && ok "sebab eksplisit: arsip tidak ada" || no "sebab tanpa arsip" "$(tail -2 "$d/log")"
+
+# Jalan keluar yang eksplisit — bukan diam-diam melewati.
+r=$(UP_MODE=none SKIP_UPLOADS=1 restore_case rupskip 45 7 7); rc=${r%%|*}; d=${r#*|}
+[ "$rc" = 0 ] && ok "SKIP_UPLOADS=1 melewati verifikasi secara sadar" || no "SKIP_UPLOADS" "rc=$rc ; $(tail -2 "$d/log")"
+grep -q 'uploads verification SKIPPED' "$d/log" && ok "pelewatan itu tercatat di log" || no "skip tidak tercatat" "$(tail -2 "$d/log")"
 
 # Drill sekarang MEMBACA produksi — itu satu-satunya cara menjawab "benarkah kita
 # bisa pulih". Jadi asersinya bukan lagi "jangan pernah sebut jago_akademi",
