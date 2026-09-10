@@ -146,6 +146,27 @@ const nextConfig = {
         source: "/api/:path*",
         destination: `${apiProxyTarget}/api/:path*`,
       },
+      // BL-167: uploaded files live in a volume mounted into `api` and `worker`,
+      // NOT into `web`. Host nginx routes /uploads/* straight to the api
+      // container, so a browser hitting the URL directly gets its 200 — which is
+      // why this looked fine from outside.
+      //
+      // The image optimizer is what breaks. It runs INSIDE the web container and
+      // resolves a local `src` against its own server, so `<Image src="/uploads/x.png">`
+      // makes web fetch http://127.0.0.1:3000/uploads/x.png, gets 404 (there is no
+      // /app/uploads in that container at all), and answers the browser with
+      // `400 "url" parameter is not allowed`. Measured in production 10 Sep 2026:
+      // /ebook/Cara-Kaya renders the cover through /_next/image and gets 400.
+      //
+      // This rewrite points the web container at the same origin nginx already
+      // uses, so the optimizer can read what it is being asked to optimize. It
+      // fixes every `<Image>` fed a /uploads path — not just today's two ebook
+      // covers, but every future admin upload, which would otherwise be born
+      // broken.
+      {
+        source: "/uploads/:path*",
+        destination: `${apiProxyTarget}/uploads/:path*`,
+      },
     ];
   },
 
