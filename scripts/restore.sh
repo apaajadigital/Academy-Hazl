@@ -56,6 +56,18 @@ SCRATCH="${SCRATCH_DB:-jago_restore_test}"
 # dump the backup step would have rejected.
 MIN_TABLES="${MIN_TABLES:-45}"
 
+# --- Uploads archive verification (BL-165) ------------------------------------
+# BL-164 made the archive; BL-163 made this drill able to fail. Until now the two
+# had not met: the drill proved only the DATABASE was recoverable. The archive was
+# verified by hand once, on 10 Sep 2026 — and a manual check is the one that gets
+# skipped exactly when it matters. Failure mode if left manual: an archive is
+# published every night, looks healthy in `ls`, and nobody ever opens it.
+#
+# Path from the host .env, same single source of truth as backup.sh (BL-162).
+UPLOADS_DIR="${UPLOADS_DIR:-}"
+# Set to 1 to skip the uploads half (e.g. a host that genuinely has no uploads).
+SKIP_UPLOADS="${SKIP_UPLOADS:-0}"
+
 # Tables whose emptiness would make a "successful" restore worthless, paired
 # with the timestamp column used to align drill against live. Column names
 # verified against the live schema, not against memory: course_enrollments has
@@ -88,6 +100,11 @@ if [ -f "$COMPOSE_DIR/.env" ]; then
 fi
 PG_USER="${_pg_user:-${POSTGRES_USER:-jagouser}}"
 
+# Same idiom, same discipline: only this key is read, the value is never logged.
+if [ -z "$UPLOADS_DIR" ] && [ -f "$COMPOSE_DIR/.env" ]; then
+  UPLOADS_DIR="$(grep -E '^UPLOADS_PATH=' "$COMPOSE_DIR/.env" | head -1 | cut -d= -f2- | tr -d '"' || true)"
+fi
+
 # Newest by FILENAME, not mtime. Backup names are `jago-YYYY-MM-DD-HHMMSS.sql.gz`
 # so a lexical sort is chronological, and an rclone re-download or a `cp` without
 # -p can no longer make the drill certify a file that is not the newest backup.
@@ -107,11 +124,15 @@ admin_q()   { "${DC[@]}"    psql -U "$PG_USER" -d postgres   -v ON_ERROR_STOP=1 
 # ── Cleanup: WITH (FORCE) so a leftover connection cannot leave the DB behind ─
 # The old cleanup swallowed every error, so a failed DROP left the scratch DB
 # alive AND still printed PASSED.
+UDIR=""
 cleanup() {
   local rc=$?
   if ! admin_q "DROP DATABASE IF EXISTS $SCRATCH WITH (FORCE);" >/dev/null 2>&1; then
     echo "WARNING: could not drop scratch database $SCRATCH — drop it by hand" >&2
   fi
+  # `|| true`: the EXIT trap runs under errexit, so a failing rm would replace
+  # $rc and change what the drill reports.
+  if [ -n "$UDIR" ] && [ -d "$UDIR" ]; then rm -rf "$UDIR" || true; fi
   return $rc
 }
 trap cleanup EXIT
@@ -187,4 +208,62 @@ done
 [ "$FAILURES" -eq 0 ] \
   || die "$FAILURES critical table(s) do not match live at the backup cutoff — this backup is NOT a proven recovery point"
 
-log "restore drill PASSED — backup replays cleanly, schema and critical data match live; scratch DB dropped"
+# ── 7. Uploads archive (BL-165) ──────────────────────────────────────────────
+# A recovered database whose files are gone is not a recovered site: every
+# certificate PDF, e-book and image would 404 while fileUrl/coverUrl rows still
+# point at them. So the archive is verified here, on the same run, rather than
+# by hand — a manual step is the one skipped exactly when it matters.
+if [ "$SKIP_UPLOADS" = "1" ]; then
+  log "uploads verification SKIPPED (SKIP_UPLOADS=1)"
+else
+  [ -n "$UPLOADS_DIR" ] && [ "${UPLOADS_DIR#/}" != "$UPLOADS_DIR" ] \
+    || die "UPLOADS_PATH not set to an absolute path — cannot verify the uploads archive. Set it, or pass SKIP_UPLOADS=1 to state deliberately that this host has none."
+  [ -d "$UPLOADS_DIR" ] || die "uploads dir does not exist: $UPLOADS_DIR"
+
+  # Newest by FILENAME, not mtime — same reasoning as the dump above: an rclone
+  # re-download or a `cp` without -p would otherwise make the drill certify an
+  # archive that is not the newest one.
+  ULATEST="$(ls -1 "$BACKUP_DIR"/jago-uploads-*.tar.gz 2>/dev/null | sort | tail -1 || true)"
+  [ -n "$ULATEST" ] \
+    || die "no uploads archive in $BACKUP_DIR — backup.sh should be producing one nightly (BL-164)"
+  log "uploads archive: $ULATEST"
+
+  gzip -t "$ULATEST" || die "uploads archive is not valid gzip: $ULATEST"
+  tar -tzf "$ULATEST" >/dev/null 2>&1 || die "uploads archive is not a readable tar: $ULATEST"
+
+  UDIR="$(mktemp -d)"
+  tar -xzf "$ULATEST" -C "$UDIR" || die "uploads archive failed to extract"
+
+  U_FILES=$(find "$UDIR" -type f | wc -l | tr -d '[:space:]')
+  LIVE_FILES=$(find "$UPLOADS_DIR" -type f | wc -l | tr -d '[:space:]')
+  log "uploads restored: $U_FILES files (live has $LIVE_FILES)"
+
+  # An archive that restores nothing while the live directory holds files is the
+  # exact failure a size check or a `tar -tzf` cannot see — the same blind spot
+  # BL-164 guards against on the writing side.
+  if [ "${LIVE_FILES:-0}" -gt 0 ] && [ "${U_FILES:-0}" -eq 0 ]; then
+    die "uploads archive restored 0 files while live holds $LIVE_FILES — this archive is NOT a recovery point"
+  fi
+
+  # Cardinality is not integrity. Comparing bytes for every archived file that
+  # still exists live is what separates "we restored 5 files" from "we restored
+  # 5 files that are actually the right ones". Files deleted from live since the
+  # backup are skipped — they cannot be compared, and their absence is expected.
+  UMISMATCH=0; UCOMPARED=0
+  while IFS= read -r f; do
+    rel="${f#"$UDIR"/}"
+    [ -f "$UPLOADS_DIR/$rel" ] || continue
+    UCOMPARED=$((UCOMPARED + 1))
+    if [ "$(md5sum "$f" | cut -d' ' -f1)" != "$(md5sum "$UPLOADS_DIR/$rel" | cut -d' ' -f1)" ]; then
+      UMISMATCH=$((UMISMATCH + 1))
+      # Path only, never contents. Upload filenames can be personal data, so this
+      # is the one place a name is printed — and only when something is wrong.
+      log "  CONTENT MISMATCH $rel"
+    fi
+  done < <(find "$UDIR" -type f)
+  log "uploads content compared: $UCOMPARED file(s), $UMISMATCH mismatch(es)"
+  [ "$UMISMATCH" -eq 0 ] \
+    || die "$UMISMATCH archived file(s) differ byte-for-byte from live — the archive is corrupt"
+fi
+
+log "restore drill PASSED — DB replays cleanly and matches live; uploads archive restores and its bytes match; scratch DB dropped"
