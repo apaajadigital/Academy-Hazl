@@ -406,7 +406,15 @@ describe("POST /api/checkout", () => {
     slug: "workshop-offline",
     status: "published",
     type: "offline",
-    startDate: new Date("2026-09-10T09:00:00+07:00"),
+    // RELATIVE, never a literal. This was `new Date("2026-09-10T09:00:00+07:00")`
+    // — a date that was comfortably in the future when the test was written and
+    // became the present on 10 Sep 2026. `isEventEnded()` then answered true,
+    // checkout returned 422 EVENT_ENDED, and three tests began failing on `main`
+    // with nothing having changed in the code they cover. A fixture that expires
+    // is not a deterministic test (SSOT §9.8); it is a scheduled outage that
+    // blocks every merge until someone reads the diff closely enough to notice
+    // the failure has nothing to do with their change.
+    startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     location: "Jakarta",
     venue: "Aula Utama",
     quota: 100,
