@@ -226,7 +226,31 @@ const nextConfig = {
   transpilePackages: ["@repo/ui"],
 
   images: {
-    formats: ["image/avif", "image/webp"],
+    // BL-159: AVIF deliberately NOT served. This is defence in depth against the
+    // NEXT decoder CVE, not a fix for a current one.
+    //
+    // The exposure it removes: `remotePatterns` below still ends in a wildcard
+    // `{ https, "**" }`, so any unauthenticated request to /_next/image can name
+    // an arbitrary host and have this server fetch and DECODE whatever comes
+    // back. That is exactly how GHSA-2xp9-vwfh-vxw4 (BL-158) was reachable here
+    // — an RCE in libheif, reached through AVIF, reached through that wildcard.
+    // Two AVIF/libheif RCEs landed in this dependency chain in 2026 alone.
+    //
+    // Why not narrow the wildcard instead, which would be the real fix: the
+    // three forms that accept an image URL (trainer course cover, trainer
+    // profile photo, LMS tenant logo) are `type="url"` inputs with NO upload
+    // alternative — trainers have no other way to set a thumbnail. Narrowing
+    // would leave them unable to, and the failure would be silent: the in-form
+    // preview is a plain <img> (renders fine), while the public pages and
+    // checkout use <Image> (blank). Giving trainers an upload field first is a
+    // FEATURE, which Phase 1-4 does not permit (CLAUDE.md §d.3). So the wildcard
+    // stays for now and is tracked as BL-159; this narrows the decoder surface
+    // behind it instead.
+    //
+    // Cost, stated plainly: WebP is roughly 20-30% larger than AVIF, so images
+    // get bigger for users on mobile data. That is the trade being made.
+    // Reversing it is one array entry once BL-159 is properly resolved.
+    formats: ["image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "**.jagoakademi.com" },
       { protocol: "https", hostname: "**.cloudflare.com" },
