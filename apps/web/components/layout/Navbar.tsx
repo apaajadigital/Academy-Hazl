@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { features } from "@/lib/features";
+import { useAuthSession } from "@/lib/auth/useAuthSession";
 
 // Community-group items — each link only surfaces once its feature ships
 // (flags are build-time). Empty array = the whole dropdown is omitted.
@@ -52,22 +53,16 @@ const navLinks = [
   { label: "Tentang", href: "/about" },
 ];
 
-function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return (
-    sessionStorage.getItem("access_token") ||
-    sessionStorage.getItem("jg_token") ||
-    localStorage.getItem("jg_access_token")
-  );
-}
-
 export function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInitials, setUserInitials] = useState("");
+  const { isLoggedIn, user } = useAuthSession();
+  const userInitials = useMemo(() => {
+    const name = user?.name ?? "";
+    return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "U";
+  }, [user]);
   const mobileMenuId = "mobile-nav-menu";
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -86,24 +81,6 @@ export function Navbar() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Check login state from token
-  useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    fetch("/api/auth/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body.success) {
-          setIsLoggedIn(true);
-          const name: string = body.data?.name ?? "";
-          setUserInitials(
-            name.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2) || "U"
-          );
-        }
-      })
-      .catch(() => {});
   }, []);
 
   const openDropdown = useCallback((label: string) => {

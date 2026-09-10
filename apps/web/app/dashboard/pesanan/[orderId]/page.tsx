@@ -18,7 +18,7 @@ import {
   GraduationCap,
   type LucideIcon,
 } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
 import {
   Card,
@@ -87,27 +87,30 @@ export default function OrderDetailPage() {
   const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push(`/masuk?redirect=/dashboard/pesanan/${orderId}`);
-      return;
-    }
+    async function load() {
+      const token = await getValidToken();
+      if (!token) {
+        router.push(`/masuk?redirect=/dashboard/pesanan/${orderId}`);
+        return;
+      }
 
-    // Relative URL, same as the sibling list page: this runs in the browser
-    // only, so it goes through the Next.js /api/* proxy rewrite and avoids CORS.
-    fetch(`/api/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) setOrder(data.data);
-        else setError(data.error?.message ?? "Pesanan tidak ditemukan.");
-        setLoading(false);
+      // Relative URL, same as the sibling list page: this runs in the browser
+      // only, so it goes through the Next.js /api/* proxy rewrite and avoids CORS.
+      fetch(`/api/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => {
-        setError("Gagal memuat data pesanan.");
-        setLoading(false);
-      });
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) setOrder(data.data);
+          else setError(data.error?.message ?? "Pesanan tidak ditemukan.");
+          setLoading(false);
+        })
+        .catch(() => {
+          setError("Gagal memuat data pesanan.");
+          setLoading(false);
+        });
+    }
+    load();
   }, [orderId, router]);
 
   if (loading) {
@@ -128,7 +131,7 @@ export default function OrderDetailPage() {
 
   async function submitRefund(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setRefundLoading(true);
     try {

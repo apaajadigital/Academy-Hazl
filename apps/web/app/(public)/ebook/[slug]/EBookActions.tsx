@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, BookOpen, Download } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import { API_BASE } from "@/lib/api/base";
 
 type Props = {
@@ -28,26 +28,29 @@ export default function EBookActions({ ebookSlug, price }: Props) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-    // Check if the user already owns it. The backend resolves this endpoint by
-    // SLUG (not id), so we must pass ebookSlug here (H2) — passing the id 404'd
-    // and the owned-file buttons never appeared for paying customers.
-    fetch(`${getApiBase()}/api/ebooks/${ebookSlug}/file`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setHasPurchased(true);
-          setFileUrl(data.data.fileUrl);
-        }
-        // A non-success body is the normal "not purchased yet" answer, so it
-        // must NOT surface as an error — only a failed request does, below.
+    async function load() {
+      const token = await getValidToken();
+      if (!token) return;
+      // Check if the user already owns it. The backend resolves this endpoint by
+      // SLUG (not id), so we must pass ebookSlug here (H2) — passing the id 404'd
+      // and the owned-file buttons never appeared for paying customers.
+      fetch(`${getApiBase()}/api/ebooks/${ebookSlug}/file`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => {
-        setError("Gagal memeriksa status pembelian. Muat ulang halaman untuk mencoba lagi.");
-      });
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setHasPurchased(true);
+            setFileUrl(data.data.fileUrl);
+          }
+          // A non-success body is the normal "not purchased yet" answer, so it
+          // must NOT surface as an error — only a failed request does, below.
+        })
+        .catch(() => {
+          setError("Gagal memeriksa status pembelian. Muat ulang halaman untuk mencoba lagi.");
+        });
+    }
+    load();
   }, [ebookSlug]);
 
   function handleBuy() {

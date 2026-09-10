@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Award, Calendar, ShieldCheck, Download } from "lucide-react";
 import { Badge, EmptyState, DashboardLoading } from "@/components/ui";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
 import { API_BASE as apiBase } from "@/lib/api/base";
 
@@ -23,24 +23,27 @@ export default function SertifikatPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.replace("/masuk"); return; }
+    async function load() {
+      const token = await getValidToken();
+      if (!token) { router.replace("/masuk"); return; }
 
-    fetch(`/api/certificates`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body.success && Array.isArray(body.data)) {
-          setCerts(body.data);
-        } else {
-          setError(body.error?.message ?? "Gagal memuat sertifikat.");
-        }
+      fetch(`/api/certificates`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => {
-        setError("Gagal memuat sertifikat.");
-      })
-      .finally(() => setLoading(false));
+        .then((r) => r.json())
+        .then((body) => {
+          if (body.success && Array.isArray(body.data)) {
+            setCerts(body.data);
+          } else {
+            setError(body.error?.message ?? "Gagal memuat sertifikat.");
+          }
+        })
+        .catch(() => {
+          setError("Gagal memuat sertifikat.");
+        })
+        .finally(() => setLoading(false));
+    }
+    load();
   }, [router]);
 
   if (loading) {

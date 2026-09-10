@@ -8,7 +8,7 @@
  *   - localStorage["jg_access_token"] → cross-tab persistence (survives reload)
  *   - sessionStorage["jg_token"]      → legacy key (read-only backward compat)
  *
- * Refresh token is managed as an HttpOnly cookie (jg_rt) by the backend.
+ * Refresh token is managed as an HttpOnly cookie (jg_refresh) by the backend.
  * We never touch it directly — the browser sends it automatically on
  * POST /api/auth/refresh with credentials: "include".
  */

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingBag, Info, BookMarked, BookOpen, Calendar, Download, Loader2 } from "lucide-react";
 import { EmptyState, DashboardLoading } from "@/components/ui";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 type EBook = {
   id: string;
@@ -25,7 +25,7 @@ export default function EbookPage() {
   const [downloadingSlug, setDownloadingSlug] = useState<string | null>(null);
 
   async function handleDownload(slug: string) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setDownloadingSlug(slug);
     try {
@@ -46,24 +46,27 @@ export default function EbookPage() {
   }
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.replace("/masuk"); return; }
+    async function load() {
+      const token = await getValidToken();
+      if (!token) { router.replace("/masuk"); return; }
 
-    fetch(`/api/ebooks/my`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body.success && Array.isArray(body.data)) {
-          setEbooks(body.data);
-        } else {
-          setError(body.error?.message ?? "Gagal memuat e-book.");
-        }
+      fetch(`/api/ebooks/my`, {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => {
-        setError("Gagal memuat e-book.");
-      })
-      .finally(() => setLoading(false));
+        .then((r) => r.json())
+        .then((body) => {
+          if (body.success && Array.isArray(body.data)) {
+            setEbooks(body.data);
+          } else {
+            setError(body.error?.message ?? "Gagal memuat e-book.");
+          }
+        })
+        .catch(() => {
+          setError("Gagal memuat e-book.");
+        })
+        .finally(() => setLoading(false));
+    }
+    load();
   }, [router]);
 
   if (loading) {

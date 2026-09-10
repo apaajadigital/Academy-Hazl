@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, PenLine } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import {
   Button,
   Input,
@@ -75,32 +75,35 @@ export default function AdminBlogPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
     let cancelled = false;
-    const params = new URLSearchParams({
-      page: String(page), limit: String(PAGE_SIZE),
-      ...(appliedSearch ? { search: appliedSearch } : {}),
-      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
-    });
-    setLoading(true);
-    fetch(`/api/admin/blog?${params}`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json() as Promise<BlogListResponse>)
-      .then((body) => {
-        // Guard against a slow response from an abandoned page overwriting a newer one.
-        if (cancelled || !body.success) return;
-        const list = Array.isArray(body.data) ? body.data : [];
-        setPosts(list);
-        setTotal(body.meta?.total ?? list.length);
-      })
-      .finally(() => { if (!cancelled) setLoading(false); });
+    async function load() {
+      const token = await getValidToken();
+      if (!token) return;
+      const params = new URLSearchParams({
+        page: String(page), limit: String(PAGE_SIZE),
+        ...(appliedSearch ? { search: appliedSearch } : {}),
+        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+      });
+      setLoading(true);
+      fetch(`/api/admin/blog?${params}`, { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json() as Promise<BlogListResponse>)
+        .then((body) => {
+          // Guard against a slow response from an abandoned page overwriting a newer one.
+          if (cancelled || !body.success) return;
+          const list = Array.isArray(body.data) ? body.data : [];
+          setPosts(list);
+          setTotal(body.meta?.total ?? list.length);
+        })
+        .finally(() => { if (!cancelled) setLoading(false); });
+    }
+    load();
     return () => { cancelled = true; };
   }, [page, statusFilter, appliedSearch, reloadKey]);
 
   function handleSearch(e: React.FormEvent) { e.preventDefault(); setPage(1); setAppliedSearch(search); }
 
   async function updateStatus(id: string, status: string) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     await fetch(`/api/admin/blog/${id}`, {
       method: "PATCH",
