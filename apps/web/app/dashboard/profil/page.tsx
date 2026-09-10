@@ -15,6 +15,7 @@ import { getValidToken } from "@/lib/auth/token";
 import {
   Button,
   Input,
+  PasswordInput,
   Textarea,
   Badge,
   Card,
@@ -383,10 +384,9 @@ export default function ProfilPage() {
 
                 <form onSubmit={handleChangePassword} className="space-y-4">
                   {passwordFields.map(({ key, label, placeholder }) => (
-                    <Input
+                    <PasswordInput
                       key={key}
                       label={label}
-                      type="password"
                       required
                       minLength={key !== "currentPassword" ? 8 : undefined}
                       value={passForm[key as keyof typeof passForm]}

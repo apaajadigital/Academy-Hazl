@@ -17,13 +17,15 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
   /** Leading icon, e.g. `<Mail size={18} />`. */
   leftIcon?: ReactNode;
+  /** Trailing slot, e.g. a show/hide-password toggle button. Rendered inside the same control row as the input, right-aligned. */
+  rightSlot?: ReactNode;
   /** Class for the outer wrapper (label + control + message). */
   containerClassName?: string;
 }
 
 /** Labeled text input with subtle border, cyan focus ring, and error state. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, hint, leftIcon, id, className, containerClassName, ...props },
+  { label, error, hint, leftIcon, rightSlot, id, className, containerClassName, ...props },
   ref,
 ) {
   const autoId = useId();
@@ -51,9 +53,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={cn(fieldBase, error ? fieldError : fieldOk, leftIcon && "pl-11", className)}
+          className={cn(fieldBase, error ? fieldError : fieldOk, leftIcon && "pl-11", rightSlot && "pr-11", className)}
           {...props}
         />
+        {rightSlot && (
+          <span className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center">
+            {rightSlot}
+          </span>
+        )}
       </div>
       {error ? (
         <p id={`${inputId}-error`} role="alert" className="text-xs text-red-600">

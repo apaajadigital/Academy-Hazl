@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, Lock, User } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, PasswordInput } from "@/components/ui";
 import { register, buildGoogleLoginUrl } from "@/lib/auth/api";
 
 export function DaftarForm() {
@@ -98,9 +98,8 @@ export function DaftarForm() {
           placeholder="nama@email.com"
         />
 
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           label="Kata Sandi"
           leftIcon={<Lock size={18} aria-hidden="true" />}
           autoComplete="new-password"
