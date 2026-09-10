@@ -23,6 +23,11 @@ vi.mock("../../../src/db/prisma.js", () => ({
     lmsBatchMember: {
       findMany: vi.fn(),
     },
+    // BL-169: the handler now resolves batchId through assertBatchInTenant, so
+    // this model is reached where it previously was not.
+    lmsBatch: {
+      findFirst: vi.fn(),
+    },
     lmsTenant: {
       findUnique: vi.fn(),
     },
@@ -146,7 +151,18 @@ const LESSONS_PER_COURSE = [
 const BATCH_MEMBERS = [
   { batchId: "batch-a1", userId: "user-alice" },
   // A batch that belongs to tenant-b. See the cross-tenant batchId test below.
+  // `user-bob` is a tenant-A user on purpose: that overlap IS the oracle BL-169
+  // closed. Before the fix, asking for batch-b1 filtered tenant-A's own rows down
+  // to exactly the people who were also in tenant-B's batch.
   { batchId: "batch-b1", userId: "user-bob" },
+];
+
+// BL-169: the batch rows themselves, so `assertBatchInTenant` has something to
+// resolve. batch-b1 exists but belongs to tenant-b — which is what makes the
+// cross-tenant request a 404 rather than an empty result.
+const BATCHES = [
+  { id: "batch-a1", tenantId: "tenant-a", name: "Batch A1" },
+  { id: "batch-b1", tenantId: "tenant-b", name: "Batch B1" },
 ];
 
 const TENANTS = [
@@ -157,6 +173,7 @@ const TENANTS = [
 type EnrollmentArgs = { where?: { tenantId?: string; courseId?: string } };
 type GroupByArgs = { where?: { course?: { tenantId?: string } } };
 type BatchMemberArgs = { where?: { batchId?: string } };
+type BatchArgs = { where?: { id?: string; tenantId?: string } };
 type TenantArgs = { where?: { id?: string } };
 
 beforeEach(() => {
@@ -186,6 +203,14 @@ beforeEach(() => {
   vi.mocked(prisma.lmsBatchMember.findMany).mockImplementation((((args: BatchMemberArgs) =>
     Promise.resolve(
       BATCH_MEMBERS.filter((m) => m.batchId === args.where?.batchId).map((m) => ({ userId: m.userId })),
+    )) as unknown) as never);
+
+  // BL-169: filters on BOTH id and tenantId, like the real query. A mock that
+  // matched on id alone would return tenant-b's batch to a tenant-a caller and
+  // the fix would look like it worked while the hole stayed open.
+  vi.mocked(prisma.lmsBatch.findFirst).mockImplementation((((args: BatchArgs) =>
+    Promise.resolve(
+      BATCHES.find((b) => b.id === args.where?.id && b.tenantId === args.where?.tenantId) ?? null,
     )) as unknown) as never);
 
   vi.mocked(prisma.lmsTenant.findUnique).mockImplementation((((args: TenantArgs) =>
@@ -282,23 +307,36 @@ describe("GET /api/lms/tenants/:tenantId/reports/completion", () => {
     expect(res.body.data[0].userId).toBe("user-alice");
   });
 
-  // Characterisation test for a KNOWN GAP, not an endorsement of it. Every other
-  // nested LMS handler resolves a batchId through `assertBatchInTenant`; this one
-  // reads `lmsBatchMember` by bare batchId. The enrollment query is still scoped,
-  // so no foreign ROW is emitted — but which of the caller's own users survive the
-  // filter is decided by a foreign batch's membership list, so a tenant-a admin
-  // can probe tenant-b's batch composition. If the handler is fixed to scope the
-  // lookup, this expectation must be updated to assert the tenant scope.
-  it("resolves batchId without a tenant scope (documented gap) yet still emits no foreign rows", async () => {
+  // BL-169 — was a characterisation test for a known gap; now it asserts the fix.
+  //
+  // The leak was never a foreign ROW: the enrollment query has always been
+  // tenant-scoped, so the response only ever held tenant-a's own people. What
+  // leaked was the FILTER. Passing tenant-b's batchId let a tenant-a admin learn
+  // which of their OWN users also sat in that foreign batch — an intersection
+  // oracle over lmsBatchMember, invisible in the response body, which is exactly
+  // why it survived review: every row on screen genuinely belonged to the caller.
+  //
+  // The batch must now be resolved through the tenant first, so a foreign id is
+  // simply not found.
+  it("refuses a foreign batchId instead of using it as a filter", async () => {
     const res = await request(app).get("/api/lms/tenants/tenant-a/reports/completion?batchId=batch-b1");
+
+    expect(res.status).toBe(404);
+    // The roster read is the oracle. Proving it never ran is the whole point —
+    // a 404 returned after the membership list was already fetched would be the
+    // same leak with a tidier status code.
+    expect(prisma.lmsBatchMember.findMany).not.toHaveBeenCalled();
+  });
+
+  it("resolves an own-tenant batchId THROUGH the tenant before reading the roster", async () => {
+    const res = await request(app).get("/api/lms/tenants/tenant-a/reports/completion?batchId=batch-a1");
+
     expect(res.status).toBe(200);
-    expect(prisma.lmsBatchMember.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { batchId: "batch-b1" } }),
-    );
-    // Today's behaviour: the foreign batch's member list leaks in as a filter.
-    expect(res.body.data.map((r: { userId: string }) => r.userId)).toEqual(["user-bob"]);
-    // The safety net that does hold: only tenant-a enrollments were ever loaded.
-    expect(res.body.data.every((r: { userId: string }) => r.userId !== "user-dave")).toBe(true);
+    // Exact object, not objectContaining: a scope that widened to `{ id }` alone
+    // would still satisfy a loose assertion while reopening the hole.
+    expect(prisma.lmsBatch.findFirst).toHaveBeenCalledWith({
+      where: { id: "batch-a1", tenantId: "tenant-a" },
+    });
   });
 
   it("skips the batch-member query entirely when no batchId is supplied", async () => {
