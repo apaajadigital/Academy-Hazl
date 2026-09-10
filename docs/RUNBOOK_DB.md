@@ -378,7 +378,7 @@ database produksi.**
 ```bash
 cd /var/www/jago-akademi
 COMPOSE_DIR=/var/www/jago-akademi /bin/bash ./scripts/restore.sh
-# → "restore drill PASSED — backup is valid; scratch DB dropped"
+# → "restore drill PASSED — backup replays cleanly, schema and critical data match live; scratch DB dropped"
 ```
 
 Setelah drill: pastikan scratch DB benar-benar hilang —
@@ -436,7 +436,7 @@ npx tsx prisma/seed.ts
 
 - [ ] 🖐️ **(a)** Backup manual dengan script baru berhasil (file final ada, mode 0600,
   `tables=45`, `gzip -t` lulus)
-- [ ] 🖐️ **(b)** Restore drill manual ke DB disposable berhasil + scratch DB terverifikasi
+- [x] 🖐️ **(b)** Restore drill manual ke DB disposable berhasil + scratch DB terverifikasi — ✅ **9 Sep 2026, drill sungguhan pertama.** Backup `jago-2026-09-09-021502.sql.gz`: 45/45 tabel, **120/120 index**, dan seluruh tabel kritis cocok dengan produksi pada cutoff yang sama (`users` 16/16, `orders` 32/32, `payment_transactions` 10/10, `course_enrollments` 2/2). Scratch DB terverifikasi hilang dari `pg_database`; produksi tetap 45 tabel. ⚠️ Perlu dicatat: drill ini baru berarti **setelah BL-163** — versi `restore.sh` sebelumnya akan mencetak PASSED untuk dump yang memulihkan 45 tabel kosong.
   hilang — **butuh persetujuan owner terpisah** (§3)
 - [ ] 🖐️ **(c)** Salinan offsite terbukti **terbaca** → `RESULT=OK`, bukan `DEGRADED`.
   Terblokir sampai `rclone` terpasang & terkonfigurasi (§2.4) — tindakan produksi terpisah
