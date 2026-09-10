@@ -64,3 +64,31 @@ describe("next.config rewrites", () => {
     expect(api?.destination).toBe("http://api:4000/api/:path*");
   });
 });
+
+/**
+ * BL-159 — AVIF must stay off while the remotePatterns wildcard is still there.
+ *
+ * These two settings are only dangerous together: `{ https, "**" }` lets any
+ * unauthenticated request name a host, and `formats` decides which decoders that
+ * attacker-controlled bytes reach. Two AVIF/libheif RCEs hit this chain in 2026
+ * (BL-158), so until the wildcard goes, AVIF stays out.
+ *
+ * Pinned as a test rather than a comment because the failure is invisible: adding
+ * "image/avif" back would look like a harmless performance win in review.
+ */
+describe("next.config images (BL-159)", () => {
+  it("does not serve AVIF while remotePatterns still allows any host", async () => {
+    const { default: config } = (await import("../../next.config.js")) as unknown as {
+      default: { images: { formats: string[]; remotePatterns: Array<{ hostname: string }> } };
+    };
+    const wildcard = config.images.remotePatterns.some((p) => p.hostname === "**");
+    if (wildcard) {
+      expect(
+        config.images.formats,
+        "remotePatterns still has the `**` wildcard, so AVIF must stay off (BL-159)",
+      ).not.toContain("image/avif");
+    }
+    // WebP stays — dropping both would ship the originals and undo the whole point.
+    expect(config.images.formats).toContain("image/webp");
+  });
+});
