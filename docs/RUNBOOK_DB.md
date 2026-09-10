@@ -327,6 +327,48 @@ berjalan" dari "retensi dilewati"; marker itu bisa. `restore.sh` juga divalidasi
 tetapi **secara terisolasi dengan `docker` palsu** — itu menguji ambang dan pemilihan
 database sasaran, **bukan** restore sungguhan.
 
+### 2.5b 🖐️ Cron backup DUPLIKAT — retensi 30 hari yang sebenarnya hanya 14 (BL-160)
+
+Terukur di host **9 Sep 2026**: `backup.sh` dipanggil **dua kali** setiap malam oleh dua penjadwal
+berbeda, dan yang kedua merusak niat yang pertama.
+
+| Pemanggil | Jam | Env | Akibat di log |
+|---|---|---|---|
+| `/etc/cron.d/jago-backup` ✅ | 02:15 | `RETENTION_DAYS=30`, `R2_REMOTE=r2:jago-backups` | `offsite=verified`, `keep=30d` |
+| **crontab root** ❌ | 02:00 | **tak ada** — jatuh ke default | `offsite=not_configured`, `keep=14d` |
+
+Karena setiap run memangkas menurut jendelanya **sendiri**, run 02:00 menghapus backup berumur
+>14 hari yang justru ingin disimpan 30 hari oleh run 02:15. Buktinya bukan teori: 33 file tersimpan,
+**tertua 25 Agu — 15 hari, bukan 30**. Jadi retensi nyata adalah 14 hari sementara runbook dan
+`cron.d` sama-sama menjanjikan 30, dan **separuh backup harian tidak pernah pergi offsite**.
+
+Ini juga menjelaskan kenapa `ls backups/` menampilkan pasangan file berjarak 15 menit setiap hari.
+
+**Perbaikan — hapus baris crontab root, `cron.d` sudah jadi sumber tunggal yang benar** (ia punya
+retensi, offsite, dan `flock`):
+
+```bash
+# Cadangan sudah dibuat 10 Sep 2026: /root/crontab-backup-20260910.txt (6 baris)
+crontab -l > /root/crontab-backup-$(date +%Y%m%d).txt
+
+crontab -l | grep -v '^0 2 \* \* \* /bin/bash /var/www/jago-akademi/scripts/backup.sh' | crontab -
+
+# Verifikasi: harus 0 (cron.d tidak ikut terbaca oleh `crontab -l`)
+crontab -l | grep -c 'backup.sh'
+```
+
+Setelah itu, **verifikasi sebulan kemudian** bahwa file tertua benar-benar mencapai 30 hari —
+itulah satu-satunya bukti bahwa retensinya kini sungguhan:
+
+```bash
+ls -t /var/www/jago-akademi/backups/jago-*.sql.gz | tail -1
+```
+
+> Kenapa menghapus, bukan melengkapi env-nya: dua penjadwal untuk satu pekerjaan berarti dua tempat
+> yang harus tetap sinkron selamanya. `flock` di dalam `backup.sh` memang mencegah keduanya berjalan
+> bersamaan (yang kedua keluar `75`), jadi duplikat ini tak pernah merusak data — ia hanya diam-diam
+> memendekkan jendela pemulihan, yang jauh lebih sulit disadari.
+
 ### 2.6 Retensi sementara 30 hari, dan gate logrotate
 
 **Retensi host di-override menjadi 30 hari.** Default script tetap 14; baris cron menyetel
