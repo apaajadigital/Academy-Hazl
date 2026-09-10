@@ -91,7 +91,7 @@ services:
       <<: *app-env
       PORT: 4000
     volumes:
-      - uploads:/app/uploads
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"]
       interval: 30s
@@ -113,7 +113,7 @@ services:
     environment:
       <<: *app-env
     volumes:
-      - uploads:/app/uploads
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
 
   web:
     build:
