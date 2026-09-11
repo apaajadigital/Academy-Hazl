@@ -22,8 +22,12 @@ export const metadata: Metadata = {
     default: "Jago Akademi — Platform Edukasi Digital Indonesia",
     template: "%s | Jago Akademi",
   },
+  // BL-23: "terlengkap" dropped. This is the default description for every page
+  // that does not set its own, and search engines quote it verbatim — an
+  // unprovable superlative travels furthest from exactly here. The product list
+  // that follows it is factual and does the persuading on its own.
   description:
-    "Platform edukasi digital terlengkap: E-Course, Event, Trainer Program, LMS, E-Book, dan Marketplace Materi. Belajar, berlatih, dan berkarier bersama Jago Akademi.",
+    "Platform edukasi digital Indonesia: E-Course, Event, Trainer Program, LMS, E-Book, dan Marketplace Materi. Belajar, berlatih, dan berkarier bersama Jago Akademi.",
   keywords: [
     "edukasi digital", "kursus online", "trainer profesional",
     "LMS Indonesia", "sertifikasi", "belajar online",
@@ -70,7 +74,10 @@ const organizationJsonLd = {
   name: "Jago Akademi",
   url: "https://jagoakademi.com",
   logo: "https://jagoakademi.com/logo.png",
-  description: "Platform edukasi digital terlengkap Indonesia — E-Course, Event, LMS B2B, E-Book, dan Trainer Program.",
+  // BL-23: same superlative removed here too. This one is structured data —
+  // search engines read it as a machine-readable assertion about the
+  // organisation, not as marketing copy.
+  description: "Platform edukasi digital Indonesia — E-Course, Event, LMS B2B, E-Book, dan Trainer Program.",
   sameAs: [
     "https://instagram.com/jagoakademi",
     "https://linkedin.com/company/jagoakademi",

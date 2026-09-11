@@ -6,8 +6,11 @@ import { fetchList } from "@/lib/api/listResource";
 
 export const metadata: Metadata = {
   title: "Berlangganan — Akses Semua Konten Premium",
+  // "ribuan kursus" removed (BL-23): the catalogue is nowhere near that, and a
+  // meta description is quoted verbatim by search engines — it is the one place
+  // an inflated claim travels furthest.
   description:
-    "Pilih paket berlangganan Jago Akademi yang sesuai kebutuhan. Akses ribuan kursus, event eksklusif, e-book, dan sertifikasi dalam satu langganan.",
+    "Pilih paket berlangganan Jago Akademi yang sesuai kebutuhan. Akses kursus, event, e-book, dan sertifikasi dalam satu langganan.",
   alternates: { canonical: "/berlangganan" },
 };
 
@@ -62,7 +65,10 @@ const PLANS: PlanView[] = [
     desc: "Untuk individu yang ingin mulai belajar.",
     color: "var(--brand-cyan-strong)",
     features: [
-      "Akses 50+ kursus pilihan",
+      // BL-23: was "Akses 50+ kursus pilihan" — a promise about catalogue size
+      // that the catalogue does not keep. What the plan grants is a selection,
+      // not a count.
+      "Akses kursus pilihan",
       "5 e-book per bulan",
       "Sertifikat kelulusan",
       "Forum diskusi komunitas",
@@ -82,7 +88,9 @@ const PLANS: PlanView[] = [
     desc: "Untuk profesional yang serius berkembang.",
     color: "var(--brand-pink-strong)",
     features: [
-      "Akses semua kursus (150+)",
+      // BL-23: "(150+)" dropped for the same reason. "Semua kursus" is true
+      // whatever the catalogue size is; the number was not.
+      "Akses semua kursus",
       "E-book tanpa batas",
       "Sertifikat bersertifikasi nasional",
       "Akses rekaman semua event",
@@ -330,27 +338,28 @@ export default async function BerlanggananPage() {
             <span className="text-accent">Akses Semua Konten</span>
           </h1>
           <p className="mx-auto mb-9 max-w-xl text-[1.05rem] leading-relaxed text-text-secondary">
-            Ratusan kursus, ribuan e-book, rekaman event eksklusif, mentoring, dan
-            sertifikasi — semuanya dalam satu paket terjangkau.
+            Kursus, e-book, rekaman event, mentoring, dan sertifikasi — semuanya
+            dalam satu paket terjangkau.
           </p>
 
-          {/* Stats row */}
-          <div className="mx-auto grid max-w-2xl grid-cols-2 overflow-hidden rounded-2xl border border-border-default bg-surface-card shadow-e1 sm:grid-cols-4">
-            {[
-              { val: "150+", label: "Kursus aktif" },
-              { val: "50+", label: "Mentor expert" },
-              { val: "10rb+", label: "Pelajar aktif" },
-              { val: "98%", label: "Kepuasan pengguna" },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="border-b border-r border-border-subtle px-4 py-[18px] text-center last:border-r-0 sm:border-b-0"
-              >
-                <span className="block text-2xl font-extrabold text-accent-cyan-strong">{s.val}</span>
-                <span className="mt-0.5 block text-[11px] text-text-muted">{s.label}</span>
-              </div>
-            ))}
-          </div>
+          {/*
+            BL-23: a stats row used to sit here claiming "150+ Kursus aktif",
+            "50+ Mentor expert", "10rb+ Pelajar aktif" and "98% Kepuasan
+            pengguna". None of it came from the database — the figures were
+            written by hand, and the catalogue behind them is far smaller.
+            TASK-052 had already stripped exactly this kind of claim from the
+            homepage hero and /about on 2 Jul 2026; this page was created 27
+            days later and reintroduced it, linked from the Footer and listed in
+            the sitemap.
+
+            Deleted rather than replaced with softer numbers: the homepage hero
+            settled this question already ("No fake numbers, no stock imagery" —
+            components/home/HeroSection.tsx). What this subscription actually
+            includes is stated honestly in the plan cards below, which read from
+            real plan data. If a proof row belongs here later, it has to come
+            from the API, and hide itself when the count is zero — the pattern
+            TestimonialsSection already uses.
+          */}
         </div>
       </section>
 
