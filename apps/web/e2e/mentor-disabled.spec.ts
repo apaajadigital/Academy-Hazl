@@ -1,28 +1,28 @@
 import { test, expect } from "@playwright/test";
 
 /**
- * The Mentor feature is OFF — owner decision C-2, 6 Aug 2026.
+ * The Mentor roster was DELETED, not merely gated — owner decision 11 Sep 2026
+ * (BL-114).
  *
- * The roster in lib/e-course/data.ts is fictional: seven invented people
- * attributed to real companies (Tokopedia, Gojek, BCA, …) with placeholder
- * LinkedIn URLs. On 10 Aug 2026 the production sitemap was found handing all
- * eight of those URLs to search engines, because the flag inverted the project's
- * convention and defaulted to ON.
+ * History: lib/e-course/data.ts carried seven invented people attributed to
+ * real companies (Tokopedia, Gojek, BCA, …) with placeholder LinkedIn URLs. On
+ * 10 Aug 2026 the production sitemap was found handing all eight of those URLs
+ * to search engines, because the flag inverted the project's convention and
+ * defaulted to ON. It was gated OFF on 31 Jul, and on 11 Sep the data, the
+ * routes, the components and the flag itself were removed from the repository
+ * — a flag hides fabricated people, it does not delete them.
  *
- * This spec is the contract that keeps it off. It asserts the four surfaces the
- * flag has to close simultaneously — route, sub-route, sitemap and navigation —
- * because closing only some of them is exactly how the pages stayed indexable
- * while looking gated.
- *
- * The whole suite runs with NEXT_PUBLIC_FEATURE_MENTOR=false (set explicitly in
- * playwright.config.ts). Should the flag ever be turned back ON deliberately,
- * that belongs in a spec with its OWN isolated environment — not by flipping the
- * global default back.
+ * This spec is the regression guard that keeps them gone. It asserts the same
+ * four surfaces as before — route, sub-route, sitemap and navigation — because
+ * closing only some of them is exactly how the pages stayed indexable while
+ * looking gated. It now also asserts the invented names appear nowhere in the
+ * served HTML at all.
  */
 
 const FICTIONAL_SLUGS = ["ahmad-fauzi", "rina-kusuma", "kevin-wijaya", "hendra-gunawan"];
+const FICTIONAL_NAMES = ["Ahmad Fauzi", "Rina Kusuma", "Kevin Wijaya", "Hendra Gunawan"];
 
-test.describe("Mentor feature disabled (C-2)", () => {
+test.describe("Mentor roster removed (BL-114)", () => {
   test("/mentor returns 404", async ({ page }) => {
     const res = await page.goto("/mentor");
     expect(res?.status()).toBe(404);
@@ -57,5 +57,13 @@ test.describe("Mentor feature disabled (C-2)", () => {
     // page — navbar, footer, or body.
     await expect(page.locator('a[href="/mentor"]')).toHaveCount(0);
     await expect(page.locator('a[href^="/mentor/"]')).toHaveCount(0);
+  });
+
+  test("the invented names are not served anywhere on the homepage", async ({ page }) => {
+    await page.goto("/");
+    const html = await page.content();
+    for (const name of FICTIONAL_NAMES) {
+      expect(html, `"${name}" is fabricated and must not be served`).not.toContain(name);
+    }
   });
 });

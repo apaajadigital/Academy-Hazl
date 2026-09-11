@@ -147,18 +147,11 @@ export default defineConfig({
         NEXT_PUBLIC_FEATURE_COMMUNITY: "true",
         NEXT_PUBLIC_FEATURE_ALUMNI: "true",
         NEXT_PUBLIC_FEATURE_PORTFOLIO: "true",
-        // Owner decision C-2 (6 Aug 2026): Mentor is default OFF — the roster is
-        // fictional, and on 10 Aug the production sitemap was found advertising
-        // /mentor plus seven invented profiles attributed to real companies.
-        //
-        // Set to the literal "false" rather than simply omitted: `env` here is
-        // MERGED over the parent process environment, so leaving it out would
-        // let a NEXT_PUBLIC_FEATURE_MENTOR exported in the developer's shell (or
-        // a CI runner) silently switch the whole suite back ON. Being explicit
-        // makes the suite's contract independent of who runs it.
-        //
-        // The OFF contract itself is asserted in e2e/mentor-disabled.spec.ts.
-        NEXT_PUBLIC_FEATURE_MENTOR: "false",
+        // No NEXT_PUBLIC_FEATURE_MENTOR here on purpose: the flag no longer
+        // exists. The fictional roster, its routes and its components were
+        // deleted on 11 Sep 2026 (BL-114) rather than left behind a flag, so
+        // there is nothing left for an exported shell variable to switch back
+        // ON. The removal itself is asserted in e2e/mentor-disabled.spec.ts.
       },
     },
   ],

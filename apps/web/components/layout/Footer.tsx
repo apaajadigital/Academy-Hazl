@@ -11,8 +11,6 @@ const waHref = waLink();
 const footerLinks = {
   Belajar: [
     { label: "Katalog Kursus",    href: "/e-course" },
-    // BL-114: gated like the community links below — /mentor 404s while OFF.
-    ...(features.mentor ? [{ label: "Mentor", href: "/mentor" }] : []),
     { label: "Event & Workshop",  href: "/event" },
     { label: "E-Book",            href: "/ebook" },
     { label: "Kelas Gratis",      href: "/kelas-gratis" },

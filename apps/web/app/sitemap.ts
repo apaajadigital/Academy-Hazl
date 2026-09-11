@@ -1,6 +1,4 @@
 import { type MetadataRoute } from "next";
-import { mentors } from "@/lib/e-course/utils";
-import { features } from "@/lib/features";
 import { API_BASE as API } from "@/lib/api/base";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jagoakademi.com";
@@ -8,12 +6,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jagoakademi.com";
 const STATIC_PAGES: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/`,                 lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
   { url: `${BASE_URL}/e-course`,         lastModified: new Date(), changeFrequency: "daily",   priority: 0.9 },
-  // BL-114: /mentor is flag-gated (fictional roster) — while OFF the route 404s,
-  // so advertising it here would submit a dead URL. Emitted conditionally below
-  // together with the per-mentor pages; flag-ON restores both automatically.
-  ...(features.mentor
-    ? [{ url: `${BASE_URL}/mentor`, lastModified: new Date(), changeFrequency: "weekly" as const, priority: 0.8 }]
-    : []),
   { url: `${BASE_URL}/event`,            lastModified: new Date(), changeFrequency: "daily",   priority: 0.9 },
   { url: `${BASE_URL}/ebook`,            lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
   { url: `${BASE_URL}/kelas-gratis`,     lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
@@ -107,21 +99,7 @@ async function fetchDynamicPages(): Promise<MetadataRoute.Sitemap> {
   return pages;
 }
 
-// Mentor profile pages are backed by the static mentor list (no API), so their
-// URLs are known at build time — emit `/mentor/[slug]` for each.
-// BL-114: only while the mentor flag is ON. The current roster is fictional and
-// was being advertised to crawlers; with the flag OFF these URLs 404, and a
-// sitemap must never submit URLs it knows are dead.
-const MENTOR_PAGES: MetadataRoute.Sitemap = features.mentor
-  ? mentors.map((m) => ({
-      url: `${BASE_URL}/mentor/${m.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    }))
-  : [];
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dynamicPages = await fetchDynamicPages();
-  return [...STATIC_PAGES, ...MENTOR_PAGES, ...dynamicPages];
+  return [...STATIC_PAGES, ...dynamicPages];
 }
