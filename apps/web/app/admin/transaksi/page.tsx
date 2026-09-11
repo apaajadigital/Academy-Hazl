@@ -28,7 +28,7 @@ import {
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 type Order = {
   id: string;
@@ -92,7 +92,7 @@ export default function AdminTransaksiPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   async function handleExportCSV() {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setExporting(true);
     try {
@@ -121,19 +121,19 @@ export default function AdminTransaksiPage() {
     // fires overlapping requests, and without this an older, slower response
     // could overwrite the newer page's rows. Same guard as trainer-hub/payout.
     let cancelled = false;
-    const token = getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    const params = new URLSearchParams({
-      page: String(page), limit: String(PAGE_SIZE),
-      ...(appliedSearch ? { search: appliedSearch } : {}),
-      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
-    });
-    setLoading(true);
-    setError("");
-    (async () => {
+    async function load() {
+      const token = await getValidToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      const params = new URLSearchParams({
+        page: String(page), limit: String(PAGE_SIZE),
+        ...(appliedSearch ? { search: appliedSearch } : {}),
+        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+      });
+      setLoading(true);
+      setError("");
       try {
         const r = await fetch(`/api/admin/orders?${params}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -162,7 +162,8 @@ export default function AdminTransaksiPage() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+    load();
     return () => { cancelled = true; };
   }, [page, statusFilter, appliedSearch, reloadKey]);
 

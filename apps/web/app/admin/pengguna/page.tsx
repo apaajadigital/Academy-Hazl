@@ -26,7 +26,7 @@ import {
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 type User = {
   id: string;
@@ -79,7 +79,7 @@ export default function AdminPenggunaPage() {
   const [reloadKey, setReloadKey] = useState(0);
 
   async function handleExportCSV() {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setExporting(true);
     try {
@@ -108,22 +108,22 @@ export default function AdminPenggunaPage() {
     // fires overlapping requests, and without this an older, slower response
     // could overwrite the newer page's rows. Same guard as trainer-hub/payout.
     let cancelled = false;
-    const token = getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    async function load() {
+      const token = await getValidToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
 
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(PAGE_SIZE),
-      ...(appliedSearch ? { search: appliedSearch } : {}),
-      ...(selectedRole !== "all" ? { role: selectedRole } : {}),
-    });
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(PAGE_SIZE),
+        ...(appliedSearch ? { search: appliedSearch } : {}),
+        ...(selectedRole !== "all" ? { role: selectedRole } : {}),
+      });
 
-    setLoading(true);
-    setError("");
-    (async () => {
+      setLoading(true);
+      setError("");
       try {
         const r = await fetch(`/api/admin/users?${params}`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -143,7 +143,8 @@ export default function AdminPenggunaPage() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+    load();
     return () => { cancelled = true; };
   }, [page, selectedRole, appliedSearch, reloadKey]);
 
@@ -155,8 +156,8 @@ export default function AdminPenggunaPage() {
     setReloadKey((k) => k + 1);
   }
 
-  function toggleVerify(userId: string, current: boolean) {
-    const token = getToken();
+  async function toggleVerify(userId: string, current: boolean) {
+    const token = await getValidToken();
     if (!token) return;
     fetch(`/api/admin/users/${userId}`, {
       method: "PATCH",

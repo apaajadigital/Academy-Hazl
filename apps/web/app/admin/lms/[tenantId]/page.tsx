@@ -7,7 +7,7 @@ import {
   ArrowLeft, Building2, Users, Layers, BarChart3,
   ToggleLeft, ToggleRight, Mail, BookOpen,
 } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import {
   Button,
   Input,
@@ -95,8 +95,8 @@ type InviteOutcome = { tone: "success" | "partial" | "notice"; message: string }
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
-function authHeaders() {
-  return { Authorization: `Bearer ${getToken() ?? ""}`, "Content-Type": "application/json" };
+async function authHeaders() {
+  return { Authorization: `Bearer ${(await getValidToken()) ?? ""}`, "Content-Type": "application/json" };
 }
 
 const PLAN_VARIANT: Record<string, BadgeProps["variant"]> = {
@@ -134,7 +134,7 @@ function InviteModal({
   async function inviteEmployee(): Promise<InviteOutcome | null> {
     const res = await fetch(`/api/lms/tenants/${tenantId}/invites`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: await authHeaders(),
       body: JSON.stringify({ emails: [email] }),
     });
     const body = (await res.json()) as ApiEnvelope<InvitesResult>;
@@ -177,7 +177,7 @@ function InviteModal({
   async function addAdmin(): Promise<InviteOutcome | null> {
     const res = await fetch(`/api/lms/tenants/${tenantId}/admins`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: await authHeaders(),
       body: JSON.stringify({ email }),
     });
     const body = (await res.json()) as ApiEnvelope<AddAdminResult>;
@@ -256,8 +256,8 @@ export default function AdminTenantDetailPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [activeSection, setActiveSection] = useState<"overview" | "batches" | "courses" | "members">("overview");
 
-  const fetchAll = useCallback(() => {
-    const token = getToken();
+  const fetchAll = useCallback(async () => {
+    const token = await getValidToken();
     if (!token || !tenantId) return;
     setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
@@ -280,7 +280,7 @@ export default function AdminTenantDetailPage() {
     if (!tenant) return;
     await fetch(`/api/lms/tenants/${tenantId}`, {
       method: "PATCH",
-      headers: authHeaders(),
+      headers: await authHeaders(),
       body: JSON.stringify({ isActive: !tenant.isActive }),
     });
     fetchAll();

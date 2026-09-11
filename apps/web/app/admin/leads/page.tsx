@@ -34,7 +34,7 @@ import {
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -127,7 +127,7 @@ function StatusSelect({ id, value, onChange }: { id: string; value: string; onCh
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value;
     setBusy(true);
-    const token = getToken();
+    const token = await getValidToken();
     try {
       await fetch(`/api/admin/leads/${id}`, {
         method: "PATCH",
@@ -173,7 +173,7 @@ export default function AdminLeadsPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function handleExportCSV() {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setExporting(true);
     try {
@@ -197,8 +197,8 @@ export default function AdminLeadsPage() {
     }
   }
 
-  const fetchLeads = useCallback((q: string, src: string, sts: string, pg: number) => {
-    const token = getToken();
+  const fetchLeads = useCallback(async (q: string, src: string, sts: string, pg: number) => {
+    const token = await getValidToken();
     if (!token) return;
     setLoading(true);
     const qs = new URLSearchParams({ page: String(pg), limit: "20" });

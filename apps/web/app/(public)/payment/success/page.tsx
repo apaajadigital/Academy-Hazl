@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { getValidToken } from "@/lib/auth/token";
-import { WA_NUMBER, CONTACT_FALLBACK_HREF } from "@/lib/config";
+import { WA_NUMBER, CONTACT_FALLBACK_HREF, buildWaLink } from "@/lib/config";
 
 // ─── Private Class order data (present only for paid private-class items) ─────
 // Older API responses may omit `privateClass` entirely — everything is optional.
@@ -244,13 +244,12 @@ function SuccessContent() {
   // When NEITHER exists this is null and the CTA is not rendered — a
   // just-paid customer must never be handed a wa.me link with no number.
   const pcAdminNumber = toWaDigits(pc?.onboardingContact) ?? WA_NUMBER;
-  const pcAdminHref = pcAdminNumber
-    ? `https://wa.me/${pcAdminNumber}?text=${encodeURIComponent(
-        `Halo Admin, saya baru saja menyelesaikan pembayaran Private Class${
-          orderId ? ` (Order ${orderId.slice(0, 8).toUpperCase()})` : ""
-        }. Mohon konfirmasi & info langkah selanjutnya. Terima kasih!`,
-      )}`
-    : null;
+  const pcAdminHref = buildWaLink(
+    pcAdminNumber,
+    `Halo Admin, saya baru saja menyelesaikan pembayaran Private Class${
+      orderId ? ` (Order ${orderId.slice(0, 8).toUpperCase()})` : ""
+    }. Mohon konfirmasi & info langkah selanjutnya. Terima kasih!`,
+  );
   const pcGroupLink =
     pc?.waGroupLink && pc.waGroupLink.startsWith("http") ? pc.waGroupLink : null;
 

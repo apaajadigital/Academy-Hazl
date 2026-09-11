@@ -21,7 +21,7 @@ import {
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 type Coupon = {
   id: string;
@@ -47,8 +47,8 @@ export default function AdminKuponPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function loadCoupons() {
-    const token = getToken();
+  async function loadCoupons() {
+    const token = await getValidToken();
     if (!token) return;
     setLoading(true);
     fetch("/api/admin/coupons?limit=50", { headers: { Authorization: `Bearer ${token}` } })
@@ -66,7 +66,7 @@ export default function AdminKuponPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     setSaving(true);
     setError(null);
@@ -89,7 +89,7 @@ export default function AdminKuponPage() {
   }
 
   async function toggleActive(id: string, current: boolean) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     await fetch(`/api/admin/coupons/${id}`, {
       method: "PATCH",

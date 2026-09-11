@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Star, MessageSquare, Trash2 } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import {
   Card,
   Badge,
@@ -61,8 +61,8 @@ export default function AdminReviewPage() {
   const [tFilter, setTFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [drafts, setDrafts] = useState<Record<string, ModerationDraft>>({});
 
-  function loadReviews() {
-    const token = getToken();
+  async function loadReviews() {
+    const token = await getValidToken();
     if (!token) return;
     const params = new URLSearchParams({ page: String(page), limit: String(limit), ...(filter !== "all" ? { approved: String(filter === "approved") } : {}) });
     setLoading(true);
@@ -79,8 +79,8 @@ export default function AdminReviewPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadReviews(); }, [page, filter]);
 
-  function loadTestimonials() {
-    const token = getToken();
+  async function loadTestimonials() {
+    const token = await getValidToken();
     if (!token) return;
     const params = new URLSearchParams(tFilter !== "all" ? { status: tFilter } : {});
     setTLoading(true);
@@ -125,7 +125,7 @@ export default function AdminReviewPage() {
       alert("Outcome maksimal 300 karakter.");
       return;
     }
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     try {
       const res = await fetch(`/api/testimonials/${id}/moderate`, {
@@ -149,7 +149,7 @@ export default function AdminReviewPage() {
   }
 
   async function toggleApprove(id: string, current: boolean) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     await fetch(`/api/admin/reviews/${id}`, {
       method: "PATCH",
@@ -161,7 +161,7 @@ export default function AdminReviewPage() {
 
   async function deleteReview(id: string) {
     if (!confirm("Hapus review ini?")) return;
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     await fetch(`/api/admin/reviews/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     loadReviews();

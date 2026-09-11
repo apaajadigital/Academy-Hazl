@@ -125,3 +125,29 @@ describe("WA_NUMBER / waLink / WA_NUMBER_DISPLAY", () => {
     }
   });
 });
+
+/**
+ * buildWaLink() is the low-level builder waLink() now delegates to, and the
+ * one a caller with a *different* number (e.g. a per-order contact on the
+ * payment-success page) uses directly instead of re-implementing the
+ * `https://wa.me/...` + encodeURIComponent construction independently.
+ */
+describe("buildWaLink", () => {
+  it("returns null for a null number regardless of text", async () => {
+    const { buildWaLink } = await import("@/lib/config");
+    expect(buildWaLink(null)).toBeNull();
+    expect(buildWaLink(null, "halo")).toBeNull();
+  });
+
+  it("builds a bare link with no text", async () => {
+    const { buildWaLink } = await import("@/lib/config");
+    expect(buildWaLink("6281234567890")).toBe("https://wa.me/6281234567890");
+  });
+
+  it("url-encodes prefilled text for an arbitrary number", async () => {
+    const { buildWaLink } = await import("@/lib/config");
+    expect(buildWaLink("6281111111111", "Halo, saya ingin bertanya")).toBe(
+      "https://wa.me/6281111111111?text=Halo%2C%20saya%20ingin%20bertanya",
+    );
+  });
+});

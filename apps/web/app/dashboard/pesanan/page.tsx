@@ -21,7 +21,7 @@ import {
   DashboardLoading,
   EmptyState,
 } from "@/components/ui";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import { downloadProtected } from "@/lib/download";
 
 type OrderItem = { itemTitle: string | null; itemType: string };
@@ -59,7 +59,7 @@ export default function PesananDashboardPage() {
   const limit = 10;
 
   async function handleCancelOrder(orderId: string) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     if (!confirm("Apakah Anda yakin ingin membatalkan pesanan ini?")) return;
 
@@ -94,22 +94,25 @@ export default function PesananDashboardPage() {
   }
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) { router.replace("/masuk"); return; }
+    async function load() {
+      const token = await getValidToken();
+      if (!token) { router.replace("/masuk"); return; }
 
-    fetch(
-      `/api/orders?page=${page}&limit=${limit}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success) {
-          setOrders(data.data);
-          setTotal(data.meta?.total ?? 0);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      fetch(
+        `/api/orders?page=${page}&limit=${limit}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success) {
+            setOrders(data.data);
+            setTotal(data.meta?.total ?? 0);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+    load();
   }, [page, router]);
 
   const totalPages = Math.ceil(total / limit);

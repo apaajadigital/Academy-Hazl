@@ -12,7 +12,7 @@ import {
   EmptyState, Input, Button, DashboardLoading,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 
 type AffiliateProfile = {
   id: string;
@@ -110,36 +110,39 @@ export default function AfiliasiPage() {
   // swallowed below, it rendered as "you have no commissions yet" rather than as
   // an error anyone would report.
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.replace("/masuk");
-      return;
-    }
-    const auth = { Authorization: `Bearer ${token}` };
+    async function load() {
+      const token = await getValidToken();
+      if (!token) {
+        router.replace("/masuk");
+        return;
+      }
+      const auth = { Authorization: `Bearer ${token}` };
 
-    Promise.all([
-      fetch("/api/affiliate/me", { headers: auth }).then((r) => r.json()),
-      fetch("/api/affiliate/withdrawals", { headers: auth }).then((r) => r.json()),
-    ])
-      .then(([aff, wd]) => {
-        // A failed profile load is an error, not an empty state. Rendering it as
-        // "not registered yet" would invite the user to re-register an account
-        // they already have.
-        if (!aff.success) {
-          setError(aff.error?.message ?? "Gagal memuat data afiliasi.");
-          return;
-        }
-        if (aff.data) setProfile(aff.data);
-        if (wd.success) setWithdrawals(wd.data ?? []);
-        else setError(wd.error?.message ?? "Gagal memuat riwayat penarikan.");
-      })
-      .catch(() => setError("Gagal memuat data afiliasi."))
-      .finally(() => setLoading(false));
+      Promise.all([
+        fetch("/api/affiliate/me", { headers: auth }).then((r) => r.json()),
+        fetch("/api/affiliate/withdrawals", { headers: auth }).then((r) => r.json()),
+      ])
+        .then(([aff, wd]) => {
+          // A failed profile load is an error, not an empty state. Rendering it as
+          // "not registered yet" would invite the user to re-register an account
+          // they already have.
+          if (!aff.success) {
+            setError(aff.error?.message ?? "Gagal memuat data afiliasi.");
+            return;
+          }
+          if (aff.data) setProfile(aff.data);
+          if (wd.success) setWithdrawals(wd.data ?? []);
+          else setError(wd.error?.message ?? "Gagal memuat riwayat penarikan.");
+        })
+        .catch(() => setError("Gagal memuat data afiliasi."))
+        .finally(() => setLoading(false));
+    }
+    load();
   }, [router]);
 
   async function register() {
     setRegistering(true);
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) {
       router.replace("/masuk");
       return;
@@ -158,7 +161,7 @@ export default function AfiliasiPage() {
     e.preventDefault();
     setSubmitting(true);
     setMsg("");
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) {
       router.replace("/masuk");
       return;

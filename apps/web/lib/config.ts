@@ -69,14 +69,27 @@ export const WA_NUMBER_DISPLAY: string | null =
       : `+${WA_NUMBER}`;
 
 /**
- * WhatsApp chat deep link, optionally with a prefilled message.
- * Returns null when no number is configured — callers must hide or disable the
- * CTA rather than render a link that goes nowhere.
+ * Build a wa.me deep link for an arbitrary already-normalized number
+ * (digits only, no "+"), optionally with a prefilled message. Returns null
+ * when `number` is null — the shared low-level piece behind waLink() below
+ * and any caller that needs to message a *different* number than the site's
+ * own WA_NUMBER (e.g. a per-order contact), so both go through one place
+ * instead of each re-implementing the `https://wa.me/...` + encodeURIComponent
+ * construction independently.
+ */
+export function buildWaLink(number: string | null, text?: string): string | null {
+  if (number === null) return null;
+  const base = `https://wa.me/${number}`;
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
+}
+
+/**
+ * WhatsApp chat deep link to the site's business number, optionally with a
+ * prefilled message. Returns null when no number is configured — callers
+ * must hide or disable the CTA rather than render a link that goes nowhere.
  */
 export function waLink(text?: string): string | null {
-  if (WA_NUMBER === null) return null;
-  const base = `https://wa.me/${WA_NUMBER}`;
-  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
+  return buildWaLink(WA_NUMBER, text);
 }
 
 /** Honest fallback when WhatsApp is unavailable. */

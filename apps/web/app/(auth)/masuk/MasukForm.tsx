@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Mail, Lock, ShieldCheck } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, Input, PasswordInput } from "@/components/ui";
 import { login, buildGoogleLoginUrl } from "@/lib/auth/api";
 import { setToken } from "@/lib/auth/token";
 
@@ -112,9 +112,8 @@ export function MasukForm() {
               Lupa kata sandi?
             </Link>
           </div>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             leftIcon={<Lock size={18} aria-hidden="true" />}
             autoComplete="current-password"
             required

@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
-import { Button, Input } from "@/components/ui";
+import { Button, PasswordInput } from "@/components/ui";
 import { resetPassword } from "@/lib/auth/api";
 
 export default function ResetPasswordForm() {
@@ -83,9 +83,8 @@ export default function ResetPasswordForm() {
       )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           label="Kata sandi baru"
           leftIcon={<Lock size={18} aria-hidden="true" />}
           autoComplete="new-password"
@@ -96,9 +95,8 @@ export default function ResetPasswordForm() {
           placeholder="Minimal 8 karakter"
         />
 
-        <Input
+        <PasswordInput
           id="confirm"
-          type="password"
           label="Konfirmasi kata sandi"
           leftIcon={<Lock size={18} aria-hidden="true" />}
           autoComplete="new-password"

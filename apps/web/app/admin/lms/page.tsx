@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Building2, Layers, Users, ChevronRight } from "lucide-react";
-import { getToken } from "@/lib/auth/token";
+import { getValidToken } from "@/lib/auth/token";
 import {
   Button,
   Input,
@@ -57,8 +57,8 @@ type AssignForm = {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 
-function authHeaders() {
-  const token = getToken();
+async function authHeaders() {
+  const token = await getValidToken();
   return { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" };
 }
 
@@ -87,7 +87,7 @@ function CreateTenantModal({ onClose, onCreated }: { onClose: () => void; onCrea
     try {
       const res = await fetch("/api/lms/tenants", {
         method: "POST",
-        headers: authHeaders(),
+        headers: await authHeaders(),
         body: JSON.stringify({ slug, name, planType: plan, seatLimit }),
       });
       const body = await res.json();
@@ -149,18 +149,21 @@ function WorkshopAssignPanel() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/lms/tenants", { headers: authHeaders() })
-      .then((r) => r.json())
-      .then((b) => { if (b.success) setTenants(Array.isArray(b.data) ? b.data : []); });
+    async function load() {
+      fetch("/api/lms/tenants", { headers: await authHeaders() })
+        .then((r) => r.json())
+        .then((b) => { if (b.success) setTenants(Array.isArray(b.data) ? b.data : []); });
+    }
+    load();
   }, []);
 
-  function handleTenantChange(tenantId: string) {
+  async function handleTenantChange(tenantId: string) {
     setForm((f) => ({ ...f, tenantId, batchId: "", courseId: "" }));
     setBatches([]); setCourses([]);
     if (!tenantId) return;
-    fetch(`/api/lms/tenants/${tenantId}/batches`, { headers: authHeaders() })
+    fetch(`/api/lms/tenants/${tenantId}/batches`, { headers: await authHeaders() })
       .then((r) => r.json()).then((b) => { if (b.success) setBatches(b.data ?? []); });
-    fetch(`/api/lms/tenants/${tenantId}/courses`, { headers: authHeaders() })
+    fetch(`/api/lms/tenants/${tenantId}/courses`, { headers: await authHeaders() })
       .then((r) => r.json()).then((b) => { if (b.success) setCourses(b.data ?? []); });
   }
 
@@ -172,7 +175,7 @@ function WorkshopAssignPanel() {
         `/api/lms/tenants/${form.tenantId}/courses/${form.courseId}/assign`,
         {
           method: "POST",
-          headers: authHeaders(),
+          headers: await authHeaders(),
           body: JSON.stringify({
             batchId: form.batchId,
             ...(form.dueDate ? { dueDate: new Date(form.dueDate).toISOString() } : {}),
@@ -276,8 +279,8 @@ export default function AdminLMSPage() {
   const [showCreate, setShowCreate] = useState(false);
   const limit = 10;
 
-  const loadTenants = useCallback((p: number) => {
-    const token = getToken();
+  const loadTenants = useCallback(async (p: number) => {
+    const token = await getValidToken();
     if (!token) return;
     setLoading(true);
     fetch(`/api/lms/tenants?page=${p}&limit=${limit}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -294,7 +297,7 @@ export default function AdminLMSPage() {
   useEffect(() => { loadTenants(page); }, [page, loadTenants]);
 
   async function toggleActive(id: string, current: boolean) {
-    const token = getToken();
+    const token = await getValidToken();
     if (!token) return;
     await fetch(`/api/lms/tenants/${id}`, {
       method: "PATCH",
