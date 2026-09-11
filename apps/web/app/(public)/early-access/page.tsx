@@ -56,7 +56,8 @@ export default function EarlyAccessPage() {
             <span className="ea-title-gradient">Platform Edukasi Terlengkap</span>
           </h1>
           <p className="ea-subtitle">
-            Akses premium awal ke ratusan e-course, event live, modul, dan e-book dengan harga khusus sebelum rilis publik.
+            {/* BL-23: "ratusan e-course" removed — the catalogue is not that size. */}
+            Akses premium awal ke e-course, event live, modul, dan e-book dengan harga khusus sebelum rilis publik.
           </p>
         </header>
 

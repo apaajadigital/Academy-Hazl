@@ -17,7 +17,10 @@ export const metadata: Metadata = {
 
 const benefits = [
   { icon: BadgeCheck, title: "Sertifikasi trainer", body: "Ikuti program terstruktur dan lulus asesmen untuk jadi trainer resmi." },
-  { icon: Presentation, title: "Bangun kelas sendiri", body: "Rancang dan terbitkan materimu ke ribuan pembelajar." },
+  // BL-23: "ribuan pembelajar" removed — this page recruits trainers, so an
+  // inflated audience figure is a promise made to someone deciding whether to
+  // invest their time.
+  { icon: Presentation, title: "Bangun kelas sendiri", body: "Rancang dan terbitkan materimu di platform Jago Akademi." },
   { icon: Wallet, title: "Hasilkan pendapatan", body: "Dapatkan bagi hasil dari setiap peserta yang belajar bersamamu." },
   { icon: Users, title: "Audiens luas", body: "Manfaatkan platform Jago Akademi untuk menjangkau lebih banyak orang." },
   { icon: GraduationCap, title: "Dibimbing hingga siap", body: "Pendampingan menyiapkan kurikulum, rekaman, dan strategi kelas." },

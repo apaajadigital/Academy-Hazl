@@ -69,9 +69,15 @@ export function Footer() {
                 />
               </div>
             </Link>
+            {/*
+              BL-23: two unearned claims removed from a block that renders on
+              EVERY page, which makes it the widest-reaching copy in the app:
+              "terlengkap Indonesia" (an unprovable superlative) and "ribuan
+              profesional" (a headcount the platform does not have).
+            */}
             <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
-              Platform edukasi digital terlengkap Indonesia. Belajar, berlatih, dan
-              berkarier bersama ribuan profesional.
+              Platform edukasi digital Indonesia. Belajar, berlatih, dan
+              kembangkan kariermu.
             </p>
 
             {/* Social links */}
