@@ -16,7 +16,6 @@ export type Lesson = {
   rating: number;
   isPortfolioProject: boolean;
   chapters: Chapter[];
-  mentorId: string;
 };
 
 export type Topic = {
@@ -47,21 +46,7 @@ export type Category = {
   topics: Topic[];
 };
 
-export type Mentor = {
-  id: string;
-  slug: string;
-  name: string;
-  role: string;
-  company: string;
-  bio: string;
-  totalStudents: string;
-  avgRating: number;
-  teachingHours: number;
-  linkedinUrl?: string;
-  topicIds: string[];
-};
 
 export type KategoriParams = { kategori: string };
 export type TopikParams = { kategori: string; topik: string };
 export type MateriParams = { kategori: string; topik: string; materi: string };
-export type MentorParams = { slug: string };

@@ -1,4 +1,4 @@
-import type { Category, Mentor } from "./types";
+import type { Category } from "./types";
 
 export const categories: Category[] = [
   {
@@ -52,7 +52,6 @@ export const categories: Category[] = [
             studentCount: "66.396",
             rating: 4.67,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "mi-1", slug: "apa-itu-marketing", title: "Apa itu Marketing?", durationMinutes: 8, isLocked: true },
               { id: "mi-2", slug: "evolusi-marketing", title: "Evolusi Marketing dari 1.0 ke 5.0", durationMinutes: 10, isLocked: true },
@@ -70,7 +69,6 @@ export const categories: Category[] = [
             studentCount: "36.213",
             rating: 4.63,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "bi-1", slug: "apa-itu-brand", title: "Apa itu Brand?", durationMinutes: 7, isLocked: true },
               { id: "bi-2", slug: "brand-identity", title: "Brand Identity vs Brand Image", durationMinutes: 9, isLocked: true },
@@ -88,7 +86,6 @@ export const categories: Category[] = [
             studentCount: "24.449",
             rating: 4.62,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "bp-1", slug: "positioning-statement", title: "Positioning Statement", durationMinutes: 10, isLocked: true },
               { id: "bp-2", slug: "competitive-differentiation", title: "Competitive Differentiation", durationMinutes: 13, isLocked: true },
@@ -104,7 +101,6 @@ export const categories: Category[] = [
             studentCount: "18.359",
             rating: 4.63,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "fbb-1", slug: "functional-vs-emotional", title: "Functional vs Emotional Benefit", durationMinutes: 11, isLocked: true },
               { id: "fbb-2", slug: "benefit-ladder", title: "Benefit Ladder Framework", durationMinutes: 14, isLocked: true },
@@ -120,7 +116,6 @@ export const categories: Category[] = [
             studentCount: "16.695",
             rating: 4.61,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "cai-1", slug: "consumer-behavior", title: "Consumer Behavior", durationMinutes: 12, isLocked: true },
               { id: "cai-2", slug: "audience-research", title: "Audience Research Methods", durationMinutes: 15, isLocked: true },
@@ -136,7 +131,6 @@ export const categories: Category[] = [
             studentCount: "15.175",
             rating: 4.64,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "cm-1", slug: "content-strategy", title: "Content Strategy Framework", durationMinutes: 14, isLocked: true },
               { id: "cm-2", slug: "content-calendar", title: "Content Calendar & Distribution", durationMinutes: 13, isLocked: true },
@@ -151,7 +145,6 @@ export const categories: Category[] = [
             studentCount: "13.576",
             rating: 4.64,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "cmp-1", slug: "campaign-brief", title: "Campaign Brief", durationMinutes: 9, isLocked: true },
               { id: "cmp-2", slug: "media-mix", title: "Media Mix Strategy", durationMinutes: 11, isLocked: true },
@@ -170,7 +163,6 @@ export const categories: Category[] = [
             studentCount: "11.006",
             rating: 4.64,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "cbb-1", slug: "creative-brief-anatomy", title: "Anatomy of a Creative Brief", durationMinutes: 13, isLocked: true },
               { id: "cbb-2", slug: "briefing-process", title: "The Briefing Process", durationMinutes: 11, isLocked: true },
@@ -185,7 +177,6 @@ export const categories: Category[] = [
             studentCount: "10.822",
             rating: 4.63,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "amm-1", slug: "visual-assessment", title: "Visual Assessment Framework", durationMinutes: 10, isLocked: true },
               { id: "amm-2", slug: "copy-review", title: "Copy Review Checklist", durationMinutes: 9, isLocked: true },
@@ -202,7 +193,6 @@ export const categories: Category[] = [
             studentCount: "7.924",
             rating: 4.65,
             isPortfolioProject: true,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "cimp-1", slug: "imc-framework", title: "IMC Framework", durationMinutes: 16, isLocked: true },
               { id: "cimp-2", slug: "marketing-plan-project", title: "Marketing Plan Project", durationMinutes: 20, isLocked: true },
@@ -217,7 +207,6 @@ export const categories: Category[] = [
             studentCount: "6.281",
             rating: 4.66,
             isPortfolioProject: true,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "bcs-1", slug: "brand-strategy-project", title: "Brand Strategy Project", durationMinutes: 25, isLocked: true },
             ],
@@ -231,7 +220,6 @@ export const categories: Category[] = [
             studentCount: "5.475",
             rating: 4.67,
             isPortfolioProject: true,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "bc-1", slug: "campaign-concept", title: "Campaign Concept Development", durationMinutes: 14, isLocked: true },
               { id: "bc-2", slug: "campaign-execution", title: "Campaign Execution Plan", durationMinutes: 16, isLocked: true },
@@ -256,7 +244,6 @@ export const categories: Category[] = [
             studentCount: "45.123",
             rating: 4.71,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "cf-1", slug: "power-of-words", title: "The Power of Words", durationMinutes: 9, isLocked: true },
               { id: "cf-2", slug: "headline-writing", title: "Headline Writing", durationMinutes: 11, isLocked: true },
@@ -273,7 +260,6 @@ export const categories: Category[] = [
             studentCount: "28.456",
             rating: 4.68,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "sb-1", slug: "brand-narrative", title: "Brand Narrative", durationMinutes: 12, isLocked: true },
               { id: "sb-2", slug: "story-arc", title: "Story Arc for Marketing", durationMinutes: 10, isLocked: true },
@@ -289,7 +275,6 @@ export const categories: Category[] = [
             studentCount: "19.874",
             rating: 4.65,
             isPortfolioProject: true,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "smc-1", slug: "instagram-copy", title: "Instagram Caption Formula", durationMinutes: 9, isLocked: true },
               { id: "smc-2", slug: "tiktok-script", title: "TikTok Script Writing", durationMinutes: 11, isLocked: true },
@@ -314,7 +299,6 @@ export const categories: Category[] = [
             studentCount: "52.341",
             rating: 4.72,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "ss-1", slug: "platform-selection", title: "Platform Selection Strategy", durationMinutes: 10, isLocked: true },
               { id: "ss-2", slug: "content-pillars", title: "Content Pillars", durationMinutes: 9, isLocked: true },
@@ -331,7 +315,6 @@ export const categories: Category[] = [
             studentCount: "38.762",
             rating: 4.69,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "im-1", slug: "instagram-algorithm", title: "Understanding Instagram Algorithm", durationMinutes: 12, isLocked: true },
               { id: "im-2", slug: "reels-strategy", title: "Reels Strategy", durationMinutes: 10, isLocked: true },
@@ -358,7 +341,6 @@ export const categories: Category[] = [
             studentCount: "22.187",
             rating: 4.64,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "icp-1", slug: "campaign-objectives", title: "Setting Campaign Objectives", durationMinutes: 10, isLocked: true },
               { id: "icp-2", slug: "media-channels", title: "Media Channels Overview", durationMinutes: 12, isLocked: true },
@@ -375,7 +357,6 @@ export const categories: Category[] = [
             studentCount: "14.532",
             rating: 4.61,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "mb-1", slug: "programmatic-buying", title: "Programmatic Buying", durationMinutes: 13, isLocked: true },
               { id: "mb-2", slug: "direct-buying", title: "Direct Media Buying", durationMinutes: 10, isLocked: true },
@@ -400,7 +381,6 @@ export const categories: Category[] = [
             studentCount: "41.234",
             rating: 4.74,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "fas-1", slug: "business-manager", title: "Business Manager Setup", durationMinutes: 12, isLocked: true },
               { id: "fas-2", slug: "pixel-setup", title: "Facebook Pixel Setup", durationMinutes: 10, isLocked: true },
@@ -417,7 +397,6 @@ export const categories: Category[] = [
             studentCount: "28.913",
             rating: 4.71,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "ft-1", slug: "interest-targeting", title: "Interest & Behavioral Targeting", durationMinutes: 13, isLocked: true },
               { id: "ft-2", slug: "lookalike-audience", title: "Lookalike Audiences", durationMinutes: 11, isLocked: true },
@@ -442,7 +421,6 @@ export const categories: Category[] = [
             studentCount: "35.678",
             rating: 4.76,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "tai-1", slug: "tiktok-ecosystem", title: "TikTok Ads Ecosystem", durationMinutes: 10, isLocked: true },
               { id: "tai-2", slug: "ad-formats", title: "Ad Formats on TikTok", durationMinutes: 9, isLocked: true },
@@ -458,7 +436,6 @@ export const categories: Category[] = [
             studentCount: "22.145",
             rating: 4.73,
             isPortfolioProject: true,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "tc-1", slug: "hook-formula", title: "Hook Formula for TikTok", durationMinutes: 12, isLocked: true },
               { id: "tc-2", slug: "ugc-strategy", title: "UGC Strategy", durationMinutes: 10, isLocked: true },
@@ -483,7 +460,6 @@ export const categories: Category[] = [
             studentCount: "44.321",
             rating: 4.73,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "gsa-1", slug: "keyword-research", title: "Keyword Research", durationMinutes: 13, isLocked: true },
               { id: "gsa-2", slug: "ad-copy", title: "Ad Copy Writing", durationMinutes: 10, isLocked: true },
@@ -501,7 +477,6 @@ export const categories: Category[] = [
             studentCount: "21.876",
             rating: 4.66,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "gd-1", slug: "display-targeting", title: "Display Targeting Options", durationMinutes: 10, isLocked: true },
               { id: "gd-2", slug: "responsive-ads", title: "Responsive Display Ads", durationMinutes: 9, isLocked: true },
@@ -526,7 +501,6 @@ export const categories: Category[] = [
             studentCount: "18.543",
             rating: 4.67,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "is-1", slug: "influencer-tiers", title: "Influencer Tiers & Selection", durationMinutes: 11, isLocked: true },
               { id: "is-2", slug: "kol-brief", title: "KOL Brief Creation", durationMinutes: 9, isLocked: true },
@@ -543,7 +517,6 @@ export const categories: Category[] = [
             studentCount: "11.234",
             rating: 4.63,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "cb-1", slug: "community-platforms", title: "Community Platforms", durationMinutes: 9, isLocked: true },
               { id: "cb-2", slug: "engagement-programs", title: "Engagement Programs", durationMinutes: 11, isLocked: true },
@@ -568,7 +541,6 @@ export const categories: Category[] = [
             studentCount: "29.876",
             rating: 4.70,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "ga-1", slug: "ga4-intro", title: "Introduction to GA4", durationMinutes: 10, isLocked: true },
               { id: "ga-2", slug: "property-setup", title: "Property Setup", durationMinutes: 12, isLocked: true },
@@ -585,7 +557,6 @@ export const categories: Category[] = [
             studentCount: "19.432",
             rating: 4.68,
             isPortfolioProject: true,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "ar-1", slug: "custom-reports", title: "Custom Reports", durationMinutes: 13, isLocked: true },
               { id: "ar-2", slug: "looker-studio", title: "Looker Studio Integration", durationMinutes: 15, isLocked: true },
@@ -610,7 +581,6 @@ export const categories: Category[] = [
             studentCount: "48.123",
             rating: 4.72,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "sf-1", slug: "how-search-works", title: "How Search Engines Work", durationMinutes: 11, isLocked: true },
               { id: "sf-2", slug: "on-page-seo", title: "On-Page SEO", durationMinutes: 13, isLocked: true },
@@ -628,7 +598,6 @@ export const categories: Category[] = [
             studentCount: "31.456",
             rating: 4.69,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "ks-1", slug: "keyword-research-seo", title: "Keyword Research for SEO", durationMinutes: 14, isLocked: true },
               { id: "ks-2", slug: "search-intent", title: "Search Intent Analysis", durationMinutes: 12, isLocked: true },
@@ -653,7 +622,6 @@ export const categories: Category[] = [
             studentCount: "12.345",
             rating: 4.63,
             isPortfolioProject: false,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "aso-1", slug: "app-store-factors", title: "App Store Ranking Factors", durationMinutes: 11, isLocked: true },
               { id: "aso-2", slug: "app-title-description", title: "Title & Description Optimization", durationMinutes: 9, isLocked: true },
@@ -669,7 +637,6 @@ export const categories: Category[] = [
             studentCount: "7.891",
             rating: 4.66,
             isPortfolioProject: true,
-            mentorId: "ahmad-fauzi",
             chapters: [
               { id: "asoa-1", slug: "ratings-reviews", title: "Ratings & Reviews Strategy", durationMinutes: 12, isLocked: true },
               { id: "asoa-2", slug: "aso-project", title: "ASO Audit Project", durationMinutes: 18, isLocked: true },
@@ -693,7 +660,6 @@ export const categories: Category[] = [
             studentCount: "16.789",
             rating: 4.65,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "crm-1", slug: "crm-concepts", title: "CRM Core Concepts", durationMinutes: 10, isLocked: true },
               { id: "crm-2", slug: "customer-lifecycle", title: "Customer Lifecycle", durationMinutes: 12, isLocked: true },
@@ -709,7 +675,6 @@ export const categories: Category[] = [
             studentCount: "24.567",
             rating: 4.70,
             isPortfolioProject: false,
-            mentorId: "rina-kusuma",
             chapters: [
               { id: "em-1", slug: "email-strategy", title: "Email Strategy", durationMinutes: 10, isLocked: true },
               { id: "em-2", slug: "segmentation", title: "List Segmentation", durationMinutes: 11, isLocked: true },
@@ -758,7 +723,6 @@ export const categories: Category[] = [
             studentCount: "38.456",
             rating: 4.75,
             isPortfolioProject: false,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "pi-1", slug: "python-basics", title: "Python Basics", durationMinutes: 12, isLocked: true },
               { id: "pi-2", slug: "data-types", title: "Data Types & Structures", durationMinutes: 14, isLocked: true },
@@ -775,7 +739,6 @@ export const categories: Category[] = [
             studentCount: "24.321",
             rating: 4.71,
             isPortfolioProject: false,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "dw-1", slug: "data-cleaning", title: "Data Cleaning", durationMinutes: 15, isLocked: true },
               { id: "dw-2", slug: "missing-values", title: "Handling Missing Values", durationMinutes: 12, isLocked: true },
@@ -800,7 +763,6 @@ export const categories: Category[] = [
             studentCount: "41.234",
             rating: 4.78,
             isPortfolioProject: false,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "sq-1", slug: "select-query", title: "SELECT Queries", durationMinutes: 10, isLocked: true },
               { id: "sq-2", slug: "joins", title: "JOINs Mastery", durationMinutes: 14, isLocked: true },
@@ -817,7 +779,6 @@ export const categories: Category[] = [
             studentCount: "18.765",
             rating: 4.72,
             isPortfolioProject: true,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "sqa-1", slug: "window-functions", title: "Window Functions", durationMinutes: 15, isLocked: true },
               { id: "sqa-2", slug: "performance-tuning", title: "Query Performance Tuning", durationMinutes: 12, isLocked: true },
@@ -842,7 +803,6 @@ export const categories: Category[] = [
             studentCount: "28.912",
             rating: 4.70,
             isPortfolioProject: false,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "tb-1", slug: "tableau-interface", title: "Tableau Interface", durationMinutes: 9, isLocked: true },
               { id: "tb-2", slug: "connecting-data", title: "Connecting Data Sources", durationMinutes: 11, isLocked: true },
@@ -868,7 +828,6 @@ export const categories: Category[] = [
             studentCount: "19.456",
             rating: 4.68,
             isPortfolioProject: false,
-            mentorId: "kevin-wijaya",
             chapters: [
               { id: "ml-1", slug: "supervised-learning", title: "Supervised Learning", durationMinutes: 14, isLocked: true },
               { id: "ml-2", slug: "unsupervised-learning", title: "Unsupervised Learning", durationMinutes: 12, isLocked: true },
@@ -916,7 +875,6 @@ export const categories: Category[] = [
             studentCount: "55.432",
             rating: 4.82,
             isPortfolioProject: false,
-            mentorId: "hendra-gunawan",
             chapters: [
               { id: "ef-1", slug: "vlookup-xlookup", title: "VLOOKUP vs XLOOKUP", durationMinutes: 12, isLocked: true },
               { id: "ef-2", slug: "if-functions", title: "IF & Nested IF", durationMinutes: 10, isLocked: true },
@@ -934,7 +892,6 @@ export const categories: Category[] = [
             studentCount: "32.167",
             rating: 4.79,
             isPortfolioProject: true,
-            mentorId: "hendra-gunawan",
             chapters: [
               { id: "ed-1", slug: "chart-design", title: "Chart Design Best Practices", durationMinutes: 11, isLocked: true },
               { id: "ed-2", slug: "interactive-dashboard", title: "Interactive Dashboard", durationMinutes: 15, isLocked: true },
@@ -959,7 +916,6 @@ export const categories: Category[] = [
             studentCount: "43.789",
             rating: 4.77,
             isPortfolioProject: false,
-            mentorId: "hendra-gunawan",
             chapters: [
               { id: "pd-1", slug: "slide-design", title: "Slide Design Principles", durationMinutes: 10, isLocked: true },
               { id: "pd-2", slug: "color-typography", title: "Color & Typography", durationMinutes: 9, isLocked: true },
@@ -985,7 +941,6 @@ export const categories: Category[] = [
             studentCount: "28.543",
             rating: 4.68,
             isPortfolioProject: false,
-            mentorId: "hendra-gunawan",
             chapters: [
               { id: "wf-1", slug: "styles-templates", title: "Styles & Templates", durationMinutes: 10, isLocked: true },
               { id: "wf-2", slug: "table-of-contents", title: "Automatic Table of Contents", durationMinutes: 9, isLocked: true },
@@ -1011,7 +966,6 @@ export const categories: Category[] = [
             studentCount: "14.321",
             rating: 4.71,
             isPortfolioProject: false,
-            mentorId: "hendra-gunawan",
             chapters: [
               { id: "vi-1", slug: "vba-editor", title: "VBA Editor Introduction", durationMinutes: 9, isLocked: true },
               { id: "vi-2", slug: "macro-recording", title: "Macro Recording", durationMinutes: 8, isLocked: true },
@@ -1059,7 +1013,6 @@ export const categories: Category[] = [
             studentCount: "32.567",
             rating: 4.76,
             isPortfolioProject: false,
-            mentorId: "cindy-maharani",
             chapters: [
               { id: "dt-1", slug: "empathize", title: "Empathize", durationMinutes: 10, isLocked: true },
               { id: "dt-2", slug: "define", title: "Define", durationMinutes: 9, isLocked: true },
@@ -1086,7 +1039,6 @@ export const categories: Category[] = [
             studentCount: "45.123",
             rating: 4.80,
             isPortfolioProject: false,
-            mentorId: "cindy-maharani",
             chapters: [
               { id: "fi-1", slug: "figma-interface", title: "Figma Interface", durationMinutes: 9, isLocked: true },
               { id: "fi-2", slug: "frames-layers", title: "Frames & Layers", durationMinutes: 10, isLocked: true },
@@ -1103,7 +1055,6 @@ export const categories: Category[] = [
             studentCount: "28.789",
             rating: 4.74,
             isPortfolioProject: true,
-            mentorId: "cindy-maharani",
             chapters: [
               { id: "wp-1", slug: "low-fidelity", title: "Low-Fidelity Wireframes", durationMinutes: 11, isLocked: true },
               { id: "wp-2", slug: "high-fidelity", title: "High-Fidelity Mockups", durationMinutes: 14, isLocked: true },
@@ -1128,7 +1079,6 @@ export const categories: Category[] = [
             studentCount: "21.456",
             rating: 4.73,
             isPortfolioProject: false,
-            mentorId: "cindy-maharani",
             chapters: [
               { id: "rm-1", slug: "quantitative-research", title: "Quantitative Research", durationMinutes: 10, isLocked: true },
               { id: "rm-2", slug: "qualitative-research", title: "Qualitative Research", durationMinutes: 12, isLocked: true },
@@ -1177,7 +1127,6 @@ export const categories: Category[] = [
             studentCount: "28.456",
             rating: 4.75,
             isPortfolioProject: false,
-            mentorId: "tina-wulandari",
             chapters: [
               { id: "pmi-1", slug: "what-is-pm", title: "What is Product Management?", durationMinutes: 10, isLocked: true },
               { id: "pmi-2", slug: "pm-vs-po", title: "PM vs PO vs BA", durationMinutes: 9, isLocked: true },
@@ -1194,7 +1143,6 @@ export const categories: Category[] = [
             studentCount: "18.789",
             rating: 4.72,
             isPortfolioProject: false,
-            mentorId: "tina-wulandari",
             chapters: [
               { id: "pd2-1", slug: "user-problem", title: "Defining User Problems", durationMinutes: 12, isLocked: true },
               { id: "pd2-2", slug: "opportunity-sizing", title: "Opportunity Sizing", durationMinutes: 10, isLocked: true },
@@ -1219,7 +1167,6 @@ export const categories: Category[] = [
             studentCount: "22.345",
             rating: 4.73,
             isPortfolioProject: false,
-            mentorId: "tina-wulandari",
             chapters: [
               { id: "ai-1", slug: "agile-manifesto", title: "Agile Manifesto", durationMinutes: 9, isLocked: true },
               { id: "ai-2", slug: "scrum-framework", title: "Scrum Framework", durationMinutes: 12, isLocked: true },
@@ -1245,7 +1192,6 @@ export const categories: Category[] = [
             studentCount: "16.543",
             rating: 4.70,
             isPortfolioProject: false,
-            mentorId: "tina-wulandari",
             chapters: [
               { id: "rb-1", slug: "prioritization", title: "Feature Prioritization", durationMinutes: 12, isLocked: true },
               { id: "rb-2", slug: "roadmap-formats", title: "Roadmap Formats", durationMinutes: 10, isLocked: true },
@@ -1293,7 +1239,6 @@ export const categories: Category[] = [
             studentCount: "58.123",
             rating: 4.79,
             isPortfolioProject: false,
-            mentorId: "gilang-permana",
             chapters: [
               { id: "hb-1", slug: "html-structure", title: "HTML Structure", durationMinutes: 10, isLocked: true },
               { id: "hb-2", slug: "semantic-html", title: "Semantic HTML", durationMinutes: 11, isLocked: true },
@@ -1310,7 +1255,6 @@ export const categories: Category[] = [
             studentCount: "41.567",
             rating: 4.76,
             isPortfolioProject: false,
-            mentorId: "gilang-permana",
             chapters: [
               { id: "cs-1", slug: "flexbox", title: "Flexbox", durationMinutes: 13, isLocked: true },
               { id: "cs-2", slug: "grid", title: "CSS Grid", durationMinutes: 12, isLocked: true },
@@ -1337,7 +1281,6 @@ export const categories: Category[] = [
             studentCount: "34.789",
             rating: 4.77,
             isPortfolioProject: false,
-            mentorId: "gilang-permana",
             chapters: [
               { id: "rb2-1", slug: "jsx", title: "JSX & Components", durationMinutes: 11, isLocked: true },
               { id: "rb2-2", slug: "props-state", title: "Props & State", durationMinutes: 13, isLocked: true },
@@ -1363,7 +1306,6 @@ export const categories: Category[] = [
             studentCount: "22.456",
             rating: 4.73,
             isPortfolioProject: false,
-            mentorId: "gilang-permana",
             chapters: [
               { id: "nb-1", slug: "node-intro", title: "Node.js Introduction", durationMinutes: 10, isLocked: true },
               { id: "nb-2", slug: "express-setup", title: "Express Setup", durationMinutes: 9, isLocked: true },
@@ -1389,7 +1331,6 @@ export const categories: Category[] = [
             studentCount: "18.321",
             rating: 4.80,
             isPortfolioProject: false,
-            mentorId: "gilang-permana",
             chapters: [
               { id: "nj-1", slug: "app-router", title: "App Router Architecture", durationMinutes: 12, isLocked: true },
               { id: "nj-2", slug: "server-components", title: "Server Components", durationMinutes: 13, isLocked: true },
@@ -1401,114 +1342,5 @@ export const categories: Category[] = [
         ],
       },
     ],
-  },
-];
-
-export const mentors: Mentor[] = [
-  {
-    id: "ahmad-fauzi",
-    slug: "ahmad-fauzi",
-    name: "Ahmad Fauzi",
-    role: "Senior Digital Marketing Strategist",
-    company: "Tokopedia",
-    bio: "Lebih dari 10 tahun pengalaman di dunia Digital Marketing, mulai dari agency hingga perusahaan teknologi terkemuka. Ahmad telah merancang dan mengeksekusi ratusan kampanye digital yang berhasil menghasilkan jutaan rupiah revenue.",
-    totalStudents: "89.2K",
-    avgRating: 4.71,
-    teachingHours: 248,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: [
-      "marketing-management",
-      "campaign-media-planning",
-      "facebook-ads",
-      "google-ads",
-      "google-analytics",
-      "seo",
-      "app-store-optimization",
-      "customer-relationship-management",
-    ],
-  },
-  {
-    id: "rina-kusuma",
-    slug: "rina-kusuma",
-    name: "Rina Kusuma",
-    role: "Brand & Content Strategist",
-    company: "Gojek",
-    bio: "Spesialis brand building dan content strategy dengan rekam jejak membangun brand-brand ikonik Indonesia. Rina percaya bahwa setiap brand memiliki cerita unik yang perlu disampaikan dengan cara yang tepat ke audiens yang tepat.",
-    totalStudents: "62.4K",
-    avgRating: 4.68,
-    teachingHours: 184,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: [
-      "creative-copywriting",
-      "social-media-marketing",
-      "influencer-marketing",
-      "customer-relationship-management",
-      "tiktok-ads",
-    ],
-  },
-  {
-    id: "kevin-wijaya",
-    slug: "kevin-wijaya",
-    name: "Kevin Wijaya",
-    role: "Senior Data Scientist",
-    company: "Bank Central Asia",
-    bio: "Data Scientist berpengalaman yang telah membangun model analitik untuk perusahaan Fortune 500 dan startup unicorn Indonesia. Kevin mengajarkan data science dengan pendekatan praktis berbasis studi kasus nyata.",
-    totalStudents: "47.8K",
-    avgRating: 4.74,
-    teachingHours: 156,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: ["python-dasar", "sql-analysis", "data-visualization", "machine-learning"],
-  },
-  {
-    id: "hendra-gunawan",
-    slug: "hendra-gunawan",
-    name: "Hendra Gunawan",
-    role: "Microsoft Certified Trainer",
-    company: "Deloitte",
-    bio: "Microsoft Certified Professional dengan sertifikasi Excel Expert dan PowerPoint Specialist. Hendra telah melatih lebih dari 50.000 profesional dalam penggunaan Microsoft Office secara efektif dan efisien.",
-    totalStudents: "78.3K",
-    avgRating: 4.76,
-    teachingHours: 212,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: ["excel-mahir", "powerpoint-pro", "word-profesional", "excel-vba"],
-  },
-  {
-    id: "cindy-maharani",
-    slug: "cindy-maharani",
-    name: "Cindy Maharani",
-    role: "Senior Product Designer",
-    company: "Shopee",
-    bio: "Product Designer dengan passion dalam menciptakan pengalaman digital yang intuitif dan manusiawi. Cindy memimpin tim design di beberapa produk dengan jutaan pengguna aktif dan selalu berpegang pada user-centered design principles.",
-    totalStudents: "38.9K",
-    avgRating: 4.77,
-    teachingHours: 128,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: ["design-thinking", "figma-desain", "user-research"],
-  },
-  {
-    id: "tina-wulandari",
-    slug: "tina-wulandari",
-    name: "Tina Wulandari",
-    role: "Senior Product Manager",
-    company: "Bukalapak",
-    bio: "Product Manager berpengalaman yang telah memimpin pengembangan produk dari 0 hingga jutaan pengguna. Tina dikenal dengan pendekatannya yang data-driven dan kemampuannya mengkoordinasikan tim lintas divisi.",
-    totalStudents: "29.4K",
-    avgRating: 4.73,
-    teachingHours: 96,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: ["product-fundamentals", "agile-scrum", "product-roadmap"],
-  },
-  {
-    id: "gilang-permana",
-    slug: "gilang-permana",
-    name: "Gilang Permana",
-    role: "Senior Full Stack Developer",
-    company: "Traveloka",
-    bio: "Full Stack Developer dengan spesialisasi di JavaScript ecosystem — React, Node.js, dan Next.js. Gilang telah membangun aplikasi web dan mobile yang digunakan oleh jutaan pengguna setiap harinya.",
-    totalStudents: "52.1K",
-    avgRating: 4.78,
-    teachingHours: 176,
-    linkedinUrl: "https://linkedin.com",
-    topicIds: ["html-css-js", "react-frontend", "nodejs-api", "nextjs-fullstack"],
   },
 ];

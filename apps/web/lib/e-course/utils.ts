@@ -1,5 +1,5 @@
-import { categories, mentors } from "./data";
-import type { Category, Topic, Lesson, Mentor, KategoriParams, TopikParams, MateriParams } from "./types";
+import { categories } from "./data";
+import type { Category, Topic, Lesson, KategoriParams, TopikParams, MateriParams } from "./types";
 
 export function getCategoryBySlug(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug);
@@ -17,14 +17,6 @@ export function getLessonBySlug(
 ): Lesson | undefined {
   const topic = getTopicBySlug(categorySlug, topicSlug);
   return topic?.lessons.find((l) => l.slug === lessonSlug);
-}
-
-export function getMentorBySlug(slug: string): Mentor | undefined {
-  return mentors.find((m) => m.slug === slug);
-}
-
-export function getMentorById(id: string): Mentor | undefined {
-  return mentors.find((m) => m.id === id);
 }
 
 export function getAllCategoryParams(): KategoriParams[] {
@@ -59,4 +51,4 @@ export function formatDurationShort(minutes: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
-export { categories, mentors };
+export { categories };
