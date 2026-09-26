@@ -1,0 +1,13 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    // Test mocks intentionally use dynamic property access on stubbed Prisma
+    // clients; noUncheckedIndexedAccess adds noise there without value.
+    // Production code (tsconfig.json) keeps this strict.
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

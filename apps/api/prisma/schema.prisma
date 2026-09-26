@@ -1,0 +1,925 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String?
+  name                String
+  avatarUrl           String?
+  isVerified          Boolean   @default(false)
+  isActive            Boolean   @default(true)
+  authProvider        String    @default("email")
+  lastLoginAt         DateTime?
+  // PDP compliance
+  deletedAt           DateTime?
+  consentGivenAt      DateTime?
+  // Email verification
+  emailVerifyToken    String?
+  emailVerifyExpiry   DateTime?
+  // Password reset
+  resetPasswordToken  String?
+  resetPasswordExpiry DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  profile            UserProfile?
+  roles              UserRole[]
+  refreshTokens      RefreshToken[]
+  courses            Course[]              @relation("TrainerCourses")
+  enrollments        CourseEnrollment[]
+  orders             Order[]
+  certificates       Certificate[]
+  affiliate          Affiliate?
+  referred           AffiliateCommission[] @relation("ReferredUserRelation")
+  quizSubmissions    QuizSubmission[]
+  lmsBatchMembers    LmsBatchMember[]
+  lmsEnrollments     LmsEnrollment[]
+  lmsCertificates    LmsCertificate[]
+  eventRegistrations EventRegistration[]
+  refunds            Refund[]
+  reviews            Review[]
+  trainerPayouts     TrainerPayout[]
+  blogPosts          BlogPost[]            @relation("BlogPostAuthor")
+  subscription       Subscription?
+  memberPortfolios   MemberPortfolio[]
+
+  @@index([email])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  userAgent String?
+  ip        String?
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// Immutable audit trail — no updatedAt, no FK on actorId (preserved after user erasure)
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorEmail String?
+  action     String
+  resource   String
+  resourceId String?
+  oldValue   Json?
+  newValue   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model UserProfile {
+  userId    String   @id
+  phone     String?
+  bio       String?  @db.Text
+  headline  String?
+  linkedin  String?
+  location  String?
+  expertise String[]
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  role      String
+  tenantId  String?
+  grantedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role, tenantId])
+  @@map("user_roles")
+}
+
+model CourseCategory {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  iconUrl   String?
+  sortOrder Int      @default(0)
+  courses   Course[]
+
+  @@map("course_categories")
+}
+
+model Course {
+  id            String    @id @default(uuid())
+  slug          String    @unique
+  title         String
+  description   String?   @db.Text
+  shortDesc     String?
+  price         Decimal   @default(0.00) @db.Decimal(12, 2)
+  salePrice     Decimal?  @db.Decimal(12, 2)
+  status        String    @default("draft")
+  trainerId     String
+  categoryId    String?
+  level         String?
+  language      String    @default("id")
+  thumbnailUrl  String?
+  previewVideo  String?
+  totalDuration Int       @default(0)
+  totalLessons  Int       @default(0)
+  totalEnrolled Int       @default(0)
+  avgRating     Decimal   @default(0.00) @db.Decimal(3, 2)
+  totalReviews  Int       @default(0)
+  isFeatured    Boolean   @default(false)
+  metaTitle     String?
+  metaDesc      String?   @db.Text
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  adminFeedback String?
+  liveZoomLink  String?
+  liveSchedule  DateTime?
+  // regular | private_class (BL-47)
+  format            String  @default("regular")
+  // WhatsApp group invite for private-class onboarding — shown only after purchase.
+  waGroupLink       String?
+  // Admin WA number for onboarding (digits only, e.g. 6285283423737).
+  onboardingContact String?
+
+  category     CourseCategory?    @relation(fields: [categoryId], references: [id])
+  trainer      User               @relation("TrainerCourses", fields: [trainerId], references: [id])
+  sections     CourseSection[]
+  enrollments  CourseEnrollment[]
+  certificates Certificate[]
+
+  // Hot path: trainer's course list, category listing, published filtering.
+  @@index([trainerId])
+  @@index([categoryId])
+  @@index([status])
+  // Catalog split: regular catalog vs private-class listing (BL-47).
+  @@index([format, status])
+  @@map("courses")
+}
+
+model CourseSection {
+  id        String         @id @default(uuid())
+  courseId  String
+  title     String
+  sortOrder Int            @default(0)
+  lessons   CourseLesson[]
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@map("course_sections")
+}
+
+model CourseLesson {
+  id          String   @id @default(uuid())
+  sectionId   String
+  title       String
+  type        String
+  contentUrl  String?
+  contentText String?  @db.Text
+  duration    Int      @default(0)
+  isPreview   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  section  CourseSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress CourseLessonProgress[]
+  quiz     Quiz?
+
+  @@index([sectionId])
+  @@map("course_lessons")
+}
+
+model Quiz {
+  id        String   @id @default(uuid())
+  lessonId  String   @unique
+  passMark  Int      @default(70)
+  createdAt DateTime @default(now())
+
+  lesson    CourseLesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id        String  @id @default(uuid())
+  quizId    String
+  question  String  @db.Text
+  // Question type: multiple_choice | checkboxes | dropdown | short_answer | paragraph | true_false | linear_scale
+  type      String  @default("multiple_choice")
+  options   Json    // String[] for choice-based types, null for text types
+  // Polymorphic answer key: Int for MC/dropdown/true_false, Int[] for checkboxes,
+  // String/String[] for short_answer, null for paragraph, Int for linear_scale.
+  answer    Json
+  required  Boolean @default(true)
+  // Type-specific settings JSON, e.g. { min, max, minLabel, maxLabel } for linear_scale
+  settings  Json?
+  sortOrder Int     @default(0)
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@map("quiz_questions")
+}
+
+model QuizSubmission {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  answers     Json
+  score       Decimal  @db.Decimal(5, 2)
+  isPassed    Boolean  @default(false)
+  submittedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, lessonId])
+  @@map("quiz_submissions")
+}
+
+model CourseEnrollment {
+  id          String                 @id @default(uuid())
+  courseId    String
+  userId      String
+  orderId     String?
+  progressPct Decimal                @default(0.00) @db.Decimal(5, 2)
+  isCompleted Boolean                @default(false)
+  completedAt DateTime?
+  enrolledAt  DateTime               @default(now())
+  progress    CourseLessonProgress[]
+
+  course Course @relation(fields: [courseId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@unique([courseId, userId])
+  // Hot path (TASK-021): student dashboard "my courses" lookups by user.
+  @@index([userId])
+  // Course detail: enrollment count / roster lookups by course.
+  @@index([courseId])
+  @@map("course_enrollments")
+}
+
+model CourseLessonProgress {
+  id           String    @id @default(uuid())
+  enrollmentId String
+  lessonId     String
+  watchedPct   Decimal   @default(0.00) @db.Decimal(5, 2)
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+
+  enrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson     CourseLesson     @relation(fields: [lessonId], references: [id])
+
+  @@unique([enrollmentId, lessonId])
+  @@map("course_lesson_progress")
+}
+
+model Order {
+  id             String    @id @default(uuid())
+  userId         String
+  totalAmount    Decimal   @db.Decimal(12, 2)
+  discountAmount Decimal   @default(0.00) @db.Decimal(12, 2)
+  finalAmount    Decimal   @db.Decimal(12, 2)
+  status         String    @default("pending")
+  paymentMethod  String?
+  couponId       String?
+  referralCode   String?
+  paidAt         DateTime?
+  expiredAt      DateTime?
+  notes          String?   @db.Text
+  // Batch8 D7: set when this order has been consumed to activate a subscription.
+  // A one-time guard so a single paid order cannot be replayed to extend a plan.
+  subscriptionConsumedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user         User                  @relation(fields: [userId], references: [id])
+  coupon       Coupon?               @relation(fields: [couponId], references: [id])
+  items        OrderItem[]
+  transactions PaymentTransaction[]
+  commissions  AffiliateCommission[]
+
+  // Hot path (TASK-021): order history & admin filtering by user/status/time.
+  @@index([userId, status, createdAt])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String  @id @default(uuid())
+  orderId    String
+  itemType   String
+  itemId     String
+  itemTitle  String?
+  quantity   Int     @default(1)
+  unitPrice  Decimal @db.Decimal(12, 2)
+  totalPrice Decimal @db.Decimal(12, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  // Hot path (BL-98): ownership/purchase lookups filter on (itemType, itemId) —
+  // routes/ebooks.ts "my library" + the download gate, and the admin delete guard
+  // in modules/admin/ebooks.ts. Only orderId was indexed, so each of those had to
+  // scan every order line on the platform.
+  @@index([itemType, itemId])
+  @@map("order_items")
+}
+
+model PaymentTransaction {
+  id            String   @id @default(uuid())
+  orderId       String
+  gateway       String
+  // BL-140: the gateway's identifier for this payment. Unique because a
+  // duplicate here means two orders share one payment identity, and the
+  // webhook then resolves a settled payment to an arbitrary one of them.
+  // Nullable stays: Postgres allows many NULLs under a unique index, and a
+  // transaction row can exist before the gateway has named it.
+  gatewayTxId   String?  @unique
+  paymentMethod String?
+  amount        Decimal  @db.Decimal(12, 2)
+  status        String   @default("pending")
+  gatewayRaw    Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  // Hot path (TASK-021): webhook reconciliation by order + status.
+  @@index([orderId, status])
+  @@map("payment_transactions")
+}
+
+model Certificate {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  type      String
+  userId    String
+  courseId  String?
+  eventId   String?
+  issuedAt  DateTime  @default(now())
+  revokedAt DateTime?
+  fileUrl   String?
+  isValid   Boolean   @default(true)
+  metadata  Json?
+
+  user   User    @relation(fields: [userId], references: [id])
+  course Course? @relation(fields: [courseId], references: [id])
+
+  // Batch8 D6: one certificate per (user, course, type). Prevents duplicate
+  // certificates being issued for the same completion (dedup keeps the oldest).
+  @@unique([userId, courseId, type])
+  @@map("certificates")
+}
+
+model Coupon {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  type        String // "percentage" | "fixed"
+  value       Decimal   @db.Decimal(12, 2)
+  maxDiscount Decimal?  @db.Decimal(12, 2)
+  minPurchase Decimal   @default(0) @db.Decimal(12, 2)
+  usageLimit  Int?
+  usageCount  Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  description String?
+  createdAt   DateTime  @default(now())
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+model EBook {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  title       String
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(12, 2)
+  salePrice   Decimal? @db.Decimal(12, 2)
+  fileUrl     String
+  coverUrl    String?
+  author      String?
+  pages       Int?
+  category    String?
+  status      String   @default("draft")
+  totalSold   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ebooks")
+}
+
+model Affiliate {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  code             String   @unique
+  totalClicks      Int      @default(0)
+  totalConversions Int      @default(0)
+  totalEarnings    Decimal  @default(0.00) @db.Decimal(12, 2)
+  balance          Decimal  @default(0.00) @db.Decimal(12, 2)
+  commissionRate   Decimal  @default(10.00) @db.Decimal(5, 2)
+  status           String   @default("active")
+  joinedAt         DateTime @default(now())
+
+  user        User                  @relation(fields: [userId], references: [id])
+  commissions AffiliateCommission[]
+  withdrawals AffiliateWithdrawal[]
+
+  @@map("affiliates")
+}
+
+model AffiliateCommission {
+  id             String    @id @default(uuid())
+  affiliateId    String
+  orderId        String
+  referredUserId String
+  commissionPct  Decimal   @db.Decimal(5, 2)
+  grossAmount    Decimal   @db.Decimal(12, 2)
+  commissionAmt  Decimal   @db.Decimal(12, 2)
+  status         String    @default("pending")
+  createdAt      DateTime  @default(now())
+  settledAt      DateTime?
+
+  affiliate    Affiliate @relation(fields: [affiliateId], references: [id])
+  order        Order     @relation(fields: [orderId], references: [id])
+  referredUser User      @relation("ReferredUserRelation", fields: [referredUserId], references: [id])
+
+  @@map("affiliate_commissions")
+}
+
+// ─── LMS (B2B Multi-Tenant) ───────────────────────────────────────────────
+
+model LmsTenant {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  name         String
+  logoUrl      String?
+  primaryColor String    @default("#2563eb")
+  customDomain String?   @unique
+  planType     String    @default("trial") // trial | starter | pro | enterprise
+  trialEndsAt  DateTime?
+  isActive     Boolean   @default(true)
+  seatLimit    Int       @default(50)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  batches     LmsBatch[]
+  invites     LmsUserInvite[]
+  courses     LmsCourse[]
+  enrollments LmsEnrollment[]
+
+  @@map("lms_tenants")
+}
+
+model LmsBatch {
+  id          String    @id @default(uuid())
+  tenantId    String
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  tenant      LmsTenant             @relation(fields: [tenantId], references: [id])
+  members     LmsBatchMember[]
+  assignments LmsCourseAssignment[]
+
+  // Tenant-scoped listing (every LMS query is scoped by tenantId).
+  @@index([tenantId])
+  @@map("lms_batches")
+}
+
+model LmsBatchMember {
+  id       String   @id @default(uuid())
+  batchId  String
+  userId   String
+  // Denormalized from parent batch for row-level tenant isolation (defense-in-depth).
+  // Nullable so the backfill migration cannot fail on pre-existing rows; app populates on write.
+  tenantId String?
+  joinedAt DateTime @default(now())
+
+  batch LmsBatch @relation(fields: [batchId], references: [id])
+  user  User     @relation(fields: [userId], references: [id])
+
+  @@unique([batchId, userId])
+  @@index([tenantId])
+  @@map("lms_batch_members")
+}
+
+model LmsCourse {
+  id          String   @id @default(uuid())
+  tenantId    String
+  title       String
+  description String?  @db.Text
+  status      String   @default("draft") // draft | published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      LmsTenant             @relation(fields: [tenantId], references: [id])
+  lessons     LmsLesson[]
+  assignments LmsCourseAssignment[]
+  enrollments LmsEnrollment[]
+
+  // Tenant-scoped listing (every LMS query is scoped by tenantId).
+  @@index([tenantId])
+  @@map("lms_courses")
+}
+
+model LmsLesson {
+  id           String   @id @default(uuid())
+  courseId     String
+  title        String
+  content      String?  @db.Text
+  videoUrl     String?
+  durationMins Int?
+  sortOrder    Int      @default(0)
+  // Denormalized from parent course for row-level tenant isolation (defense-in-depth).
+  // Nullable so the backfill migration cannot fail on pre-existing rows; app populates on write.
+  tenantId     String?
+  createdAt    DateTime @default(now())
+
+  course   LmsCourse     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress LmsProgress[]
+  quizzes  LmsQuiz[]
+
+  @@index([courseId])
+  @@index([tenantId])
+  @@map("lms_lessons")
+}
+
+model LmsQuiz {
+  id        String   @id @default(uuid())
+  lessonId  String
+  question  String   @db.Text
+  options   Json
+  answer    Int
+  // Denormalized from parent lesson->course for row-level tenant isolation (defense-in-depth).
+  // Nullable so the backfill migration cannot fail on pre-existing rows; app populates on write.
+  tenantId  String?
+  createdAt DateTime @default(now())
+
+  lesson LmsLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("lms_quizzes")
+}
+
+model LmsCourseAssignment {
+  id          String    @id @default(uuid())
+  batchId     String
+  courseId    String
+  dueDate     DateTime?
+  isMandatory Boolean   @default(true)
+  // Denormalized from parent course/batch for row-level tenant isolation (defense-in-depth).
+  // Nullable so the backfill migration cannot fail on pre-existing rows; app populates on write.
+  tenantId    String?
+  assignedAt  DateTime  @default(now())
+
+  batch  LmsBatch  @relation(fields: [batchId], references: [id])
+  course LmsCourse @relation(fields: [courseId], references: [id])
+
+  @@unique([batchId, courseId])
+  @@index([tenantId])
+  @@map("lms_course_assignments")
+}
+
+model LmsEnrollment {
+  id          String    @id @default(uuid())
+  tenantId    String
+  courseId    String
+  userId      String
+  enrolledAt  DateTime  @default(now())
+  completedAt DateTime?
+
+  tenant      LmsTenant       @relation(fields: [tenantId], references: [id])
+  course      LmsCourse       @relation(fields: [courseId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
+  progress    LmsProgress[]
+  certificate LmsCertificate?
+
+  @@unique([courseId, userId])
+  // Hot path (TASK-021): tenant-wide completion reports + student portal.
+  @@index([tenantId])
+  @@index([userId])
+  @@map("lms_enrollments")
+}
+
+model LmsProgress {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  lessonId     String
+  // Denormalized from parent enrollment for row-level tenant isolation (defense-in-depth).
+  // Nullable so the backfill migration cannot fail on pre-existing rows; app populates on write.
+  tenantId     String?
+  completedAt  DateTime @default(now())
+
+  enrollment LmsEnrollment @relation(fields: [enrollmentId], references: [id])
+  lesson     LmsLesson     @relation(fields: [lessonId], references: [id])
+
+  @@unique([enrollmentId, lessonId])
+  @@index([tenantId])
+  @@map("lms_progress")
+}
+
+model LmsCertificate {
+  id           String   @id @default(uuid())
+  enrollmentId String   @unique
+  tenantId     String
+  userId       String
+  courseTitle  String
+  issuedAt     DateTime @default(now())
+
+  enrollment LmsEnrollment @relation(fields: [enrollmentId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+
+  @@map("lms_certificates")
+}
+
+model LmsUserInvite {
+  id        String   @id @default(uuid())
+  tenantId  String
+  email     String
+  batchId   String?
+  status    String   @default("pending") // pending | accepted | expired
+  token     String   @unique @default(uuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  tenant LmsTenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, email])
+  @@map("lms_user_invites")
+}
+
+// ─── Events ──────────────────────────────────────────────────────────────────
+
+model Event {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  description String?   @db.Text
+  type        String    @default("online") // online | offline | hybrid
+  status      String    @default("draft") // draft | published | cancelled
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  venue       String?
+  price       Decimal   @default(0.00) @db.Decimal(12, 2)
+  salePrice   Decimal?  @db.Decimal(12, 2)
+  quota       Int?
+  totalSold   Int       @default(0)
+  coverUrl    String?
+  speakerName String?
+  speakerBio  String?   @db.Text
+  isFeatured  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  registrations EventRegistration[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id         String    @id @default(uuid())
+  eventId    String
+  userId     String
+  orderId    String?
+  ticketCode String    @unique @default(uuid())
+  status     String    @default("pending") // pending | confirmed | cancelled | attended
+  attendedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  event Event @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@map("event_registrations")
+}
+
+model Refund {
+  id          String    @id @default(uuid())
+  orderId     String    @unique
+  userId      String
+  reason      String    @db.Text
+  status      String    @default("pending") // pending | approved | rejected
+  amount      Decimal   @db.Decimal(12, 2)
+  adminNote   String?
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+  processedBy String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  // Hot path (F2): the trainer balance aggregate joins refunds by status to find
+  // approved refunds that still sit on a "paid" order. Without this the only
+  // usable index is the orderId unique key, so the status filter forced a
+  // sequential scan over every refund on the platform.
+  @@index([status])
+  @@map("refunds")
+}
+
+// ─── Phase 8: Trainer Hub ─────────────────────────────────────────────────────
+
+model TrainerPayout {
+  id          String    @id @default(uuid())
+  trainerId   String
+  amount      Decimal   @db.Decimal(12, 2)
+  bankName    String
+  accountNo   String
+  accountName String
+  status      String    @default("pending") // pending | approved | rejected | paid
+  note        String?
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+  processedBy String?
+
+  trainer User @relation(fields: [trainerId], references: [id])
+
+  // Hot paths: every trainer-facing query filters on trainerId (routes/trainer.ts
+  // list + balance aggregate), and the admin payout queue filters/aggregates on
+  // status alone (modules/admin/payouts.ts stats + list).
+  @@index([trainerId])
+  @@index([status])
+  @@map("trainer_payouts")
+}
+
+// ─── Phase 8: Review & Rating ─────────────────────────────────────────────────
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  itemType  String // course | event | ebook
+  itemId    String
+  rating    Int // 1–5
+  content   String?  @db.Text
+  status    String   @default("published") // published | hidden
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, itemType, itemId])
+  // Every product page lists reviews for its item.
+  @@index([itemType, itemId])
+  @@map("reviews")
+}
+
+// ─── Phase 8: Blog CMS ───────────────────────────────────────────────────────
+
+model BlogPost {
+  id          String    @id @default(uuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?   @db.Text
+  content     String    @db.Text
+  coverUrl    String?
+  category    String?
+  tags        String[]
+  status      String    @default("draft") // draft | published
+  authorId    String
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author User @relation("BlogPostAuthor", fields: [authorId], references: [id])
+
+  @@map("blog_posts")
+}
+
+// ─── Phase 8: Affiliate Withdrawal ───────────────────────────────────────────
+
+model AffiliateWithdrawal {
+  id          String    @id @default(uuid())
+  affiliateId String
+  amount      Decimal   @db.Decimal(12, 2)
+  bankName    String
+  accountNo   String
+  accountName String
+  status      String    @default("pending") // pending | approved | rejected | paid
+  note        String?
+  processedAt DateTime?
+  processedBy String?
+  requestedAt DateTime  @default(now())
+
+  affiliate Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@map("affiliate_withdrawals")
+}
+
+// ─── Phase 8: Subscription ────────────────────────────────────────────────────
+
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  planType  String // monthly | annual
+  status    String   @default("active") // active | cancelled | expired
+  startedAt DateTime @default(now())
+  expiresAt DateTime
+  orderId   String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("subscriptions")
+}
+
+// ─── Phase 5: Lead capture (TASK-040) ─────────────────────────────────────────
+
+model Lead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  message   String?  @db.Text
+  // Which landing/funnel produced the lead — affiliate | lms | trainer | free-class | other
+  source    String   @default("other")
+  status    String   @default("new") // new | contacted | qualified | converted | archived
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([source, status])
+  @@index([email])
+  @@map("leads")
+}
+
+// ─── Phase 5: Testimonial engine (TASK-095) ───────────────────────────────────
+
+model Testimonial {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  company   String?
+  quote     String   @db.Text
+  rating    Int? // 1..5, optional
+  photoUrl  String?
+  // Moderation lifecycle — only `approved` are shown publicly.
+  status    String   @default("pending") // pending | approved | rejected
+  // Optional link to the submitting user (consent/audit).
+  userId    String?
+  featured  Boolean  @default(false)
+  // general | alumni (BL-48) — alumni testimonials power the alumni showcase.
+  category  String   @default("general")
+  // Career outcome, e.g. "Kini bekerja sebagai Digital Marketer di X".
+  outcome   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, featured])
+  @@index([category, status])
+  @@map("testimonials")
+}
+
+// ─── Phase B: Alumni & Community — member portfolios (BL-48) ──────────────────
+
+model MemberPortfolio {
+  id       String  @id @default(uuid())
+  name     String
+  role     String // e.g. "UI/UX Designer"
+  headline String?
+  photoUrl String?
+  // Array of {title, url?, imageUrl?, description?} — shape enforced by Zod at
+  // the admin boundary; kept as Json to avoid a join table for a display list.
+  portfolioItems Json    @default("[]")
+  featured       Boolean @default(false)
+  status         String  @default("draft") // draft | published
+  // Optional link to the member's account; portfolio survives user deletion.
+  userId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([status, featured])
+  @@map("member_portfolios")
+}

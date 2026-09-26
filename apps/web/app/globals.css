@@ -1,0 +1,515 @@
+@import "tailwindcss";
+@config "../tailwind-legacy.config.ts";
+@plugin "@tailwindcss/typography";
+
+/* ─── CSS Design Tokens — Jago Akademi Light Theme ─────────────────── */
+:root {
+  /* ── Brand primitives ───────────────────────────────────────────── */
+  --brand-cyan:          #36bdf2;
+  --brand-cyan-strong:   #0077A8;   /* accessible for text/icons on white (4.67:1) */
+  --brand-cyan-dark:     #00aad4;   /* legacy compat */
+  --brand-pink:          #ff2f86;
+  --brand-pink-strong:   #CC0052;   /* accessible for text on white (4.84:1) */
+  --brand-pink-dark:     #d40054;   /* legacy compat */
+  --brand-purple:        #946bee;   /* gradient mid-stop (Stitch `secondary`) */
+
+  /* Canonical brand gradient — hero/accent only. Use via `.bg-brand-gradient`
+     so pages stop inlining the raw linear-gradient(...). */
+  --brand-gradient:      linear-gradient(100deg, #36bdf2 0%, #946bee 55%, #ff2f86 100%);
+
+  /* ── Surfaces ───────────────────────────────────────────────────── */
+  --surface-page:        #F5F5F7;
+  --surface-card:        #FFFFFF;
+  --surface-sunken:      #FAFAFA;
+  --surface-raised:      #FFFFFF;
+  --surface-overlay:     rgba(0, 0, 0, 0.45);
+  --surface-accent-soft: rgba(0, 212, 255, 0.08);
+  --surface-pink-soft:   rgba(255, 0, 102, 0.07);
+
+  /* ── Legacy bg aliases (light values) ──────────────────────────── */
+  --bg-base:             #F5F5F7;
+  --bg-surface:          #FFFFFF;
+  --bg-elevated:         #FAFAFA;
+  --bg-overlay:          #F0F0F2;
+
+  /* ── Text ───────────────────────────────────────────────────────── */
+  --text-primary:        #1D1D1F;
+  --text-secondary:      #636366;
+  --text-muted:          #6E6E73;
+  --text-inverse:        #FFFFFF;
+  --text-on-accent:      #001318;   /* dark text on cyan fill button */
+
+  /* ── Border ─────────────────────────────────────────────────────── */
+  --border-default:      #E5E5E5;
+  --border-subtle:       #EFEFEF;
+  --border-strong:       #D2D2D7;
+  --border-focus:        #0077A8;
+  --border-brand:        rgba(0, 119, 168, 0.3);
+
+  /* ── Elevation shadows ──────────────────────────────────────────── */
+  --shadow-e0:           none;
+  --shadow-e1:           0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-e2:           0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-e3:           0 10px 25px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.08);
+  --shadow-e4:           0 20px 48px rgba(0,0,0,0.16), 0 8px 16px rgba(0,0,0,0.10);
+  --shadow-focus-cyan:   0 0 0 3px rgba(0, 119, 168, 0.2);
+  /* legacy compat */
+  --shadow-card:         var(--shadow-e2);
+  --shadow-glow-cyan:    var(--shadow-e2);
+  --shadow-glow-pink:    var(--shadow-e2);
+
+  /* ── Spacing ────────────────────────────────────────────────────── */
+  --section-py:          6rem;
+  --section-py-sm:       4rem;
+
+  /* ── Radius ─────────────────────────────────────────────────────── */
+  --radius-sm:           0.5rem;
+  --radius-md:           0.75rem;   /* 12px — dashboard buttons & inputs */
+  --radius-lg:           1rem;      /* 16px — legacy/public cards (unchanged) */
+  --radius-xl:           1.5rem;
+  --radius-full:         9999px;
+  /* Dashboard standardization contract (Jul 2026): card radius = 20px.
+     Separate token so public/marketing cards on --radius-lg stay 16px. */
+  --radius-card:         1.25rem;   /* 20px — dashboard cards */
+
+  /* ── Dashboard layout contract ──────────────────────────────────── */
+  --container-max:       100rem;    /* 1600px — dashboard content max-width */
+
+  /* ── Motion ─────────────────────────────────────────────────────── */
+  --transition-fast:     150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:     250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:     400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo:       cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body:    var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ─── Tailwind v4 Semantic Utilities ────────────────────────────────── */
+@theme inline {
+  --color-surface-page:         var(--surface-page);
+  --color-surface-card:         var(--surface-card);
+  --color-surface-sunken:       var(--surface-sunken);
+  --color-surface-accent-soft:  var(--surface-accent-soft);
+  --color-surface-pink-soft:    var(--surface-pink-soft);
+  --color-text-primary:         var(--text-primary);
+  --color-text-secondary:       var(--text-secondary);
+  --color-text-muted:           var(--text-muted);
+  --color-text-on-accent:       var(--text-on-accent);
+  --color-accent-cyan:          var(--brand-cyan);
+  --color-accent-cyan-strong:   var(--brand-cyan-strong);
+  --color-accent-pink:          var(--brand-pink);
+  --color-accent-pink-strong:   var(--brand-pink-strong);
+  --color-accent-purple:        var(--brand-purple);
+  --color-border-default:       var(--border-default);
+  --color-border-subtle:        var(--border-subtle);
+  --color-border-strong:        var(--border-strong);
+  --color-border-focus:         var(--border-focus);
+  --shadow-e1:                  var(--shadow-e1);
+  --shadow-e2:                  var(--shadow-e2);
+  --shadow-e3:                  var(--shadow-e3);
+  --radius-card:                var(--radius-card);
+}
+
+/* ─── Base Reset & Defaults ─────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--surface-page);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.625;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scrollbar — light */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface-sunken); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand-cyan-strong); }
+
+  /* Selection */
+  ::selection {
+    background-color: rgba(0, 119, 168, 0.15);
+    color: var(--brand-cyan-strong);
+  }
+
+  /* Headings — Plus Jakarta Sans ExtraBold */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  img, video { max-width: 100%; height: auto; display: block; }
+  input, textarea, select, button { font-family: inherit; }
+
+  /* Focus ring — accessible cyan (4.67:1 on white). Tight 2px offset reads
+     crisper on dense admin controls; kit buttons/inputs layer their own
+     branded ring on top. */
+  :focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+/* ─── Components ────────────────────────────────────────────────────── */
+@layer components {
+
+  /* ── Editorial language (design refresh, Jul 2026) ─────────────────
+     Section labels are quiet uppercase eyebrows with a short rule —
+     NOT pill badges. Headings are solid ink with ONE accented keyword
+     (.text-accent) — never word-by-word gradients. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-cyan-strong);
+  }
+  .eyebrow::before {
+    content: "";
+    width: 1.75rem;
+    height: 2px;
+    flex: none;
+    background: var(--brand-cyan);
+    border-radius: 1px;
+  }
+  .eyebrow-center::before { display: none; }
+  .eyebrow-center::after  { display: none; }
+
+  .text-accent      { color: var(--brand-cyan-strong); }
+  .text-accent-pink { color: var(--brand-pink-strong); }
+
+  /* Editorial arrow link — "Lihat semua →" */
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--brand-cyan-strong);
+    transition: gap var(--transition-fast), color var(--transition-fast);
+  }
+  .link-arrow:hover { gap: 0.625rem; color: var(--text-primary); }
+
+  /* Gradient text — DEPRECATED for headings (kept for legacy spots only) */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, var(--brand-cyan-strong) 0%, var(--brand-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-cyan {
+    background: linear-gradient(135deg, var(--brand-cyan-strong) 0%, var(--brand-cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Canonical brand gradient fill — replaces inlined linear-gradient(...) on
+     hero/accent surfaces. Pair with a light text color on top. */
+  .bg-brand-gradient {
+    background: var(--brand-gradient);
+  }
+
+  /* Frosted-glass surface (light-only) — floating nav, overlay cards.
+     No .dark variant by design: this app is LIGHT-ONLY. */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+  /* Cards — white + elevation. `.card` is the canonical name; `.card-dark`
+     kept as a legacy alias from the dark-theme era. */
+  .card,
+  .card-dark {
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-e1);
+    transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+  }
+  .card:hover,
+  .card-dark:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-e2);
+    transform: translateY(-2px);
+  }
+
+  /* Elevated card — used for dropdowns, popovers */
+  .card-glow {
+    position: relative;
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-e3);
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+    border: none;
+    /* outline: none removed — focus ring handled by :focus-visible */
+  }
+  .btn-primary {
+    background: var(--brand-cyan);
+    color: var(--text-on-accent);
+    padding: 0.75rem 1.75rem;
+    box-shadow: var(--shadow-e1);
+  }
+  .btn-primary:hover {
+    background: var(--brand-cyan-strong);
+    color: var(--text-inverse);
+    box-shadow: var(--shadow-e2);
+    transform: translateY(-1px);
+  }
+  .btn-accent {
+    background: var(--brand-pink);
+    color: #fff;
+    padding: 0.75rem 1.75rem;
+    box-shadow: var(--shadow-e1);
+  }
+  .btn-accent:hover {
+    background: var(--brand-pink-strong);
+    box-shadow: var(--shadow-e2);
+    transform: translateY(-1px);
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--brand-cyan-strong);
+    padding: 0.75rem 1.75rem;
+    border: 1.5px solid var(--border-strong);
+  }
+  .btn-outline:hover {
+    border-color: var(--brand-cyan-strong);
+    background: var(--surface-accent-soft);
+    box-shadow: var(--shadow-e1);
+  }
+  .btn-ghost {
+    background: var(--surface-sunken);
+    color: var(--text-primary);
+    padding: 0.75rem 1.75rem;
+    border: 1px solid var(--border-default);
+  }
+  .btn-ghost:hover {
+    background: #F0F0F2;
+    border-color: var(--border-strong);
+  }
+  .btn-sm  { font-size: 0.8125rem; padding: 0.5rem 1.25rem; }
+  .btn-lg  { font-size: 1.0625rem; padding: 1rem 2.25rem; }
+  .btn-xl  { font-size: 1.125rem;  padding: 1.125rem 2.75rem; }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.875rem;
+    border-radius: var(--radius-full);
+  }
+  .badge-cyan    { background: var(--surface-accent-soft); color: var(--brand-cyan-strong); border: 1px solid rgba(0,119,168,0.2); }
+  .badge-pink    { background: var(--surface-pink-soft);   color: var(--brand-pink-strong); border: 1px solid rgba(204,0,82,0.2); }
+  .badge-neutral { background: var(--surface-sunken); color: var(--text-secondary); border: 1px solid var(--border-default); }
+
+  /* Section */
+  .section    { padding-top: var(--section-py); padding-bottom: var(--section-py); }
+  .section-sm { padding-top: var(--section-py-sm); padding-bottom: var(--section-py-sm); }
+  .container-pad {
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 768px) { .container-pad { padding-inline: 2rem; } }
+
+  /* ── Dashboard layout contract (standardization, Jul 2026) ─────────
+     Canonical wrapper + 12-column grid for User/Admin/Trainer dashboards.
+     Container: max 1600px, padding 16 (mobile) → 24 (tablet ≥768) → 32
+     (desktop ≥1280). Grid: 12 cols, gap 20 (laptop) → 24 (desktop ≥1280). */
+  .dash-container {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: 1rem;   /* 16px */
+  }
+  @media (min-width: 768px)  { .dash-container { padding-inline: 1.5rem; } } /* 24px */
+  @media (min-width: 1280px) { .dash-container { padding-inline: 2rem; } }   /* 32px */
+
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1.25rem;   /* 20px — laptop */
+  }
+  @media (min-width: 1280px) { .dash-grid { gap: 1.5rem; } } /* 24px — desktop */
+
+  /* Divider */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border-default) 50%, transparent 100%);
+  }
+
+  /* Input */
+  .input-dark {
+    width: 100%;
+    background: var(--surface-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    padding: 0.75rem 1rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    outline: none;
+  }
+  .input-dark::placeholder { color: var(--text-muted); }
+  .input-dark:focus,
+  .input-dark:focus-visible {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-focus-cyan);
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  /* Stats */
+  .stat-number {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 2.5rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  /* Marquee */
+  .marquee-container {
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 2rem;
+    animation: marquee 30s linear infinite;
+    width: max-content;
+  }
+
+  /* Skeleton — light shimmer */
+  .skeleton {
+    background: linear-gradient(90deg, #ECECEC 25%, #F5F5F5 50%, #ECECEC 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-md);
+  }
+}
+
+/* ─── Utilities ─────────────────────────────────────────────────────── */
+@layer utilities {
+  .text-balance  { text-wrap: balance; }
+  .text-pretty   { text-wrap: pretty; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .backdrop-blur-dark {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+
+  /* Mobile nav drawer (Navbar gap G8) — slide the panel in from the right and
+     fade the scrim in. Light-only; honours prefers-reduced-motion below. */
+  .animate-drawer-in { animation: drawer-in 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+  .animate-overlay-in { animation: overlay-in 0.2s ease; }
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes marquee {
+  0%   { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes fade-in-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes drawer-in {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(0); }
+}
+@keyframes overlay-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ─── Reduced Motion ────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .marquee-track { animation: none; }
+  .skeleton      { animation: none; background: #ECECEC; }
+
+  .card:hover,
+  .card-dark:hover,
+  .btn:hover {
+    transform: none;
+  }
+}

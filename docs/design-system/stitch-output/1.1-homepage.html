@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hazl Academy — Akselerasi Karier Teknologi &amp; Bisnis Digital</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed-dim": "#72d2ff",
+            "on-secondary": "#ffffff",
+            "tertiary-container": "#00789e",
+            "secondary-fixed-dim": "#ffb2be",
+            "outline-variant": "#bfc7d0",
+            "surface-container": "#ededf4",
+            "secondary": "#b80049",
+            "surface-container-low": "#f3f3fa",
+            "primary-container": "#0077a8",
+            "inverse-surface": "#2e3036",
+            "tertiary-fixed": "#c1e8ff",
+            "on-error": "#ffffff",
+            "inverse-primary": "#86cfff",
+            "on-secondary-container": "#fffbff",
+            "tertiary": "#005e7d",
+            "surface": "#f9f9ff",
+            "on-secondary-fixed-variant": "#900038",
+            "primary-fixed": "#c8e6ff",
+            "primary": "#005d85",
+            "on-background": "#1a1b21",
+            "surface-container-lowest": "#ffffff",
+            "surface-container-highest": "#e2e2e9",
+            "inverse-on-surface": "#f0f0f7",
+            "error": "#ba1a1a",
+            "surface-dim": "#d9d9e0",
+            "on-secondary-fixed": "#400014",
+            "on-primary-container": "#ecf5ff",
+            "surface-variant": "#e2e2e9",
+            "primary-fixed-dim": "#86cfff",
+            "on-primary-fixed": "#001e2e",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed-variant": "#004d66",
+            "surface-container-high": "#e8e7ef",
+            "outline": "#707880",
+            "on-tertiary-container": "#e8f6ff",
+            "on-error-container": "#93000a",
+            "secondary-fixed": "#ffd9de",
+            "secondary-container": "#e01e5f",
+            "on-primary": "#ffffff",
+            "on-tertiary-fixed": "#001e2b",
+            "on-surface-variant": "#3f484f",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#004c6d",
+            "on-surface": "#1a1b21",
+            "error-container": "#ffdad6",
+            "surface-tint": "#00658f",
+            "background": "#f9f9ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-md": "1rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.5rem",
+            "space-xl": "2.5rem",
+            "space-sm": "0.5rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "label-sm": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "eyebrow": ["Inter"]
+          },
+          "fontSize": {
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f3f3fa;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #bfc7d0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased selection:bg-tertiary-fixed selection:text-on-tertiary-fixed font-body-md text-body-md">
+<!-- ================= TOP APP BAR (Shared Component Anchor) ================= -->
+<header class="sticky top-0 w-full z-50 bg-surface-container-lowest border-b border-outline-variant shadow-none">
+<div class="flex justify-between items-center h-16 px-6 lg:px-8 max-w-[1440px] mx-auto w-full">
+<!-- Brand Logo -->
+<div class="flex items-center gap-8">
+<a class="flex items-center gap-1.5 focus:outline-none" href="#">
+<span class="text-headline-md font-headline-md font-extrabold text-on-surface tracking-tight">Hazl Academy</span>
+<span class="w-2 h-2 rounded-full bg-secondary inline-block"></span>
+</a>
+<!-- Desktop Navigation Links -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary font-label-md font-semibold border-b-2 border-primary pb-1" href="#">Program</a>
+<a class="text-on-surface-variant font-label-md hover:text-on-surface transition-colors" href="#">Untuk Korporasi</a>
+<a class="text-on-surface-variant font-label-md hover:text-on-surface transition-colors" href="#">Kurikulum</a>
+<a class="text-on-surface-variant font-label-md hover:text-on-surface transition-colors" href="#">Metodologi</a>
+<a class="text-on-surface-variant font-label-md hover:text-on-surface transition-colors" href="#">Karier</a>
+</nav>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-5">
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors font-medium" href="#">
+          Masuk
+        </a>
+<a class="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-tertiary-fixed-dim text-on-background font-label-md text-label-md font-semibold hover:bg-tertiary-fixed active:scale-[0.99] transition-all duration-150 border border-transparent shadow-none" href="#">
+          Mulai Belajar Sekarang
+        </a>
+</div>
+</div>
+</header>
+<!-- ================= HERO SECTION (Asymmetrical Workspace Preview) ================= -->
+<section class="w-full max-w-[1440px] mx-auto px-6 lg:px-8 pt-10 pb-16 lg:pt-16 lg:pb-24">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+<!-- Left Column: Copy & Strategic CTAs -->
+<div class="lg:col-span-6 flex flex-col items-start">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container border border-outline-variant mb-6">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-eyebrow text-eyebrow tracking-widest text-on-surface-variant uppercase">
+            AKSELERASI KARIER TEKNOLOGI &amp; BISNIS
+          </span>
+</div>
+<h1 class="font-display-hero text-display-hero text-on-surface tracking-tight mb-5">
+          Kuasai Keahlian Digital Berstandar Industri Masa Depan
+        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-xl mb-8">
+          Kurikulum langsung dari production codebase bersama lead engineer korporat terdepan. Dipandu sistem mentorship terstruktur, code review ketat, dan portofolio arsitektur riil.
+        </p>
+<!-- CTA Cluster -->
+<div class="flex flex-wrap items-center gap-4 w-full sm:w-auto mb-12">
+<a class="h-12 px-7 rounded-full bg-tertiary-fixed-dim text-on-background font-label-md text-label-md font-semibold inline-flex items-center justify-center gap-2 hover:bg-tertiary-fixed transition-colors active:scale-[0.99]" href="#">
+<span>Mulai Belajar Sekarang</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<a class="h-12 px-7 rounded-full bg-surface-container-lowest text-on-surface border border-outline-variant font-label-md text-label-md font-medium inline-flex items-center justify-center hover:border-outline transition-colors active:scale-[0.99]" href="#">
+            Lihat Silabus Lengkap
+          </a>
+</div>
+<!-- Trust Enterprise Ribbon -->
+<div class="w-full pt-6 border-t border-outline-variant">
+<p class="font-eyebrow text-eyebrow tracking-wider text-outline uppercase mb-3">
+            ALUMNI BEKERJA DI EKOSISTEM TEKNOLOGI KORPORASI
+          </p>
+<div class="flex items-center flex-wrap gap-8 text-on-surface-variant opacity-75">
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">TELKOM INDONESIA</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">GOTO ECOSYSTEM</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">BANK MANDIRI</span>
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight">BUKALAPAK</span>
+</div>
+</div>
+</div>
+<!-- Right Column: High-Craft LMS Workspace Window Preview -->
+<div class="lg:col-span-6">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-none">
+<!-- Workspace Window Header -->
+<div class="bg-surface-container-low px-4 py-3 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="ml-2 font-label-sm text-label-sm text-on-surface-variant font-medium">hazl-lms / workspace / mod-04-event-broker</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container border border-outline-variant text-[11px] font-medium text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 48 Modul Terverifikasi
+              </span>
+</div>
+</div>
+<!-- Workspace Inner Body -->
+<div class="grid grid-cols-1 md:grid-cols-12">
+<!-- Left Sub-panel: Curriculum Tree -->
+<div class="md:col-span-5 border-r border-outline-variant bg-surface-container-lowest p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">MODUL SAAT INI</span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">68% Selesai</span>
+</div>
+<!-- Progress Line -->
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden mb-5">
+<div class="h-full bg-tertiary-fixed-dim rounded-full" style="width: 68%;"></div>
+</div>
+<!-- Syllabus items -->
+<div class="space-y-2">
+<div class="p-2.5 rounded-lg bg-surface-container-low border border-outline-variant flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">check_circle</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface font-medium leading-snug">03. Kafka Event Pipeline</p>
+<p class="font-label-sm text-[11px] text-outline">Passed • Code Review Disetujui</p>
+</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border-l-2 border-primary border-t border-r border-b border-outline-variant flex items-start gap-2.5">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">play_circle</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface font-semibold leading-snug">04. Distributed Locking Redis</p>
+<p class="font-label-sm text-[11px] text-primary font-medium">Sedang Berlangsung (14:20)</p>
+</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant opacity-60 flex items-start gap-2.5">
+<span class="material-symbols-outlined text-outline text-[18px] mt-0.5">lock</span>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface font-medium leading-snug">05. Database Sharding Cluster</p>
+<p class="font-label-sm text-[11px] text-outline">Terkunci • Modul 04 Wajib Lulus</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Mentor badge in syllabus -->
+<div class="mt-4 pt-3 border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-full bg-surface-container-high flex items-center justify-center font-bold text-xs text-on-surface">RK</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface font-medium">Rian Kurniawan</p>
+<p class="text-[10px] text-outline">Lead Architect • Mentoring</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">verified</span>
+</div>
+</div>
+<!-- Right Sub-panel: Video Mini Canvas & Code Execution Sandbox -->
+<div class="md:col-span-7 bg-surface-container-lowest flex flex-col">
+<!-- Mini Video Player View -->
+<div class="relative bg-inverse-surface h-44 flex items-center justify-center border-b border-outline-variant overflow-hidden">
+<!-- Soft single accent glow (within 1 permitted instance) -->
+<div class="absolute -right-8 -top-8 w-36 h-36 bg-tertiary-fixed-dim/20 rounded-full blur-2xl pointer-events-none"></div>
+<div class="text-center z-10 p-4">
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest/10 backdrop-blur-sm border border-outline-variant/40 flex items-center justify-center mx-auto mb-2 text-inverse-on-surface cursor-pointer hover:bg-surface-container-lowest/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">play_arrow</span>
+</div>
+<p class="font-label-sm text-label-sm text-inverse-on-surface font-medium">Session #4: Concurrency Mutex Pattern</p>
+<p class="text-[11px] text-outline-variant">Arsitektur High-Throughput Fintech (IDR 2.4B/sec)</p>
+</div>
+<div class="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[11px] text-outline-variant font-mono">
+<span>14:20 / 38:50</span>
+<span class="inline-flex items-center gap-1 text-tertiary-fixed-dim">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> 1080p 60fps
+                  </span>
+</div>
+</div>
+<!-- Production Code Review Block -->
+<div class="p-4 bg-surface-container-lowest flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant text-[11px] font-mono text-outline">
+<span>redis_distributed_lock.go</span>
+<span class="text-primary font-semibold">TEST PASS: 12/12</span>
+</div>
+<pre class="font-mono text-[12px] leading-relaxed text-on-surface-variant bg-surface-container-low p-2.5 rounded-lg border border-outline-variant overflow-x-auto"><code><span class="text-primary">func</span> AcquireLock(ctx context.Context, key <span class="text-tertiary">string</span>) <span class="text-tertiary">bool</span> {
+  resp := redis.SetNX(ctx, key, workerID, 5*time.Second)
+  <span class="text-secondary font-medium">if</span> !resp.Val() {
+    metrics.Incr(<span class="text-outline">"lock_contention"</span>)
+    <span class="text-secondary font-medium">return</span> <span class="text-primary">false</span>
+  }
+  <span class="text-secondary font-medium">return</span> <span class="text-primary">true</span>
+}</code></pre>
+</div>
+<div class="mt-3 flex items-center justify-between pt-2 border-t border-outline-variant">
+<span class="font-label-sm text-label-sm text-outline">Production Pipeline Sync</span>
+<span class="font-label-sm text-label-sm text-primary font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">terminal</span> Branch: main-enterprise
+                  </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= STRUCTURAL COURSE CATEGORIES ================= -->
+<section class="w-full bg-surface-container-low border-y border-outline-variant py-16">
+<div class="max-w-[1440px] mx-auto px-6 lg:px-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-outline-variant gap-4">
+<div>
+<span class="font-eyebrow text-eyebrow tracking-widest text-primary uppercase">SPESIALISASI UTAMA</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mt-1">
+            Jalur Pembelajaran Terstruktur
+          </h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+          Bukan card generik. Setiap spesialisasi memiliki silabus adaptif yang disinkronisasi setiap kuartal dengan kebutuhan talent stack B2B.
+        </p>
+</div>
+<!-- Structural Interactive Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Category Item 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-eyebrow text-eyebrow text-outline uppercase tracking-wider">TRACK 01</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[11px] text-primary font-semibold">12 Kursus</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Fullstack Engineering</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+              Membangun arsitektur microservices performa tinggi, domain-driven design, dan modern client SPA.
+            </p>
+</div>
+<div>
+<div class="flex flex-wrap gap-1.5 mb-6">
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Go</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Laravel</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">React/Next</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">GraphQL</span>
+</div>
+<a class="font-label-md text-label-md text-primary font-semibold inline-flex items-center gap-1 hover:underline" href="#">
+              Jelajahi Silabus <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Category Item 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-eyebrow text-eyebrow text-outline uppercase tracking-wider">TRACK 02</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[11px] text-primary font-semibold">8 Kursus</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Cloud &amp; DevOps</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+              Orkestrasi infrastructure-as-code, pipeline CI/CD zero-downtime, dan monitoring reliability standar SRE.
+            </p>
+</div>
+<div>
+<div class="flex flex-wrap gap-1.5 mb-6">
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Kubernetes</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Terraform</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">AWS</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Prometheus</span>
+</div>
+<a class="font-label-md text-label-md text-primary font-semibold inline-flex items-center gap-1 hover:underline" href="#">
+              Jelajahi Silabus <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Category Item 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-eyebrow text-eyebrow text-outline uppercase tracking-wider">TRACK 03</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[11px] text-primary font-semibold">10 Kursus</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Data &amp; AI Systems</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+              Pengembangan pipeline data lakehouse skala petabyte, deployment LLM on-premise, dan automasi MLOps.
+            </p>
+</div>
+<div>
+<div class="flex flex-wrap gap-1.5 mb-6">
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">PySpark</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">dbt</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Kafka</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">vLLM</span>
+</div>
+<a class="font-label-md text-label-md text-primary font-semibold inline-flex items-center gap-1 hover:underline" href="#">
+              Jelajahi Silabus <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Category Item 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between hover:border-outline transition-all duration-150">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-eyebrow text-eyebrow text-outline uppercase tracking-wider">TRACK 04</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container font-label-sm text-[11px] text-primary font-semibold">6 Kursus</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Product &amp; UI/UX</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-6">
+              Desain sistem enterprise multi-brand, metriks product discovery berbasis data, dan delivery handoff presisi.
+            </p>
+</div>
+<div>
+<div class="flex flex-wrap gap-1.5 mb-6">
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Design Tokens</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">Figma Pro</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">A/B Test</span>
+<span class="px-2 py-1 rounded bg-surface-container-low text-[11px] font-mono text-on-surface-variant">PRD</span>
+</div>
+<a class="font-label-md text-label-md text-primary font-semibold inline-flex items-center gap-1 hover:underline" href="#">
+              Jelajahi Silabus <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= 3 PILLARS / VALUE PROPOSITION ================= -->
+<section class="w-full max-w-[1440px] mx-auto px-6 lg:px-8 py-20">
+<div class="text-center max-w-2xl mx-auto mb-16">
+<span class="font-eyebrow text-eyebrow tracking-widest text-primary uppercase">METODOLOGI KAMI</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mt-1 mb-3">
+        Dirancang Tanpa Gimmick. Fokus Pada Kapabilitas Produksi.
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Standar industri tidak dicapai melalui kuis pilihan ganda. Kami menerapkan rigor teknis kelas korporasi.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Pillar 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col items-start">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-on-surface mb-6">
+<span class="material-symbols-outlined text-[24px]">terminal</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-3">Production-Grade Curriculum</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Studi kasus langsung dari production codebase. Anda tidak membuat to-do list sederhana, melainkan menangani race conditions, caching multi-layer, dan payload terenkripsi.
+        </p>
+</div>
+<!-- Pillar 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col items-start">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-on-surface mb-6">
+<span class="material-symbols-outlined text-[24px]">rate_review</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-3">1-on-1 Code Review &amp; Mentorship</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Setiap pull request Anda ditinjau secara baris per baris oleh Tech Lead korporat. Dapatkan umpan balik tajam mengenai time complexity, modularitas, dan security audit.
+        </p>
+</div>
+<!-- Pillar 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 flex flex-col items-start">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low border border-outline-variant flex items-center justify-center text-on-surface mb-6">
+<span class="material-symbols-outlined text-[24px]">hub</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-3">Jalur Karier &amp; B2B Talent Network</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Akses langsung ke hiring manager mitra kami tanpa perantara portal lowongan umum. Profil teknis terverifikasi Anda disalurkan ke pipeline rekrutmen prioritas.
+        </p>
+</div>
+</div>
+</section>
+<!-- ================= SPOTLIGHT E-COURSE UNGGULAN (Asymmetric Horizontal Showcase) ================= -->
+<section class="w-full bg-surface-container-lowest border-y border-outline-variant py-16">
+<div class="max-w-[1440px] mx-auto px-6 lg:px-8">
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-8 lg:p-10">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- Left Details: Course Meta & Highlights -->
+<div class="lg:col-span-7">
+<div class="flex items-center gap-3 mb-4">
+<span class="px-2.5 py-1 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-[11px] font-bold">
+                FLAGSHIP E-COURSE
+              </span>
+<span class="flex items-center gap-1 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-primary text-[16px]">verified</span> Terakreditasi Industri
+              </span>
+</div>
+<h3 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mb-4">
+              Mastering Fullstack Laravel &amp; React Native Enterprise
+            </h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+              Membangun arsitektur monorepo, sinkronisasi offline-first mobile database, arsitektur event-driven worker, dan integrasi Payment Gateway standar PCI-DSS.
+            </p>
+<!-- Key Syllabus Breakdown -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+<div class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg">
+<p class="font-label-sm text-[11px] text-outline uppercase font-semibold">ARSITEKTUR</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Microservices &amp; DTO</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg">
+<p class="font-label-sm text-[11px] text-outline uppercase font-semibold">DEVOPS</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold">CI/CD &amp; Docker Swarm</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-3 rounded-lg">
+<p class="font-label-sm text-[11px] text-outline uppercase font-semibold">TRANSAKSI</p>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Idempotency &amp; Ledger</p>
+</div>
+</div>
+<!-- Instructor Profile snippet -->
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-on-surface text-sm">
+                RK
+              </div>
+<div>
+<p class="font-label-md text-label-md font-semibold text-on-surface">Rian Kurniawan</p>
+<p class="font-label-sm text-[12px] text-on-surface-variant">Principal Architect @ Hazl • Ex-Tech Lead Unicorn</p>
+</div>
+</div>
+</div>
+<!-- Right Action & Enrollment Card -->
+<div class="lg:col-span-5">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 sm:p-8">
+<div class="flex items-baseline justify-between mb-4">
+<div>
+<span class="text-xs text-outline line-through block">Rp 1.250.000</span>
+<span class="font-display-hero text-headline-xl text-on-surface font-extrabold tracking-tight">Rp 349.000</span>
+</div>
+<span class="px-2 py-1 rounded bg-secondary-fixed text-secondary font-label-sm text-[11px] font-bold">
+                  HEMAT 72%
+                </span>
+</div>
+<div class="space-y-3 pb-6 mb-6 border-b border-outline-variant text-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span>42 Jam Video Pelatihan 1080p Full Akses Selamanya</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span>Akses Repositori Source Code Enterprise Boilerplate</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span>Sertifikat Kelulusan Verifikasi Kriptografis</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">check</span>
+<span>Review Tugas Akhir Personal oleh Mentor Senior</span>
+</div>
+</div>
+<a class="w-full h-12 rounded-full bg-tertiary-fixed-dim text-on-background font-label-md text-label-md font-semibold inline-flex items-center justify-center gap-2 hover:bg-tertiary-fixed transition-colors active:scale-[0.99]" href="#">
+<span>Akses Kelas Sekarang</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+<p class="text-center font-label-sm text-[11px] text-outline mt-3">
+                Garansi 7 hari uang kembali jika materi tidak sesuai spesifikasi.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= TESTIMONIAL & SOCIAL PROOF NYATA ================= -->
+<section class="w-full max-w-[1440px] mx-auto px-6 lg:px-8 py-20">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 pb-4 border-b border-outline-variant gap-4">
+<div>
+<span class="font-eyebrow text-eyebrow tracking-widest text-primary uppercase">HASIL KARIER TERVERIFIKASI</span>
+<h2 class="font-headline-xl text-headline-xl text-on-surface tracking-tight mt-1">
+          Pengalaman Otentik Para Lulusan
+        </h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+        Bukan testimoni rekayasa. Ini kisah langsung mereka yang berhasil melompat ke skala engineering enterprise.
+      </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-primary mb-4">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 leading-relaxed">
+            "Sesi code review di Hazl mengubah total cara saya menstrukturkan domain logic. Terbiasa menulis monolithic Laravel, di sini saya diajarkan decoupled services dan queue optimization yang langsung relevan saat tes teknikal di Telkom."
+          </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant">
+<img class="w-11 h-11 rounded-full object-cover border border-outline-variant" data-alt="A clean professional studio portrait of an Indonesian male software engineer wearing glasses and a minimalist charcoal crewneck against a crisp neutral light studio background. The lighting is balanced and soft, conveying technical professionalism, discipline, and contemporary industry expertise aligned with modern tech workplace aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr3YPp2-aaJFP52r2Tm5_4mxVzz4TE9JRUNGJIkMiZtlR19kW2aDIvce7SHwDXv5zJExhIByLKSCKfEPemCpN9GFgF4Su83Auwp2YGkTNVi_HdKaWAo893Ix-m1JPNQyxxymsF_2kEVNTrICUWHh1TGtvCKm6OCH-hnQ59b2fkftRgX4FuoPEh9Jskx3-bJt-wZFQfxTCcYpLm8DE4NFQ_S4KTqzKwSpaWrEQ_Rvo701WiWnuZ31bXCcR1k36c4CaC96YtJaW6UUU"/>
+<div>
+<h4 class="font-label-md text-label-md font-semibold text-on-surface">Dimas Bagaswara</h4>
+<p class="font-label-sm text-[12px] text-on-surface-variant">Software Engineer di Telkom Indonesia</p>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-primary mb-4">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 leading-relaxed">
+            "Silabus Cloud &amp; DevOps benar-benar production-grade. Lab Kubernetes multi-node dan automasi Terraform di Hazl membuat saya percaya diri menangani sistem core banking yang menuntut keandalan 99.99% tanpa toleransi downtime."
+          </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant">
+<img class="w-11 h-11 rounded-full object-cover border border-outline-variant" data-alt="A professional headshot of a confident young Indonesian woman who works as a Cloud DevOps engineer, photographed in a sleek modern tech office setting with neutral light tones and subtle architectural lines. She has an engaging, thoughtful expression in crisp business casual attire, captured in bright high-key lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQlFtRh5YdGUWmwDAb8jR1qX9ZUv6AnnKo52C44RBS6TYXthzSlG3GPs8zuOdUZIaNT0B087Fz4qTu99n8kYL2Tf66tUmUwtdMlsbNiaVQtpiaBh3WxSNx4nBxrLod5WqmuKaUVVSq9EnEF_5twYwvAWWh67gy5P1tU90pLtPKTm2limNZzOSMul-EWerHLmpSyTw6wJ5yL9fGfRSNQZrw-YqH26wZaEB-m00xuXBh5ike_XoSM2z2w4ggFkP319MSteNWnJs_FC4"/>
+<div>
+<h4 class="font-label-md text-label-md font-semibold text-on-surface">Annisa Larasati</h4>
+<p class="font-label-sm text-[12px] text-on-surface-variant">Cloud Reliability Engineer di Bank Mandiri</p>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-1 text-primary mb-4">
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+<span class="material-symbols-outlined text-[18px]">star</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mb-6 leading-relaxed">
+            "Pendekatan design system tokenomics di Hazl membuka mata saya. Saya belajar bagaimana sinkronisasi tokens dari Figma langsung ke codebase React tanpa miss spek. Handoff ke frontend lead kini 3x lebih cepat dan zero styling defect."
+          </p>
+</div>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant">
+<img class="w-11 h-11 rounded-full object-cover border border-outline-variant" data-alt="A polished professional headshot of an Asian male digital product designer in a clean monochrome workspace. Soft directional light illuminates subtle textures of a navy button-up shirt. The background features blurred architectural workspace elements in soft off-white and cool grey tones, highlighting authentic contemporary industry capability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY2RNfljCazUh4zkiLku7YmW0OqnsBvOUoSL5f-ETBsdhTgF6b38VZBwc_RQ9rPkglKlkx-5hGhcz5JhqwmVmb0jPbx2R4BWVBFJyk__kOpT1ClyfF951FmufuYsu5OsyFLrjk48dzzRHfAs0C3GPCdqpD62Ph7vRkvmG9DJUNlYQlbZ7yZPx8nHsKuGZVIYEwtggIhLGtq2k1dszIzsAO5bth_8kdzFvVHIHmsqRuaKUMcPN8Fp_8vjsB-HyrUupXnWoKA82-2xA"/>
+<div>
+<h4 class="font-label-md text-label-md font-semibold text-on-surface">Fikri Ramadhan</h4>
+<p class="font-label-sm text-[12px] text-on-surface-variant">Product Designer di Bukalapak</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ================= CLOSING DARK CTA BAND ================= -->
+<section class="w-full bg-[#16181D] text-inverse-on-surface py-20 border-t border-[#2e3036]">
+<div class="max-w-[1440px] mx-auto px-6 lg:px-8 text-center flex flex-col items-center">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-eyebrow text-eyebrow tracking-widest text-outline-variant uppercase">
+          KONSULTASI GRATIS DENGAN LEAD MENTOR
+        </span>
+</div>
+<h2 class="font-display-hero text-headline-xl sm:text-display-hero text-inverse-on-surface tracking-tight max-w-3xl mb-5">
+        Siap Mengakselerasi Standar Karier Digital Anda?
+      </h2>
+<p class="font-body-lg text-body-lg text-outline-variant max-w-xl mb-10">
+        Bergabunglah bersama ribuan engineer dan praktisi produk yang telah menguasai kompetensi teknologi berstandar tinggi bersama Hazl Academy.
+      </p>
+<div class="flex flex-wrap items-center justify-center gap-4 w-full sm:w-auto">
+<a class="h-12 px-8 rounded-full bg-tertiary-fixed-dim text-[#16181D] font-label-md text-label-md font-semibold inline-flex items-center justify-center gap-2 hover:bg-tertiary-fixed transition-colors active:scale-[0.99]" href="#">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Mulai Belajar Sekarang</span>
+</a>
+<a class="h-12 px-8 rounded-full bg-transparent text-inverse-on-surface border border-outline font-label-md text-label-md font-medium inline-flex items-center justify-center hover:bg-white/5 transition-colors active:scale-[0.99]" href="#">
+          Konsultasi Tim Kurikulum
+        </a>
+</div>
+<div class="mt-12 flex items-center justify-center gap-6 text-[12px] text-outline">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">check_circle</span> Tanpa Kontrak Mengikat
+        </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">check_circle</span> Akses Repositori Seumur Hidup
+        </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">check_circle</span> Sertifikasi Resmi Terverifikasi
+        </span>
+</div>
+</div>
+</section>
+<!-- ================= FOOTER (Shared Component Anchor) ================= -->
+<footer class="w-full bg-surface-container-lowest border-t border-outline-variant shadow-none">
+<div class="w-full max-w-[1440px] mx-auto px-6 lg:px-8 py-12">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
+<!-- Brand Info -->
+<div class="md:col-span-4 flex flex-col items-start">
+<a class="flex items-center gap-1.5 focus:outline-none mb-3" href="#">
+<span class="text-headline-md font-headline-md font-extrabold text-on-surface">Hazl Academy</span>
+<span class="w-2 h-2 rounded-full bg-secondary inline-block"></span>
+</a>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-sm mb-6 leading-relaxed">
+            Platform edukasi teknologi presisi tinggi untuk akselerasi karier software engineering, infrastruktur cloud, dan sistem data skala enterprise.
+          </p>
+<div class="text-[12px] text-outline">
+            Terdaftar di Kementerian Hukum &amp; HAM RI
+          </div>
+</div>
+<!-- Navigation Links 1 -->
+<div class="md:col-span-2 md:col-start-6">
+<h4 class="font-label-sm text-label-sm text-on-surface font-semibold uppercase tracking-wider mb-4">Program</h4>
+<ul class="space-y-2.5">
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Fullstack Engineering</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Cloud &amp; DevOps</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Data &amp; AI Systems</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Product &amp; UI/UX</a></li>
+</ul>
+</div>
+<!-- Navigation Links 2 (Exact Shared Components Links Array) -->
+<div class="md:col-span-3">
+<h4 class="font-label-sm text-label-sm text-on-surface font-semibold uppercase tracking-wider mb-4">Perusahaan &amp; Info</h4>
+<ul class="space-y-2.5">
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Tentang Hazl</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Karier</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Mitra Korporasi</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Blog Edukasi</a></li>
+</ul>
+</div>
+<!-- Navigation Links 3 (Legal & Contact) -->
+<div class="md:col-span-2">
+<h4 class="font-label-sm text-label-sm text-on-surface font-semibold uppercase tracking-wider mb-4">Dukungan</h4>
+<ul class="space-y-2.5">
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Syarat &amp; Ketentuan</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Kebijakan Privasi</a></li>
+<li><a class="text-on-surface-variant hover:text-on-surface text-body-sm font-body-sm hover:underline transition-all duration-150" href="#">Hubungi Kami</a></li>
+</ul>
+</div>
+</div>
+<!-- Copyright Sub-bar -->
+<div class="pt-8 border-t border-outline-variant flex flex-col md:flex-row items-center justify-between text-on-surface-variant text-body-sm font-body-sm gap-4">
+<p>© 2025 PT Hazl Akselerasi Indonesia. Seluruh hak cipta dilindungi undang-undang.</p>
+<div class="flex items-center gap-6">
+<span class="text-outline text-label-sm">Hazl Design System v1.0 • Jakarta, Indonesia</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

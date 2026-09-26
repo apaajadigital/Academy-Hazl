@@ -1,0 +1,181 @@
+openapi: 3.1.0
+info:
+  title: Jago Akademi API
+  version: 1.0.0
+  description: >
+    REST API for the Jago Akademi platform. All responses use the standard
+    envelope (TASK-011): `{ success: true, data, meta? }` or
+    `{ success: false, error: { code, message, details? } }`.
+    This spec is a representative starting point (TASK-050); full coverage of all
+    ~130 endpoints is added incrementally alongside per-route Zod schemas (BL-12).
+servers:
+  # The API is served from the main domain under /api/*, proxied by the host-level
+  # nginx. There is no api.jagoakademi.com — that host does not resolve (BL-33,
+  # docs/INTEGRATION_VERIFICATION.md). Generated clients must target this origin.
+  - url: https://jagoakademi.com
+    description: Production
+  - url: http://localhost:4000
+    description: Local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string, example: VALIDATION_ERROR }
+        message: { type: string }
+        details: {}
+    PaginationMeta:
+      type: object
+      required: [total, page, limit]
+      properties:
+        total: { type: integer }
+        page: { type: integer }
+        limit: { type: integer }
+        avgRating: { type: number }
+        totalReviews: { type: integer }
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, enum: [false] }
+        error: { $ref: "#/components/schemas/ApiError" }
+  responses:
+    Unauthorized:
+      description: Missing/invalid token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    ValidationError:
+      description: Request failed validation
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      summary: Liveness probe
+      security: []
+      responses:
+        "200":
+          description: Process is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: healthy }
+                  version: { type: string }
+                  timestamp: { type: string, format: date-time }
+  /api/ready:
+    get:
+      summary: Readiness probe (DB + search + redis)
+      security: []
+      responses:
+        "200": { description: Ready }
+        "503": { description: A required dependency is down }
+  /api/auth/register:
+    post:
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, consent]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                consent: { type: boolean }
+      responses:
+        "201": { description: Created }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /api/auth/login:
+    post:
+      summary: Log in, returns access token + sets refresh cookie
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200": { description: Authenticated }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/courses:
+    get:
+      summary: List published courses (paginated, searchable)
+      security: []
+      parameters:
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: categorySlug, in: query, schema: { type: string } }
+      responses:
+        "200":
+          description: Course list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, enum: [true] }
+                  data: { type: array, items: { type: object } }
+                  meta: { $ref: "#/components/schemas/PaginationMeta" }
+  /api/courses/{slug}:
+    get:
+      summary: Course detail by slug
+      security: []
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Course detail }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /api/checkout:
+    post:
+      summary: Create an order and DOKU payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                items: { type: array, items: { type: object } }
+                couponCode: { type: string }
+                referralCode: { type: string }
+      responses:
+        "200": { description: Order created with paymentUrl }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /api/webhooks/doku:
+    post:
+      summary: DOKU payment callback (signature-verified, idempotent, queued)
+      security: []
+      responses:
+        "200": { description: Received }
+        "401": { description: Invalid signature }

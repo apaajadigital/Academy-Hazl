@@ -1,0 +1,89 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Local env files
+.env
+.env.local
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Stray local artifacts
+Claude Dekstop/
+
+# Large binary files — do NOT commit to GitHub
+postgresql-installer.exe
+redis-bin/
+verify_student.sql
+implementation_plan2.md
+# Root-level images (not web assets)
+/*.png
+/*.jpg
+/*.jpeg
+"Jago Akademi.png"
+
+
+# Testing
+coverage
+test-results/
+playwright-report/
+blob-report/
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+*.pem
+
+# AI agents
+# Everything under .claude/ is local scratch EXCEPT settings.json: the shared
+# permission allowlist (which ops commands may run unprompted, and the deny
+# rules that keep an agent off `git push origin main` / `gh pr merge`) is a
+# project rule, not a per-machine preference, so it is versioned.
+.claude/*
+!.claude/settings.json
+.gemini/
+jago_akademi_clarification_questions.docx.pdf
+
+# Build artifacts & tool output
+*.tsbuildinfo
+graphify-out/
+scratch/
+
+# Runtime database dumps & env backups — P0, 6 Aug 2026.
+# The production working tree (/var/www/jago-akademi) was found holding an
+# environment backup and nine PostgreSQL dumps of REAL user data, all untracked
+# but none of them ignored. A single `git add -A` there would have committed
+# live secrets and user records into a repo that pushes to GitHub.
+#
+# Deliberately NOT `*.sql`: 14 Prisma migrations plus 3 helper queries in
+# scripts/ are source code and must stay tracked. Verified before adding these
+# lines — `git ls-files` against all five patterns matched 0 tracked files.
+/backups/
+*.sql.gz
+*.dump
+backup_*.sql
+.env.bak*
+
+.claude-flow/

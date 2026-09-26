@@ -1,0 +1,12 @@
+# Registry override for CD deploys (TASK-020).
+# On the host, CD runs prebuilt images from GHCR instead of building from source:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.registry.yml up -d --wait
+# API_IMAGE / WEB_IMAGE are exported by the deploy pipeline (tag or sha).
+# Note: the base file's `build:` stays merged but is ignored because the deploy
+# flow always `pull`s and never passes `--build` — compose runs the pulled image.
+services:
+  api:
+    image: ${API_IMAGE:?Set API_IMAGE (e.g. ghcr.io/org/repo/api:v1.0.0)}
+
+  web:
+    image: ${WEB_IMAGE:?Set WEB_IMAGE (e.g. ghcr.io/org/repo/web:v1.0.0)}

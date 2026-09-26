@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hazl Academy - Katalog Terpadu</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#c8e6ff",
+            "tertiary": "#005e7d",
+            "surface-container-low": "#f3f3fa",
+            "error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#72d2ff",
+            "on-secondary-container": "#fffbff",
+            "surface-bright": "#f9f9ff",
+            "secondary-container": "#e01e5f",
+            "on-tertiary": "#ffffff",
+            "primary-container": "#0077a8",
+            "surface-container-highest": "#e2e2e9",
+            "on-primary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#e8f6ff",
+            "on-error": "#ffffff",
+            "inverse-on-surface": "#f0f0f7",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed": "#001e2e",
+            "inverse-surface": "#2e3036",
+            "surface": "#f9f9ff",
+            "surface-tint": "#00658f",
+            "surface-dim": "#d9d9e0",
+            "secondary-fixed": "#ffd9de",
+            "surface-container": "#ededf4",
+            "inverse-primary": "#86cfff",
+            "secondary": "#b80049",
+            "outline": "#707880",
+            "on-surface-variant": "#3f484f",
+            "on-primary-container": "#ecf5ff",
+            "primary": "#005d85",
+            "surface-variant": "#e2e2e9",
+            "on-surface": "#1a1b21",
+            "surface-container-high": "#e8e7ef",
+            "background": "#f9f9ff",
+            "primary-fixed-dim": "#86cfff",
+            "on-tertiary-fixed-variant": "#004d66",
+            "tertiary-container": "#00789e",
+            "on-primary-fixed-variant": "#004c6d",
+            "on-secondary-fixed": "#400014",
+            "on-background": "#1a1b21",
+            "tertiary-fixed": "#c1e8ff",
+            "on-tertiary-fixed": "#001e2b",
+            "on-secondary-fixed-variant": "#900038",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#ffb2be",
+            "outline-variant": "#bfc7d0",
+            "error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "2rem",
+            "gutter": "1.5rem",
+            "space-xl": "2.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "eyebrow": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TOP NAV BAR (Shared Component Anchor) -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline docked full-width top-0 sticky z-50">
+<div class="max-w-7xl mx-auto px-6 md:px-8 w-full flex justify-between items-center h-16">
+<!-- Brand Logo & Cluster -->
+<div class="flex items-center gap-10">
+<a class="text-headline-md font-headline-md font-extrabold text-primary dark:text-inverse-primary tracking-tight flex items-center gap-2" href="#">
+<span class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-headline-sm font-bold text-sm tracking-normal">H</span>
+          Hazl Academy
+        </a>
+<!-- Desktop Navigation Links -->
+<nav class="hidden md:flex items-center gap-7">
+<a class="text-label-md font-label-md text-on-surface-variant dark:text-inverse-on-surface hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors" href="#">Program</a>
+<a class="text-label-md font-label-md text-primary dark:text-inverse-primary font-bold border-b-2 border-primary dark:border-inverse-primary pb-1" href="#">Katalog Terpadu</a>
+<a class="text-label-md font-label-md text-on-surface-variant dark:text-inverse-on-surface hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors" href="#">Event &amp; Webinar</a>
+<a class="text-label-md font-label-md text-on-surface-variant dark:text-inverse-on-surface hover:text-on-surface dark:hover:text-inverse-on-surface transition-colors" href="#">Resources</a>
+</nav>
+</div>
+<!-- Search Bar & Actions -->
+<div class="flex items-center gap-4">
+<!-- Compact Search -->
+<div class="relative hidden lg:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 text-body-sm font-body-sm bg-surface-container-low border border-outline-variant rounded-lg focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container text-on-surface placeholder-outline transition-all" placeholder="Cari silabus, e-book..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<a class="text-label-md font-label-md font-medium text-on-surface-variant hover:text-on-surface px-3 py-2 transition-colors" href="#">Masuk</a>
+<a class="text-label-md font-label-md font-semibold text-on-primary bg-primary-container hover:bg-primary px-4 py-2 rounded-full transition-all duration-150 active:scale-[0.98]" href="#">Mulai Belajar</a>
+</div>
+</div>
+</header>
+<!-- MAIN CANVAS -->
+<main class="flex-1 max-w-7xl mx-auto px-6 md:px-8 py-10 w-full space-y-10">
+<!-- SECTION 1: CATALOG HEADER & COMPREHENSIVE FILTER ENGINE -->
+<section class="space-y-6">
+<!-- Breadcrumb / Eyebrow & Hero Copy -->
+<div class="space-y-2">
+<span class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">KATALOG TERPADU • HAZL LEARNING ECOSYSTEM</span>
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight">Eksplorasi Program &amp; Resource Pembelajaran Digital</h1>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-3xl">
+          Kurikulum standar korporat, e-book arsitektur, webinar interaktif, dan kelas gratis tanpa komitmen untuk menguasai software engineering kelas dunia.
+        </p>
+</div>
+<!-- Controls & Search Module Bar -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-4 md:p-5 flex flex-col md:flex-row gap-4 justify-between items-center">
+<!-- Main Search Query Input -->
+<div class="relative w-full md:w-96">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-xl">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-surface border border-outline-variant rounded-lg text-body-sm font-body-sm text-on-surface placeholder-outline focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary-container/20 transition-all" placeholder="Cari topik (e.g. Kubernetes, React Native, Kafka)..." type="text"/>
+</div>
+<!-- Sorter & Quick Meta Filters -->
+<div class="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-label-sm text-on-surface-variant whitespace-nowrap">Urutkan:</span>
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border border-outline-variant rounded-lg pl-3 pr-8 py-2 text-label-md font-label-md text-on-surface focus:outline-none focus:border-primary-container cursor-pointer">
+<option>Terbaru Ditambahkan</option>
+<option>Paling Populer</option>
+<option>Tingkat Kesulitan</option>
+<option>Rating Tertinggi</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-lg">expand_more</span>
+</div>
+</div>
+<div class="h-6 w-px bg-outline-variant hidden sm:block"></div>
+<!-- Total Count Metric -->
+<div class="text-label-sm font-label-sm text-on-surface-variant bg-surface px-3 py-2 rounded-lg border border-outline-variant">
+            Menampilkan <span class="font-bold text-on-surface">28 item terverifikasi</span>
+</div>
+</div>
+</div>
+<!-- Unified Segmented Tabs & Tag Pills Filter -->
+<div class="space-y-4">
+<!-- Segmented Tab Bar (Architectural Flat Style) -->
+<div class="flex border-b border-outline-variant overflow-x-auto no-scrollbar gap-1">
+<button class="px-5 py-3 text-label-md font-label-md font-bold text-primary border-b-2 border-primary whitespace-nowrap flex items-center gap-2">
+            Semua
+            <span class="text-xs bg-primary-fixed text-on-primary-fixed font-semibold px-2 py-0.5 rounded-full">28</span>
+</button>
+<button class="px-5 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap flex items-center gap-2">
+            E-Course
+            <span class="text-xs bg-surface-container text-on-surface-variant font-medium px-2 py-0.5 rounded-full">12</span>
+</button>
+<button class="px-5 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap flex items-center gap-2">
+            E-Book
+            <span class="text-xs bg-surface-container text-on-surface-variant font-medium px-2 py-0.5 rounded-full">6</span>
+</button>
+<button class="px-5 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap flex items-center gap-2">
+            Event / Webinar
+            <span class="text-xs bg-surface-container text-on-surface-variant font-medium px-2 py-0.5 rounded-full">5</span>
+</button>
+<button class="px-5 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap flex items-center gap-2">
+            Kelas Gratis
+            <span class="text-xs bg-surface-container text-on-surface-variant font-medium px-2 py-0.5 rounded-full">5</span>
+</button>
+</div>
+<!-- Secondary Filter Pills Row -->
+<div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-eyebrow font-eyebrow text-outline uppercase tracking-wider mr-1">Level:</span>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm bg-primary-container text-on-primary font-medium">Semua Level</button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:border-outline transition-colors">Junior / Entry</button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:border-outline transition-colors">Mid-Level</button>
+<button class="px-3 py-1 rounded-full text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface-variant hover:border-outline transition-colors">Senior / Staff Lead</button>
+</div>
+<div class="flex flex-wrap items-center gap-2">
+<span class="text-eyebrow font-eyebrow text-outline uppercase tracking-wider mr-1">Domain:</span>
+<button class="px-3 py-1 rounded-lg text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface hover:border-primary-container transition-colors">Software Eng</button>
+<button class="px-3 py-1 rounded-lg text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface hover:border-primary-container transition-colors">Cloud &amp; DevOps</button>
+<button class="px-3 py-1 rounded-lg text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface hover:border-primary-container transition-colors">Data / AI</button>
+<button class="px-3 py-1 rounded-lg text-label-sm font-label-sm bg-surface border border-outline-variant text-on-surface hover:border-primary-container transition-colors">Product Architecture</button>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: UNIFIED PRODUCT GRID (STRICT IDENTICAL ARCHITECTURE FOR ALL 4 TYPES) -->
+<section>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- CARD 1: E-Course -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="A clean, modern workspace scene with a dual monitor workstation displaying code editor interfaces in an enterprise setting. Soft neutral ambient light illuminates the minimalist desk setup with crisp blue highlights, embodying professional engineering and digital education." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAErIlPDdrp42lI3jgZuvKn-B4rbLEG71YQxTmc1BZxNniQPT9kTy8jLOQB5vyqppbmHlLRXU9No97QlCDTjVzW74W7HJ8IB3Y7q14fQ85YRDrJHKKDRmqqoCc5i10osrDqmTgZCHiq4en_SA0lNgjVUAvrUYRiQ1l9nYtCPZf9Vv1UbVOG7KIHU3383H-VMnaZ7vtgXpMzLPwZtYM4OfcoqhuTNthmM2X_LBBRi5vCUs6BPwN02QnTIWOxbHVw0kJBM7BniG-c4mQ"/>
+<!-- Type Badge: Top-Left -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-primary-fixed/90 text-primary border border-primary/20 backdrop-blur-xs">
+                E-Course
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> 42 Jam Video
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                FULLSTACK ENGINEERING
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Mastering Fullstack Laravel &amp; React Native Enterprise
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">layers</span> 48 Modul</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">verified</span> Sertifikat Terverifikasi</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Professional studio headshot portrait of a senior software engineer in a neutral collared shirt against a warm gray minimalist studio background, captured with crisp modern lighting and professional composition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUVu9irYtWWEPp6C173mnJdZ_Eh1ebT7L9tng9oHujBpGi3lW9LdMfQnt0vs_ut5KFz6cWgyREJDkPZGnJlWZ39lcjwo7oo0C2fXzu3iCXP4TXBIK01x7xbcsl-_iGh5vGhycZsiXFnkmT4iIPrDWJjbN7yRaaHxp_xUUrx3UPwgJNQ5YVrA9Muk7G2cipB8Un3CqZ4LJ4TtQjbW7Eyv3L9R8MAzbmLe0Mk9VCt7Uc4S7Y_tQncj1mCGcGMGYTLJz51i0zQ67MTuk"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Rian Kurniawan</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Principal Architect, Ex-Tech Unicorn</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-body-sm font-body-sm text-outline line-through text-xs">Rp 1.250.000</div>
+<div class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 349.000</div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Lihat Detail
+            </a>
+</div>
+</article>
+<!-- CARD 2: E-Book -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="An architectural blueprint diagram of a distributed microservices cloud structure presented on an ultra-clean digital canvas with sharp technical lines, crisp vector diagrams, and electric blue vector accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlkx9VnQO83BLWnOSZZvppUI3r71sZGvYI4qbsEUj8Pk9D8U-Yd0zCivcEXP5ic8rldMNOaMdjKEGqmAhkjNCVOPRcfKUmUf2aAowiF6KL9MuqfCfSkxpqcX1mczziXL589ROB2_P07g8_RXZrCyT38w3OZ40eXdCMsHhVZBVGPE9OjEFmNz_njKdpQUXRuO5Y6rgvF9xkr4RfLTZeV8liMNJgmtKfLaRG6BAn3P3rzvVhatuIpJ4Tj_7O_n8iS2TvRjsqDRS2jJU"/>
+<!-- Type Badge: Top-Left (Amber Soft Tint for E-Book) -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-amber-100/90 text-amber-800 border border-amber-300/40 backdrop-blur-xs">
+                E-Book
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">menu_book</span> 180 Hlm PDF
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                CLOUD &amp; DISTRIBUTED SYSTEMS
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Microservices Resiliency &amp; Circuit Breaker Pattern Guide
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">code</span> Code Samples</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">architecture</span> Architecture Blueprint</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Portrait photo of an experienced enterprise cloud infrastructure consultant in smart casual corporate attire in front of a modern minimalist architectural background with bright ambient daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbFd06PCMJxo8vSOp7KNzbIrMTQuUdY-aJEPusTAvYnDtMepWrH6UrewCk5bYIU0xRNBQeUs4OCS6kEvFXLDqfxSrxTFWvRXjHycoWpgXTNophE2kx6TZb3gnbWgGIlsABSg7AYfyYsJZbXZUQMekYhl-Em2ZPtpX5C1mu0OEm_p50UZCT8LZsULtE_s2jO8z0TasaJgC1prMOZI1dTzhsaqEDptuYr-B9Stui0Iz2gHhLJ_4_MXnxW5DAXkck0J3PdEAgUG3kZko"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Dimas Setiadi</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Cloud Solutions Lead, Hazl Labs</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-body-sm font-body-sm text-outline line-through text-xs">Rp 300.000</div>
+<div class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 149.000</div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Download E-Book
+            </a>
+</div>
+</article>
+<!-- CARD 3: Event / Webinar -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="A clean modern amphitheater stage setup for an engineering conference with geometric screens showing data ledger graphs in crisp white and electric cyan tones with professional studio production lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMX18dJDvAH6Bys0uS-v_uyEvOKT3ru2CmW-cO0HZudYdH0UwE8fZBdXUNGKZtQ45ocX9ionL_ECUVLDcOJdtl327ulJtCbaRjQTesp_LEFg4p4rAp9CSo6CnOpEG7CLuqXGNTJpL3B7BweW6GTGUPAy8wG8ZbKDRfsVjJpo0xocE2cZ2oryQzFmYgizKOF_d8NppfVuSPnIk4xILuJ8lpb3PP9Uaa6THjHbKccWrFGb644gtQauEDBfUIkkusS4HK8UM38M0K3zY"/>
+<!-- Type Badge: Top-Left (Pink Soft Tint for Live Event) -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-secondary-fixed text-secondary border border-secondary/20 backdrop-blur-xs">
+                Live Event
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">event</span> 24 Nov 2025 • 19:30 WIB
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                FINTECH &amp; DATA PIPELINE
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Live Masterclass: High-Throughput Fintech Ledger Architecture
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">terminal</span> Hands-on Lab</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">forum</span> Q&amp;A Langsung</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Professional headshot of a female staff fintech software engineer with glasses smiling warmly against a bright neutral corporate technology office background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYV4UFgK0-O92FPD7jaVrskfgZuOwDPac076EKt4CbvVs-Bc39RZJyv5Xn34vbVtmJdCOtsppQi7DAp2lAjNcwI8LNoE9P0SUsVSfYwE9Z3Czgo7aL9VAfvzeyrgOYOWZuR-5PF8UCpduuEgjbywdK5rEe2YvyXNlMRmVdPtA67-1Ywxabj-JoTrDiKuWuEBizcWZEzsSOp3Bi5iJMUGNZLXqVh1G5r9jw49blRpaVXQLbWOTNcUD9dSA0qasFSMzWXM0Ul4GYRiQ"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Dr. Sarah Danastri</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Head of Core Banking, Digital Pay</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-body-sm font-body-sm text-outline line-through text-xs">Rp 250.000</div>
+<div class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 99.000</div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Daftar Sekarang
+            </a>
+</div>
+</article>
+<!-- CARD 4: Kelas Gratis -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="A clean top-down view of a minimalist desk with a dark mechanical keyboard, a pristine tablet displaying shell scripting syntax, and a notebook on a pale wood table in natural light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBAIwdVWro5JMwQA4nF0plCarJstp7ecgE2E0VTcu4dOq_avAX04DAvFeacJkUJkKxcvJ-omexNbTDMDIef9sFX2qkRJg1_j-VuOzlN18USliRmQZB1_QyIvYAulD9gvp_09KThDPsDIsNDCBzOitNtI-ZNf1OSko435xIQDsuEM5pxKSom0NOipKKrLiOJDN8pydTuV2Ux0nABRE7uH4LF064YaFeIpQBf2cRn2oUnyswjSHbZ0PI0z_YM2jmP1_msUi7PskYYvU"/>
+<!-- Type Badge: Top-Left (Emerald Soft Tint for Kelas Gratis) -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-300/40 backdrop-blur-xs">
+                Kelas Gratis
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span> 2.5 Jam
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                SYSTEMS &amp; BACKEND FOUNDATION
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Foundations of Linux &amp; Shell Scripting for Backend
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">public</span> Free Access</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">groups</span> Community Support</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Close up portrait photo of a young technical instructor wearing a navy crewneck shirt in an airy modern tech open-space office with warm soft morning light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeb1quT5e6dBx8kDGC_ymXs_r0JD_Oym34p7ZB7OpDS7wflor5ARCpApNEYGj7bR84WylepYgnW9hv3rIXr155URZqmijNh0zA081149mbOeHGskfPuw_uVQiRkj-2LejlmYRRoyezyY3F3vEtkkim4wz3qhFoAvY90EzIcRguEjvEIl4v1ciyEpoTEl5iceTjJQwxBj-PCMNJ6n4WhAx8ZhE2UqZl512S6Pv1HV_jSIOFJPdLH-PuFMHmNHy0Eazg9sUD3oD6SHw"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Agung Wicaksono</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Linux Foundation Certified SysAdmin</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-label-sm font-label-sm font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                Gratis Akses Penuh
+              </div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Mulai Belajar
+            </a>
+</div>
+</article>
+<!-- CARD 5: E-Course -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="A clean isometric visualization of server node clusters and kubernetes pods rendered with accurate micro-lines on a neutral white and silver canvas, conveying high reliability and observability." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkkEC7PkARJxFJXZQFQigHJu_WYlD4tcGp4GWELbYX1c6vhrU6ulMuyoKD9Aw8f93VmfbpRwzmlFTckIjatExnneU8wFTo4WnS81b-_TSjqx2rUykdYzbJDrQmAx7LwvBqELJUUMMYc_dCkrZCfNRwuRUyl4uoXKOkKRu6_sBxljNkhrWlUHwtLqtYiCXfmYE4hpNF-tsejw3DawoN0FWk0HByWy3hkZONK43D5wQHuc_T3Zkfocz9ePO523FgWjvt6phzzMAWnB4"/>
+<!-- Type Badge: Top-Left -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-primary-fixed/90 text-primary border border-primary/20 backdrop-blur-xs">
+                E-Course
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> 36 Jam Video
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                SRE &amp; INFRASTRUCTURE
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Enterprise Kubernetes &amp; SRE Observability Mastery
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">monitoring</span> Prometheus &amp; Grafana</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">verified</span> SRE Certification Prep</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Portrait photo of a veteran systems architect wearing glasses and a dark blazer standing against a bright, modern corporate training facility with crisp studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDUlzhCR0rj1RNuvM6D1h1vBrziKhOi7jBku3kkrfVf3ACqKf7rd_MAmrA4q7pgjYHlWim2EaiwkyvfU4kz6xMLY7NZtDNY_R-dlGVFAjFV2vYGneRJjsO0l5FShVyzNbIBptgTdbR4itJP4v6sZ3_e5g10tiZEeDbYMFk5DBFiMi6Yq1ANWeW3sB_g18XMuMIPc2GFjA0jhSM8e9OhcLppicCSDiUMn9LWvLpViMxJcKG0uXFcUP8o5mvvulbJn1FXfKP-KFEBo4"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Budi Prakoso</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Director of SRE, Global Telco</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-body-sm font-body-sm text-outline line-through text-xs">Rp 1.500.000</div>
+<div class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 429.000</div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Lihat Detail
+            </a>
+</div>
+</article>
+<!-- CARD 6: E-Book (Free E-Book) -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col justify-between hover:border-outline transition-all duration-200 group">
+<div>
+<!-- (a) 16:9 Thumbnail Area with absolute badges -->
+<div class="relative w-full aspect-video bg-surface-container overflow-hidden border-b border-outline-variant">
+<img class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300" data-alt="Design system component UI layout boards neatly organized in clean wireframes with typography tokens, spacing grids, and color palettes on a crisp white high-resolution canvas." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoB-I7e8pmOQSPjhq2INvTB-gndwAXUYgfQ6r8mYmXS4iqVFjDMZmSC_M_c7nW7DMouDnu82NSj23_Rg47lQdXJCjrx2JU9KamrA4mAcjy5w_7vR0u3tImtsVQF9jBuHv6On6lw6m18WvOI0fNeR6SoI1eFhoM1J4VqNpbEievhvjU7HAefIgLEGG11JVcyHne-f2RjU4NXulXNvgr0KSBvf25A4BdXp4f1mrbygpsMVQKzjYFZaq9GiQ7HcjHEHs3zWNLUOfKE1U"/>
+<!-- Type Badge: Top-Left (Amber Soft Tint for E-Book) -->
+<span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-eyebrow font-eyebrow uppercase font-bold tracking-wider bg-amber-100/90 text-amber-800 border border-amber-300/40 backdrop-blur-xs">
+                E-Book
+              </span>
+<!-- Format Duration / Timing: Bottom-Right -->
+<span class="absolute bottom-3 right-3 px-2.5 py-0.5 rounded text-label-sm font-label-sm font-medium bg-inverse-surface/85 text-inverse-on-surface backdrop-blur-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">menu_book</span> 112 Hlm PDF
+              </span>
+</div>
+<!-- Card Content Body -->
+<div class="p-5 space-y-3">
+<!-- (b) Category Eyebrow -->
+<div class="text-eyebrow font-eyebrow uppercase tracking-widest text-primary font-bold">
+                DESIGN SYSTEMS &amp; FRONTEND
+              </div>
+<!-- (c) Title -->
+<h3 class="text-headline-sm font-headline-sm text-on-surface group-hover:text-primary transition-colors line-clamp-2">
+                Design System Tokenomics &amp; Component Governance
+              </h3>
+<!-- (d) Key Metadata / Highlights -->
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface-variant pt-1 pb-1">
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">palette</span> Figma Tokens</span>
+<span class="text-outline-variant">•</span>
+<span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-outline">sync_alt</span> CI/CD Sync Blueprint</span>
+</div>
+<!-- (e) Author / Instructor Row -->
+<div class="flex items-center gap-3 pt-3 border-t border-outline-variant/60">
+<img class="w-8 h-8 rounded-full object-cover border border-outline-variant" data-alt="Professional headshot of a female design technologist with minimal silver jewelry and a light gray blouse against a pristine white studio background with soft ambient lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFF_H6gZHGb7aRdh-QCMthMY1epc2Umi6X6QYsrCglJ-D_fCYk9DjCRXHAsiuv2PO0GXuIWmgtflg4EYMx6Xg8oGqz9Pd9OxbsgnsVFge5xX3SCd8wCzfztYKm2ORcMsW0uZwmgtKWLtAucOXghsd6_JJAZ8zOqqYujMKKmDBcf_nW44g6E0IQW6R_Wu8EexCu4h9B3TRRZ2GoxySd8RB2QhQiZgOUK_H61PVqUwqf0RAXk3fCsxl5gKEVmtobOxj4bvIIMI5HyqM"/>
+<div class="flex flex-col">
+<span class="text-label-sm font-label-sm font-semibold text-on-surface">Maya Anggraini</span>
+<span class="text-body-sm font-body-sm text-on-surface-variant text-xs">Staff Design Technologist, Hazl UI</span>
+</div>
+</div>
+</div>
+</div>
+<!-- (f) Card Footer -->
+<div class="p-5 pt-3 border-t border-outline-variant flex items-center justify-between bg-surface/50">
+<div>
+<div class="text-label-sm font-label-sm font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+                Gratis / Free E-Book
+              </div>
+</div>
+<a class="px-4 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-label-md font-label-md font-semibold text-primary hover:bg-primary-container hover:text-on-primary hover:border-primary-container transition-all duration-150" href="#">
+              Download PDF
+            </a>
+</div>
+</article>
+</div>
+</section>
+<!-- SECTION 3: NUMERIC PAGINATION & QUICK BROWSE -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 pb-2 border-t border-outline-variant">
+<div class="text-body-sm font-body-sm text-on-surface-variant">
+        Halaman <span class="font-semibold text-on-surface">1</span> dari <span class="font-semibold text-on-surface">5</span> (Menampilkan 6 dari 28 materi)
+      </div>
+<div class="flex items-center gap-1.5">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-label-md font-label-md text-outline hover:text-on-surface hover:border-outline transition-colors disabled:opacity-40" disabled="">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">chevron_left</span> Sebelumnya</span>
+</button>
+<button class="w-9 h-9 rounded-lg bg-primary-container text-on-primary font-label-md font-bold flex items-center justify-center">1</button>
+<button class="w-9 h-9 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low font-label-md font-medium flex items-center justify-center transition-colors">2</button>
+<button class="w-9 h-9 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low font-label-md font-medium flex items-center justify-center transition-colors">3</button>
+<span class="px-1 text-outline font-label-md">...</span>
+<button class="w-9 h-9 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-low font-label-md font-medium flex items-center justify-center transition-colors">5</button>
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-label-md font-label-md text-on-surface hover:border-outline hover:bg-surface-container-low transition-colors">
+<span class="flex items-center gap-1">Berikutnya <span class="material-symbols-outlined text-sm">chevron_right</span></span>
+</button>
+</div>
+</div>
+<!-- SECTION 4: ENTERPRISE CORPORATE BANNER (Minimalist Up-skilling Card) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 relative overflow-hidden">
+<!-- Subtle, single soft background tint (Architectural, zero neon) -->
+<div class="absolute -right-24 -top-24 w-96 h-96 bg-primary-fixed/30 rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="space-y-2 max-w-2xl">
+<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-eyebrow font-eyebrow font-bold tracking-wider uppercase bg-primary-fixed text-primary">
+<span class="material-symbols-outlined text-xs">domain</span> HAZL FOR BUSINESS
+          </div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">
+            Mencari Pelatihan untuk Tim Korporat Anda?
+          </h2>
+<p class="text-body-md font-body-md text-on-surface-variant">
+            Hazl Business menyediakan multi-tenant LMS, dashboard analitik retensi, kurikulum custom backend/cloud, dan sertifikasi batch berstandar ISO 17024 untuk tim engineering 10 hingga 5.000 karyawan.
+          </p>
+</div>
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+<a class="px-6 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest text-label-md font-label-md font-semibold text-on-surface hover:bg-surface-container-low transition-colors text-center" href="#">
+            Unduh Katalog B2B
+          </a>
+<a class="px-6 py-3 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-label-md font-label-md font-semibold transition-colors text-center shadow-none" href="#">
+            Konsultasi Tim B2B
+          </a>
+</div>
+</div>
+</section>
+</main>
+<!-- FOOTER (Shared Component Anchor) -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline docked full-width bottom w-full mt-16">
+<div class="max-w-7xl mx-auto px-6 md:px-8 py-12 flex flex-col gap-8 w-full">
+<!-- Top Row: Brand & Quick Links Cluster -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div>
+<div class="text-headline-sm font-headline-sm font-bold text-primary dark:text-inverse-primary tracking-tight">
+            Hazl Academy
+          </div>
+<p class="text-body-sm font-body-sm text-on-surface-variant dark:text-inverse-on-surface max-w-md mt-1">
+            Enterprise accredited and verified vocational platform for technology, architecture, and cloud engineering.
+          </p>
+</div>
+<!-- Links from JSON -->
+<nav class="flex flex-wrap gap-x-6 gap-y-2">
+<a class="text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors" href="#">Program Akreditasi</a>
+<a class="text-label-sm font-label-sm text-primary dark:text-inverse-primary font-medium" href="#">Katalog Kursus</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors" href="#">Webinar &amp; Bootcamp</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors" href="#">Pusat Bantuan</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors" href="#">Kebijakan Privasi</a>
+<a class="text-label-sm font-label-sm text-on-surface-variant dark:text-inverse-on-surface hover:text-primary dark:hover:text-inverse-primary transition-colors" href="#">Syarat &amp; Ketentuan</a>
+</nav>
+</div>
+<!-- Bottom Row: Verification & Exact Copyright string -->
+<div class="pt-6 border-t border-outline-variant/60 dark:border-outline/40 flex flex-col sm:flex-row justify-between items-center gap-4 text-body-sm font-body-sm text-on-surface-variant dark:text-inverse-on-surface text-xs">
+<p>© 2024 Hazl Academy. Enterprise accredited and verified vocational platform. All rights reserved.</p>
+<div class="flex items-center gap-4 text-outline">
+<span class="hover:text-on-surface cursor-pointer">Status Sistem: Normal (99.98%)</span>
+<span>•</span>
+<span class="hover:text-on-surface cursor-pointer">ISO/IEC 27001 Certified</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

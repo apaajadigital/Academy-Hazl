@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout Aman - Hazl Academy</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary": "#005e7d",
+            "surface-variant": "#e2e2e9",
+            "primary-fixed-dim": "#86cfff",
+            "tertiary-container": "#00789e",
+            "surface-container-low": "#f3f3fa",
+            "background": "#f9f9ff",
+            "tertiary-fixed": "#c1e8ff",
+            "secondary-container": "#e01e5f",
+            "primary-fixed": "#c8e6ff",
+            "on-tertiary-container": "#e8f6ff",
+            "inverse-surface": "#2e3036",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed": "#001e2e",
+            "on-background": "#1a1b21",
+            "on-error-container": "#93000a",
+            "surface-container": "#ededf4",
+            "surface-container-highest": "#e2e2e9",
+            "on-error": "#ffffff",
+            "on-primary-container": "#ecf5ff",
+            "surface-dim": "#d9d9e0",
+            "surface-container-high": "#e8e7ef",
+            "on-tertiary": "#ffffff",
+            "on-primary-fixed-variant": "#004c6d",
+            "inverse-on-surface": "#f0f0f7",
+            "primary": "#005d85",
+            "on-surface-variant": "#3f484f",
+            "secondary-fixed": "#ffd9de",
+            "outline-variant": "#bfc7d0",
+            "error-container": "#ffdad6",
+            "on-secondary-container": "#fffbff",
+            "surface-container-lowest": "#ffffff",
+            "secondary": "#b80049",
+            "tertiary-fixed-dim": "#72d2ff",
+            "secondary-fixed-dim": "#ffb2be",
+            "on-primary": "#ffffff",
+            "error": "#ba1a1a",
+            "outline": "#707880",
+            "on-secondary-fixed-variant": "#900038",
+            "surface-tint": "#00658f",
+            "on-tertiary-fixed-variant": "#004d66",
+            "on-surface": "#1a1b21",
+            "primary-container": "#0077a8",
+            "surface-bright": "#f9f9ff",
+            "surface": "#f9f9ff",
+            "inverse-primary": "#86cfff",
+            "on-tertiary-fixed": "#001e2b",
+            "on-secondary-fixed": "#400014"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "2rem",
+            "space-xl": "2.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-xs": "0.25rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.5rem"
+          },
+          "fontFamily": {
+            "label-md": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "body-sm": ["Inter"],
+            "body-md": ["Inter"],
+            "eyebrow": ["Inter"],
+            "label-sm": ["Inter"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "body-lg": ["Inter"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Shared Component: TopNavBar (checkout_header) -->
+<header class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline sticky top-0 z-40">
+<div class="w-full max-w-7xl mx-auto px-4 md:px-8 py-3 flex justify-between items-center">
+<!-- Brand Logo Anchor -->
+<div class="flex items-center space-x-3">
+<a class="text-headline-md font-headline-md font-bold text-primary dark:text-inverse-primary tracking-tight flex items-center space-x-2" href="#">
+<span>Hazl Academy</span>
+</a>
+<div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm space-x-1">
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="lock">lock</span>
+<span>Checkout Terenkripsi 256-Bit SSL</span>
+</div>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center space-x-4">
+<div class="inline-flex sm:hidden items-center text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="lock">lock</span>
+<span>SSL 256-Bit</span>
+</div>
+<a class="inline-flex items-center text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary font-label-md text-label-md transition-colors duration-150 space-x-1 py-1.5 px-3 rounded-lg hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="support_agent">support_agent</span>
+<span>Bantuan</span>
+</a>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10">
+<!-- Step Indicator Progress -->
+<div class="mb-8 max-w-2xl">
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">1</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Informasi Akun</span>
+</div>
+<div class="w-8 h-[2px] bg-primary"></div>
+<div class="flex items-center space-x-2">
+<span class="w-6 h-6 rounded-full bg-primary text-on-primary font-label-sm text-label-sm flex items-center justify-center font-bold">2</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Metode Pembayaran</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-2">Pastikan rincian akun Anda benar untuk pengiriman token dan kredensial LMS seketika.</p>
+</div>
+<!-- 2 Column Layout (Grid 7:5) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Form & Payment Methods (7 Cols) -->
+<section class="lg:col-span-7 space-y-6">
+<!-- Step 1: Student Account Information Form -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 space-y-5">
+<div class="flex items-center justify-between border-b border-outline-variant pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[22px]" data-icon="badge">badge</span>
+<span>1. Data Penerima Akses Siswa</span>
+</h2>
+<span class="font-label-sm text-label-sm text-primary font-medium flex items-center">
+<span class="material-symbols-outlined text-[16px] mr-1 text-primary" data-icon="verified_user">verified_user</span>
+              Auto-Sync LMS
+            </span>
+</div>
+<div class="space-y-4">
+<!-- Full Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1.5 font-medium" for="full_name">
+                Nama Lengkap (Sesuai Sertifikat)
+              </label>
+<input class="w-full h-10 px-3.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-tertiary-fixed-dim focus:ring-2 focus:ring-primary-fixed-dim transition-all" id="full_name" placeholder="Masukkan nama lengkap Anda" type="text" value="Dimas Pratama"/>
+</div>
+<!-- Email Address -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1.5 font-medium" for="email">
+                Email Perusahaan / Penerima Akses LMS
+              </label>
+<div class="relative">
+<input class="w-full h-10 px-3.5 pr-10 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-tertiary-fixed-dim focus:ring-2 focus:ring-primary-fixed-dim transition-all" id="email" placeholder="nama@domain.com" type="email" value="dimas.pratama@telkom.co.id"/>
+<span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-tertiary">
+<span class="material-symbols-outlined text-[18px]" data-icon="mail">mail</span>
+</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Undangan ruang kerja GitHub Classroom dan akses platform Hazl akan dikirim ke email ini.</p>
+</div>
+<!-- WhatsApp Number -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1.5 font-medium" for="whatsapp">
+                Nomor WhatsApp Aktif
+              </label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+<span class="font-label-md text-label-md text-on-surface-variant">+62</span>
+</div>
+<input class="w-full h-10 pl-14 pr-3.5 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-tertiary-fixed-dim focus:ring-2 focus:ring-primary-fixed-dim transition-all" id="whatsapp" placeholder="812-XXXX-XXXX" type="tel" value="812-3456-7890"/>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Digunakan untuk konfirmasi aktivasi instan dan pengiriman invoice resmi.</p>
+</div>
+</div>
+</div>
+<!-- Step 2: Payment Methods Selection -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 space-y-5">
+<div class="flex items-center justify-between border-b border-outline-variant pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center space-x-2">
+<span class="material-symbols-outlined text-primary text-[22px]" data-icon="payments">payments</span>
+<span>2. Pilih Metode Pembayaran Terakreditasi</span>
+</h2>
+</div>
+<div class="space-y-3" id="payment-options">
+<!-- Option 1: QRIS -->
+<label class="relative flex items-start p-4 rounded-xl border-2 border-primary bg-primary-fixed/20 cursor-pointer transition-all">
+<input checked="" class="mt-1 h-4 w-4 text-primary border-outline focus:ring-primary" name="payment_method" type="radio" value="qris"/>
+<div class="ml-3.5 flex-1">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center space-x-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">QRIS Terpadu (Instan)</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-tertiary-fixed text-primary font-label-sm text-label-sm font-semibold">
+                      Rekomendasi Cepat
+                    </span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary font-medium">Bebas Biaya Transaksi</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Pindai QR kode dengan GoPay, OVO, ShopeePay, Dana, LinkAja, atau aplikasi m-Banking apa saja (BCA, Mandiri, BRI, CIMB).
+                </p>
+<div class="mt-2.5 flex items-center space-x-3 text-on-surface-variant font-label-sm text-label-sm opacity-90">
+<span class="px-2 py-1 bg-surface-container rounded font-mono text-[11px] font-bold text-on-surface">QRIS</span>
+<span class="px-2 py-1 bg-surface-container rounded font-mono text-[11px] font-bold text-on-surface">GOPAY</span>
+<span class="px-2 py-1 bg-surface-container rounded font-mono text-[11px] font-bold text-on-surface">OVO</span>
+<span class="px-2 py-1 bg-surface-container rounded font-mono text-[11px] font-bold text-on-surface">DANA</span>
+<span class="px-2 py-1 bg-surface-container rounded font-mono text-[11px] font-bold text-on-surface">SHOPEEPAY</span>
+</div>
+</div>
+</label>
+<!-- Option 2: Virtual Account Bank -->
+<label class="relative flex items-start p-4 rounded-xl border border-outline-variant hover:border-outline cursor-pointer transition-all">
+<input class="mt-1 h-4 w-4 text-primary border-outline focus:ring-primary" name="payment_method" type="radio" value="va"/>
+<div class="ml-3.5 flex-1">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Virtual Account Bank (Otomatis Terverifikasi)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">24 Jam Real-time</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Transfer instan tanpa perlu unggah struk manual. Konfirmasi diverifikasi dalam hitungan detik.
+                </p>
+<div class="mt-2.5 flex items-center space-x-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="px-2 py-1 bg-surface-container rounded font-semibold text-[11px]">BCA VA</span>
+<span class="px-2 py-1 bg-surface-container rounded font-semibold text-[11px]">Mandiri Livin</span>
+<span class="px-2 py-1 bg-surface-container rounded font-semibold text-[11px]">BNI</span>
+<span class="px-2 py-1 bg-surface-container rounded font-semibold text-[11px]">BRImo</span>
+</div>
+</div>
+</label>
+<!-- Option 3: Credit Card / Debit -->
+<label class="relative flex items-start p-4 rounded-xl border border-outline-variant hover:border-outline cursor-pointer transition-all">
+<input class="mt-1 h-4 w-4 text-primary border-outline focus:ring-primary" name="payment_method" type="radio" value="cc"/>
+<div class="ml-3.5 flex-1">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<div class="flex items-center space-x-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Kartu Kredit / Debit Online</span>
+<span class="inline-flex items-center text-on-surface-variant text-[12px]">
+<span class="material-symbols-outlined text-[14px] mr-0.5 text-primary" data-icon="lock">lock</span>
+                      3D Secure
+                    </span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Visa / Mastercard / JCB</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+                  Enkripsi tokenisasi AES-256 berstandar perbankan PCI-DSS Level 1. Keamanan data kartu Anda terlindungi.
+                </p>
+</div>
+</label>
+</div>
+</div>
+<!-- Voucher & Promo Code Section -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6">
+<label class="block font-label-md text-label-md text-on-surface mb-2 font-medium" for="coupon_code">
+            Kode Promo / Kupon Beasiswa Hazl
+          </label>
+<div class="flex space-x-3">
+<div class="relative flex-grow">
+<input class="w-full h-10 px-3.5 uppercase font-mono font-semibold rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface font-body-md text-body-md focus:outline-none focus:border-tertiary-fixed-dim focus:ring-2 focus:ring-primary-fixed-dim" id="coupon_code" placeholder="KODE PROMO" type="text" value="HAZLENGINEER"/>
+<span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-primary">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+</span>
+</div>
+<button class="h-10 px-5 rounded-lg border border-outline-variant hover:border-outline bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-all" type="button">
+              Terapkan
+            </button>
+</div>
+<div class="mt-2 flex items-center text-primary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px] mr-1 text-primary" data-icon="verified">verified</span>
+<span>Kupon <strong>HAZLENGINEER</strong> berhasil diterapkan (Hemat Rp 50.000).</span>
+</div>
+</div>
+</section>
+<!-- Right Column: Order Summary & Trust Module (5 Cols) -->
+<aside class="lg:col-span-5 space-y-6">
+<!-- Order Summary Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 space-y-6 shadow-none">
+<div class="border-b border-outline-variant pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface">Ringkasan Pesanan</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">1 item dalam keranjang pembelajaran Anda</p>
+</div>
+<!-- Course Mini Card -->
+<div class="flex space-x-4 items-start pb-5 border-b border-outline-variant">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist developer workspace setup featuring modern enterprise code editors and terminal screens displaying Laravel and React code. The desk is arranged with disciplined order under diffused, soft studio lighting in a light-mode architectural space. Colors emphasize pure whites, deep obsidian slate, and precision cyan highlights representing high-craft educational technology." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUInIBLwT06OANcUqUs0jeOXYousEbJSWMlwJuf8TSeEPX3YwPHoNzI5gar1dKK0KxrdM39RbCw0UGmol5eZyCp_e_cEViSF8Zh59Jk5BMgERIHqTeYgRut-1xb6z7taANvKJTRCoZJeq401tGqzLNHkDIhSOJJenjgkZXSy3gTM8uTjC4sj-zGDRDXuNn2xEfxJY0YmwVm7bCcwIDf8Zq12ctTzIvP6Gmlsf7cqNdQ6vzEImh-MqQxEOkqgk9SpW1t5MozeD5Wvc"/>
+</div>
+<div class="flex-1 min-w-0">
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-tertiary-fixed text-primary mb-1">
+                BOOTCAMP PRO
+              </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold leading-snug line-clamp-2">
+                Mastering Fullstack Laravel &amp; React Native Enterprise
+              </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center">
+<span class="material-symbols-outlined text-[15px] mr-1 text-primary" data-icon="person">person</span>
+                Instruktur: Rian Kurniawan
+              </p>
+</div>
+</div>
+<!-- Package Inclusions List -->
+<div class="space-y-2.5 text-on-surface-variant font-body-sm text-body-sm pb-5 border-b border-outline-variant">
+<p class="font-label-sm text-label-sm text-on-surface font-semibold mb-2">Paket Pembelian Mencakup:</p>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="all_inclusive">all_inclusive</span>
+<span>Akses Materi &amp; Update Selamanya (Lifetime)</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="terminal">terminal</span>
+<span>Modul Repositori Git Boilerplate Enterprise</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="rate_review">rate_review</span>
+<span>1-on-1 Code Review Berkala dari Mentor Senior</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="workspace_premium">workspace_premium</span>
+<span>Sertifikat Verifikasi Kriptografis Berlisensi</span>
+</div>
+</div>
+<!-- Price Calculation -->
+<div class="space-y-2.5 font-body-md text-body-md">
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span>Harga Normal</span>
+<span class="line-through text-outline">Rp 1.250.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center">
+                Promo Diskon Terbatas
+                <span class="ml-1.5 px-1.5 py-0.2 rounded bg-tertiary-fixed text-primary font-mono text-[10px] font-bold">HEMAT 72%</span>
+</span>
+<span class="text-primary font-medium">-Rp 901.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span>Kupon Promo (<span class="font-mono text-[11px] font-bold text-primary">HAZLENGINEER</span>)</span>
+<span class="text-primary font-medium">-Rp 50.000</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span>Biaya Platform &amp; PPN</span>
+<span class="text-primary font-semibold">Rp 0 (Bebas Biaya)</span>
+</div>
+<div class="pt-4 border-t border-outline-variant flex justify-between items-baseline">
+<div>
+<span class="block font-headline-sm text-headline-sm text-on-surface font-bold">Total Pembayaran</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sudah termasuk pajak &amp; biaya layanan</span>
+</div>
+<div class="text-right">
+<span class="font-headline-xl text-headline-xl font-bold text-on-surface tracking-tight">Rp 299.000</span>
+</div>
+</div>
+</div>
+<!-- Primary CTA Action -->
+<div class="pt-2">
+<button class="w-full h-12 rounded-full bg-primary-fixed-dim hover:bg-tertiary-fixed text-on-background font-headline-sm text-headline-sm font-bold flex items-center justify-center space-x-2 transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-primary-fixed" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock">lock</span>
+<span>Lanjut ke Pembayaran Rp 299.000</span>
+</button>
+<p class="font-label-sm text-label-sm text-center text-on-surface-variant mt-2.5">
+              Dengan mengklik tombol di atas, Anda menyetujui Ketentuan Layanan Hazl.
+            </p>
+</div>
+</div>
+<!-- Trust Badges & Guarantee Module -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-5 space-y-4">
+<div class="flex items-start space-x-3.5">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5" data-icon="verified">verified</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Garansi 7 Hari Uang Kembali 100%</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Jika kurikulum tidak memenuhi ekspektasi teknis Anda, ajukan refund instan tanpa proses berbelit.
+              </p>
+</div>
+</div>
+<div class="border-t border-outline-variant pt-3 flex items-start space-x-3.5">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5" data-icon="schedule">schedule</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Akses Aktif dalam 60 Detik</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Sistem otomatis kami menghubungkan akun LMS dan repositori GitHub Anda tepat setelah konfirmasi.
+              </p>
+</div>
+</div>
+<div class="border-t border-outline-variant pt-3 flex items-start space-x-3.5">
+<span class="material-symbols-outlined text-primary text-[22px] mt-0.5" data-icon="security">security</span>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Standar Kepatuhan ISO/IEC 27001</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+                Infrastruktur data kami terisolasi dan teraudit secara berkala untuk menjaga kerahasiaan identitas siswa.
+              </p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Shared Component: Footer (trust_footer) -->
+<footer class="bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline mt-16">
+<div class="w-full max-w-7xl mx-auto px-4 md:px-8 py-8 flex flex-col items-center justify-center space-y-4">
+<!-- Footer Nav Links -->
+<nav class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150" href="#">
+          Garansi 7 Hari Uang Kembali
+        </a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150" href="#">
+          Kebijakan Privasi
+        </a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150" href="#">
+          Syarat &amp; Ketentuan
+        </a>
+<a class="font-label-sm text-label-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150" href="#">
+          Bantuan Pelanggan
+        </a>
+</nav>
+<!-- Copyright & Security Label -->
+<p class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant text-center opacity-80 hover:opacity-100 transition-opacity duration-150">
+        © 2025 Hazl Academy. Seluruh hak cipta dilindungi. Sistem Keamanan ISO/IEC 27001 Terverifikasi.
+      </p>
+</div>
+</footer>
+<!-- Micro-Interactions Script for Payment Method Switcher -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+      paymentRadios.forEach(radio => {
+        radio.addEventListener('change', () => {
+          paymentRadios.forEach(r => {
+            const card = r.closest('label');
+            if (r.checked) {
+              card.classList.remove('border-outline-variant');
+              card.classList.add('border-2', 'border-primary', 'bg-primary-fixed/20');
+            } else {
+              card.classList.remove('border-2', 'border-primary', 'bg-primary-fixed/20');
+              card.classList.add('border', 'border-outline-variant');
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body></html>

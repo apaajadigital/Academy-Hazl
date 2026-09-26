@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+
+<html lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mastering Fullstack Laravel &amp; React Native Enterprise - Hazl Academy</title>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-fixed": "#c8e6ff",
+            "tertiary": "#005e7d",
+            "surface-container-low": "#f3f3fa",
+            "error-container": "#ffdad6",
+            "tertiary-fixed-dim": "#72d2ff",
+            "on-secondary-container": "#fffbff",
+            "surface-bright": "#f9f9ff",
+            "secondary-container": "#e01e5f",
+            "on-tertiary": "#ffffff",
+            "primary-container": "#0077a8",
+            "surface-container-highest": "#e2e2e9",
+            "on-primary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "on-tertiary-container": "#e8f6ff",
+            "on-error": "#ffffff",
+            "inverse-on-surface": "#f0f0f7",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-fixed": "#001e2e",
+            "inverse-surface": "#2e3036",
+            "surface": "#f9f9ff",
+            "surface-tint": "#00658f",
+            "surface-dim": "#d9d9e0",
+            "secondary-fixed": "#ffd9de",
+            "surface-container": "#ededf4",
+            "inverse-primary": "#86cfff",
+            "secondary": "#b80049",
+            "outline": "#707880",
+            "on-surface-variant": "#3f484f",
+            "on-primary-container": "#ecf5ff",
+            "primary": "#005d85",
+            "surface-variant": "#e2e2e9",
+            "on-surface": "#1a1b21",
+            "surface-container-high": "#e8e7ef",
+            "background": "#f9f9ff",
+            "primary-fixed-dim": "#86cfff",
+            "on-tertiary-fixed-variant": "#004d66",
+            "tertiary-container": "#00789e",
+            "on-primary-fixed-variant": "#004c6d",
+            "on-secondary-fixed": "#400014",
+            "on-background": "#1a1b21",
+            "tertiary-fixed": "#c1e8ff",
+            "on-tertiary-fixed": "#001e2b",
+            "on-secondary-fixed-variant": "#900038",
+            "on-error-container": "#93000a",
+            "secondary-fixed-dim": "#ffb2be",
+            "outline-variant": "#bfc7d0",
+            "error": "#ba1a1a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xs": "0.25rem",
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-lg": "1.5rem",
+            "margin": "2rem",
+            "gutter": "1.5rem",
+            "space-xl": "2.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "body-md": ["Inter"],
+            "label-md": ["Inter"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "body-lg": ["Inter"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "eyebrow": ["Inter"]
+          },
+          "fontSize": {
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface antialiased font-body-md text-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- 1. Header / TopNavBar (Derived directly from Shared Components JSON) -->
+<header class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 sticky z-50">
+<div class="max-w-7xl mx-auto px-6 md:px-8 w-full flex justify-between items-center h-16">
+<!-- Brand Logo & Left Cluster -->
+<div class="flex items-center gap-10">
+<a class="text-headline-md font-headline-md font-extrabold text-primary tracking-tight flex items-center gap-2" href="#">
+<span class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</span>
+          Hazl Academy
+        </a>
+<!-- Desktop Navigation Links (JSON Authority) -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary font-bold border-b-2 border-primary pb-1 text-label-md font-label-md" href="#">Program</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Katalog Terpadu</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Event &amp; Webinar</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors text-label-md font-label-md" href="#">Resources</a>
+</nav>
+</div>
+<!-- Right Action Cluster -->
+<div class="flex items-center gap-4">
+<!-- Search bar on right -->
+<div class="hidden lg:flex items-center relative w-64">
+<span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-lg text-body-sm font-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors" placeholder="Cari silabus, modul, stack..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">
+            Masuk
+          </button>
+<button class="px-5 py-2.5 rounded-full bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-all duration-150 active:scale-[0.98]">
+            Mulai Belajar
+          </button>
+</div>
+</div>
+</div>
+</header>
+<!-- 2. Breadcrumbs & Sub-Header Canvas -->
+<div class="bg-surface-container-lowest border-b border-outline-variant">
+<div class="max-w-7xl mx-auto px-6 md:px-8 py-3.5 flex items-center text-body-sm font-body-sm text-on-surface-variant overflow-x-auto whitespace-nowrap">
+<a class="hover:text-primary transition-colors" href="#">Beranda</a>
+<span class="material-symbols-outlined text-[14px] mx-2 text-outline">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Katalog Terpadu</a>
+<span class="material-symbols-outlined text-[14px] mx-2 text-outline">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">E-Course</a>
+<span class="material-symbols-outlined text-[14px] mx-2 text-outline">chevron_right</span>
+<a class="hover:text-primary transition-colors" href="#">Fullstack Engineering</a>
+<span class="material-symbols-outlined text-[14px] mx-2 text-outline">chevron_right</span>
+<span class="text-on-surface font-medium truncate max-w-xs md:max-w-none">Mastering Fullstack Laravel &amp; React Native Enterprise</span>
+</div>
+</div>
+<!-- 3. Hero Section (Public Detail 2-Column Grid) -->
+<section class="bg-surface py-10 md:py-14 border-b border-outline-variant">
+<div class="max-w-7xl mx-auto px-6 md:px-8">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+<!-- Left Column: Content & Enterprise Specs -->
+<div class="lg:col-span-7 flex flex-col gap-6">
+<!-- Badge -->
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-eyebrow font-eyebrow bg-primary-fixed text-primary tracking-wider uppercase">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+              E-Course Unggulan • Terakreditasi Industri
+            </span>
+</div>
+<!-- Title -->
+<h1 class="text-headline-xl font-headline-xl text-on-surface tracking-tight">
+            Mastering Fullstack Laravel &amp; React Native Enterprise
+          </h1>
+<!-- Description -->
+<p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">
+            Membangun arsitektur monorepo skala enterprise, sinkronisasi offline-first mobile database, arsitektur event-driven worker, dan integrasi payment gateway standar PCI-DSS.
+          </p>
+<!-- Instructor Chip -->
+<div class="flex items-center gap-3.5 p-3 rounded-xl bg-surface-container-lowest border border-outline-variant w-fit">
+<img class="w-12 h-12 rounded-lg object-cover border border-outline-variant" data-alt="Close up professional portrait of Rian Kurniawan, a senior software engineer wearing technical casual attire in a modern tech office setting with clean ambient light and neutral architectural lines in a light mode palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN52xxry1P2jVw32sF070wkeQ944z9I_7CnC_rVhDxm1JeFVJEkEcVGsIFek-ZB0SmtyZsyjl3oKO4dPNX62We10_zA9WA0B98vibWICTzXKZZifcIwSLGYuDRb4iUmkgzT_k1hEguRr4mG5lUFvUgT68qUKKExBddW8xKJVLSWdGM2eMDljfZK17BecaQY1ljdIyGI3FzWVFFWpoUJTjAOG-WP_xiyfnfDep5uwZ-1iAqP2R4GuXWGonwuy_VJonziR6WoQvtqk0"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">Rian Kurniawan</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-surface-container text-on-surface-variant">Principal Architect @ Hazl</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Ex-Tech Lead Unicorn • 12+ tahun pengalaman skala produksi</p>
+</div>
+</div>
+<!-- Key Meta Specs Bar -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+<div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center gap-1.5 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">schedule</span>
+<span class="text-label-sm font-label-sm">Durasi</span>
+</div>
+<p class="text-label-md font-label-md text-on-surface font-semibold">42 Jam Video</p>
+<p class="text-[11px] text-on-surface-variant">1080p 60fps On-Demand</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center gap-1.5 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">equalizer</span>
+<span class="text-label-sm font-label-sm">Tingkat Level</span>
+</div>
+<p class="text-label-md font-label-md text-on-surface font-semibold">Intermediate to Adv</p>
+<p class="text-[11px] text-on-surface-variant">Rekomendasi 1+ thn kode</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center gap-1.5 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">all_inclusive</span>
+<span class="text-label-sm font-label-sm">Akses Materi</span>
+</div>
+<p class="text-label-md font-label-md text-on-surface font-semibold">Selamanya (Lifetime)</p>
+<p class="text-[11px] text-on-surface-variant">+ Pembaruan Silabus</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<div class="flex items-center gap-1.5 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[18px] text-primary">verified</span>
+<span class="text-label-sm font-label-sm">Sertifikasi</span>
+</div>
+<p class="text-label-md font-label-md text-on-surface font-semibold">Terverifikasi</p>
+<p class="text-[11px] text-on-surface-variant">Portofolio Riil &amp; ID Unik</p>
+</div>
+</div>
+</div>
+<!-- Right Column: Sticky Pricing & Enrollment Card -->
+<div class="lg:col-span-5">
+<div class="sticky top-24 rounded-xl bg-surface-container-lowest border border-outline-variant overflow-hidden">
+<!-- Video Preview Thumbnail Player -->
+<div class="relative w-full aspect-video bg-inverse-surface border-b border-outline-variant group cursor-pointer overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 opacity-85" data-alt="An advanced developer workstation with dual monitors displaying structured monorepo code and clean React Native mobile mockups in a bright, modern architectural study. Crisp morning daylight, flat minimalist aesthetics, clean workspace with soft blue accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCp9m8J4Uq2JxCxsm7CD_XXZmAMeESb3-YLL-79Tt71SyZKwhZKf_B7dxDp4qAKJuqPy9Gy8GbpjqL6-3UfGyz9CIwzoNpt2ZIo1QVA4EHlzrCHgU_qQbJE49EK6CO9CTPagaBcaQsISVn8oOSPgp5cKUkAm1w98Dp_Erre22U0ws0OTJSl9_-j3MqolwX568riU2tKvlkYsJ9TQVdmNQuFB_tlxkEgQA2Q8FeJ7-8-erRDD9_KeR_VsPrA1tUl08bxPbX9JwVtsDg"/>
+<div class="absolute inset-0 bg-on-surface/30 flex flex-col items-center justify-center p-6 text-center text-on-primary">
+<div class="w-14 h-14 rounded-full bg-surface-container-lowest/90 text-primary flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px] pl-1" data-weight="fill">play_arrow</span>
+</div>
+<span class="text-label-md font-label-md font-semibold tracking-wide">Preview Modul Gratis (14 Menit)</span>
+<span class="text-[12px] opacity-80 mt-1">Tonton arsitektur overview tanpa registrasi</span>
+</div>
+</div>
+<!-- Pricing & Action Body -->
+<div class="p-6 md:p-8 flex flex-col gap-6">
+<!-- Promo Tag & Price Block -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="px-2.5 py-1 rounded-md text-eyebrow font-eyebrow bg-secondary-fixed text-secondary tracking-wider uppercase font-bold">
+                    HEMAT 72% • PROMO BULAN INI
+                  </span>
+<span class="text-label-sm font-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> Berakhir dalam 2 hari
+                  </span>
+</div>
+<div class="flex items-baseline gap-3">
+<span class="text-display-hero-mobile font-display-hero-mobile text-on-surface font-extrabold tracking-tight">
+                    Rp 349.000
+                  </span>
+<span class="text-body-lg font-body-lg text-outline line-through">
+                    Rp 1.250.000
+                  </span>
+</div>
+</div>
+<!-- Dual CTA Buttons -->
+<div class="flex flex-col gap-3">
+<button class="w-full h-12 rounded-full bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-headline-sm transition-all duration-150 flex items-center justify-center gap-2 shadow-sm active:scale-[0.99]">
+<span class="material-symbols-outlined text-[20px]">shopping_cart_checkout</span>
+                  Beli &amp; Mulai Belajar Sekarang
+                </button>
+<button class="w-full h-12 rounded-full bg-surface-container-lowest border border-outline-variant hover:border-primary text-on-surface font-headline-sm text-headline-sm transition-all duration-150 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px] text-tertiary">chat</span>
+                  Konsultasi via WhatsApp
+                </button>
+</div>
+<!-- Guarantee & Perks Checklist -->
+<div class="border-t border-outline-variant pt-5 flex flex-col gap-3">
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<span>7 Hari Garansi Uang Kembali tanpa syarat</span>
+</div>
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">code_blocks</span>
+<span>Akses Repositori GitHub Boilerplate Produksi</span>
+</div>
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">person_check</span>
+<span>Review Portofolio Akhir 1-on-1 dengan Mentor Senior</span>
+</div>
+<div class="flex items-center gap-3 text-body-sm font-body-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">workspace_premium</span>
+<span>Sertifikat Kelulusan Resmi dengan ID Kriptografis Unik</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. Tabbed Content Detail Section -->
+<main class="py-12 md:py-16">
+<div class="max-w-7xl mx-auto px-6 md:px-8">
+<!-- Tab Header Strip (Strict 1px border architecture) -->
+<div class="border-b border-outline-variant mb-10 overflow-x-auto">
+<div class="flex gap-8 whitespace-nowrap min-w-max">
+<button class="pb-4 text-headline-sm font-headline-sm text-primary border-b-2 border-primary transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">menu_book</span>
+            Silabus &amp; Kurikulum (48 Modul)
+          </button>
+<button class="pb-4 text-headline-sm font-headline-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+            Materi &amp; Yang Dipelajari
+          </button>
+<button class="pb-4 text-headline-sm font-headline-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">person</span>
+            Profil Mentor
+          </button>
+<button class="pb-4 text-headline-sm font-headline-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">star</span>
+            Ulasan Siswa (4.9/5)
+          </button>
+<button class="pb-4 text-headline-sm font-headline-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">help_outline</span>
+            FAQ
+          </button>
+</div>
+</div>
+<!-- Main Layout: 70% Syllabus & Detail, 30% Sticky Side Utility -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+<!-- Left Content Area (70% - 8 cols) -->
+<div class="lg:col-span-8 flex flex-col gap-12">
+<!-- Section A: Accordion Modules -->
+<div>
+<div class="flex items-center justify-between mb-6">
+<div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">Silabus Komprehensif</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Struktur kurikulum dirancang dari fondasi arsitektur monorepo hingga deployment berkinerja tinggi.</p>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant">6 Bagian • 48 Pelajaran • Total 42 Jam</span>
+</div>
+<!-- Accordion List -->
+<div class="flex flex-col gap-3">
+<!-- Modul 01 (Open State) -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest overflow-hidden">
+<div class="p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-primary-fixed text-primary flex items-center justify-center font-bold text-label-md">01</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                        Modul 01: Arsitektur Monorepo, Domain-Driven Design &amp; DTO Pattern
+                      </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                        6 Pelajaran • 4 Jam 20 Menit • <span class="text-primary font-medium">Termasuk 2 Video Preview Gratis</span>
+</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_less</span>
+</div>
+<!-- Lessons Drawer -->
+<div class="px-5 pb-5 pt-1 border-t border-outline-variant bg-surface-bright flex flex-col gap-2">
+<div class="py-2.5 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[18px]" data-weight="fill">play_circle</span>
+<span class="text-body-sm font-body-sm text-on-surface">1.1 Setup Monorepo Workspace: Laravel 11 &amp; React Native Turbo Modules</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-fixed text-primary">Preview Gratis</span>
+<span class="text-label-sm font-label-sm text-outline">34:12</span>
+</div>
+</div>
+<div class="py-2.5 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[18px]" data-weight="fill">play_circle</span>
+<span class="text-body-sm font-body-sm text-on-surface">1.2 Domain-Driven Design (DDD) &amp; Bounded Contexts Implementation</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-primary-fixed text-primary">Preview Gratis</span>
+<span class="text-label-sm font-label-sm text-outline">48:50</span>
+</div>
+</div>
+<div class="py-2.5 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between opacity-85">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+<span class="text-body-sm font-body-sm text-on-surface">1.3 Strict Data Transfer Objects (DTO) &amp; Typed Action Handlers</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">52:10</span>
+</div>
+<div class="py-2.5 px-3 rounded-lg bg-surface-container-lowest border border-outline-variant flex items-center justify-between opacity-85">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-outline text-[18px]">lock</span>
+<span class="text-body-sm font-body-sm text-on-surface">1.4 Repository Pattern vs Query Builder Benchmark di Skala Jutaan Baris</span>
+</div>
+<span class="text-label-sm font-label-sm text-outline">44:05</span>
+</div>
+</div>
+</div>
+<!-- Modul 02 -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-label-md">02</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                      Modul 02: Event Broker, Redis Distributed Locking &amp; Multi-layer Cache
+                    </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      8 Pelajaran • 6 Jam • Redis Cluster, Sentinel &amp; Race Condition Prevention
+                    </p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+<!-- Modul 03 -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-label-md">03</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                      Modul 03: Offline-First Database Sync dengan WatermelonDB &amp; SQLite
+                    </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      9 Pelajaran • 7 Jam • Two-way Conflict Resolution &amp; Delta Synchronization
+                    </p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+<!-- Modul 04 -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-label-md">04</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                      Modul 04: Idempotency Key, Payment Gateway Webhook &amp; Ledger Engine
+                    </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      8 Pelajaran • 6.5 Jam • Double-entry Bookkeeping &amp; PCI-DSS Best Practice
+                    </p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+<!-- Modul 05 -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-label-md">05</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                      Modul 05: CI/CD Pipeline Zero-Downtime, Docker Swarm &amp; Prometheus
+                    </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      9 Pelajaran • 8 Jam • Automated Rollback, Grafana Dashboards &amp; Alerting
+                    </p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+<!-- Modul 06 -->
+<div class="rounded-xl border border-outline-variant bg-surface-container-lowest p-5 flex items-start justify-between cursor-pointer hover:bg-surface-container-low transition-colors">
+<div class="flex items-start gap-4">
+<span class="w-8 h-8 rounded-lg bg-surface-container text-on-surface-variant flex items-center justify-center font-bold text-label-md">06</span>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">
+                      Modul 06: Capstone Project &amp; 1-on-1 Code Review Submission
+                    </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                      8 Pelajaran • 10 Jam • Implementasi Aplikasi E-Commerce Skala Enterprise Nyata
+                    </p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Section B: What You Will Learn -->
+<div class="p-8 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-6">Materi &amp; Kapabilitas yang Akan Anda Kuasai</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div class="flex items-start gap-3.5">
+<div class="w-6 h-6 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                  Mendesain arsitektur backend yang tahan beban 10.000+ request per detik tanpa race condition.
+                </p>
+</div>
+<div class="flex items-start gap-3.5">
+<div class="w-6 h-6 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                  Mengimplementasikan database transaction isolation level dan event worker queue asinkron.
+                </p>
+</div>
+<div class="flex items-start gap-3.5">
+<div class="w-6 h-6 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                  Membangun mobile app React Native dengan SQLite local caching dan auto-sync saat reconnect.
+                </p>
+</div>
+<div class="flex items-start gap-3.5">
+<div class="w-6 h-6 rounded-md bg-primary-fixed text-primary flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface">
+                  Setup deployment otomatis ke server staging &amp; production via GitHub Actions zero-downtime.
+                </p>
+</div>
+</div>
+<!-- Prerequisites sub-block -->
+<div class="mt-8 pt-6 border-t border-outline-variant">
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]">info</span>
+                Prasyarat Mengikuti Kelas
+              </h3>
+<ul class="flex flex-col gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                  Pemahaman dasar sintaks PHP/Laravel dan JavaScript/TypeScript modern (ES6+).
+                </li>
+<li class="flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                  Laptop minimal RAM 8GB (rekomendasi 16GB) untuk menjalankan container Docker lokal &amp; simulator mobile.
+                </li>
+</ul>
+</div>
+</div>
+<!-- Section C: Mentor Section -->
+<div class="p-8 rounded-xl bg-surface-container-lowest border border-outline-variant">
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-6">Instruktur Kelas</h2>
+<div class="flex flex-col md:flex-row gap-6 items-start">
+<img class="w-24 h-24 rounded-xl object-cover border border-outline-variant shrink-0" data-alt="Authentic professional headshot of an experienced software architect in an engineering lab with clean lines, soft modern illumination, sharp focus, wearing minimalist glasses and dark tech crewneck." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDI03D0SN-ieYA3uU66gF0DILMRhspbI3cP_CwlXLqgLc__fplZPSnX3OugFMOWnMF2m45NRgYD82Ipo7k8MCg3iDjuxXQVASICgDkqUHX6rOon22HtA0zNfuCsq29rHztBYncvJKvdcdZq_9cgKfDQfVng-QJZKbRKFItv5_1ID64XPl6b8l93VcIH4CacGgoPhnJTRtUC9S9IqC-7iUe2zw6rzjp-xXrOUD6_Fb7z78fktgOwUIkkjwjjETPw7YiH3svOWo_Ic98"/>
+<div class="flex flex-col gap-3">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface">Rian Kurniawan</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Principal Architect @ Hazl Platform • Ex-Gojek, DOKU &amp; Tokopedia Lead</p>
+</div>
+<div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-low rounded-lg border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-weight="fill">star</span>
+<span class="text-label-md font-label-md font-bold text-on-surface">4.98</span>
+<span class="text-label-sm font-label-sm text-outline">(1.420 Siswa)</span>
+</div>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant leading-relaxed">
+                  Telah merancang arsitektur sistem transaksi finansial dan distributed queue yang melayani jutaan transaksi per hari di berbagai unicorn Indonesia. Aktif sebagai kontributor open-source dan tech advisor bagi enterprise fintech di Asia Tenggara.
+                </p>
+<div class="flex items-center gap-4 pt-1">
+<a class="inline-flex items-center gap-1.5 text-body-sm font-body-sm text-primary hover:underline" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span> github.com/riankurniawan
+                  </a>
+<span class="text-outline">•</span>
+<a class="inline-flex items-center gap-1.5 text-body-sm font-body-sm text-primary hover:underline" href="#">
+<span class="material-symbols-outlined text-[18px]">share</span> linkedin.com/in/riankurniawan
+                  </a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Side Utility Column (30% - 4 cols) -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- Enterprise Certificate Card -->
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant flex flex-col gap-4">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Sertifikasi Hazl Verified</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                Lulusan program ini mendapatkan credential digital berkode hash SHA-256 yang dapat langsung divalidasi oleh HR partner dan dipasang di profil LinkedIn.
+              </p>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg border border-outline-variant text-[12px] font-mono text-outline">
+              HASH ID: HZL-2024-FSLE-883921
+            </div>
+</div>
+<!-- Enterprise Team Plan Mini-Card -->
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-0.5 rounded text-eyebrow font-eyebrow bg-surface-container-highest text-on-surface tracking-wider uppercase">
+                B2B &amp; Enterprise
+              </span>
+<span class="material-symbols-outlined text-outline text-[20px]">corporate_fare</span>
+</div>
+<div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Pelatihan Tim Rekayasa</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">
+                Daftarkan lebih dari 5 engineer dengan diskon corporate volume dan dashboard monitoring kemajuan belajar internal.
+              </p>
+</div>
+<button class="w-full py-2.5 rounded-lg border border-outline-variant hover:border-primary text-on-surface text-label-md font-label-md transition-colors">
+              Hubungi Tim Hazl Enterprise
+            </button>
+</div>
+<!-- Student Testimonial Snippet -->
+<div class="p-6 rounded-xl bg-surface-container-lowest border border-outline-variant flex flex-col gap-3">
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px]" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px]" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px]" data-weight="fill">star</span>
+<span class="material-symbols-outlined text-[16px]" data-weight="fill">star</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface italic">
+              "Modul WatermelonDB sync dan distributed locking benar-benar menyelamatkan arsitektur mobile POS di startup saya. Sangat berbobot dan tanpa teori basa-basi."
+            </p>
+<div class="pt-2 border-t border-outline-variant flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed text-primary flex items-center justify-center font-bold text-label-sm">
+                DA
+              </div>
+<div>
+<p class="text-label-sm font-label-sm font-bold text-on-surface">Dimas Anggoro</p>
+<p class="text-[11px] text-outline">Lead Engineer at Paypoint</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- 6. Related Content Carousel/Grid (Unified Product Card System) -->
+<section class="py-12 md:py-16 bg-surface-container-low border-t border-outline-variant">
+<div class="max-w-7xl mx-auto px-6 md:px-8">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-headline-lg font-headline-lg text-on-surface">Materi Terkait &amp; Lintasan Lanjutan</h2>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Eksplorasi modul pelengkap untuk melengkapi profil arsitektur Anda.</p>
+</div>
+<a class="hidden md:flex items-center gap-1 text-label-md font-label-md text-primary hover:underline" href="#">
+          Lihat Semua Katalog <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Unified 3-Card Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Related Item 1: E-Book -->
+<div class="rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-outline transition-all duration-200 flex flex-col overflow-hidden">
+<div class="p-6 flex flex-col flex-1 gap-4">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-0.5 rounded text-eyebrow font-eyebrow bg-primary-fixed text-primary tracking-wider uppercase font-semibold">
+                E-Book &amp; Blueprint
+              </span>
+<span class="material-symbols-outlined text-outline text-[18px]">menu_book</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface leading-snug">
+              The SRE Playbook: Kubernetes Multi-Region Failover
+            </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">
+              Panduan implementasi cluster high-availability antarzona, autoscaling, dan arsitektur database read-replica.
+            </p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex items-center justify-between">
+<div>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 149.000</span>
+<span class="text-[12px] text-outline block">Format PDF + Code Repo</span>
+</div>
+<button class="px-4 py-2 rounded-lg bg-surface-container-low hover:bg-surface-container border border-outline-variant text-label-sm font-label-sm text-on-surface transition-colors">
+                Detail
+              </button>
+</div>
+</div>
+</div>
+<!-- Related Item 2: Live Event / Workshop -->
+<div class="rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-outline transition-all duration-200 flex flex-col overflow-hidden">
+<div class="p-6 flex flex-col flex-1 gap-4">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-0.5 rounded text-eyebrow font-eyebrow bg-secondary-fixed text-secondary tracking-wider uppercase font-semibold">
+                Live Workshop
+              </span>
+<span class="material-symbols-outlined text-outline text-[18px]">videocam</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface leading-snug">
+              Workshop: Building Scalable Payment Ledger
+            </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">
+              Sesi live coding 4 jam implementasi ledger akuntansi double-entry berbasis PostgreSQL &amp; immutable event log.
+            </p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex items-center justify-between">
+<div>
+<span class="text-headline-sm font-headline-sm text-on-surface font-bold">Rp 99.000</span>
+<span class="text-[12px] text-outline block">Live Zoom • 28 Okt 2024</span>
+</div>
+<button class="px-4 py-2 rounded-lg bg-surface-container-low hover:bg-surface-container border border-outline-variant text-label-sm font-label-sm text-on-surface transition-colors">
+                Daftar
+              </button>
+</div>
+</div>
+</div>
+<!-- Related Item 3: Kelas Gratis -->
+<div class="rounded-xl bg-surface-container-lowest border border-outline-variant hover:border-outline transition-all duration-200 flex flex-col overflow-hidden">
+<div class="p-6 flex flex-col flex-1 gap-4">
+<div class="flex items-center justify-between">
+<span class="px-2.5 py-0.5 rounded text-eyebrow font-eyebrow bg-surface-container-highest text-on-surface tracking-wider uppercase font-semibold">
+                Kelas Gratis
+              </span>
+<span class="material-symbols-outlined text-outline text-[18px]">school</span>
+</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface leading-snug">
+              Modern CI/CD with GitHub Actions &amp; Docker
+            </h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">
+              Automasi testing kode, static analysis linter, pembuatan image container, dan trigger deployment serverless.
+            </p>
+<div class="mt-auto pt-4 border-t border-outline-variant flex items-center justify-between">
+<div>
+<span class="text-headline-sm font-headline-sm text-primary font-bold">Gratis</span>
+<span class="text-[12px] text-outline block">Akses Terbuka Selamanya</span>
+</div>
+<button class="px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-label-sm font-label-sm text-on-primary transition-colors">
+                Mulai
+              </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 7. Footer (Derived directly from Shared Components JSON) -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant docked full-width bottom w-full">
+<div class="max-w-7xl mx-auto px-6 md:px-8 py-12 flex flex-col gap-8 w-full">
+<!-- Top Row: Logo & Links -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<a class="text-headline-sm font-headline-sm font-bold text-primary flex items-center gap-2" href="#">
+<span class="w-6 h-6 rounded-md bg-primary flex items-center justify-center text-on-primary text-[14px]">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</span>
+          Hazl Academy
+        </a>
+<!-- Links from JSON -->
+<div class="flex flex-wrap gap-x-6 gap-y-2 text-label-sm font-label-sm">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Program Akreditasi</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Katalog Kursus</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Webinar &amp; Bootcamp</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Pusat Bantuan</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Kebijakan Privasi</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Syarat &amp; Ketentuan</a>
+</div>
+</div>
+<!-- Bottom Row: Copyright text -->
+<div class="pt-6 border-t border-outline-variant flex flex-col md:flex-row items-center justify-between gap-4 text-body-sm font-body-sm text-on-surface-variant">
+<p>© 2024 Hazl Academy. Enterprise accredited and verified vocational platform. All rights reserved.</p>
+<div class="flex items-center gap-4 text-outline">
+<span class="text-label-sm font-label-sm">ISO 27001 Certified Quality Education</span>
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+<span class="text-label-sm font-label-sm">W3C Standards Compliant</span>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-[#F6F7F9]" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hazl Academy Design System (HDS) — Foundation &amp; Tokens</title>
+<!-- Google Fonts: Plus Jakarta Sans & Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "outline": "#707880",
+            "inverse-primary": "#86cfff",
+            "secondary-fixed-dim": "#ffb2be",
+            "on-background": "#1a1b21",
+            "on-primary-fixed": "#001e2e",
+            "on-tertiary-container": "#e8f6ff",
+            "surface-container-high": "#e8e7ef",
+            "on-secondary": "#ffffff",
+            "on-primary-container": "#ecf5ff",
+            "on-secondary-container": "#fffbff",
+            "error": "#ba1a1a",
+            "tertiary": "#005e7d",
+            "on-surface-variant": "#3f484f",
+            "surface-container-low": "#f3f3fa",
+            "inverse-on-surface": "#f0f0f7",
+            "surface-dim": "#d9d9e0",
+            "on-error": "#ffffff",
+            "on-surface": "#1a1b21",
+            "secondary-fixed": "#ffd9de",
+            "surface-container": "#ededf4",
+            "secondary": "#b80049",
+            "background": "#f9f9ff",
+            "on-primary": "#ffffff",
+            "surface": "#f9f9ff",
+            "secondary-container": "#e01e5f",
+            "on-tertiary-fixed-variant": "#004d66",
+            "outline-variant": "#bfc7d0",
+            "primary-container": "#0077a8",
+            "on-primary-fixed-variant": "#004c6d",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#001e2b",
+            "primary-fixed": "#c8e6ff",
+            "on-secondary-fixed-variant": "#900038",
+            "surface-tint": "#00658f",
+            "surface-container-lowest": "#ffffff",
+            "primary-fixed-dim": "#86cfff",
+            "surface-container-highest": "#e2e2e9",
+            "inverse-surface": "#2e3036",
+            "surface-variant": "#e2e2e9",
+            "on-error-container": "#93000a",
+            "surface-bright": "#f9f9ff",
+            "tertiary-fixed-dim": "#72d2ff",
+            "error-container": "#ffdad6",
+            "primary": "#005d85",
+            "tertiary-container": "#00789e",
+            "on-secondary-fixed": "#400014",
+            "tertiary-fixed": "#c1e8ff"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-md": "1rem",
+            "space-xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "gutter": "1.5rem",
+            "space-xs": "0.25rem",
+            "margin": "2rem"
+          },
+          "fontFamily": {
+            "eyebrow": ["Inter"],
+            "body-lg": ["Inter"],
+            "display-hero-mobile": ["Plus Jakarta Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "label-sm": ["Inter"],
+            "body-sm": ["Inter"],
+            "headline-md": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Plus Jakarta Sans"],
+            "headline-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Inter"],
+            "body-md": ["Inter"],
+            "display-hero": ["Plus Jakarta Sans"],
+            "headline-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "eyebrow": ["11px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.025em", "fontWeight": "800" }],
+            "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["20px", { "lineHeight": "28px", "letterSpacing": "-0.015em", "fontWeight": "700" }],
+            "headline-xl-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "headline-sm": ["16px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "body-md": ["15px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-hero": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.03em", "fontWeight": "800" }],
+            "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+      display: inline-block;
+      line-height: 1;
+    }
+    /* Brand custom colors directly mapped to Hazl Spec */
+    :root {
+      --hazl-canvas: #F6F7F9;
+      --hazl-border: #E7E9EC;
+      --hazl-primary-blue: #36BDF2;
+      --hazl-deep-blue: #0077A8;
+      --hazl-accent-pink: #FF2F86;
+      --hazl-deep-pink: #CC0052;
+      --hazl-text-primary: #16181D;
+      --hazl-text-muted: #5B616E;
+    }
+  </style>
+</head>
+<body class="min-h-full bg-[#F6F7F9] text-[#16181D] antialiased selection:bg-[#36BDF2]/20 selection:text-[#0077A8]">
+<!-- Top Navigation Bar (Shared Component Anchor) -->
+<header class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 sticky z-40">
+<div class="flex justify-between items-center w-full px-6 h-16 max-w-[1440px] mx-auto">
+<!-- Left: Logo & Search -->
+<div class="flex items-center gap-8">
+<a class="flex items-center gap-2 group" href="#">
+<div class="flex items-baseline font-headline-md text-headline-md font-bold tracking-tight text-[#16181D]">
+<span>hazl</span><span class="text-[#FF2F86] inline-block">.</span><span>id</span>
+</div>
+<span class="hidden xl:inline-block px-2 py-0.5 text-[11px] font-medium tracking-wide uppercase bg-[#36BDF2]/10 text-[#0077A8] rounded">HDS v1.0</span>
+</a>
+<!-- Search Bar on left -->
+<div class="relative w-64 md:w-80">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-[#5B616E] text-[18px]">search</span>
+<input class="w-full pl-9 pr-4 py-1.5 text-body-sm font-body-sm bg-[#F6F7F9] border border-outline-variant rounded-lg text-[#16181D] placeholder-[#5B616E]/70 focus:bg-white focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-[#36BDF2]/20 transition-all duration-150" placeholder="Cari token, komponen, status..." type="text"/>
+<kbd class="absolute right-2.5 top-2 px-1.5 py-0.5 text-[10px] font-mono text-[#5B616E] bg-white border border-outline-variant rounded">⌘K</kbd>
+</div>
+</div>
+<!-- Center: Navigation Links -->
+<nav class="hidden lg:flex items-center gap-6 h-full pt-4">
+<a class="text-primary font-semibold border-b-2 border-primary pb-3 font-label-md text-label-md" href="#foundations">Foundations</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-3 font-label-md text-label-md transition-colors duration-150" href="#components">Components</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-3 font-label-md text-label-md transition-colors duration-150" href="#patterns">Patterns</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-3 font-label-md text-label-md transition-colors duration-150" href="#guidelines">Guidelines</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-3 font-label-md text-label-md transition-colors duration-150" href="#resources">Resources</a>
+</nav>
+<!-- Right: Trailing Actions -->
+<div class="flex items-center gap-3">
+<button class="p-2 text-[#5B616E] hover:bg-surface-container-low rounded-lg transition-colors duration-150" title="Dark Mode Preview">
+<span class="material-symbols-outlined text-[20px]">dark_mode</span>
+</button>
+<button class="p-2 text-[#5B616E] hover:bg-surface-container-low rounded-lg transition-colors duration-150" title="Language">
+<span class="material-symbols-outlined text-[20px]">translate</span>
+</button>
+<span class="px-2.5 py-1 text-label-sm font-label-sm font-medium text-[#5B616E] bg-[#F6F7F9] border border-outline-variant rounded-md">v2.4.0</span>
+<button class="px-3 py-1.5 text-label-sm font-label-sm font-medium bg-[#0077A8] text-white rounded-lg hover:bg-primary transition-colors duration-150">
+          Feedback
+        </button>
+<div class="w-8 h-8 rounded-full border border-outline-variant overflow-hidden ml-1">
+<img class="w-full h-full object-cover" data-alt="High precision modern avatar of Hazl Academy Design System Lead, clean crisp corporate profile photo with neutral studio lighting, sharp focus, professional demeanor and subtle cool blue background tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsUAmg4K9oZP4dXAMd-457gcCUWSM1T1Hn0fAZg_WBuZnE1u_RnpBAAVR5LMbsMMfp9bh_vBiepeWV0vWzQUBSOxwSosJx62ngKIgk5spDHkXwp9RYNy8SUPtl_B5CR-DGKuIyw4N3lt4q3SwqTZ8SdL_mwYnxGrfZR89CkCJrSAm_2rRVgTBjQtQNHTSY1zLNg47FZ0mDpwBtz3TujbWBSx2LfPbxD1Dl-Sp7zuJzV22WUtT0e1HizojhaXur79vXCyr0NfazYfo"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Layout Container: Sidebar + Main Content -->
+<div class="max-w-[1440px] mx-auto flex w-full">
+<!-- SideNavBar (Shared Component Anchor) -->
+<aside class="hidden xl:flex flex-col justify-between h-[calc(100vh-4rem)] p-4 w-64 sticky top-16 bg-surface-container-lowest border-r border-outline-variant shrink-0">
+<div>
+<!-- Sidebar Header -->
+<div class="flex items-center gap-3 px-2 py-3 mb-4 border-b border-outline-variant/60">
+<div class="w-9 h-9 rounded-lg bg-[#0077A8]/10 text-[#0077A8] flex items-center justify-center font-bold font-headline-sm">
+            H
+          </div>
+<div>
+<div class="text-headline-sm font-headline-sm font-bold text-on-surface text-sm leading-tight">Component Library</div>
+<div class="text-[11px] font-body-sm text-[#5B616E]">v2.4.0 • Updated Today</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<nav class="space-y-1">
+<!-- Active Tab: Overview / Foundations -->
+<a class="flex items-center gap-3 px-3 py-2 text-primary bg-surface-container-low border-l-[3px] border-primary font-medium rounded-r-lg font-label-md text-label-md" href="#overview">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#colors">
+<span class="material-symbols-outlined text-[18px]">palette</span>
+<span>Color &amp; Theme</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#typography">
+<span class="material-symbols-outlined text-[18px]">text_fields</span>
+<span>Typography</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#buttons">
+<span class="material-symbols-outlined text-[18px]">smart_button</span>
+<span>Buttons &amp; Links</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#badges">
+<span class="material-symbols-outlined text-[18px]">dashboard</span>
+<span>Cards &amp; Containers</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#navigation">
+<span class="material-symbols-outlined text-[18px]">navigation</span>
+<span>Navigation</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#tables">
+<span class="material-symbols-outlined text-[18px]">table_chart</span>
+<span>Data Tables</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors duration-150 font-label-md text-label-md" href="#inputs">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Form Inputs</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Footer -->
+<div class="pt-4 border-t border-outline-variant space-y-2">
+<button class="w-full flex items-center justify-center gap-2 px-3 py-2 text-label-sm font-label-sm font-semibold bg-white hover:bg-surface-container-low border border-outline-variant text-[#16181D] rounded-lg transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px] text-[#0077A8]">download</span>
+          Export Figma Kit
+        </button>
+<div class="flex items-center justify-between px-2 pt-2 text-[12px] text-[#5B616E]">
+<a class="flex items-center gap-1.5 hover:text-[#16181D]" href="#">
+<span class="material-symbols-outlined text-[16px]">history</span>
+            Changelog
+          </a>
+<a class="flex items-center gap-1.5 hover:text-[#16181D]" href="#">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+            Settings
+          </a>
+</div>
+</div>
+</aside>
+<!-- Main Foundation Workspace Canvas (85-90% Neutral Space) -->
+<main class="flex-1 min-w-0 px-6 sm:px-10 py-10 space-y-12">
+<!-- SECTION 1: HEADER / MASTHEAD -->
+<section class="bg-white border border-outline-variant rounded-xl p-8 sm:p-10 shadow-none" id="overview">
+<!-- Breadcrumb -->
+<nav class="flex items-center gap-2 text-body-sm font-body-sm text-[#5B616E] mb-4">
+<span class="hover:text-[#16181D] cursor-pointer">Hazl Academy</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="hover:text-[#16181D] cursor-pointer">Design System</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-medium">Foundations &amp; Core Tokens</span>
+</nav>
+<div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+<div class="max-w-3xl space-y-3">
+<div class="flex items-center gap-3">
+<h1 class="text-headline-xl font-headline-xl text-[#16181D] tracking-tight">Hazl Academy Design System (HDS)</h1>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-full bg-[#36BDF2]/10 text-[#0077A8]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0077A8]"></span>
+                Stable
+              </span>
+</div>
+<p class="text-body-lg font-body-lg text-[#5B616E] leading-relaxed">
+              Panduan bahasa visual resmi untuk E-Course, E-Book, Webinar, Trainer Hub, dan LMS Multi-Tenant korporat.
+            </p>
+</div>
+<!-- Metadata Tags -->
+<div class="flex flex-wrap lg:flex-col gap-2 shrink-0 items-start lg:items-end">
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F6F7F9] border border-outline-variant rounded-md text-label-sm font-label-sm font-medium text-[#16181D]">
+<span class="material-symbols-outlined text-[15px] text-[#0077A8]">verified</span>
+              Version 1.0
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#F6F7F9] border border-outline-variant rounded-md text-label-sm font-label-sm font-medium text-[#16181D]">
+<span class="material-symbols-outlined text-[15px] text-[#047857]">space_dashboard</span>
+              Neutrals 88%
+            </span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#ECFDF5] border border-[#A7F3D0] rounded-md text-label-sm font-label-sm font-medium text-[#047857]">
+<span class="material-symbols-outlined text-[15px]">check_circle</span>
+              Zero AI-Slop Compliant
+            </span>
+</div>
+</div>
+<!-- System Summary Callout Bar -->
+<div class="mt-8 pt-6 border-t border-outline-variant grid grid-cols-2 md:grid-cols-4 gap-6 text-body-sm font-body-sm">
+<div>
+<div class="text-[#5B616E] text-eyebrow font-eyebrow uppercase mb-1">BRAND IDENTITY</div>
+<div class="font-semibold text-[#16181D]">hazl<span class="text-[#FF2F86]">.</span>id Foundation</div>
+</div>
+<div>
+<div class="text-[#5B616E] text-eyebrow font-eyebrow uppercase mb-1">GRID STANDARD</div>
+<div class="font-semibold text-[#16181D]">12-Col / 8px Base Scale</div>
+</div>
+<div>
+<div class="text-[#5B616E] text-eyebrow font-eyebrow uppercase mb-1">WCAG RATING</div>
+<div class="font-semibold text-[#16181D]">AA Pass (Contrast &gt; 4.5:1)</div>
+</div>
+<div>
+<div class="text-[#5B616E] text-eyebrow font-eyebrow uppercase mb-1">SURFACE DEPTH</div>
+<div class="font-semibold text-[#16181D]">Flat 1px Stroke Architecture</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: COLOR PALETTE ARCHITECTURE -->
+<section class="space-y-6" id="colors">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">CORE TOKENS</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Color Palette Architecture</h2>
+</div>
+<span class="text-body-sm font-body-sm text-[#5B616E]">Precision calibrated • No uncalibrated neon slop</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- 2A: Primary & Contrast Brand -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<span class="font-headline-sm text-headline-sm text-[#16181D]">Primary &amp; Contrast</span>
+<span class="text-[11px] font-mono text-[#5B616E]">brand.blue</span>
+</div>
+<!-- Swatch 1: Primary Action Blue -->
+<div class="space-y-2">
+<div class="h-16 w-full rounded-lg bg-[#36BDF2] flex items-end p-2.5 justify-between">
+<span class="text-xs font-mono font-bold text-[#16181D]">#36BDF2</span>
+<span class="text-[10px] font-medium px-2 py-0.5 bg-white/80 rounded text-[#16181D]">Interactive Surface</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-medium text-[#16181D]">Primary Action Blue</span>
+<span class="text-[#5B616E]">Marketing fills, highlights</span>
+</div>
+</div>
+<!-- Swatch 2: Deep Contrast Blue -->
+<div class="space-y-2">
+<div class="h-16 w-full rounded-lg bg-[#0077A8] flex items-end p-2.5 justify-between">
+<span class="text-xs font-mono font-bold text-white">#0077A8</span>
+<span class="text-[10px] font-medium px-2 py-0.5 bg-black/20 rounded text-white">WCAG AA Compliant</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-medium text-[#16181D]">Deep Contrast Blue</span>
+<span class="text-[#5B616E]">Text &amp; icons on white</span>
+</div>
+</div>
+</div>
+<!-- 2B: Energy & Accents -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<span class="font-headline-sm text-headline-sm text-[#16181D]">Energy &amp; Accents</span>
+<span class="text-[11px] font-mono text-[#5B616E]">brand.pink</span>
+</div>
+<!-- Swatch 1: Pink Accent -->
+<div class="space-y-2">
+<div class="h-16 w-full rounded-lg bg-[#FF2F86] flex items-end p-2.5 justify-between">
+<span class="text-xs font-mono font-bold text-white">#FF2F86</span>
+<span class="text-[10px] font-medium px-2 py-0.5 bg-black/20 rounded text-white">The Spark Dot</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-medium text-[#16181D]">Pink Accent</span>
+<span class="text-[#5B616E]">hazl.id dot, notification spark</span>
+</div>
+</div>
+<!-- Swatch 2: Deep Pink Text -->
+<div class="space-y-2">
+<div class="h-16 w-full rounded-lg bg-[#CC0052] flex items-end p-2.5 justify-between">
+<span class="text-xs font-mono font-bold text-white">#CC0052</span>
+<span class="text-[10px] font-medium px-2 py-0.5 bg-white/20 rounded text-white">High Contrast</span>
+</div>
+<div class="flex justify-between items-center text-label-sm font-label-sm">
+<span class="font-medium text-[#16181D]">Deep Pink Text</span>
+<span class="text-[#5B616E]">Text on white &amp; light cards</span>
+</div>
+</div>
+</div>
+<!-- 2C: Dominant Neutrals (88% Canvas Rule) -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 space-y-4">
+<div class="flex items-center justify-between pb-3 border-b border-outline-variant">
+<span class="font-headline-sm text-headline-sm text-[#16181D]">Dominant Neutrals</span>
+<span class="text-[11px] font-mono text-[#5B616E]">neutrals.88%</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-xs font-mono">
+<div class="p-2 rounded border border-outline-variant bg-[#16181D] text-white flex flex-col justify-between h-14">
+<span class="text-[10px] font-sans text-neutral-400">Headlines</span>
+<span>#16181D</span>
+</div>
+<div class="p-2 rounded border border-outline-variant bg-[#5B616E] text-white flex flex-col justify-between h-14">
+<span class="text-[10px] font-sans text-neutral-300">Secondary</span>
+<span>#5B616E</span>
+</div>
+<div class="p-2 rounded border border-outline-variant bg-[#E7E9EC] text-[#16181D] flex flex-col justify-between h-14">
+<span class="text-[10px] font-sans text-[#5B616E]">Stroke Line</span>
+<span>#E7E9EC</span>
+</div>
+<div class="p-2 rounded border border-outline-variant bg-[#F6F7F9] text-[#16181D] flex flex-col justify-between h-14">
+<span class="text-[10px] font-sans text-[#5B616E]">Canvas Base</span>
+<span>#F6F7F9</span>
+</div>
+</div>
+<!-- Soft Tint Demo -->
+<div class="pt-2 border-t border-outline-variant">
+<div class="text-[11px] font-medium text-[#5B616E] mb-2 uppercase tracking-wide">10% Soft-Tint Surfaces</div>
+<div class="flex gap-2">
+<div class="flex-1 py-1.5 px-2 bg-[#36BDF2]/10 border border-[#36BDF2]/20 rounded text-center text-xs font-mono font-semibold text-[#0077A8]">
+                  blue-soft 10%
+                </div>
+<div class="flex-1 py-1.5 px-2 bg-[#FF2F86]/10 border border-[#FF2F86]/20 rounded text-center text-xs font-mono font-semibold text-[#CC0052]">
+                  pink-soft 10%
+                </div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: TYPOGRAPHY HIERARCHY & EYEBROW CONVENTION -->
+<section class="space-y-6" id="typography">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">TYPE SCALE</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Typography Hierarchy &amp; Eyebrow Convention</h2>
+</div>
+<div class="bg-white border border-outline-variant rounded-xl divide-y divide-outline-variant overflow-hidden">
+<!-- Eyebrow convention -->
+<div class="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F6F7F9]/40">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">Eyebrow Label</span>
+<div class="text-xs text-[#5B616E]">11px / Inter / Tracking 0.1em</div>
+</div>
+<div class="flex-1">
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">KATEGORI KELAS • E-COURSE UNGGULAN</span>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-eyebrow / #0077A8</div>
+</div>
+<!-- H1 Display -->
+<div class="p-6 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">H1 Display Hero</span>
+<div class="text-xs text-[#5B616E]">32px / Plus Jakarta Sans</div>
+</div>
+<div class="flex-1">
+<h1 class="text-headline-xl font-headline-xl text-[#16181D]">Akselerasi Karir Digital Indonesia</h1>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-headline-xl font-bold</div>
+</div>
+<!-- H2 Section Title -->
+<div class="p-6 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">H2 Section Title</span>
+<div class="text-xs text-[#5B616E]">24px / Plus Jakarta Sans</div>
+</div>
+<div class="flex-1">
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Kurikulum Berbasis Standar Industri</h2>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-headline-lg font-bold</div>
+</div>
+<!-- H3 Card Title -->
+<div class="p-6 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">H3 Card Title</span>
+<div class="text-xs text-[#5B616E]">18px-20px / Plus Jakarta Sans</div>
+</div>
+<div class="flex-1">
+<h3 class="text-headline-md font-headline-md text-[#16181D]">Fullstack Laravel 11 &amp; React Native Enterprise</h3>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-headline-md font-semibold</div>
+</div>
+<!-- Body Regular -->
+<div class="p-6 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">Body Regular</span>
+<div class="text-xs text-[#5B616E]">14px-15px / Inter Regular</div>
+</div>
+<div class="flex-1">
+<p class="text-body-md font-body-md text-[#16181D] leading-relaxed max-w-2xl">
+                Setiap materi disusun secara komprehensif bersama lead engineer korporat ternama. Dilengkapi dengan repo live, studi kasus arsitektur microservices, dan sertifikat kelulusan terverifikasi.
+              </p>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-body-md leading-24</div>
+</div>
+<!-- Caption / Muted -->
+<div class="p-6 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
+<div class="w-48 shrink-0">
+<span class="text-xs font-mono text-[#5B616E]">Caption &amp; Metadata</span>
+<div class="text-xs text-[#5B616E]">12px / Inter Medium</div>
+</div>
+<div class="flex-1">
+<p class="text-label-sm font-label-sm text-[#5B616E]">Terakhir diperbarui 14 menit yang lalu oleh Tim Kurikulum Hazl Academy</p>
+</div>
+<div class="text-xs font-mono text-[#5B616E]">text-label-sm text-[#5B616E]</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: DUAL BUTTON SYSTEM (CRITICAL ARCHITECTURE DEMO) -->
+<section class="space-y-6" id="buttons">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">INTERACTION ARCHITECTURE</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Dual Button System</h2>
+</div>
+<p class="text-body-sm font-body-sm text-[#5B616E]">Intentional distinction between Public Marketing vs. Product LMS Workspace</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<!-- Group A: Marketing / Public Surface -->
+<div class="bg-white border border-outline-variant rounded-xl p-8 space-y-6">
+<div class="flex items-center justify-between pb-4 border-b border-outline-variant">
+<div>
+<span class="font-headline-md text-headline-md text-[#16181D] block">Group A: Marketing &amp; Public Surface</span>
+<span class="text-label-sm font-label-sm text-[#5B616E]">Pill Shaped (<code class="text-xs font-mono">rounded-full</code>) • h-11 or h-12 • High Contrast</span>
+</div>
+<span class="px-2 py-1 text-xs font-semibold rounded bg-[#36BDF2]/10 text-[#0077A8]">Public</span>
+</div>
+<div class="space-y-4">
+<!-- Primary Marketing -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-11 px-6 rounded-full bg-[#0077A8] hover:bg-primary text-white text-label-md font-label-md font-semibold transition-all duration-150 active:scale-95 shadow-none">
+                  Mulai Belajar Sekarang
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Primary Solid Pill</span>
+</div>
+<!-- Secondary Marketing -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-11 px-6 rounded-full bg-white hover:bg-[#F6F7F9] text-[#16181D] border border-outline-variant text-label-md font-label-md font-semibold transition-all duration-150 active:scale-95">
+                  Lihat Silabus Lengkap
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Secondary Stroke Pill</span>
+</div>
+<!-- Accent Marketing -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-11 px-6 rounded-full bg-[#FF2F86] hover:bg-[#CC0052] text-white text-label-md font-label-md font-semibold transition-all duration-150 active:scale-95 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+                  Akses Early Bird Diskon
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Accent Spark Pill</span>
+</div>
+</div>
+<div class="p-3 bg-[#F6F7F9] rounded-lg text-xs text-[#5B616E] border border-outline-variant">
+              Digunakan khusus pada Landing Page, Katalog Publik, Checkout CTA, dan Pengumuman Webinar.
+            </div>
+</div>
+<!-- Group B: Product & LMS Workspace -->
+<div class="bg-white border border-outline-variant rounded-xl p-8 space-y-6">
+<div class="flex items-center justify-between pb-4 border-b border-outline-variant">
+<div>
+<span class="font-headline-md text-headline-md text-[#16181D] block">Group B: Product &amp; LMS Workspace</span>
+<span class="text-label-sm font-label-sm text-[#5B616E]">Medium Rounded (<code class="text-xs font-mono">rounded-lg</code> / 8px) • h-9 or h-10 • Precision Tool</span>
+</div>
+<span class="px-2 py-1 text-xs font-semibold rounded bg-[#F6F7F9] text-[#16181D] border border-outline-variant">Workspace</span>
+</div>
+<div class="space-y-4">
+<!-- Primary Workspace -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-9 px-4 rounded-lg bg-[#0077A8] hover:bg-primary text-white text-label-sm font-label-sm font-medium flex items-center gap-2 transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+                  Lanjutkan Modul
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Primary Tool (8px)</span>
+</div>
+<!-- Secondary Workspace -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-9 px-4 rounded-lg bg-white hover:bg-[#F6F7F9] text-[#16181D] border border-outline-variant text-label-sm font-label-sm font-medium flex items-center gap-2 transition-all duration-150 active:scale-95">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                  Unduh Starter Code
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Secondary Tool (8px)</span>
+</div>
+<!-- Ghost / Subtle Workspace -->
+<div class="flex items-center justify-between gap-4">
+<button class="h-9 px-3 rounded-lg hover:bg-surface-container-low text-[#5B616E] hover:text-[#16181D] text-label-sm font-label-sm font-medium flex items-center gap-1.5 transition-colors duration-150">
+<span class="material-symbols-outlined text-[16px]">bookmark_border</span>
+                  Tandai Selesai
+                </button>
+<span class="text-xs font-mono text-[#5B616E]">Ghost / Subtle Action</span>
+</div>
+</div>
+<div class="p-3 bg-[#F6F7F9] rounded-lg text-xs text-[#5B616E] border border-outline-variant">
+              Digunakan pada Dashboard LMS, Trainer Hub, Table Action, Modal Konfirmasi, dan Editor Soal.
+            </div>
+</div>
+</div>
+</section>
+<!-- SECTION 5: BADGE & STATUS SYSTEM (Soft-Tint Architecture) -->
+<section class="space-y-6" id="badges">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">STATE ARCHITECTURE</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Badge &amp; Status System (Soft-Tint Pattern)</h2>
+<p class="text-body-sm font-body-sm text-[#5B616E] mt-1">Rule: 10% opacity low-density background + 100% solid contrast typography. Never solid filled heavy badges.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Variant 1: Aktif / Berjalan -->
+<div class="bg-white border border-outline-variant rounded-xl p-5 space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono text-[#5B616E]">Success / Active</span>
+<span class="w-2 h-2 rounded-full bg-[#047857]"></span>
+</div>
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-md bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]/60">
+<span class="w-1.5 h-1.5 rounded-full bg-[#047857]"></span>
+                Aktif / Berjalan
+              </span>
+</div>
+<p class="text-xs text-[#5B616E]">Status enrollment aktif, kelas sedang live, atau progress berjalan lancar.</p>
+</div>
+<!-- Variant 2: Menunggu Pembayaran -->
+<div class="bg-white border border-outline-variant rounded-xl p-5 space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono text-[#5B616E]">Pending / Attention</span>
+<span class="w-2 h-2 rounded-full bg-[#B45309]"></span>
+</div>
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-md bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]/60">
+<span class="w-1.5 h-1.5 rounded-full bg-[#B45309]"></span>
+                Menunggu Pembayaran
+              </span>
+</div>
+<p class="text-xs text-[#5B616E]">Invoice belum dilunasi, menunggu verifikasi transfer bank atau QRIS.</p>
+</div>
+<!-- Variant 3: Gratis / Free Tier -->
+<div class="bg-white border border-outline-variant rounded-xl p-5 space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono text-[#5B616E]">Free / Blue Soft</span>
+<span class="w-2 h-2 rounded-full bg-[#0077A8]"></span>
+</div>
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-md bg-[#36BDF2]/10 text-[#0077A8] border border-[#36BDF2]/25">
+<span class="w-1.5 h-1.5 rounded-full bg-[#0077A8]"></span>
+                Gratis
+              </span>
+</div>
+<p class="text-xs text-[#5B616E]">Webinar pengenalan, materi open source, atau preview bab gratis.</p>
+</div>
+<!-- Variant 4: Korporat LMS -->
+<div class="bg-white border border-outline-variant rounded-xl p-5 space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-xs font-mono text-[#5B616E]">Corporate / Pink Soft</span>
+<span class="w-2 h-2 rounded-full bg-[#CC0052]"></span>
+</div>
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-label-sm font-label-sm font-semibold rounded-md bg-[#FF2F86]/10 text-[#CC0052] border border-[#FF2F86]/25">
+<span class="w-1.5 h-1.5 rounded-full bg-[#CC0052]"></span>
+                Korporat LMS
+              </span>
+</div>
+<p class="text-xs text-[#5B616E]">Pelatihan B2B bersponsor korporat, tenant khusus, atau sertifikasi batch.</p>
+</div>
+</div>
+</section>
+<!-- SECTION 6: FORM INPUT STATES & CONTROLS -->
+<section class="space-y-6" id="inputs">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">FORM CONTROLS</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Form Input States &amp; Controls</h2>
+<p class="text-body-sm font-body-sm text-[#5B616E] mt-1">Rule: Persistent labels placed strictly ABOVE input fields. Height: 40px standard.</p>
+</div>
+<div class="bg-white border border-outline-variant rounded-xl p-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Default State -->
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-medium text-[#16181D]">
+                Nama Lengkap Siswa
+              </label>
+<div class="relative">
+<input class="w-full h-10 px-3 py-2 text-body-sm font-body-sm bg-white border border-outline-variant rounded-lg text-[#16181D] placeholder-[#5B616E]/60 focus:outline-none transition-colors" placeholder="Masukkan nama lengkap" readonly="" type="text" value="Budi Pratama"/>
+</div>
+<span class="text-[11px] text-[#5B616E]">Sesuai nama pada kartu identitas / sertifikat</span>
+</div>
+<!-- Active / Focus State -->
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-medium text-[#0077A8]">
+                Alamat Email Korporat <span class="text-[#FF2F86]">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 py-2 text-body-sm font-body-sm bg-white border border-[#36BDF2] ring-2 ring-[#36BDF2]/20 rounded-lg text-[#16181D] focus:outline-none transition-colors" type="email" value="budi.pratama@telkom.co.id"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-[#0077A8] text-[18px]">verified_user</span>
+</div>
+<span class="text-[11px] text-[#0077A8] font-medium">Domain korporat terverifikasi otomatis</span>
+</div>
+<!-- Error State -->
+<div class="space-y-1.5">
+<label class="block text-label-sm font-label-sm font-medium text-[#16181D]">
+                Nomor Induk Pegawai (NIP)
+              </label>
+<div class="relative">
+<input class="w-full h-10 px-3 py-2 text-body-sm font-body-sm bg-white border border-[#E11D48] ring-2 ring-[#E11D48]/15 rounded-lg text-[#16181D] focus:outline-none transition-colors" type="text" value="NIP-99238"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-[#E11D48] text-[18px]">error</span>
+</div>
+<div class="flex items-center gap-1 text-[11px] text-[#E11D48] font-medium">
+<span>NIP tidak terdaftar pada direktori tenant terpilih</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 7: NAVIGATION PATTERNS -->
+<section class="space-y-6" id="navigation">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">NAVIGATIONAL PATTERNS</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Structural Navigation States</h2>
+<p class="text-body-sm font-body-sm text-[#5B616E] mt-1">Rule: Flat design anchored by 1px borders. Never use blurred floating gradient blobs for active indicators.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Sidebar Item Pattern -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 space-y-4">
+<span class="text-label-sm font-label-sm font-semibold text-[#16181D] block border-b border-outline-variant pb-2">
+              Workspace Sidebar Pattern (3px Left Anchor)
+            </span>
+<div class="space-y-1.5 max-w-xs">
+<!-- Active state with 3px solid #0077A8 -->
+<div class="flex items-center gap-3 px-3 py-2 text-[#0077A8] bg-[#36BDF2]/10 border-l-[3px] border-[#0077A8] font-medium rounded-r-lg font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">school</span>
+<span>Kelas Saya</span>
+<span class="ml-auto text-[11px] px-1.5 py-0.5 rounded bg-white text-[#0077A8] font-semibold border border-outline-variant">12</span>
+</div>
+<!-- Hover / Inactive state -->
+<div class="flex items-center gap-3 px-3 py-2 text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9] rounded-lg font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[18px]">analytics</span>
+<span>Progress Belajar</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9] rounded-lg font-label-md text-label-md transition-colors">
+<span class="material-symbols-outlined text-[18px]">workspace_premium</span>
+<span>Sertifikat &amp; Portofolio</span>
+</div>
+</div>
+</div>
+<!-- Public Nav Pattern -->
+<div class="bg-white border border-outline-variant rounded-xl p-6 space-y-4">
+<span class="text-label-sm font-label-sm font-semibold text-[#16181D] block border-b border-outline-variant pb-2">
+              Public TopBar Indicator (2px Bottom Line)
+            </span>
+<div class="flex items-center gap-8 pt-4">
+<div class="text-[#0077A8] font-semibold border-b-2 border-[#0077A8] pb-2 font-label-md text-label-md">
+                Katalog E-Course
+              </div>
+<div class="text-[#5B616E] hover:text-[#16181D] pb-2 font-label-md text-label-md cursor-pointer transition-colors">
+                Bootcamp Live
+              </div>
+<div class="text-[#5B616E] hover:text-[#16181D] pb-2 font-label-md text-label-md cursor-pointer transition-colors">
+                LMS Korporat
+              </div>
+</div>
+<p class="text-xs text-[#5B616E] pt-2">
+              Indikator aktif bertumpu pada garis aksen 2px di bawah link teks dengan tracking optik natural, bebas dari button pill yang berlebihan pada area header publik.
+            </p>
+</div>
+</div>
+</section>
+<!-- SECTION 8: REAL APPLICATION PREVIEW -->
+<section class="space-y-6" id="components">
+<div>
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">IMPLEMENTATION</span>
+<h2 class="text-headline-lg font-headline-lg text-[#16181D]">Real Application Preview</h2>
+<p class="text-body-sm font-body-sm text-[#5B616E] mt-1">Sintesis semua prinsip desain dalam modul nyata: Course Card &amp; Corporate LMS Table.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- 8A: Real Hazl E-Course Card (1 Col) -->
+<div class="bg-white border border-outline-variant rounded-xl overflow-hidden hover:border-[#D1D5DB] transition-all duration-200">
+<!-- Card Media Container -->
+<div class="relative h-48 w-full bg-[#16181D] border-b border-outline-variant overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Editorial photograph of an enterprise developer coding environment with clean monitors displaying structured code in light mode studio ambient, minimal tech desk setting with subtle soft blue tones and pristine white aesthetics." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfzkoAjOEHfdPLvxD08lXZjQRmt4vTGglzh4gBWulgC6bmduhXUj-P7Abbv1I0aknUSKTu0lDEXRWWRM2SQWioL23rUfibhyhhtF7gaOl5lOJzBwD8Vi9d6xUPAYp1morb1gjq_Y5TY3d7i_YJs6y5927l6wfrbyXEbQ7MnFCACdybsgL3uPn-uPdWOgJZbPUd1t7nKZntyIFamaieKWp8zLDtN09vYHwoub3tdr22k-yHjMmsDMFD16mp7772Z2Jz2mfjZlGjKmw"/>
+<div class="absolute top-3 left-3 flex gap-2">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-white/95 text-[#0077A8] shadow-sm">
+                  E-Course
+                </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#16181D]/80 text-white backdrop-blur-sm">
+                  48 Modul
+                </span>
+</div>
+<span class="absolute bottom-3 right-3 px-2 py-0.5 rounded text-[11px] font-medium bg-[#16181D]/80 text-white">
+                32 Jam Video
+              </span>
+</div>
+<!-- Card Body -->
+<div class="p-6 space-y-4">
+<!-- Eyebrow Category -->
+<span class="text-eyebrow font-eyebrow text-[#0077A8] tracking-widest uppercase">FULLSTACK ENGINEERING</span>
+<!-- Course Title -->
+<h3 class="text-headline-md font-headline-md text-[#16181D] line-clamp-2 hover:text-[#0077A8] cursor-pointer transition-colors leading-snug">
+                Mastering Fullstack Laravel &amp; React untuk Industri
+              </h3>
+<!-- Linear Progress Metric -->
+<div class="space-y-1.5">
+<div class="flex justify-between text-label-sm font-label-sm">
+<span class="text-[#5B616E]">Progress Belajar</span>
+<span class="font-semibold text-[#16181D]">68%</span>
+</div>
+<div class="w-full h-1.5 bg-[#E7E9EC] rounded-full overflow-hidden">
+<div class="h-full bg-[#36BDF2] rounded-full" style="width: 68%;"></div>
+</div>
+</div>
+<!-- Trainer Info -->
+<div class="flex items-center gap-3 pt-2 border-t border-outline-variant">
+<div class="w-8 h-8 rounded-full border border-outline-variant overflow-hidden shrink-0">
+<img class="w-full h-full object-cover" data-alt="Portrait photo of a confident Indonesian male principal software engineer, dressed in a minimal black shirt with soft natural lighting and modern minimal tech workspace background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADYqxCmQLsAN0Mp_rxcSmBDhW4D8RdHNR2-dl_QVYiMTfMEmXK1qXBF-g3Vw4-GCuNB3DGhC4TxUZ-RbkoK3xcNVdqYDyGyud83TGrD9NWgeQgcNgExiYbmYDjmmcQ_3A8G7Wy6B7J6rHZBgmXP0CA68LRwmDyrzdHJLrfpIrsjE-daU52b1UyNPzeQBLDTmToh9vjgmEWkVhfL9YbMMzZ8caghstR0jzaEDYoG0dBylw4JIyNrugTuRic2MhPDTbjQuaCh43VFYE"/>
+</div>
+<div class="text-xs">
+<div class="font-semibold text-[#16181D]">Rian Kurniawan</div>
+<div class="text-[#5B616E]">Principal Architect @ Hazl</div>
+</div>
+</div>
+<!-- Footer: Price & Workspace Action Button -->
+<div class="flex items-center justify-between pt-3 border-t border-outline-variant">
+<div>
+<div class="text-[11px] text-[#5B616E] line-through">Rp 899.000</div>
+<div class="font-headline-sm text-headline-sm font-bold text-[#16181D]">Rp 349.000</div>
+</div>
+<button class="h-9 px-4 rounded-lg bg-[#0077A8] hover:bg-primary text-white text-label-sm font-label-sm font-medium flex items-center gap-1.5 transition-all duration-150 active:scale-95">
+<span>Akses Kelas</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- 8B: Real LMS Tenant Table Row & Architecture (2 Cols) -->
+<div class="lg:col-span-2 bg-white border border-outline-variant rounded-xl p-6 space-y-5" id="tables">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-outline-variant">
+<div>
+<span class="font-headline-md text-headline-md text-[#16181D] block">Manajemen Partisipan Korporat LMS</span>
+<span class="text-body-sm font-body-sm text-[#5B616E]">Tenant Aktif: PT Telkom Indonesia (Batch Q3-2025)</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="h-8 px-3 rounded-lg border border-outline-variant bg-white hover:bg-surface-container-low text-[#16181D] text-label-sm font-label-sm font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">filter_list</span>
+                  Filter
+                </button>
+<button class="h-8 px-3 rounded-lg bg-[#0077A8] hover:bg-primary text-white text-label-sm font-label-sm font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">person_add</span>
+                  Undang Peserta
+                </button>
+</div>
+</div>
+<!-- Tabular Component -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant text-[11px] font-mono font-semibold tracking-wider text-[#5B616E] uppercase">
+<th class="py-2.5 px-3">Nama Siswa / Pegawai</th>
+<th class="py-2.5 px-3">Modul Terdaftar</th>
+<th class="py-2.5 px-3">Status LMS</th>
+<th class="py-2.5 px-3">Nilai Akhir</th>
+<th class="py-2.5 px-3 text-right">Tindakan</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant text-body-sm font-body-sm">
+<!-- Row 1 -->
+<tr class="hover:bg-[#F6F7F9] transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-[#0077A8]/10 text-[#0077A8] flex items-center justify-center font-bold text-xs">
+                          AS
+                        </div>
+<div>
+<div class="font-medium text-[#16181D]">Anisa Syahrini</div>
+<div class="text-[11px] text-[#5B616E]">anisa.s@telkom.co.id</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-[#16181D]">
+                      Cloud Security &amp; AWS DevOps
+                    </td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded bg-[#ECFDF5] text-[#047857]">
+<span class="w-1 h-1 rounded-full bg-[#047857]"></span>
+                        Lulus (100%)
+                      </span>
+</td>
+<td class="py-3 px-3 font-mono font-medium text-[#16181D]">
+                      94.5 / 100
+                    </td>
+<td class="py-3 px-3 text-right">
+<button class="p-1 hover:bg-surface-container-high rounded text-[#5B616E] hover:text-[#16181D]">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-[#F6F7F9] transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-[#FF2F86]/10 text-[#CC0052] flex items-center justify-center font-bold text-xs">
+                          DH
+                        </div>
+<div>
+<div class="font-medium text-[#16181D]">Dimas Handoko</div>
+<div class="text-[11px] text-[#5B616E]">dimas.h@telkom.co.id</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-[#16181D]">
+                      Fullstack Laravel &amp; React
+                    </td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded bg-[#36BDF2]/10 text-[#0077A8]">
+<span class="w-1 h-1 rounded-full bg-[#0077A8]"></span>
+                        Berjalan (64%)
+                      </span>
+</td>
+<td class="py-3 px-3 font-mono font-medium text-[#5B616E]">
+                      Evaluasi
+                    </td>
+<td class="py-3 px-3 text-right">
+<button class="p-1 hover:bg-surface-container-high rounded text-[#5B616E] hover:text-[#16181D]">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-[#F6F7F9] transition-colors">
+<td class="py-3 px-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container-highest text-[#16181D] flex items-center justify-center font-bold text-xs">
+                          MR
+                        </div>
+<div>
+<div class="font-medium text-[#16181D]">Muhammad Rizki</div>
+<div class="text-[11px] text-[#5B616E]">m.rizki@telkom.co.id</div>
+</div>
+</div>
+</td>
+<td class="py-3 px-3 text-[#16181D]">
+                      System Architecture &amp; Microservices
+                    </td>
+<td class="py-3 px-3">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded bg-[#FFFBEB] text-[#B45309]">
+<span class="w-1 h-1 rounded-full bg-[#B45309]"></span>
+                        Pending Final Exam
+                      </span>
+</td>
+<td class="py-3 px-3 font-mono font-medium text-[#5B616E]">
+                      Menunggu
+                    </td>
+<td class="py-3 px-3 text-right">
+<button class="p-1 hover:bg-surface-container-high rounded text-[#5B616E] hover:text-[#16181D]">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Summary -->
+<div class="flex items-center justify-between pt-3 border-t border-outline-variant text-label-sm font-label-sm text-[#5B616E]">
+<span>Menampilkan 1-3 dari 48 peserta batch korporat</span>
+<div class="flex gap-1">
+<button class="px-2 py-1 border border-outline-variant rounded bg-white hover:bg-surface-container-low text-xs disabled:opacity-50" disabled="">Sebelumnya</button>
+<button class="px-2 py-1 border border-outline-variant rounded bg-white hover:bg-surface-container-low text-xs">Selanjutnya</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer (Shared Component Anchor) -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant w-full mt-12">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-8 py-6 max-w-7xl mx-auto gap-4">
+<div class="text-body-sm font-body-sm text-[#5B616E]">
+        © 2025 Hazl Academy. Built with Hazl Design System. All rights reserved.
+      </div>
+<div class="flex flex-wrap items-center gap-6 text-label-sm font-label-sm">
+<a class="text-primary underline hover:text-primary transition-colors duration-150" href="#">Design Tokens</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-150" href="#">Accessibility</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-150" href="#">Contributing</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-150" href="#">GitHub</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors duration-150" href="#">Report Issue</a>
+</div>
+</div>
+</footer>
+</body></html>

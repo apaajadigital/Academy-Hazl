@@ -1,0 +1,51 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "ui": "tui",
+  "globalEnv": [
+    "CI",
+    "NODE_ENV",
+    "PORT",
+    "API_PROXY_TARGET",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_SITE_URL",
+    "NEXT_PUBLIC_FEATURE_PRIVATE_CLASS",
+    "NEXT_PUBLIC_FEATURE_ALL_ACCESS",
+    "NEXT_PUBLIC_FEATURE_LEARNING_PATH",
+    "NEXT_PUBLIC_FEATURE_COMMUNITY",
+    "NEXT_PUBLIC_FEATURE_GAMIFICATION",
+    "NEXT_PUBLIC_FEATURE_ALUMNI",
+    "NEXT_PUBLIC_FEATURE_PORTFOLIO",
+    "NEXT_PUBLIC_FEATURE_MENTOR",
+    "NEXT_PUBLIC_WA_NUMBER",
+    "NEXT_PUBLIC_APP_NAME",
+    "NEXT_PUBLIC_GA_ID",
+    "NEXT_PUBLIC_MIXPANEL_TOKEN",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "SENTRY_DSN",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "SENTRY_AUTH_TOKEN",
+    "NEXT_RUNTIME"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

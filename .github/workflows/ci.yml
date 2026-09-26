@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint · Types · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (reproducible)
+        run: npm ci
+
+      # `npm run --workspace api exec` treated "exec" as a script name and made
+      # every CI run fail since TASK-004; use a real workspace script instead.
+      - name: Generate Prisma client
+        run: npm run db:generate --workspace api
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run check-types
+
+      - name: Test (with coverage + threshold gate)
+        run: npm run --workspace api test:coverage
+
+      # apps/web had no unit-test runner until Wave 1, so this job only ever ran
+      # the API suite — the web workspace was invisible to CI even after tests
+      # existed. That is how an empty-string feature flag and an empty WhatsApp
+      # number reached production unnoticed.
+      #
+      # Deliberately the workspace script rather than root `npm test`: the root
+      # script is `turbo run test`, which would re-run the entire API suite a
+      # second time (without the coverage gate) for no added signal.
+      #
+      # `npm run` propagates vitest's exit code, so a failing web test fails the
+      # job — proven by an intentional-failure run before this step was added.
+      - name: Web unit tests
+        run: npm run test --workspace web
+
+      # Dependency audit (SSOT §9.7). Blocking threshold is CRITICAL only:
+      # the 6 known HIGH advisories are an explicitly accepted, monitored risk
+      # (BL-15, docs/SECURITY_CHECKLIST.md — do NOT `npm audit fix --force`).
+      # Gating on `high` would turn CI permanently red over a decision already
+      # made; a new CRITICAL should absolutely block. The report step above the
+      # gate keeps the full picture visible in every run's log.
+      - name: Audit report (informational)
+        run: npm audit || true
+
+      - name: Audit gate (fail on critical)
+        run: npm audit --audit-level=critical
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Visual regression — Windows, production standalone build.
+  #
+  # WHY A SEPARATE JOB, AND WHY WINDOWS
+  # The committed baselines are named `…-chromium-win32.png` because that is the
+  # platform they were recorded on. Font stacks and hinting differ per OS, so a
+  # Win32 PNG is not evidence about how ubuntu-latest rasterises the same page —
+  # and Playwright's default on a platform with no matching baseline is to write
+  # a NEW one and pass, silently creating an unreviewed second source of truth.
+  # The spec therefore throws on non-Windows (see e2e/visual-baseline.spec.ts),
+  # and this job is the one place the baselines are authoritative.
+  #
+  # WHY A PRODUCTION BUILD
+  # `next dev` ignores `dynamicParams = false` — it renders three learning-path
+  # routes that a real build 404s — and it paints its dev indicator into every
+  # full-page screenshot. Eleven of the twenty original baselines were, as a
+  # direct result, photographs of a Next.js error overlay rather than of a page.
+  #
+  # No database is needed: /e-course is served from a fixed fixture, and the one
+  # server-side fetch on the photographed pages degrades to the same empty render
+  # whether the API answers or is absent. See apps/web/e2e/VISUAL_BASELINES.md.
+  # ─────────────────────────────────────────────────────────────────────────────
+  visual:
+    name: Visual regression (Windows · production build)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies (reproducible)
+        run: npm ci
+
+      # Only the browser this suite uses. Installing all three would triple the
+      # download for no added signal. `--with-deps` is Linux-only and is
+      # deliberately omitted here.
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+        working-directory: apps/web
+
+      # Built as its own step, NOT inside Playwright's webServer: that timeout is
+      # a startup budget, and folding a cold compile into it would make it
+      # impossible to tell "compiling" from "hung".
+      #
+      # The NEXT_PUBLIC_* flags are inlined at BUILD time and must match the
+      # values the suite expects, or the job would photograph a different app.
+      - name: Build web (production standalone)
+        run: npm run build
+        working-directory: apps/web
+        env:
+          NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: "true"
+          NEXT_PUBLIC_FEATURE_COMMUNITY: "true"
+          NEXT_PUBLIC_FEATURE_ALUMNI: "true"
+          NEXT_PUBLIC_FEATURE_PORTFOLIO: "true"
+          NEXT_PUBLIC_FEATURE_MENTOR: "false"
+
+      # No `--update-snapshots`: this job VERIFIES baselines, it never records
+      # them. A recapture is a deliberate, reviewed change made on a Windows
+      # machine and committed — see apps/web/e2e/VISUAL_BASELINES.md.
+      # A failing screenshot fails the step, and the job with it.
+      - name: Visual baseline (production standalone)
+        run: npx playwright test visual-baseline
+        working-directory: apps/web
+        env:
+          PLAYWRIGHT_PRODUCTION_BUILD: "1"
+          NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: "true"
+          NEXT_PUBLIC_FEATURE_COMMUNITY: "true"
+          NEXT_PUBLIC_FEATURE_ALUMNI: "true"
+          NEXT_PUBLIC_FEATURE_PORTFOLIO: "true"
+          NEXT_PUBLIC_FEATURE_MENTOR: "false"
+
+      # Only on failure, and only these two directories: they hold the actual /
+      # expected / diff PNGs and the HTML report. Nothing here reads .env, cookies
+      # or tokens — the suite runs unauthenticated and the paths are explicit, so
+      # no secret can be swept in by a wildcard.
+      - name: Upload visual diff artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: ignore
+          retention-days: 7

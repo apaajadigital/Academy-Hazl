@@ -1,0 +1,427 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Search,
+  X,
+  Download,
+  ClipboardList,
+  Sparkles,
+  PhoneCall,
+  UserCheck,
+  CheckCircle2,
+  Archive,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Badge,
+  Button,
+  DashboardLoading,
+  Input,
+  Pagination,
+  StatCard,
+  Table,
+  TableContainer,
+  THead,
+  TBody,
+  TR,
+  TH,
+  TD,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  PageHeader,
+} from "@/components/ui";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { cn } from "@/lib/utils";
+import { getValidToken } from "@/lib/auth/token";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  message: string | null;
+  source: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Meta = { total: number; page: number; limit: number };
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SOURCES = [
+  { value: "", label: "Semua Sumber" },
+  { value: "lms", label: "LMS B2B" },
+  { value: "affiliate", label: "Afiliasi" },
+  { value: "trainer", label: "Trainer" },
+  { value: "free-class", label: "Kelas Gratis" },
+  { value: "other", label: "Lainnya" },
+] as const;
+
+const STATUSES = [
+  { value: "", label: "Semua Status" },
+  { value: "new", label: "Baru" },
+  { value: "contacted", label: "Dihubungi" },
+  { value: "qualified", label: "Qualified" },
+  { value: "converted", label: "Konversi" },
+  { value: "archived", label: "Arsip" },
+] as const;
+
+const SOURCE_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  lms:        { bg: "rgba(0,119,168,0.1)",    text: "#0077A8", label: "LMS B2B" },
+  affiliate:  { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Afiliasi" },
+  trainer:    { bg: "rgba(234,179,8,0.12)",   text: "#A16207", label: "Trainer" },
+  "free-class": { bg: "rgba(22,163,74,0.1)", text: "#15803D", label: "Kelas Gratis" },
+  other:      { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Lainnya" },
+};
+
+const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  new:       { bg: "rgba(59,130,246,0.1)",   text: "#2563EB", label: "Baru" },
+  contacted: { bg: "rgba(234,179,8,0.12)",   text: "#A16207", label: "Dihubungi" },
+  qualified: { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Qualified" },
+  converted: { bg: "rgba(22,163,74,0.1)",    text: "#15803D", label: "Konversi" },
+  archived:  { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Arsip" },
+};
+
+// Maps a lead source to the closest kit Badge variant (kit has no per-source hue).
+const SOURCE_BADGE: Record<string, "info" | "brand" | "warning" | "success" | "neutral"> = {
+  lms: "info",
+  affiliate: "brand",
+  trainer: "warning",
+  "free-class": "success",
+  other: "neutral",
+};
+
+const STATUS_ICON: Record<string, LucideIcon> = {
+  new: Sparkles,
+  contacted: PhoneCall,
+  qualified: UserCheck,
+  converted: CheckCircle2,
+  archived: Archive,
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString("id-ID", {
+    day: "numeric", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+// Secure CSV export using backend API (verifies transaction/role)
+
+// ─── Status select ────────────────────────────────────────────────────────────
+
+function StatusSelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const s = STATUS_STYLE[value] ?? STATUS_STYLE["new"]!;
+
+  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const next = e.target.value;
+    setBusy(true);
+    const token = await getValidToken();
+    try {
+      await fetch(`/api/admin/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token ?? ""}` },
+        body: JSON.stringify({ status: next }),
+      });
+      onChange(next);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <select
+      value={value}
+      onChange={handleChange}
+      disabled={busy}
+      className="cursor-pointer rounded-lg border-0 px-2 py-1 text-xs font-semibold transition-opacity outline-none"
+      style={{ background: s.bg, color: s.text, opacity: busy ? 0.5 : 1 }}
+      aria-label="Ubah status lead"
+    >
+      {STATUSES.filter((s) => s.value !== "").map((st) => (
+        <option key={st.value} value={st.value}>{st.label}</option>
+      ))}
+    </select>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default function AdminLeadsPage() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [meta, setMeta] = useState<Meta>({ total: 0, page: 1, limit: 20 });
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  // Debounced copy of `query` that actually drives fetching. The raw `query`
+  // updates on every keystroke, so it must not be an effect dependency.
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [source, setSource] = useState("");
+  const [status, setStatus] = useState("");
+  const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function handleExportCSV() {
+    const token = await getValidToken();
+    if (!token) return;
+    setExporting(true);
+    try {
+      const res = await fetch("/api/admin/leads/export", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Gagal mengunduh CSV");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leads-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert("Gagal mengekspor data leads.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const fetchLeads = useCallback(async (q: string, src: string, sts: string, pg: number) => {
+    const token = await getValidToken();
+    if (!token) return;
+    setLoading(true);
+    const qs = new URLSearchParams({ page: String(pg), limit: "20" });
+    if (q) qs.set("q", q);
+    if (src) qs.set("source", src);
+    if (sts) qs.set("status", sts);
+
+    fetch(`/api/admin/leads?${qs}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((body) => {
+        if (body.success) {
+          setLeads(body.data ?? []);
+          setMeta(body.meta ?? { total: 0, page: pg, limit: 20 });
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Single declarative fetch driver: the old version fetched only on mount
+  // (empty deps) and relied on handlers calling fetchLeads imperatively, which
+  // made state and server data easy to desync. `fetchLeads` is stable
+  // (useCallback with []), so listing it cannot cause a refetch loop — the
+  // effect re-runs only when a filter/pagination input actually changes.
+  // Search UX is preserved: the raw `query` stays out of the deps; the
+  // debounced copy triggers the fetch 350ms after typing stops.
+  useEffect(() => {
+    fetchLeads(debouncedQuery, source, status, page);
+  }, [fetchLeads, debouncedQuery, source, status, page]);
+
+  function handleSearch(q: string) {
+    setQuery(q);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    // React 19 batches these two updates, so the effect above runs once.
+    debounceRef.current = setTimeout(() => { setPage(1); setDebouncedQuery(q); }, 350);
+  }
+
+  function handleSource(src: string) {
+    setSource(src);
+    setPage(1);
+  }
+
+  function handleStatus(sts: string) {
+    setStatus(sts);
+    setPage(1);
+  }
+
+  function handlePage(p: number) {
+    setPage(p);
+  }
+
+  function handleStatusChange(id: string, next: string) {
+    setLeads((prev) => prev.map((l) => l.id === id ? { ...l, status: next } : l));
+  }
+
+  const totalPages = Math.ceil(meta.total / meta.limit);
+
+  // Metrics
+  const counts = STATUSES.filter((s) => s.value).reduce<Record<string, number>>((acc, s) => {
+    acc[s.value] = leads.filter((l) => l.status === s.value).length;
+    return acc;
+  }, {});
+
+  return (
+    <div className="dash-container flex flex-col gap-6">
+
+      {/* Header */}
+      <PageHeader
+        breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Leads</span></span>}
+        title="Leads CRM"
+        actions={
+          <Button
+            id="leads-export-csv-btn"
+            variant="secondary"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            leftIcon={<Download size={15} aria-hidden="true" />}
+          >
+            {exporting ? "Mengekspor..." : "Export CSV"}
+          </Button>
+        }
+      />
+
+      {/* Metrics — StatCards that double as status filters */}
+      <section className="dash-grid">
+        {STATUSES.filter((s) => s.value).map((s) => {
+          const st = STATUS_STYLE[s.value]!;
+          const Icon = STATUS_ICON[s.value] ?? Sparkles;
+          const active = status === s.value;
+          return (
+            <button
+              id={`leads-filter-status-${s.value}-btn`}
+              key={s.value}
+              onClick={() => handleStatus(active ? "" : s.value)}
+              aria-pressed={active}
+              className={cn(
+                "col-span-6 block w-full rounded-[var(--radius-card)] p-0 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan-strong/40 sm:col-span-4 xl:col-span-2",
+                active ? "ring-2 ring-accent-cyan-strong" : "hover:-translate-y-0.5 hover:shadow-e2",
+              )}
+            >
+              <StatCard
+                label={s.label}
+                value={counts[s.value] ?? 0}
+                icon={Icon}
+                iconColor={st.text}
+                iconBg={st.bg}
+              />
+            </button>
+          );
+        })}
+      </section>
+
+      {/* Filters — framed filter card */}
+      <div className="flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card p-4 shadow-e1">
+        {/* Search */}
+        <div className="relative min-w-[200px] max-w-[320px] flex-1">
+          <Input
+            id="leads-search-input"
+            type="search"
+            leftIcon={<Search size={15} aria-hidden="true" />}
+            value={query}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Cari nama / email / perusahaan…"
+            aria-label="Cari lead"
+            containerClassName="w-full"
+            className={query ? "pr-10" : undefined}
+          />
+          {query && (
+            <button
+              id="leads-search-clear-btn"
+              onClick={() => handleSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+              aria-label="Hapus pencarian"
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        {/* Source filter tabs */}
+        <Tabs value={source} onValueChange={handleSource}>
+          <TabsList className="flex-wrap">
+            {SOURCES.map((s) => (
+              <TabsTrigger
+                key={s.value}
+                id={`leads-source-${s.value || "all"}-btn`}
+                value={s.value}
+              >
+                {s.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Table */}
+      {loading ? (
+        <DashboardLoading />
+      ) : leads.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="Tidak ada leads ditemukan"
+          description={
+            query || source || status
+              ? "Coba ubah filter atau hapus pencarian."
+              : "Leads akan muncul di sini saat ada yang mengisi form di landing page."
+          }
+        />
+      ) : (
+        <TableContainer>
+          <Table>
+            <THead>
+              <TR>
+                {["Nama & Email", "Perusahaan", "Telepon", "Sumber", "Status", "Tanggal"].map((h) => (
+                  <TH key={h}>{h}</TH>
+                ))}
+              </TR>
+            </THead>
+            <TBody>
+              {leads.map((lead) => {
+                const src = SOURCE_STYLE[lead.source] ?? SOURCE_STYLE["other"]!;
+                return (
+                  <TR key={lead.id}>
+                    <TD>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-[11px] font-extrabold text-white">
+                          {(lead.name ?? "?").slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-text-primary">{lead.name}</p>
+                          <p className="mt-0.5 text-xs text-text-secondary">{lead.email}</p>
+                          {lead.message && (
+                            <p className="mt-0.5 max-w-[240px] truncate text-xs text-text-muted">{lead.message}</p>
+                          )}
+                        </div>
+                      </div>
+                    </TD>
+                    <TD className="text-text-secondary">{lead.company ?? "—"}</TD>
+                    <TD className="font-mono text-xs text-text-secondary">{lead.phone ?? "—"}</TD>
+                    <TD>
+                      <Badge variant={SOURCE_BADGE[lead.source] ?? "neutral"}>{src.label}</Badge>
+                    </TD>
+                    <TD>
+                      <StatusSelect id={lead.id} value={lead.status} onChange={(v) => handleStatusChange(lead.id, v)} />
+                    </TD>
+                    <TD className="whitespace-nowrap text-xs text-text-muted">{fmtDate(lead.createdAt)}</TD>
+                  </TR>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <span className="text-sm text-text-secondary">
+            {page} / {totalPages} ({meta.total.toLocaleString("id-ID")} leads)
+          </span>
+          <Pagination page={page} pageCount={totalPages} onPageChange={handlePage} />
+        </div>
+      )}
+    </div>
+  );
+}

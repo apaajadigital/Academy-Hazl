@@ -1,0 +1,174 @@
+name: Deploy
+
+# CD (TASK-020): build images → push GHCR → SSH deploy → migrate → smoke test.
+# Triggers: version tags (v*) or manual dispatch. The `production` environment
+# should be configured with required reviewers in GitHub so every deploy still
+# gets a human approval (SSOT §9.6).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref (tag/sha) to deploy"
+        required: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  # GHCR / Docker require the image repository name to be all-lowercase. The
+  # GitHub repo slug (haluanitcore/Jago-Akademi-Website1) has uppercase letters
+  # and a workflow-level `env:` cannot run a lowercasing expression, so pin the
+  # lowercased path here. Keep in sync if the repo is ever renamed.
+  IMAGE_BASE: ghcr.io/haluanitcore/jago-akademi-website1
+
+jobs:
+  build-push:
+    name: Build & push images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Resolve version tag
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/api:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE_BASE }}/api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            API_PROXY_TARGET=${{ vars.API_PROXY_TARGET }}
+            NEXT_PUBLIC_GA_ID=${{ vars.NEXT_PUBLIC_GA_ID }}
+            NEXT_PUBLIC_MIXPANEL_TOKEN=${{ vars.NEXT_PUBLIC_MIXPANEL_TOKEN }}
+            NEXT_PUBLIC_APP_NAME=Jago Akademi
+            NEXT_PUBLIC_FEATURE_PRIVATE_CLASS=${{ vars.NEXT_PUBLIC_FEATURE_PRIVATE_CLASS }}
+            NEXT_PUBLIC_FEATURE_ALL_ACCESS=${{ vars.NEXT_PUBLIC_FEATURE_ALL_ACCESS }}
+            NEXT_PUBLIC_FEATURE_LEARNING_PATH=${{ vars.NEXT_PUBLIC_FEATURE_LEARNING_PATH }}
+            NEXT_PUBLIC_FEATURE_COMMUNITY=${{ vars.NEXT_PUBLIC_FEATURE_COMMUNITY }}
+            NEXT_PUBLIC_FEATURE_GAMIFICATION=${{ vars.NEXT_PUBLIC_FEATURE_GAMIFICATION }}
+            NEXT_PUBLIC_FEATURE_MENTOR=${{ vars.NEXT_PUBLIC_FEATURE_MENTOR }}
+            NEXT_PUBLIC_FEATURE_ALUMNI=${{ vars.NEXT_PUBLIC_FEATURE_ALUMNI }}
+            NEXT_PUBLIC_FEATURE_PORTFOLIO=${{ vars.NEXT_PUBLIC_FEATURE_PORTFOLIO }}
+            NEXT_PUBLIC_WA_NUMBER=${{ vars.NEXT_PUBLIC_WA_NUMBER }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+          tags: |
+            ${{ env.IMAGE_BASE }}/web:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE_BASE }}/web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to production host
+    needs: build-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # `packages: read` is what makes GITHUB_TOKEN able to pull THIS private
+    # repo's GHCR images. It is not decorative: the host has no standing
+    # registry credential at all (verified 9 Sep 2026 — there is no
+    # ~/.docker/config.json on the VPS), so without the login step below the
+    # very first `docker compose pull` answers 401 and the deploy dies after
+    # the approval gate has already been spent.
+    permissions:
+      contents: read
+      packages: read
+    # Configure this environment in GitHub with required reviewers → human gate.
+    environment: production
+    steps:
+      - name: Deploy over SSH (pull → migrate → up → prune)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Run-scoped token: GitHub revokes it when the job ends. Deliberately
+          # NOT a long-lived PAT parked in the host's ~/.docker/config.json —
+          # that file is world-readable to anyone who reaches root on the box
+          # and would outlive any incident by months.
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # Only these two cross into the remote shell; nothing else is exported.
+          envs: GHCR_USER,GHCR_TOKEN
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd ${{ secrets.DEPLOY_PATH }}
+            export API_IMAGE=${{ env.IMAGE_BASE }}/api:${{ needs.build-push.outputs.version }}
+            export WEB_IMAGE=${{ env.IMAGE_BASE }}/web:${{ needs.build-push.outputs.version }}
+            echo "$API_IMAGE" > .last-deploy-api && echo "$WEB_IMAGE" > .last-deploy-web
+            # Registry auth for the pull below. `--password-stdin` keeps the token
+            # out of the host process list; the trap drops the credential file
+            # again on every exit path, success or failure.
+            trap 'docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            # BL-43: this host runs docker-compose.vps.yml + a HOST-level nginx.
+            # docker-compose.prod.yml describes the old nginx-in-Docker topology
+            # and publishes NO host ports on web/api — running it here detaches
+            # the site from host nginx and causes a 502 sitewide outage (incident
+            # 17 Jul 2026). Every runbook was swept to vps.yml on 29 Jul; this
+            # workflow was missed. Keep these three lines on vps.yml.
+            docker compose -f docker-compose.vps.yml -f docker-compose.registry.yml pull api web
+            # Migrations run before the app swap. NOTE: no pre-deploy backup is
+            # automated yet — RUNBOOK_DEPLOY.md §9 is still a manual step, so take
+            # the backup before dispatching this workflow.
+            docker compose -f docker-compose.vps.yml -f docker-compose.registry.yml run --rm api npx prisma migrate deploy
+            docker compose -f docker-compose.vps.yml -f docker-compose.registry.yml up -d --wait
+            # Guard BL-43: web must be reachable by host nginx on 3010. If the
+            # wrong compose file ever slips back in, fail here rather than leave
+            # a 502 up.
+            docker port jago-akademi-web-1 | grep -q 3010
+            docker image prune -f
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          # BL-33: api.jagoakademi.com does NOT resolve and never has. The API is
+          # served at jagoakademi.com/api/* by host nginx, so the old URL made this
+          # job fail after migrations and the container swap had already run.
+          curl -fsS --max-time 10 https://jagoakademi.com/api/health
+          curl -fsS --max-time 10 -o /dev/null https://jagoakademi.com
+          echo "Smoke test OK"

@@ -1,0 +1,210 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: jago_akademi
+      POSTGRES_USER: ${POSTGRES_USER:-jagouser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?DB password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jagouser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.5
+    restart: always
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:?Meilisearch master key required}
+      MEILI_ENV: production
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    # Persistence for BullMQ jobs (TASK-022): AOF every second.
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: jago-api-vps:local
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "4010:4000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
+      REDIS_URL: redis://redis:6379
+      PORT: 4000
+      WEB_URL: ${WEB_URL}
+      CORS_ORIGIN: ${WEB_URL}
+      JWT_SECRET: ${JWT_SECRET:?Required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Required}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      COOKIE_SECURE: "true"
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Jago Akademi}
+      DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
+      DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
+      DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
+      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
+      # paylater). Change it here to re-scope checkout without a rebuild.
+      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY}
+      UPLOAD_DIR: /app/uploads
+      MAX_FILE_SIZE_MB: "50"
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      # Stamps /api/health and the Sentry release. Never wired before, so health
+      # always reported "1.0.0" (health.ts:15) and Sentry sent release: undefined
+      # (instrument.ts:14) — errors could not be attributed to a deploy. Set
+      # APP_VERSION in the host .env at deploy time (released git sha or tag).
+      APP_VERSION: ${APP_VERSION:-}
+    volumes:
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # BullMQ worker (TASK-022) — reuses the api image, runs the worker entrypoint.
+  # Without this (and redis above) BullMQ is disabled and jobs run inline in the
+  # request path; async emails/certificates would block responses on the VPS.
+  worker:
+    image: jago-api-vps:local
+    restart: always
+    command: ["node", "dist/worker.js"]
+    # The api image bakes in a HEALTHCHECK against :4000, but the worker runs
+    # no HTTP server, so it would always report "unhealthy". Disable it here.
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
+      REDIS_URL: redis://redis:6379
+      # The worker builds user-facing links too, so it needs the same WEB_URL as
+      # the api. Without it env.ts falls back to http://localhost:3004 and every
+      # queued email (verify, reset, LMS invite, invoice) ships a dead link —
+      # and certificateService PERSISTS that localhost verify URL on the row.
+      WEB_URL: ${WEB_URL}
+      JWT_SECRET: ${JWT_SECRET:?Required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Required}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Jago Akademi}
+      DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
+      DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
+      DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
+      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
+      # paylater). Change it here to re-scope checkout without a rebuild.
+      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
+      MEILISEARCH_URL: http://meilisearch:7700
+      MEILISEARCH_KEY: ${MEILISEARCH_KEY}
+      UPLOAD_DIR: /app/uploads
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      # Same reason as the api service — the worker reports into the same Sentry
+      # project, so it needs the same release stamp or its errors are unversioned.
+      APP_VERSION: ${APP_VERSION:-}
+    volumes:
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        # Server-side rewrite target; on this topology the API is not published
+        # under a public subdomain, so point at the compose service DNS name.
+        # Unset falls back to NEXT_PUBLIC_API_URL, i.e. previous behaviour.
+        API_PROXY_TARGET: ${API_PROXY_TARGET:-}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+        NEXT_PUBLIC_MIXPANEL_TOKEN: ${NEXT_PUBLIC_MIXPANEL_TOKEN:-}
+        NEXT_PUBLIC_APP_NAME: "Jago Akademi"
+        # Feature flags are inlined at BUILD time (lib/features.ts). Before these
+        # lines no flag could ever be enabled in a Docker image regardless of the
+        # host .env (30 Jul audit). Empty = OFF, unchanged behaviour.
+        NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: ${NEXT_PUBLIC_FEATURE_PRIVATE_CLASS:-}
+        NEXT_PUBLIC_FEATURE_ALL_ACCESS: ${NEXT_PUBLIC_FEATURE_ALL_ACCESS:-}
+        NEXT_PUBLIC_FEATURE_LEARNING_PATH: ${NEXT_PUBLIC_FEATURE_LEARNING_PATH:-}
+        NEXT_PUBLIC_FEATURE_COMMUNITY: ${NEXT_PUBLIC_FEATURE_COMMUNITY:-}
+        NEXT_PUBLIC_FEATURE_GAMIFICATION: ${NEXT_PUBLIC_FEATURE_GAMIFICATION:-}
+        NEXT_PUBLIC_FEATURE_MENTOR: ${NEXT_PUBLIC_FEATURE_MENTOR:-}
+        NEXT_PUBLIC_FEATURE_ALUMNI: ${NEXT_PUBLIC_FEATURE_ALUMNI:-}
+        NEXT_PUBLIC_FEATURE_PORTFOLIO: ${NEXT_PUBLIC_FEATURE_PORTFOLIO:-}
+        NEXT_PUBLIC_WA_NUMBER: ${NEXT_PUBLIC_WA_NUMBER:-}
+        # Browser DSN is inlined at build time (BL-17); empty = client SDK off.
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    restart: always
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3010:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      # Server/edge DSN for the Next.js runtime (BL-17) — read at startup by
+      # instrumentation.ts, so unlike the browser DSN it needs no rebuild.
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres_data:
+  meilisearch_data:
+  redis_data:
+  # Only used when UPLOADS_PATH is unset (dev, and any host that wants Docker to
+  # own the storage). Production sets UPLOADS_PATH and gets a bind mount instead.
+  #
+  # BL-162: this host ran `/var/www/jago-uploads:/app/uploads` for months as an
+  # UNCOMMITTED edit to this file. `git pull` failed on it loudly, which is how
+  # it was finally found; `git checkout --` on it succeeds SILENTLY, and the next
+  # `up -d` then remounts this empty named volume. The app loses sight of every
+  # uploaded file without emitting one error. Set UPLOADS_PATH in the host .env
+  # instead of editing this file — a working-tree edit is not configuration, it
+  # is a landmine with a countdown.
+  uploads:
