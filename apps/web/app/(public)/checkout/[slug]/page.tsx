@@ -221,7 +221,7 @@ function CheckoutContent() {
                 : `/belajar/${slug}`;
           window.location.href = redirectUrl;
         } else {
-          // paymentUrl is the DOKU hosted payment page
+          // paymentUrl is the Duitku-hosted payment page
           window.location.href = data.data.paymentUrl;
         }
       } else {
@@ -507,7 +507,7 @@ function CheckoutContent() {
                 className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs"
                 style={{ color: "var(--text-muted)" }}
               >
-                <Lock size={14} aria-hidden="true" /> Pembayaran aman melalui DOKU
+                <Lock size={14} aria-hidden="true" /> Pembayaran aman melalui Duitku
               </p>
 
               {/* Terms */}

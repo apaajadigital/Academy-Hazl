@@ -31,7 +31,7 @@ const sections = [
   },
   {
     h: "6. Pihak Ketiga & Transfer Data",
-    p: "Kami menggunakan penyedia tepercaya untuk pembayaran (DOKU), email, penyimpanan media, dan analitik. Beberapa penyedia dapat memproses data di luar Indonesia; kami memastikan perlindungan yang memadai.",
+    p: "Kami menggunakan penyedia tepercaya untuk pembayaran (Duitku), email, penyimpanan media, dan analitik. Beberapa penyedia dapat memproses data di luar Indonesia; kami memastikan perlindungan yang memadai.",
   },
   {
     h: "7. Kontak",

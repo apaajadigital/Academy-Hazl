@@ -68,6 +68,18 @@ app.use(
     },
   })
 );
+// Duitku's payment callback is application/x-www-form-urlencoded (unlike
+// DOKU's JSON) — parsed here so routes/webhooks.ts can read req.body. Express
+// dispatches each body parser by Content-Type, so this is additive and does
+// not affect any of the JSON routes.
+app.use(
+  express.urlencoded({
+    extended: true,
+    verify: (req: unknown, _res: unknown, buf: Buffer) => {
+      (req as Record<string, unknown>).rawBody = buf;
+    },
+  })
+);
 app.use(cookieParser());
 app.use(generalLimiter);
 

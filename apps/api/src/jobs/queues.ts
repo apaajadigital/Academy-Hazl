@@ -153,7 +153,7 @@ export function enqueueWebhook(data: WebhookJob): Promise<void> {
   return dispatch({
     queueName: QUEUE.WEBHOOK,
     processor: processWebhookPayment,
-    jobName: "doku-payment",
+    jobName: "duitku-payment",
     data,
     // BL-141: the jobId used to be just invoice+status, which made every retry of
     // a given notification collapse onto one job. Combined with the dead-letter

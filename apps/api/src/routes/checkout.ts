@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middleware/authenticate.js";
 import { prisma } from "../db/prisma.js";
 import { validateCoupon, incrementCouponUsage } from "../services/coupon/couponService.js";
-import { createDokuOrder } from "../services/payment/dokuService.js";
+import { createDuitkuOrder } from "../services/payment/duitkuService.js";
 import { buildInvoiceNumber } from "../services/payment/invoiceNumber.js";
 import { isEventEnded } from "../services/event/eventService.js";
 import { enqueueEmail } from "../jobs/queues.js";
@@ -324,47 +324,37 @@ router.post("/", authenticate, async (req, res, next) => {
     // processor (order.couponId), so an abandoned/failed pending order no longer
     // consumes a coupon slot. Free orders (fulfilled above) still count inline.
 
-    // Create DOKU payment.
+    // Create Duitku payment.
     //
-    // BL-140/BL-148: this used to be `JA-${order.id.slice(0, 8)}` — 32 bits of a
-    // UUID behind a hyphen DOKU rejects for KKI. The identifier now encodes the
+    // BL-140/BL-148 (from the DOKU era, still applies): this used to be
+    // `JA-${order.id.slice(0, 8)}` — only 32 bits of a UUID behind a hyphen,
+    // rejected by the old gateway's format rules. The identifier now encodes the
     // WHOLE order id, so two orders cannot collide, and carries no symbols.
+    // Duitku's merchantOrderId limit is 50 chars — see invoiceNumber.ts.
     const invoiceNumber = buildInvoiceNumber(order.id, "paid");
-    const callbackUrl = `${env.WEB_URL}/payment/success?orderId=${order.id}`;
+    const callbackUrl = `${env.WEB_URL}/api/webhooks/duitku`;
 
-    // Build a failure URL so DOKU can redirect the user back to the checkout
-    // page (with context) when payment is cancelled or fails.
-    let failureUrl: string | undefined;
-    if (itemSlug) {
-      const returnPath =
-        itemType === "event"
-          ? `/checkout/${itemSlug}?type=event&itemId=${itemId}`
-          : `/checkout/${itemSlug}`;
-      failureUrl = `${env.WEB_URL}/payment/failed?orderId=${order.id}&returnUrl=${encodeURIComponent(returnPath)}`;
-    }
-
-    // BL-56: async payment methods (VA / bank transfer) are not settled when the
-    // buyer leaves DOKU, so they must land on the pending page that shows the
-    // transfer instructions and expiry countdown. Unlike failureUrl this is never
-    // conditional — every paid order can be settled asynchronously.
+    // Duitku gives only one returnUrl (unlike DOKU's separate failure/pending
+    // URLs). Always send the buyer to the pending page — it already re-checks
+    // order status server-side, so it's a safe landing spot for every outcome
+    // (paid, still-processing VA transfer, or cancelled).
     const pendingUrl = `${env.WEB_URL}/payment/pending?orderId=${order.id}`;
 
-    const { paymentUrl } = await createDokuOrder(
+    const { paymentUrl } = await createDuitkuOrder(
       invoiceNumber,
       [{ name: itemTitle, price: Math.round(finalAmount), quantity: 1 }],
       Math.round(finalAmount),
       callbackUrl,
+      pendingUrl,
       order.user.name,
-      order.user.email,
-      failureUrl,
-      pendingUrl
+      order.user.email
     );
 
     // Store transaction record
     await prisma.paymentTransaction.create({
       data: {
         orderId: order.id,
-        gateway: "doku",
+        gateway: "duitku",
         gatewayTxId: invoiceNumber,
         amount: finalAmount,
         status: "pending",

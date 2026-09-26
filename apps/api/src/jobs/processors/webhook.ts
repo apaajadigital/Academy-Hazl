@@ -180,7 +180,7 @@ export async function processWebhookPayment(job: WebhookJob): Promise<void> {
       // buyer's money without granting access.
       const claimed = await tx.order.updateMany({
         where: { id: order.id, status: { notIn: ["paid", "refund_pending", "refunded", "cancelled"] } },
-        data: { status: "paid", paidAt: new Date(), paymentMethod: channelId ?? "doku" },
+        data: { status: "paid", paidAt: new Date(), paymentMethod: channelId ?? "duitku" },
       });
       if (claimed.count === 0) {
         // Another delivery already fulfilled (or terminated) this order.

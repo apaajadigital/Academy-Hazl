@@ -23,7 +23,7 @@ const sections = [
   },
   {
     h: "4. Pembayaran & Refund",
-    p: "Pembayaran diproses melalui penyedia pihak ketiga (DOKU). Kebijakan pengembalian dana mengikuti ketentuan yang berlaku pada masing-masing produk dan akan diinformasikan saat pembelian.",
+    p: "Pembayaran diproses melalui penyedia pihak ketiga (Duitku). Kebijakan pengembalian dana mengikuti ketentuan yang berlaku pada masing-masing produk dan akan diinformasikan saat pembelian.",
   },
   {
     h: "5. Konten & Hak Kekayaan Intelektual",

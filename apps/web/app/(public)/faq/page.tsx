@@ -37,7 +37,7 @@ export const FAQ_ITEMS: FaqGroup[] = [
     items: [
       {
         q: "Metode pembayaran apa yang diterima?",
-        a: "Kami menerima Transfer Bank (Virtual Account), QRIS, dan Kartu Kredit/Debit melalui gateway pembayaran DOKU yang aman.",
+        a: "Kami menerima Transfer Bank (Virtual Account) melalui gateway pembayaran Duitku yang aman.",
       },
       {
         q: "Apakah ada biaya berlangganan?",

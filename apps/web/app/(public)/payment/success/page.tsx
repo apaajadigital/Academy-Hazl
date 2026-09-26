@@ -137,7 +137,7 @@ function SuccessContent() {
   const [mounted, setMounted] = useState(false);
 
   const [tokenReady, setTokenReady] = useState(false);
-  // DOKU redirects the browser here on RETURN — payment is only confirmed later
+  // Duitku redirects the browser here on RETURN — payment is only confirmed later
   // via the webhook. So we must verify the order is actually `paid` before
   // claiming success (previously this page showed "Berhasil" unconditionally).
   const [verified, setVerified] = useState<"checking" | "paid" | "unpaid" | "error">(
