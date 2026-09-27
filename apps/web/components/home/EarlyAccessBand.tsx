@@ -1,66 +1,53 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Section } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
+import { CheckCircleIcon } from "./HomeIcons";
 
-/**
- * Dark editorial closing band (tone="ink") — honest early-access invitation.
- * Replaces the two look-alike centered CTA sections from the old homepage.
- */
 export function EarlyAccessBand() {
   return (
-    <Section tone="ink">
-      <div className="relative overflow-hidden">
-        {/* Decorative brand-gradient glow on the dark band (Stitch flair). */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-brand-gradient opacity-25 blur-[100px]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-[var(--brand-cyan)] opacity-[0.12] blur-[100px]"
-        />
+    <section className="w-full bg-[#16181D] text-white py-20 border-t border-[#2E3036]">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8 text-center flex flex-col items-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#FF2F86]"></span>
+          <span className="text-[11px] font-bold tracking-widest text-[#BFC7D0] uppercase">
+            KONSULTASI GRATIS DENGAN LEAD MENTOR
+          </span>
+        </div>
 
-        <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
-          <Reveal className="lg:col-span-8">
-            <p className="eyebrow mb-4 !text-[var(--brand-cyan)]">Early access</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white text-balance md:text-4xl">
-              Platform ini baru dibuka.
-              <br />
-              Jadilah bagian dari{" "}
-              <span className="bg-brand-gradient bg-clip-text text-transparent">angkatan pertama</span>.
-            </h2>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/70">
-              Daftar gratis hari ini — dapatkan akses awal saat katalog dirilis,
-              dan bantu bentuk arah platform ini bersama kami.
-            </p>
-          </Reveal>
+        <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl font-extrabold text-white tracking-tight max-w-3xl mb-5 leading-tight">
+          Siap Mengakselerasi Standar Karier Digital Anda?
+        </h2>
 
-          <Reveal delay={0.1} className="lg:col-span-4">
-            <div className="flex flex-col gap-3 lg:items-end">
-              <Link
-                href="/daftar"
-                className="btn btn-lg bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2 w-full sm:w-auto"
-              >
-                Daftar Gratis
-                <ArrowRight size={18} aria-hidden="true" />
-              </Link>
-              <Link
-                href="/early-access"
-                className="btn btn-lg w-full border border-white/25 bg-transparent text-white transition-colors hover:border-white/50 hover:bg-white/10 sm:w-auto"
-              >
-                Gabung Early Access
-              </Link>
-              <Link
-                href="/kelas-gratis"
-                className="text-sm text-white/50 hover:text-white/80 transition-colors text-center"
-              >
-                Atau mulai dari kelas gratis →
-              </Link>
-            </div>
-          </Reveal>
+        <p className="text-sm sm:text-base text-gray-400 max-w-xl mb-10 leading-relaxed">
+          Bergabunglah bersama ribuan engineer dan praktisi produk yang telah menguasai kompetensi teknologi berstandar tinggi bersama Hazl Academy.
+        </p>
+
+        <div className="flex flex-wrap items-center justify-center gap-4 w-full sm:w-auto">
+          <Link
+            href="/daftar"
+            className="h-12 px-8 rounded-full bg-[#36BDF2] text-[#16181D] text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-[#72D2FF] transition-colors active:scale-[0.99]"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#FF2F86]"></span>
+            <span>Mulai Belajar Sekarang</span>
+          </Link>
+          <Link
+            href="/contact"
+            className="h-12 px-8 rounded-full bg-transparent text-white border border-gray-600 text-sm font-medium inline-flex items-center justify-center hover:bg-white/5 transition-colors active:scale-[0.99]"
+          >
+            Konsultasi Tim Kurikulum
+          </Link>
+        </div>
+
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
+          <span className="flex items-center gap-1.5">
+            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Tanpa Kontrak Mengikat
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Akses Repositori Seumur Hidup
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Sertifikasi Resmi Terverifikasi
+          </span>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }

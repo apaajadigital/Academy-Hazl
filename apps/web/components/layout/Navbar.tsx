@@ -5,12 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown, Sparkles } from "lucide-react";
+
+const brand = { name: "Hazl Academy" } as const;
 import { cn } from "@/lib/utils";
 import { features } from "@/lib/features";
 import { useAuthSession } from "@/lib/auth/useAuthSession";
 
 // Community-group items — each link only surfaces once its feature ships
-// (flags are build-time). Empty array = the whole dropdown is omitted.
 const komunitasChildren = [
   ...(features.community
     ? [{ label: "Komunitas", href: "/komunitas", desc: "Bergabung dengan komunitas belajar" }]
@@ -32,17 +33,14 @@ const navLinks = [
     children: [
       { label: "E-Book",             href: "/ebook",           desc: "Buku digital berkualitas" },
       { label: "Kelas Gratis",       href: "/kelas-gratis",    desc: "Mulai belajar tanpa biaya" },
-      // Only surfaced once the private-class catalog ships (flag is build-time).
       ...(features.privateClass
         ? [{ label: "Private Class", href: "/kelas-privat", desc: "Mentoring intensif bareng mentor" }]
         : []),
       { label: "Trainer Program",    href: "/trainer-program", desc: "Jadilah trainer profesional" },
       { label: "Paket LMS",          href: "/clients",         desc: "LMS untuk institusi & perusahaan" },
-      // desc must match real inventory — the page lists e-books, not event recordings.
       { label: "Marketplace Materi", href: "/marketplace",     desc: "Etalase materi digital praktisi" },
     ],
   },
-  // The Komunitas dropdown only renders when at least one community feature is on.
   ...(komunitasChildren.length > 0
     ? [{ label: "Komunitas", href: "#", children: komunitasChildren }]
     : []),
@@ -60,11 +58,12 @@ export function Navbar() {
     const name = user?.name ?? "";
     return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "U";
   }, [user]);
+
   const mobileMenuId = "mobile-nav-menu";
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -89,200 +88,204 @@ export function Navbar() {
     closeTimeoutRef.current = setTimeout(() => setActiveDropdown(null), 150);
   }, []);
 
+  // Hidden on checkout/payment pages
+  if (pathname?.startsWith("/checkout") || pathname?.startsWith("/payment")) {
+    return null;
+  }
+
   return (
     <>
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-md",
-        isScrolled
-          ? "bg-white/85 border-b border-border-default shadow-e2"
-          : "bg-white/70 border-b border-transparent"
-      )}
-    >
-      <nav className="container-pad flex items-center justify-between h-16 md:h-[4.5rem]" aria-label="Navigasi utama">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="relative w-32 h-9">
-            <Image
-              src="/logo.png"
-              alt="Jago Akademi"
-              fill
-              sizes="128px"
-              className="object-contain object-left"
-              priority
-            />
-          </div>
-        </Link>
+      <header
+        className={cn(
+          "fixed top-0 left-0 right-0 z-50 transition-colors duration-200 border-b",
+          isScrolled
+            ? "bg-white/95 backdrop-blur-md border-[#E7E9EC] shadow-sm"
+            : "bg-white border-[#E7E9EC]"
+        )}
+      >
+        <nav className="max-w-[1440px] mx-auto px-6 lg:px-8 flex items-center justify-between h-16" aria-label="Navigasi utama">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="relative w-32 h-9">
+              <Image
+                src="/logo.png"
+                alt={brand.name}
+                fill
+                sizes="128px"
+                className="object-contain object-left"
+                priority
+              />
+            </div>
+          </Link>
 
-        {/* Desktop nav links */}
-        <ul className="hidden md:flex items-center gap-1" role="list">
-          {navLinks.map((link) =>
-            link.children ? (
-              <li
-                key={link.label}
-                className="relative"
-                onMouseEnter={() => openDropdown(link.label)}
-                onMouseLeave={scheduleClose}
-              >
-                <button
-                  type="button"
-                  aria-haspopup="true"
-                  aria-expanded={activeDropdown === link.label}
-                  onClick={() =>
-                    setActiveDropdown(activeDropdown === link.label ? null : link.label)
-                  }
-                  onFocus={() => openDropdown(link.label)}
-                  onBlur={scheduleClose}
-                  className={cn(
-                    "flex items-center gap-1 px-3.5 py-2 rounded-full text-sm font-medium transition-colors",
-                    activeDropdown === link.label
-                      ? "text-accent-cyan-strong bg-surface-accent-soft"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-sunken"
-                  )}
+          {/* Desktop nav links */}
+          <ul className="hidden md:flex items-center gap-1" role="list">
+            {navLinks.map((link) =>
+              link.children ? (
+                <li
+                  key={link.label}
+                  className="relative"
+                  onMouseEnter={() => openDropdown(link.label)}
+                  onMouseLeave={scheduleClose}
                 >
-                  {link.label}
-                  <ChevronDown
-                    size={14}
-                    aria-hidden="true"
-                    className={cn(
-                      "transition-transform duration-200",
-                      activeDropdown === link.label && "rotate-180"
-                    )}
-                  />
-                </button>
-
-                {/* Dropdown */}
-                {activeDropdown === link.label && (
-                  <div
-                    role="menu"
-                    className="absolute top-full left-0 pt-2"
-                    onMouseEnter={() => openDropdown(link.label)}
-                    onMouseLeave={scheduleClose}
+                  <button
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded={activeDropdown === link.label}
+                    onClick={() =>
+                      setActiveDropdown(activeDropdown === link.label ? null : link.label)
+                    }
                     onFocus={() => openDropdown(link.label)}
                     onBlur={scheduleClose}
+                    className={cn(
+                      "flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors",
+                      activeDropdown === link.label
+                        ? "text-[#0077A8] bg-[#EDEDF4]"
+                        : "text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9]"
+                    )}
                   >
-                    <div className="card-glow min-w-[240px] p-2">
-                      {link.children.map((child) => (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          role="menuitem"
-                          className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl hover:bg-surface-accent-soft transition-colors group"
-                        >
-                          <span className="text-sm font-semibold text-text-primary group-hover:text-accent-cyan-strong transition-colors">
-                            {child.label}
-                          </span>
-                          <span className="text-xs text-text-muted">{child.desc}</span>
-                        </Link>
-                      ))}
+                    {link.label}
+                    <ChevronDown
+                      size={14}
+                      aria-hidden="true"
+                      className={cn(
+                        "transition-transform duration-200",
+                        activeDropdown === link.label && "rotate-180"
+                      )}
+                    />
+                  </button>
+
+                  {/* Dropdown */}
+                  {activeDropdown === link.label && (
+                    <div
+                      role="menu"
+                      className="absolute top-full left-0 pt-2"
+                      onMouseEnter={() => openDropdown(link.label)}
+                      onMouseLeave={scheduleClose}
+                      onFocus={() => openDropdown(link.label)}
+                      onBlur={scheduleClose}
+                    >
+                      <div className="bg-white border border-[#E7E9EC] rounded-xl shadow-lg min-w-[240px] p-2">
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            role="menuitem"
+                            className="flex flex-col gap-0.5 px-3 py-2 rounded-lg hover:bg-[#F6F7F9] transition-colors group"
+                          >
+                            <span className="text-xs sm:text-sm font-semibold text-[#16181D] group-hover:text-[#0077A8] transition-colors">
+                              {child.label}
+                            </span>
+                            <span className="text-[11px] text-[#707880]">{child.desc}</span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </li>
-            ) : (
-              <li key={link.label}>
-                <Link
-                  href={link.href}
-                  aria-current={pathname.startsWith(link.href) && link.href !== "#" ? "page" : undefined}
-                  className={cn(
-                    "px-3.5 py-2 rounded-full text-sm font-medium transition-colors",
-                    pathname.startsWith(link.href) && link.href !== "#"
-                      ? "text-accent-cyan-strong bg-surface-accent-soft"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-sunken"
                   )}
+                </li>
+              ) : (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    aria-current={pathname.startsWith(link.href) && link.href !== "#" ? "page" : undefined}
+                    className={cn(
+                      "px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors",
+                      pathname.startsWith(link.href) && link.href !== "#"
+                        ? "text-[#0077A8] bg-[#EDEDF4]"
+                        : "text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9]"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              )
+            )}
+          </ul>
+
+          {/* Desktop CTA */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link
+              href="/kolaborasi"
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-[#5B616E] hover:text-[#0077A8] transition-colors"
+            >
+              <Sparkles size={14} aria-hidden="true" />
+              Kolaborasi
+            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-2 rounded-full bg-[#0077A8] text-white text-xs sm:text-sm font-semibold hover:bg-[#005D85] transition-colors shadow-none"
                 >
-                  {link.label}
+                  Dashboard
                 </Link>
-              </li>
-            )
-          )}
-        </ul>
+                <Link
+                  href="/dashboard"
+                  aria-label="Profil saya"
+                  className="w-9 h-9 flex items-center justify-center rounded-full bg-[#EDEDF4] border border-[#E7E9EC] text-[#16181D] text-xs font-bold hover:border-[#0077A8] transition-colors"
+                >
+                  {userInitials}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/masuk"
+                  className="px-3.5 py-2 text-xs sm:text-sm font-medium text-[#16181D] hover:text-[#0077A8] transition-colors"
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/daftar"
+                  className="px-5 py-2 rounded-full bg-[#36BDF2] text-[#16181D] text-xs sm:text-sm font-semibold hover:bg-[#72D2FF] active:scale-[0.99] transition-all shadow-none"
+                >
+                  Mulai Belajar Sekarang
+                </Link>
+              </>
+            )}
+          </div>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/kolaborasi"
-            className="flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent-cyan-strong transition-colors"
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            aria-label={isMobileOpen ? "Tutup menu" : "Buka menu"}
+            aria-expanded={isMobileOpen}
+            aria-controls={mobileMenuId}
+            className="md:hidden p-2 rounded-lg text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9] transition-colors"
+            onClick={() => setIsMobileOpen(!isMobileOpen)}
           >
-            <Sparkles size={14} aria-hidden="true" />
-            Kolaborasi
-          </Link>
-          {isLoggedIn ? (
-            <>
-              <Link
-                href="/dashboard"
-                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard"
-                aria-label="Profil saya"
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-brand-gradient text-white text-xs font-bold shadow-e1 hover:opacity-90 transition-opacity"
-              >
-                {userInitials}
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/masuk" className="btn btn-outline btn-sm">
-                Masuk
-              </Link>
-              <Link
-                href="/daftar"
-                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm"
-              >
-                Mulai Gratis
-              </Link>
-            </>
-          )}
-        </div>
+            {isMobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+          </button>
+        </nav>
+      </header>
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          aria-label={isMobileOpen ? "Tutup menu" : "Buka menu"}
-          aria-expanded={isMobileOpen}
-          aria-controls={mobileMenuId}
-          className="md:hidden p-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-surface-sunken transition-colors"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-        >
-          {isMobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
-        </button>
-      </nav>
-    </header>
-
-    {/* Mobile drawer (gap G8 — slide-in nav). Rendered OUTSIDE <header> so the
-        header's backdrop-blur (which establishes a containing block for fixed
-        descendants) can't clip the full-height fixed drawer. */}
-    {isMobileOpen && (
+      {/* Mobile drawer */}
+      {isMobileOpen && (
         <>
-          {/* Scrim */}
           <div
-            className="md:hidden fixed top-16 left-0 right-0 bottom-0 z-40 bg-[#1D1D1F]/40 backdrop-blur-sm animate-overlay-in"
+            className="md:hidden fixed top-16 left-0 right-0 bottom-0 z-40 bg-black/40 backdrop-blur-sm"
             aria-hidden="true"
             onClick={() => setIsMobileOpen(false)}
           />
-          {/* Panel */}
           <div
             id={mobileMenuId}
             role="dialog"
             aria-modal="true"
             aria-label="Menu navigasi mobile"
-            className="md:hidden fixed top-16 right-0 bottom-0 z-50 w-[86%] max-w-sm bg-white shadow-e4 flex flex-col overflow-y-auto animate-drawer-in"
+            className="md:hidden fixed top-16 right-0 bottom-0 z-50 w-[86%] max-w-sm bg-white shadow-xl flex flex-col overflow-y-auto border-l border-[#E7E9EC]"
           >
             <div className="flex-1 px-5 py-6 space-y-1">
               {navLinks.map((link) =>
                 link.children ? (
                   <div key={link.label} className="pt-2">
-                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-text-muted">
+                    <p className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#707880]">
                       {link.label}
                     </p>
                     {link.children.map((child) => (
                       <Link
                         key={child.href}
                         href={child.href}
-                        className="block px-3 py-2.5 rounded-xl text-sm text-text-secondary hover:text-accent-cyan-strong hover:bg-surface-accent-soft transition-colors"
+                        className="block px-3 py-2 rounded-lg text-sm text-[#5B616E] hover:text-[#0077A8] hover:bg-[#F6F7F9] transition-colors"
                         onClick={() => setIsMobileOpen(false)}
                       >
                         {child.label}
@@ -295,10 +298,10 @@ export function Navbar() {
                     href={link.href}
                     aria-current={pathname.startsWith(link.href) && link.href !== "#" ? "page" : undefined}
                     className={cn(
-                      "block px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                      "block px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                       pathname.startsWith(link.href) && link.href !== "#"
-                        ? "text-accent-cyan-strong bg-surface-accent-soft"
-                        : "text-text-secondary hover:text-text-primary hover:bg-surface-sunken"
+                        ? "text-[#0077A8] bg-[#EDEDF4]"
+                        : "text-[#5B616E] hover:text-[#16181D] hover:bg-[#F6F7F9]"
                     )}
                     onClick={() => setIsMobileOpen(false)}
                   >
@@ -309,7 +312,7 @@ export function Navbar() {
 
               <Link
                 href="/kolaborasi"
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-accent-cyan-strong hover:bg-surface-accent-soft transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#5B616E] hover:text-[#0077A8] hover:bg-[#F6F7F9] transition-colors"
                 onClick={() => setIsMobileOpen(false)}
               >
                 <Sparkles size={15} aria-hidden="true" />
@@ -317,26 +320,30 @@ export function Navbar() {
               </Link>
             </div>
 
-            <div className="px-5 py-5 border-t border-border-default flex flex-col gap-2">
+            <div className="px-5 py-5 border-t border-[#E7E9EC] flex flex-col gap-2">
               {isLoggedIn ? (
                 <Link
                   href="/dashboard"
-                  className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 w-full justify-center"
+                  className="h-10 px-4 rounded-full bg-[#0077A8] text-white text-sm font-semibold flex items-center justify-center hover:bg-[#005D85] transition-colors"
                   onClick={() => setIsMobileOpen(false)}
                 >
                   Dashboard Saya
                 </Link>
               ) : (
                 <>
-                  <Link href="/masuk" className="btn btn-outline w-full justify-center" onClick={() => setIsMobileOpen(false)}>
+                  <Link
+                    href="/masuk"
+                    className="h-10 px-4 rounded-full border border-[#E7E9EC] text-[#16181D] text-sm font-medium flex items-center justify-center hover:bg-[#F6F7F9] transition-colors"
+                    onClick={() => setIsMobileOpen(false)}
+                  >
                     Masuk
                   </Link>
                   <Link
                     href="/daftar"
-                    className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 w-full justify-center"
+                    className="h-10 px-4 rounded-full bg-[#36BDF2] text-[#16181D] text-sm font-semibold flex items-center justify-center hover:bg-[#72D2FF] transition-colors"
                     onClick={() => setIsMobileOpen(false)}
                   >
-                    Mulai Gratis
+                    Mulai Belajar Sekarang
                   </Link>
                 </>
               )}

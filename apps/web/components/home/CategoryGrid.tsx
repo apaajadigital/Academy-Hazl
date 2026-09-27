@@ -1,85 +1,105 @@
-import { ArrowRight, BookOpen, Building2, CalendarDays, GraduationCap, Library, Store } from "lucide-react";
 import Link from "next/link";
-import { CategoryCard } from "@/components/ui/CategoryCard";
-import { Section, SectionHeader } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
+import { ArrowRightIcon } from "./HomeIcons";
 
-const UNITS = [
+const TRACKS = [
   {
-    href: "/e-course",
-    icon: BookOpen,
-    name: "E-Course",
-    description: "Kursus video praktis dengan sertifikat resmi — akses sekali bayar.",
+    trackNo: "TRACK 01",
+    count: "12 Kursus",
+    title: "Fullstack Engineering",
+    description: "Membangun arsitektur microservices performa tinggi, domain-driven design, dan modern client SPA.",
+    tags: ["Go", "Laravel", "React/Next", "GraphQL"],
+    href: "/e-course?kategori=engineering",
   },
   {
-    href: "/event",
-    icon: CalendarDays,
-    name: "Event & Workshop",
-    description: "Webinar dan workshop intensif bersama praktisi industri.",
+    trackNo: "TRACK 02",
+    count: "8 Kursus",
+    title: "Cloud & DevOps",
+    description: "Orkestrasi infrastructure-as-code, pipeline CI/CD zero-downtime, dan monitoring reliability standar SRE.",
+    tags: ["Kubernetes", "Terraform", "AWS", "Prometheus"],
+    href: "/e-course?kategori=devops",
   },
   {
-    href: "/ebook",
-    icon: Library,
-    name: "E-Book",
-    description: "Panduan praktis dan template siap pakai untuk kebutuhan kerja.",
+    trackNo: "TRACK 03",
+    count: "10 Kursus",
+    title: "Data & AI Systems",
+    description: "Pengembangan pipeline data lakehouse skala petabyte, deployment LLM on-premise, dan automasi MLOps.",
+    tags: ["PySpark", "dbt", "Kafka", "vLLM"],
+    href: "/e-course?kategori=data-ai",
   },
   {
-    href: "/clients",
-    icon: Building2,
-    name: "LMS Perusahaan",
-    description: "Kelola pelatihan tim dengan batch, tugas, dan laporan progres.",
+    trackNo: "TRACK 04",
+    count: "6 Kursus",
+    title: "Product & UI/UX",
+    description: "Desain sistem enterprise multi-brand, metriks product discovery berbasis data, dan delivery handoff presisi.",
+    tags: ["Design Tokens", "Figma Pro", "A/B Test", "PRD"],
+    href: "/e-course?kategori=product",
   },
-  {
-    href: "/trainer-program",
-    icon: GraduationCap,
-    name: "Trainer Program",
-    // No "Segera hadir" note: /trainer-program is live and accepts leads.
-    description: "Jalur menjadi trainer bersertifikat di Jago Akademi.",
-  },
-  {
-    href: "/marketplace",
-    icon: Store,
-    name: "Marketplace Materi",
-    // No "Segera hadir" note: /marketplace is live and sells real e-books via
-    // GET /api/ebooks. The badge contradicted a page that already takes orders.
-    description: "Etalase materi digital siap unduh dari para praktisi.",
-  },
-] as const;
+];
 
-/** "Jelajahi berdasarkan kebutuhan" — business-unit tiles (mirrors Udacity Schools). */
 export function CategoryGrid() {
   return (
-    <Section tone="sunken">
-      <SectionHeader
-        eyebrow="Jelajahi"
-        title={
-          <>
-            Satu platform, <span className="bg-brand-gradient bg-clip-text text-transparent">enam</span> cara belajar
-          </>
-        }
-        lede="Pilih jalur yang sesuai kebutuhanmu — belajar mandiri, hadir di event, atau melatih tim perusahaan."
-        action={
-          <Link href="/e-course" className="link-arrow">
-            Lihat E-Course
-            <ArrowRight size={16} aria-hidden="true" />
-          </Link>
-        }
-      />
+    <section className="w-full bg-[#F6F7F9] border-y border-[#E7E9EC] py-16">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-4 border-b border-[#E7E9EC] gap-4">
+          <div>
+            <span className="text-[11px] font-bold tracking-widest text-[#0077A8] uppercase">
+              SPESIALISASI UTAMA
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#16181D] tracking-tight mt-1">
+              Jalur Pembelajaran Terstruktur
+            </h2>
+          </div>
+          <p className="text-sm text-[#5B616E] max-w-md">
+            Bukan card generik. Setiap spesialisasi memiliki silabus adaptif yang disinkronisasi setiap kuartal dengan kebutuhan talent stack B2B.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {UNITS.map((unit, i) => (
-          <Reveal key={unit.href} delay={i * 0.05}>
-            <CategoryCard
-              href={unit.href}
-              icon={unit.icon}
-              name={unit.name}
-              description={unit.description}
-              accent={i % 3 === 1 ? "pink" : "cyan"}
-              className="h-full"
-            />
-          </Reveal>
-        ))}
+        {/* Structural Interactive Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {TRACKS.map((track) => (
+            <div
+              key={track.trackNo}
+              className="bg-white border border-[#E7E9EC] rounded-xl p-6 flex flex-col justify-between hover:border-[#707880] transition-all duration-150 shadow-none hover:shadow-sm"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[11px] font-bold text-[#707880] uppercase tracking-wider">
+                    {track.trackNo}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-[#EDEDF4] text-[11px] text-[#0077A8] font-semibold">
+                    {track.count}
+                  </span>
+                </div>
+                <h3 className="font-display text-lg font-bold text-[#16181D] mb-2">
+                  {track.title}
+                </h3>
+                <p className="text-xs text-[#5B616E] leading-relaxed mb-6">
+                  {track.description}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex flex-wrap gap-1.5 mb-6">
+                  {track.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 rounded bg-[#F6F7F9] text-[11px] font-mono text-[#3F484F] border border-[#E7E9EC]/50"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                <Link
+                  href={track.href}
+                  className="text-xs text-[#0077A8] font-semibold inline-flex items-center gap-1 hover:underline"
+                >
+                  Jelajahi Silabus <ArrowRightIcon className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

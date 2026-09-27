@@ -1,35 +1,27 @@
 import Link from "next/link";
 import Image from "next/image";
 import { MessageCircle, Clock, ArrowUpRight } from "lucide-react";
+
+const brand = { name: "Hazl Academy" } as const;
 import { waLink, WA_NUMBER_DISPLAY, CONTACT_FALLBACK_HREF } from "@/lib/config";
 import { features } from "@/lib/features";
 
-// Resolved once at module scope: waLink() reads a build-time inlined constant,
-// so the answer cannot change between renders.
 const waHref = waLink();
 
 const footerLinks = {
-  Belajar: [
+  Program: [
     { label: "Katalog Kursus",    href: "/e-course" },
     { label: "Event & Workshop",  href: "/event" },
     { label: "E-Book",            href: "/ebook" },
     { label: "Kelas Gratis",      href: "/kelas-gratis" },
     { label: "Marketplace Materi", href: "/marketplace" },
-    // /berlangganan was unreachable from any public surface: its only inbound
-    // links were post-login (/dashboard/berlangganan) and SubscriptionLock, which
-    // itself sits behind the default-OFF learningPath flag. A public pricing page
-    // no visitor can find is a dead funnel.
     { label: "Berlangganan",      href: "/berlangganan" },
     { label: "Blog",              href: "/blog" },
-  ],
-  Program: [
-    // Only surfaced once the private-class catalog ships (flag is build-time).
     ...(features.privateClass ? [{ label: "Private Class", href: "/kelas-privat" }] : []),
-    { label: "Trainer Program",  href: "/trainer-program" },
-    { label: "Program Afiliasi", href: "/afiliasi" },
-    { label: "Paket LMS",        href: "/clients" },
-    { label: "Kolaborasi",       href: "/kolaborasi" },
-    // Community links — each only surfaces once its feature ships (build-time flags).
+    { label: "Trainer Program",   href: "/trainer-program" },
+    { label: "Program Afiliasi",  href: "/afiliasi" },
+    { label: "Paket LMS",         href: "/clients" },
+    { label: "Kolaborasi",        href: "/kolaborasi" },
     ...(features.community ? [{ label: "Komunitas", href: "/komunitas" }] : []),
     ...(features.alumni ? [{ label: "Cerita Alumni", href: "/alumni" }] : []),
     ...(features.portfolio ? [{ label: "Portofolio Member", href: "/portofolio-member" }] : []),
@@ -41,8 +33,6 @@ const footerLinks = {
   ],
 };
 
-// lucide v1.21 ships no brand-social glyphs (per REDESIGN_ICON_MAP "do not port"
-// note), so the social chips use the short text mark. hrefs preserved.
 const socials = [
   { label: "IG", text: "Instagram", href: "https://instagram.com/jagoakademi" },
   { label: "YT", text: "YouTube", href: "https://youtube.com/@jagoakademi" },
@@ -52,9 +42,9 @@ const socials = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border-default bg-surface-sunken">
+    <footer className="w-full bg-[#FAFAFA] border-t border-[#E7E9EC] shadow-none">
       {/* Main footer */}
-      <div className="container-pad py-16">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
           {/* Brand column */}
           <div className="lg:col-span-2 space-y-6">
@@ -62,26 +52,23 @@ export function Footer() {
               <div className="relative w-36 h-10">
                 <Image
                   src="/logo.png"
-                  alt="Jago Akademi"
+                  alt={brand.name}
                   fill
                   sizes="144px"
                   className="object-contain object-left"
                 />
               </div>
             </Link>
-            {/*
-              BL-23: two unearned claims removed from a block that renders on
-              EVERY page, which makes it the widest-reaching copy in the app:
-              "terlengkap Indonesia" (an unprovable superlative) and "ribuan
-              profesional" (a headcount the platform does not have).
-            */}
-            <p className="text-sm text-text-secondary leading-relaxed max-w-xs">
-              Platform edukasi digital Indonesia. Belajar, berlatih, dan
-              kembangkan kariermu.
+            <p className="text-sm text-[#5B616E] leading-relaxed max-w-sm">
+              Platform edukasi teknologi presisi tinggi untuk akselerasi karier software engineering, infrastruktur cloud, dan sistem data skala enterprise.
             </p>
 
+            <div className="text-xs text-[#707880]">
+              Terdaftar di Kementerian Hukum &amp; HAM RI
+            </div>
+
             {/* Social links */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               {socials.map(({ label, text, href }) => (
                 <a
                   key={label}
@@ -89,62 +76,76 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={text}
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-card border border-border-default text-text-secondary hover:text-accent-cyan-strong hover:border-border-brand hover:bg-surface-accent-soft transition-all duration-200 text-[11px] font-bold shadow-e1"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-[#E7E9EC] text-[#5B616E] hover:text-[#0077A8] hover:border-[#0077A8] hover:bg-[#F6F7F9] transition-all text-[11px] font-bold shadow-none"
                 >
                   {label}
                 </a>
               ))}
             </div>
 
-            {/* WhatsApp CTA — hidden entirely when no number is configured.
-                A dead wa.me link is worse than no button: it looks like a
-                working channel and silently drops the enquiry. */}
+            {/* WhatsApp CTA */}
             {waHref ? (
               <a
                 href={waHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm w-fit"
+                className="h-10 px-4 rounded-full bg-[#0077A8] text-white text-xs font-semibold inline-flex items-center gap-2 hover:bg-[#005D85] transition-colors shadow-none w-fit"
               >
-                <MessageCircle size={16} aria-hidden="true" />
+                <MessageCircle size={15} aria-hidden="true" />
                 Chat via WhatsApp
               </a>
             ) : (
               <Link
                 href={CONTACT_FALLBACK_HREF}
-                className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 btn-sm w-fit"
+                className="h-10 px-4 rounded-full bg-[#0077A8] text-white text-xs font-semibold inline-flex items-center gap-2 hover:bg-[#005D85] transition-colors shadow-none w-fit"
               >
-                <MessageCircle size={16} aria-hidden="true" />
+                <MessageCircle size={15} aria-hidden="true" />
                 Hubungi Kami
               </Link>
             )}
           </div>
 
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <nav key={category} aria-label={`Navigasi ${category}`} className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-text-muted">
-                {category}
-              </h4>
-              <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
+          {/* Program Column (Col-span 2) */}
+          <nav aria-label="Navigasi Program" className="lg:col-span-2 space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#707880]">
+              Program &amp; Ekosistem
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {footerLinks.Program.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-xs sm:text-sm text-[#5B616E] hover:text-[#0077A8] transition-colors py-0.5"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </nav>
+
+          {/* Perusahaan Column */}
+          <nav aria-label="Navigasi Perusahaan" className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#707880]">
+              Perusahaan
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.Perusahaan.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-xs sm:text-sm text-[#5B616E] hover:text-[#0077A8] transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
 
           {/* Kontak column */}
           <nav aria-label="Navigasi Kontak" className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-text-muted">
-              Kontak
+            <h4 className="text-xs font-bold uppercase tracking-widest text-[#707880]">
+              Dukungan &amp; Kontak
             </h4>
             <ul className="space-y-2.5">
               {waHref && (
@@ -153,11 +154,11 @@ export function Footer() {
                     href={waHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors group"
+                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-[#5B616E] hover:text-[#0077A8] transition-colors group"
                   >
-                    <MessageCircle size={15} aria-hidden="true" className="text-accent-cyan-strong" />
+                    <MessageCircle size={14} aria-hidden="true" className="text-[#0077A8]" />
                     WhatsApp
-                    <ArrowUpRight size={13} aria-hidden="true" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                    <ArrowUpRight size={12} aria-hidden="true" className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                   </a>
                 </li>
               )}
@@ -167,14 +168,14 @@ export function Footer() {
                     href={waHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm text-text-secondary hover:text-accent-cyan-strong transition-colors"
+                    className="text-xs sm:text-sm text-[#5B616E] hover:text-[#0077A8] transition-colors"
                   >
                     {WA_NUMBER_DISPLAY}
                   </a>
                 </li>
               )}
-              <li className="flex items-center gap-1.5 text-sm text-text-muted">
-                <Clock size={15} aria-hidden="true" />
+              <li className="flex items-center gap-1.5 text-xs text-[#707880]">
+                <Clock size={14} aria-hidden="true" />
                 Sen–Jum, 09.00–17.00 WIB
               </li>
             </ul>
@@ -183,20 +184,21 @@ export function Footer() {
       </div>
 
       {/* Divider */}
-      <div className="divider-gradient" />
+      <div className="border-t border-[#E7E9EC]" />
 
       {/* Bottom bar */}
-      <div className="container-pad py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p className="text-xs text-text-muted">
-          © 2025–2026 Jago Akademi. Hak cipta dilindungi.
-        </p>
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#707880]">
+        <p>© 2025–2026 PT Hazl Akselerasi Indonesia. Hak cipta dilindungi.</p>
         <div className="flex items-center gap-6">
-          <Link href="/privacy" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
+          <Link href="/privacy" className="hover:text-[#16181D] transition-colors">
             Kebijakan Privasi
           </Link>
-          <Link href="/terms" className="text-xs text-text-muted hover:text-text-secondary transition-colors">
-            Syarat & Ketentuan
+          <Link href="/terms" className="hover:text-[#16181D] transition-colors">
+            Syarat &amp; Ketentuan
           </Link>
+          <span className="hidden md:inline text-[11px] text-[#BFC7D0]">
+            Hazl Design System v1.0 • Jakarta
+          </span>
         </div>
       </div>
     </footer>

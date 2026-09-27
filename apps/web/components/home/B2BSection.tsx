@@ -1,63 +1,69 @@
 import Link from "next/link";
-import { Building2, BarChart3, Shield } from "lucide-react";
-import { Section } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
+import { CheckCircleIcon, ArrowRightIcon } from "./HomeIcons";
 
-/**
- * B2B enterprise mini-section: connects homepage → /clients funnel.
- * Placed between TestimonialsSection and EarlyAccessBand.
- */
 export function B2BSection() {
   return (
-    <Section>
-      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-        {/* Left: copy */}
-        <Reveal className="lg:col-span-7">
-          <p className="eyebrow mb-4">Untuk Perusahaan & Institusi</p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--text-primary)] text-balance md:text-4xl">
-            Kelola pelatihan tim dalam{" "}
-            <span className="bg-brand-gradient bg-clip-text text-transparent">satu platform terpadu</span>
-          </h2>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-[var(--text-secondary)]">
-            Jago Akademi LMS B2B memungkinkan perusahaan mengelola program pelatihan karyawan, melacak progres, dan menerbitkan sertifikat — semua dalam satu workspace yang bisa dikustomisasi.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-6">
-            {[
-              { icon: Building2, text: "Workspace per divisi atau team" },
-              { icon: BarChart3, text: "Dashboard progres real-time" },
-              { icon: Shield,    text: "Data terisolasi per perusahaan" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)]">
-                  <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
-                </span>
-                <span className="text-sm font-medium text-[var(--text-secondary)]">{text}</span>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-
-        {/* Right: CTA card */}
-        <Reveal delay={0.1} className="lg:col-span-5">
-          <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-white p-8 shadow-e2">
-            {/* Gradient accent bar (Stitch flair) — decorative. */}
-            <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-brand-gradient" />
-            <p className="text-sm font-semibold text-[var(--text-secondary)] mb-1">Mulai dari trial 14 hari</p>
-            <p className="font-display text-2xl font-bold text-[var(--text-primary)] mb-6">
-              Coba LMS B2B gratis — tanpa kartu kredit
+    <section className="w-full max-w-[1440px] mx-auto px-6 lg:px-8 py-16">
+      <div className="bg-[#F6F7F9] border border-[#E7E9EC] rounded-xl p-8 lg:p-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left: Copy */}
+          <div className="lg:col-span-7">
+            <span className="text-[11px] font-bold tracking-widest text-[#0077A8] uppercase mb-2 inline-block">
+              UNTUK PERUSAHAAN &amp; INSTITUSI
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#16181D] tracking-tight mb-4">
+              Kelola Pelatihan Tim dalam Satu Workspace Terpadu
+            </h2>
+            <p className="text-sm text-[#5B616E] max-w-lg mb-6 leading-relaxed">
+              Hazl Academy LMS B2B memungkinkan korporasi mengelola program upskilling karyawan, memantau kemajuan kurikulum secara real-time, dan menerbitkan sertifikat kompetensi resmi.
             </p>
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex items-center gap-2 text-xs text-[#16181D]">
+                <CheckCircleIcon className="w-4 h-4 text-[#0077A8]" />
+                <span>Multi-tenant terisolasi per divisi</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[#16181D]">
+                <CheckCircleIcon className="w-4 h-4 text-[#0077A8]" />
+                <span>Laporan analitik progres real-time</span>
+              </div>
+            </div>
             <Link
               href="/clients"
-              className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2 w-full justify-center mb-3"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#0077A8] hover:underline"
             >
-              Lihat Paket LMS B2B
-            </Link>
-            <Link href="/contact" className="btn btn-ghost w-full justify-center text-[var(--text-secondary)]">
-              Konsultasi dengan tim kami
+              <span>Pelajari Solusi Korporat</span>
+              <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </div>
-        </Reveal>
+
+          {/* Right: Action Card */}
+          <div className="lg:col-span-5">
+            <div className="bg-white border border-[#E7E9EC] rounded-xl p-6 sm:p-8">
+              <span className="text-xs font-semibold text-[#0077A8] block mb-1">Trial 14 Hari Tanpa Komitmen</span>
+              <h3 className="font-display text-xl font-bold text-[#16181D] mb-4">
+                Coba LMS B2B Hazl Academy
+              </h3>
+              <p className="text-xs text-[#5B616E] mb-6 leading-relaxed">
+                Dapatkan demo instan lingkungan pembelajaran karyawan dengan kurikulum teknologi terkini.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/clients"
+                  className="h-11 px-6 rounded-full bg-[#36BDF2] text-[#16181D] text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-[#72D2FF] transition-colors active:scale-[0.99]"
+                >
+                  Lihat Paket LMS B2B
+                </Link>
+                <Link
+                  href="/contact"
+                  className="h-11 px-6 rounded-full bg-white text-[#5B616E] border border-[#E7E9EC] text-sm font-medium inline-flex items-center justify-center hover:text-[#16181D] hover:border-[#707880] transition-colors"
+                >
+                  Konsultasi dengan Tim Kurikulum
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }
