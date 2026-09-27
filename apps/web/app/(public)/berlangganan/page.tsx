@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // meta description is quoted verbatim by search engines — it is the one place
   // an inflated claim travels furthest.
   description:
-    "Pilih paket berlangganan Jago Akademi yang sesuai kebutuhan. Akses kursus, event, e-book, dan sertifikasi dalam satu langganan.",
+    "Pilih paket berlangganan Hazl Academy yang sesuai kebutuhan. Akses kursus, event, e-book, dan sertifikasi dalam satu langganan.",
   alternates: { canonical: "/berlangganan" },
 };
 
@@ -330,7 +330,7 @@ export default async function BerlanggananPage() {
         <div className="relative z-10 mx-auto max-w-3xl">
           <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(0,119,168,0.2)] bg-surface-accent-soft px-4 py-1.5 text-xs font-semibold tracking-wide text-accent-cyan-strong">
             <Sparkles size={14} />
-            Jago Akademi Premium
+            Hazl Academy Premium
           </span>
           <h1 className="mb-5 text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight text-text-primary">
             Satu Langganan,

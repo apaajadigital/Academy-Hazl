@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { Clock, RefreshCw, Copy, Check } from "lucide-react";
+import { getValidToken } from "@/lib/auth/token";
 
-// ─── Countdown timer hook ─────────────────────────────────────────────────────
-/**
- * Returns remaining seconds from now until `expiresAt` (ISO string).
- * Returns null if expiresAt is not provided.
- * Counts down every second; stops at 0.
- */
+// ─── Countdown Hook ───────────────────────────────────────────────────────────
+
 function useCountdown(expiresAt: string | null): number | null {
   const [remaining, setRemaining] = useState<number | null>(() => {
     if (!expiresAt) return null;
@@ -39,235 +37,205 @@ function formatCountdown(seconds: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-// ─── Animated spinning clock ─────────────────────────────────────────────────
-function AnimatedClock() {
-  return (
-    <div className="relative flex items-center justify-center" aria-hidden="true">
-      {/* Pulsing ring */}
-      <span
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: "rgba(245, 158, 11, 0.12)",
-          animation: "pulse-ring 2s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="relative flex h-20 w-20 items-center justify-center rounded-full"
-        style={{ background: "rgba(245,158,11,0.12)", border: "2px solid rgba(245,158,11,0.3)" }}
-      >
-        {/* Clock SVG with animated hands */}
-        <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="#D97706" strokeWidth="1.8" strokeLinecap="round">
-          <circle cx="12" cy="12" r="9" />
-          {/* Minute hand — rotates */}
-          <line
-            x1="12" y1="12" x2="12" y2="6"
-            style={{ transformOrigin: "12px 12px", animation: "spin-minute 6s linear infinite" }}
-          />
-          {/* Hour hand */}
-          <line
-            x1="12" y1="12" x2="15" y2="12"
-            style={{ transformOrigin: "12px 12px", animation: "spin-hour 72s linear infinite" }}
-          />
-          <circle cx="12" cy="12" r="1" fill="#D97706" />
-        </svg>
-      </div>
-
-      <style>{`
-        @keyframes pulse-ring {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.08); }
-        }
-        @keyframes spin-minute {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes spin-hour {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  );
+function formatRp(amount: number) {
+  return `Rp ${amount.toLocaleString("id-ID")}`;
 }
 
-// ─── Payment instruction step ────────────────────────────────────────────────
-function Step({
-  num,
-  text,
-  delay,
-}: {
-  num: number;
-  text: string;
-  delay: string;
-}) {
-  return (
-    <li
-      className="flex items-start gap-3 opacity-0"
-      style={{ animation: `fade-in-up 0.4s ${delay} ease forwards` }}
-    >
-      <span
-        className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold"
-        style={{ background: "var(--brand-cyan)", color: "var(--text-on-accent)" }}
-      >
-        {num}
-      </span>
-      <span className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-        {text}
-      </span>
-    </li>
-  );
-}
+// ─── Main Pending Content ─────────────────────────────────────────────────────
 
-// ─── Main pending content ─────────────────────────────────────────────────────
 function PendingContent() {
+  const router = useRouter();
   const params = useSearchParams();
   const orderId = params.get("orderId");
-  /**
-   * expiresAt — ISO 8601 string. Set by the payment gateway redirect.
-   * Example: /payment/pending?orderId=xxx&expiresAt=2026-07-10T09%3A00%3A00Z
-   * When absent (most cases), countdown is not shown.
-   */
   const expiresAt = params.get("expiresAt");
   const countdown = useCountdown(expiresAt);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
+  const [checking, setChecking] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [orderData, setOrderData] = useState<{
+    finalAmount?: number;
+    status?: string;
+  } | null>(null);
 
   const isExpired = countdown !== null && countdown <= 0;
 
+  // Poll order status every 4 seconds to detect payment completion
+  useEffect(() => {
+    if (!orderId || isExpired) return;
+
+    let active = true;
+
+    async function checkStatus() {
+      try {
+        const token = await getValidToken();
+        if (!token) return;
+
+        const res = await fetch(`/api/orders/${orderId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const body = await res.json();
+        if (active && body.success && body.data) {
+          setOrderData({
+            finalAmount: Number(body.data.finalAmount ?? 0),
+            status: body.data.status,
+          });
+
+          if (body.data.status === "paid") {
+            router.push(`/payment/success?orderId=${orderId}`);
+          }
+        }
+      } catch {
+        // silent retry
+      }
+    }
+
+    checkStatus();
+    const interval = setInterval(checkStatus, 4000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [orderId, isExpired, router]);
+
+  // Manual Refresh Handler
+  async function handleManualCheck() {
+    if (!orderId || checking) return;
+    setChecking(true);
+    try {
+      const token = await getValidToken();
+      if (!token) return;
+      const res = await fetch(`/api/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json();
+      if (body.success && body.data?.status === "paid") {
+        router.push(`/payment/success?orderId=${orderId}`);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setTimeout(() => setChecking(false), 500);
+    }
+  }
+
+  function handleCopyRef() {
+    if (!orderId) return;
+    navigator.clipboard.writeText(orderId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center px-4 py-16"
-      style={{ background: "var(--surface-page)" }}
-    >
-      <div
-        className="w-full max-w-md"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(24px)",
-          transition: "opacity 0.5s ease, transform 0.5s ease",
-        }}
-      >
-        {/* Icon */}
-        <div className="mb-8 flex justify-center">
-          <AnimatedClock />
-        </div>
+    <div className="min-h-screen bg-[#fcfcfd] flex flex-col justify-center items-center px-4 py-16 text-[#202124] antialiased">
+      <div className="w-full max-w-lg">
+        {/* Main Card */}
+        <div className="rounded-[22px] border border-[#e8e8e9] bg-white p-7 sm:p-9 shadow-none text-center">
+          {/* Animated Clock / Status Header */}
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-18 w-18 items-center justify-center rounded-full bg-amber-50 border-2 border-amber-200">
+              <Clock size={36} className="text-amber-600 animate-pulse" />
+            </div>
+          </div>
 
-        {/* Heading */}
-        <div className="mb-6 text-center">
-          <h1
-            className="mb-2 text-3xl font-extrabold tracking-tight"
-            style={{ color: "var(--text-primary)", fontFamily: "var(--font-display)" }}
-          >
-            {isExpired ? "Waktu Pembayaran Habis" : "Menunggu Pembayaran"}
+          <h1 className="text-2xl font-bold tracking-tight text-[#202124] mb-2">
+            {isExpired ? "Batas Waktu Pembayaran Berakhir" : "Menunggu Pembayaran"}
           </h1>
-          <p style={{ color: "var(--text-secondary)" }}>
+          <p className="text-xs text-[#77787d] leading-relaxed mb-6">
             {isExpired
-              ? "Batas waktu pembayaran telah berakhir. Silakan buat pesanan baru."
-              : "Selesaikan pembayaran sebelum batas waktu. Akses akan aktif otomatis setelah konfirmasi."}
+              ? "Waktu transfer Anda telah habis. Silakan buat pesanan baru untuk melanjutkan."
+              : "Selesaikan pembayaran melalui aplikasi m-Banking atau e-Wallet Anda. Halaman ini akan otomatis diperbarui setelah transaksi berhasil diverifikasi."}
           </p>
-          {orderId && (
-            <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
-              Ref:{" "}
-              <span className="font-mono font-semibold" style={{ color: "var(--text-secondary)" }}>
-                {orderId.slice(0, 8).toUpperCase()}
+
+          {/* Countdown Clock Display if present */}
+          {countdown !== null && !isExpired && (
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50/70 px-4 py-1.5 text-xs font-semibold text-amber-800">
+              <Clock size={13} />
+              <span>Selesaikan dalam {formatCountdown(countdown)}</span>
+            </div>
+          )}
+
+          {/* Transaction Metadata Box */}
+          <div className="mb-6 rounded-xl border border-[#e8e8e9] bg-[#fbfbfc] p-4 text-left space-y-2.5">
+            {orderId && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-[#77787d]">Kode Referensi Pesanan</span>
+                <button
+                  type="button"
+                  onClick={handleCopyRef}
+                  className="inline-flex items-center gap-1 font-mono font-bold text-[#202124] hover:text-[#0077A8] transition"
+                  title="Klik untuk menyalin"
+                >
+                  <span>{orderId.slice(0, 12).toUpperCase()}</span>
+                  {copied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                </button>
+              </div>
+            )}
+            {orderData?.finalAmount !== undefined && orderData.finalAmount > 0 && (
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-[#e8e8e9]">
+                <span className="text-[#77787d]">Jumlah Pembayaran</span>
+                <span className="font-bold text-[#0077A8] text-sm">
+                  {formatRp(orderData.finalAmount)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-xs pt-2 border-t border-[#e8e8e9]">
+              <span className="text-[#77787d]">Status Saluran Gateway</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-amber-700">
+                <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />
+                Sinkronisasi Real-time
               </span>
-            </p>
-          )}
+            </div>
+          </div>
+
+          {/* Transfer Instructions Step List */}
+          <div className="mb-6 text-left rounded-xl border border-[#e8e8e9] p-4 text-xs text-[#77787d] space-y-2.5">
+            <p className="font-bold text-[#202124] mb-2">Panduan Pembayaran Cepat:</p>
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#f2f2f4] text-[11px] font-bold text-[#202124]">
+                1
+              </span>
+              <span>Buka aplikasi m-Banking atau e-Wallet yang Anda pilih saat checkout.</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#f2f2f4] text-[11px] font-bold text-[#202124]">
+                2
+              </span>
+              <span>Pindai QRIS atau masukkan nomor Virtual Account sesuai tagihan Duitku.</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#f2f2f4] text-[11px] font-bold text-[#202124]">
+                3
+              </span>
+              <span>Pastikan nominal pembayaran sesuai hingga digit terakhir agar otomatis terverifikasi.</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2.5">
+            <button
+              type="button"
+              onClick={handleManualCheck}
+              disabled={checking}
+              className="w-full h-11 rounded-full bg-[#252527] hover:bg-[#1a1b1d] text-white text-xs font-semibold flex items-center justify-center gap-2 transition disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={checking ? "animate-spin" : ""} />
+              <span>{checking ? "Memeriksa Status..." : "Saya Sudah Membayar — Cek Sekarang"}</span>
+            </button>
+
+            <Link
+              href="/dashboard/pesanan"
+              className="w-full h-11 rounded-full border border-[#e8e8e9] hover:bg-[#f2f2f4] text-[#202124] text-xs font-semibold flex items-center justify-center gap-2 transition"
+            >
+              <span>Lihat Daftar Pesanan Saya</span>
+            </Link>
+          </div>
         </div>
 
-        {/* Countdown timer */}
-        {countdown !== null && (
-          <div
-            className="mb-6 rounded-2xl p-5 text-center opacity-0"
-            style={{
-              animation: "fade-in-up 0.4s 0.5s ease forwards",
-              background: isExpired ? "rgba(239,68,68,0.06)" : "rgba(245,158,11,0.07)",
-              border: `1px solid ${isExpired ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.25)"}`,
-            }}
-          >
-            <p
-              className="mb-1 text-xs font-semibold uppercase tracking-widest"
-              style={{ color: isExpired ? "#DC2626" : "#D97706" }}
-            >
-              {isExpired ? "Kadaluarsa" : "Sisa Waktu"}
-            </p>
-            <p
-              className="font-mono text-4xl font-bold tabular-nums"
-              style={{ color: isExpired ? "#DC2626" : "#B45309" }}
-            >
-              {isExpired ? "00:00" : formatCountdown(countdown)}
-            </p>
-          </div>
-        )}
-
-        {/* Instructions card — only show if not expired */}
-        {!isExpired && (
-          <div
-            className="mb-6 rounded-2xl p-5 opacity-0"
-            style={{
-              animation: "fade-in-up 0.4s 0.6s ease forwards",
-              background: "var(--surface-card)",
-              border: "1px solid var(--border-subtle)",
-              boxShadow: "var(--shadow-e1)",
-            }}
-          >
-            <p
-              className="mb-4 text-xs font-semibold uppercase tracking-widest"
-              style={{ color: "var(--brand-cyan-strong)" }}
-            >
-              Cara Menyelesaikan Pembayaran
-            </p>
-            <ul className="space-y-3">
-              <Step num={1} text="Buka email kamu dan klik link pembayaran yang telah dikirim." delay="0.7s" />
-              <Step num={2} text="Pilih metode pembayaran yang tersedia (transfer bank, e-wallet, kartu kredit)." delay="0.85s" />
-              <Step num={3} text="Selesaikan pembayaran sesuai instruksi. Jangan tutup halaman sampai selesai." delay="1s" />
-              <Step num={4} text="Akses akan aktif otomatis dalam beberapa menit setelah konfirmasi." delay="1.15s" />
-            </ul>
-          </div>
-        )}
-
-        {/* CTA buttons */}
-        <div
-          className="flex flex-col gap-3 sm:flex-row opacity-0"
-          style={{ animation: "fade-in-up 0.4s 1.2s ease forwards" }}
-        >
-          {isExpired ? (
-            <Link
-              href="/e-course"
-              className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
-            >
-              Lihat Kursus Lagi
-            </Link>
-          ) : (
-            <Link
-              id="pending-check-order-btn"
-              href={orderId ? `/pesanan/${orderId}` : "/dashboard/pesanan"}
-              className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
-            >
-              Cek Status Pesanan
-            </Link>
-          )}
-          <Link
-            id="pending-home-btn"
-            href="/"
-            className="btn btn-outline btn-lg flex-1 justify-center"
-          >
-            Kembali ke Beranda
-          </Link>
-        </div>
-
-        {/* Support note */}
-        <p
-          className="mt-6 text-center text-xs opacity-0"
-          style={{ animation: "fade-in-up 0.4s 1.35s ease forwards", color: "var(--text-muted)" }}
-        >
-          Butuh bantuan?{" "}
-          <Link href="/contact" className="font-semibold hover:underline" style={{ color: "var(--brand-cyan-strong)" }}>
-            Hubungi Support
+        {/* Support Help Footer */}
+        <p className="mt-6 text-center text-xs text-[#77787d]">
+          Mengalami kendala saat mentransfer?{" "}
+          <Link href="/faq" className="font-semibold text-[#0077A8] hover:underline">
+            Hubungi Tim Bantuan
           </Link>
         </p>
       </div>
@@ -275,19 +243,14 @@ function PendingContent() {
   );
 }
 
-// ─── Page wrapper ─────────────────────────────────────────────────────────────
+// ─── Export with Suspense ─────────────────────────────────────────────────────
+
 export default function PaymentPendingPage() {
   return (
     <Suspense
       fallback={
-        <div
-          className="flex min-h-screen items-center justify-center"
-          style={{ background: "var(--surface-page)" }}
-        >
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-            style={{ borderColor: "#D97706", borderTopColor: "transparent" }}
-          />
+        <div className="flex min-h-screen items-center justify-center bg-[#fcfcfd]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0077A8] border-t-transparent" />
         </div>
       }
     >

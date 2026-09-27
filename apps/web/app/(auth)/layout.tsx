@@ -3,9 +3,9 @@ import Link from "next/link";
 import Image from "next/image";
 
 // No `title` metadata here on purpose: each auth page sets its own title and the
-// root layout's `%s | Jago Akademi` template wraps it exactly once. Declaring a
-// bare `title.default: "Jago Akademi"` here caused the root template to double it
-// into "Jago Akademi | Jago Akademi" (QA M-1).
+// root layout's `%s | Hazl Academy` template wraps it exactly once. Declaring a
+// bare `title.default: "Hazl Academy"` here caused the root template to double it
+// into "Hazl Academy | Hazl Academy" (QA M-1).
 
 /**
  * Auth shell (Stitch redesign, Jul 2026) — a centered ~420px frosted card on the
@@ -31,14 +31,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             href="/"
             className="inline-flex min-h-10 items-center gap-2 text-text-primary transition-colors hover:text-accent"
           >
-            <Image src="/logo.png" alt="Jago Akademi" width={1037} height={190} priority className="h-8 w-auto" />
+            <Image src="/logo.png" alt="Hazl Academy" width={1414} height={286} priority className="h-8 w-auto" />
           </Link>
         </div>
 
         <div className="glass-card rounded-[var(--radius-xl)] p-8 shadow-e2 sm:p-10">{children}</div>
 
         <p className="mt-6 text-center text-xs text-text-muted">
-          &copy; {new Date().getFullYear()} Jago Akademi &middot; Belajar. Berlatih. Berkarier.
+          &copy; {new Date().getFullYear()} Hazl Academy &middot; Belajar. Berlatih. Berkarier.
         </p>
       </div>
     </div>

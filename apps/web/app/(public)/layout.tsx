@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { RefCapture } from "@/components/shared/RefCapture";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </a>
       <Navbar />
       <main id="main-content">{children}</main>
-      <Footer />
+      <PublicFooter />
     </>
   );
 }

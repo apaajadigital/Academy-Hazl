@@ -7,7 +7,7 @@ const waLinkOrContact = (text: string): string => waLink(text) ?? CONTACT_FALLBA
 
 // Falls back to /contact when WhatsApp is unconfigured — a consult CTA
 // that goes nowhere is worse than one that goes to the contact form.
-const WA_CONSULT_HREF = waLinkOrContact("Halo, saya ingin bergabung dengan Komunitas Jago Akademi");
+const WA_CONSULT_HREF = waLinkOrContact("Halo, saya ingin bergabung dengan Komunitas Hazl Academy");
 
 // Optional WhatsApp community group link — config-only go-live switch. Only an
 // https URL is honored; while unset, the lead form + admin follow-up IS the
@@ -45,7 +45,7 @@ export default function KomunitasPage() {
         eyebrow="Komunitas"
         title={
           <>
-            Gabung <span className="text-[var(--brand-cyan-strong)]">Komunitas</span> Jago Akademi
+            Gabung <span className="text-[var(--brand-cyan-strong)]">Komunitas</span> Hazl Academy
           </>
         }
         lede="Belajar bareng lebih seru. Ikut sharing session, perluas jaringan sesama learner, dan dapatkan info program lebih dulu — semuanya dimulai dari satu formulir pendaftaran."

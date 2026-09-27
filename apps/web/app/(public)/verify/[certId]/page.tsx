@@ -107,7 +107,7 @@ export default async function VerifyCertPage({
           <div className="text-center">
             <Image
               src="/logo.png"
-              alt="Jago Akademi"
+              alt="Hazl Academy"
               width={1037}
               height={190}
               className="mx-auto h-8 w-auto"
@@ -143,7 +143,7 @@ export default async function VerifyCertPage({
           <p className="border-t border-border-subtle pt-4 text-center text-xs text-text-muted">
             Verifikasi resmi oleh{" "}
             <Link href="/" className="text-accent-cyan-strong hover:underline">
-              Jago Akademi
+              Hazl Academy
             </Link>
           </p>
         </div>

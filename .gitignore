@@ -16,6 +16,9 @@ node_modules
 # Stray local artifacts
 Claude Dekstop/
 
+# Local Claude Code / ruflo tooling state — never shared code, just per-machine cache
+.claude-flow/
+
 # Large binary files — do NOT commit to GitHub
 postgresql-installer.exe
 redis-bin/

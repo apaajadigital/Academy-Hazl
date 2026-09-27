@@ -9,7 +9,7 @@ import { env } from "../config/env.js";
 export const pinoLogger = pino({
   level: env.LOG_LEVEL ?? (env.NODE_ENV === "production" ? "info" : "debug"),
   enabled: env.NODE_ENV !== "test",
-  base: { service: "jago-api" },
+  base: { service: "hazl-api" },
   redact: {
     paths: [
       "req.headers.authorization",

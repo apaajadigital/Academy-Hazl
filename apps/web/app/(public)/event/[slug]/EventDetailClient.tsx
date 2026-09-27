@@ -472,7 +472,7 @@ export default function EventDetailClient() {
               {/* Security note */}
               {!isRegistered && !isFull && (
                 <p className="mt-3 text-center text-xs" style={{ color: "var(--text-muted)" }}>
-                  🔒 Pembayaran aman melalui DOKU
+                  🔒 Pembayaran aman melalui Duitku
                 </p>
               )}
 

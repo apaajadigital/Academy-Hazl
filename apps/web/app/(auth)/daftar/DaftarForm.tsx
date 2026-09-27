@@ -45,7 +45,7 @@ export function DaftarForm() {
         <h2 className="text-lg font-semibold text-text-primary">Registrasi berhasil!</h2>
         <p className="text-sm text-text-secondary">
           Akun untuk <strong>{email}</strong> berhasil dibuat. Silakan masuk untuk
-          mulai menggunakan Jago Akademi.
+          mulai menggunakan Hazl Academy.
         </p>
         <Link
           href="/masuk"
@@ -128,7 +128,7 @@ export function DaftarForm() {
             <Link href="/terms" className="text-accent hover:underline" target="_blank">
               Syarat &amp; Ketentuan
             </Link>{" "}
-            Jago Akademi, termasuk pemrosesan data pribadi saya sesuai UU PDP.
+            Hazl Academy, termasuk pemrosesan data pribadi saya sesuai UU PDP.
           </label>
         </div>
 

@@ -238,7 +238,7 @@ export default function OrderDetailPage() {
                 <Wallet size={20} className="text-accent-cyan-strong" aria-hidden="true" />
                 <h4 className="text-sm font-bold uppercase tracking-wide text-text-primary">Instruksi Pembayaran</h4>
               </div>
-              <p className="text-sm text-text-secondary">Menunggu konfirmasi pembayaran dari DOKU...</p>
+              <p className="text-sm text-text-secondary">Menunggu konfirmasi pembayaran dari Duitku...</p>
             </div>
           )}
 

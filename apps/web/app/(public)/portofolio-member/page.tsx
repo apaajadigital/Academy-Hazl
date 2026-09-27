@@ -153,8 +153,8 @@ export default function PortofolioMemberPage() {
             <span className="pm-hero-gradient">Dari Member Komunitas Kami</span>
           </h1>
           <p className="pm-hero-desc">
-            Proyek dan karya yang dipublikasikan langsung oleh member Jago
-            Akademi — bukti nyata hasil belajar mereka.
+            Proyek dan karya yang dipublikasikan langsung oleh member Hazl
+            Academy — bukti nyata hasil belajar mereka.
           </p>
         </div>
         <div className="pm-hero-glow" aria-hidden="true" />

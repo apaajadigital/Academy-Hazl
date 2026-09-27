@@ -5,7 +5,7 @@ import { Card } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Kebijakan Privasi",
-  description: "Kebijakan privasi Jago Akademi — bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda sesuai UU PDP.",
+  description: "Kebijakan privasi Hazl Academy — bagaimana kami mengumpulkan, menggunakan, dan melindungi data pribadi Anda sesuai UU PDP.",
 };
 
 const sections = [
@@ -31,7 +31,7 @@ const sections = [
   },
   {
     h: "6. Pihak Ketiga & Transfer Data",
-    p: "Kami menggunakan penyedia tepercaya untuk pembayaran (DOKU), email, penyimpanan media, dan analitik. Beberapa penyedia dapat memproses data di luar Indonesia; kami memastikan perlindungan yang memadai.",
+    p: "Kami menggunakan penyedia tepercaya untuk pembayaran (Duitku), email, penyimpanan media, dan analitik. Beberapa penyedia dapat memproses data di luar Indonesia; kami memastikan perlindungan yang memadai.",
   },
   {
     h: "7. Kontak",
@@ -85,7 +85,7 @@ export default function PrivacyPage() {
               </div>
               <Card className="p-5">
                 <p className="mb-1 text-xs text-text-secondary">Berlaku sejak</p>
-                <p className="text-sm font-semibold text-text-primary">Peluncuran layanan Jago Akademi</p>
+                <p className="text-sm font-semibold text-text-primary">Peluncuran layanan Hazl Academy</p>
               </Card>
             </div>
           </aside>
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
             <Card className="p-6 md:p-10">
               <header className="mb-8 border-b border-border-default pb-6">
                 <h1 className="mb-2 text-3xl font-bold text-text-primary md:text-4xl">Kebijakan Privasi</h1>
-                <p className="text-sm text-text-secondary">Berlaku sejak peluncuran layanan Jago Akademi.</p>
+                <p className="text-sm text-text-secondary">Berlaku sejak peluncuran layanan Hazl Academy.</p>
               </header>
 
               <div className="space-y-10">

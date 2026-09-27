@@ -250,7 +250,7 @@ router.delete(
         await tx.user.update({
           where: { id },
           data: {
-            email: `deleted+${id}@jagoakademi.invalid`,
+            email: `deleted+${id}@hazlacademy.invalid`,
             name: "Akun Dihapus",
             avatarUrl: null,
             passwordHash: null,
@@ -358,7 +358,7 @@ router.get(
         userAgent: req.headers["user-agent"],
       });
 
-      res.setHeader("Content-Disposition", `attachment; filename="jago-data-${id}.json"`);
+      res.setHeader("Content-Disposition", `attachment; filename="hazl-data-${id}.json"`);
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.status(200).send(JSON.stringify(successResponse(bundle), null, 2));
     } catch (err) {

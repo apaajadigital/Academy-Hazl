@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
 
 export const metadata: Metadata = {
-  title: "Komunitas Jago Akademi",
+  title: "Komunitas Hazl Academy",
   description:
-    "Gabung Komunitas Jago Akademi: belajar bareng sesama learner, ikut sharing session dan kelas gratis bulanan, networking, serta info program lebih dulu.",
+    "Gabung Komunitas Hazl Academy: belajar bareng sesama learner, ikut sharing session dan kelas gratis bulanan, networking, serta info program lebih dulu.",
   alternates: { canonical: "/komunitas" },
   openGraph: {
-    title: "Komunitas Jago Akademi",
+    title: "Komunitas Hazl Academy",
     description:
-      "Belajar bareng, sharing session, dan networking bersama sesama learner Jago Akademi.",
+      "Belajar bareng, sharing session, dan networking bersama sesama learner Hazl Academy.",
     type: "website",
     url: "/komunitas",
   },

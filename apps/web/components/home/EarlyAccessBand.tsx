@@ -1,51 +1,62 @@
 import Link from "next/link";
-import { CheckCircleIcon } from "./HomeIcons";
+import Image from "next/image";
+import { ArrowRightIcon, SparklesIcon } from "./HomeIcons";
 
 export function EarlyAccessBand() {
   return (
-    <section className="w-full bg-[#16181D] text-white py-20 border-t border-[#2E3036]">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-8 text-center flex flex-col items-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#FF2F86]"></span>
-          <span className="text-[11px] font-bold tracking-widest text-[#BFC7D0] uppercase">
-            KONSULTASI GRATIS DENGAN LEAD MENTOR
-          </span>
-        </div>
+    <section className="w-full bg-white py-16 sm:py-24">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[40px] bg-gradient-to-r from-[#0077A8] via-[#0D5B8A] to-[#CC0052] px-6 py-16 sm:py-20 text-center shadow-lg">
+          {/* Decorative Background Elements */}
+          <div className="pointer-events-none absolute inset-0 opacity-20 bg-[radial-gradient(#FFFFFF_1px,transparent_1px)] [background-size:20px_20px]"></div>
 
-        <h2 className="font-display text-2xl sm:text-3xl lg:text-5xl font-extrabold text-white tracking-tight max-w-3xl mb-5 leading-tight">
-          Siap Mengakselerasi Standar Karier Digital Anda?
-        </h2>
+          <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto">
+            {/* Mascot Hazel Welcoming */}
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
+              <Image
+                src="/brand/mascot/hazel-menyambut.webp"
+                alt="Hazel menyambut"
+                fill
+                sizes="128px"
+                className="object-contain drop-shadow-md"
+              />
+            </div>
 
-        <p className="text-sm sm:text-base text-gray-400 max-w-xl mb-10 leading-relaxed">
-          Bergabunglah bersama ribuan engineer dan praktisi produk yang telah menguasai kompetensi teknologi berstandar tinggi bersama Hazl Academy.
-        </p>
+            {/* Badge */}
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs sm:text-sm font-bold text-white backdrop-blur-sm mb-6">
+              <SparklesIcon className="w-4 h-4 text-pink-300" />
+              <span>Daftar gratis</span>
+              <span className="hidden sm:inline opacity-60">•</span>
+              <span className="hidden sm:inline font-semibold">Jualan mulai hari ini</span>
+            </span>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 w-full sm:w-auto">
-          <Link
-            href="/daftar"
-            className="h-12 px-8 rounded-full bg-[#36BDF2] text-[#16181D] text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-[#72D2FF] transition-colors active:scale-[0.99]"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#FF2F86]"></span>
-            <span>Mulai Belajar Sekarang</span>
-          </Link>
-          <Link
-            href="/contact"
-            className="h-12 px-8 rounded-full bg-transparent text-white border border-gray-600 text-sm font-medium inline-flex items-center justify-center hover:bg-white/5 transition-colors active:scale-[0.99]"
-          >
-            Konsultasi Tim Kurikulum
-          </Link>
-        </div>
+            {/* Main Headline */}
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] mb-5">
+              Siap ubah skill AI-mu jadi penghasilan?
+            </h2>
 
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
-          <span className="flex items-center gap-1.5">
-            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Tanpa Kontrak Mengikat
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Akses Repositori Seumur Hidup
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircleIcon className="w-4 h-4 text-[#36BDF2]" /> Sertifikasi Resmi Terverifikasi
-          </span>
+            {/* Subheading */}
+            <p className="text-base sm:text-lg text-white/90 max-w-xl mb-10 leading-relaxed font-normal">
+              Mulai dari satu kelas. Saat sudah siap, buka lapakmu sendiri di Hazl Academy dan nikmati bagi hasil 95%.
+            </p>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5">
+              <Link
+                href="/daftar"
+                className="h-12 px-8 rounded-full bg-white text-[#16181D] text-sm sm:text-base font-bold inline-flex items-center gap-2 hover:bg-[#F6F7F9] transition-all shadow-md active:scale-[0.99]"
+              >
+                <span>Daftar gratis</span>
+                <ArrowRightIcon className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/trainer-program"
+                className="h-12 px-8 rounded-full border border-white/30 bg-white/10 text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-sm active:scale-[0.99]"
+              >
+                Pelajari jadi kreator
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </section>

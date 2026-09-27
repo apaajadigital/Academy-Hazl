@@ -79,7 +79,7 @@ export function SubscriptionLock({ children, isLocked }: SubscriptionLockProps) 
             Konten Terkunci
           </h3>
           <p className="mb-5 text-sm leading-relaxed text-text-secondary">
-            Berlangganan Jago Akademi untuk mengakses semua materi, video, dan sertifikat pembelajaran.
+            Berlangganan Hazl Academy untuk mengakses semua materi, video, dan sertifikat pembelajaran.
           </p>
           <Link
             href="/berlangganan"

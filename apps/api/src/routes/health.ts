@@ -11,8 +11,11 @@ router.get("/health", (_req, res) => {
   res.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    service: "Jago Akademi Core API",
-    version: env.APP_VERSION ?? "1.0.0",
+    service: "Hazl Academy Core API",
+    // `||` not `??`: .env.example ships APP_VERSION="" ("leave empty" is the
+    // documented default), and `??` only falls back on null/undefined, so an
+    // explicit empty string survived as the reported version instead of "1.0.0".
+    version: env.APP_VERSION || "1.0.0",
   });
 });
 

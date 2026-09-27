@@ -289,7 +289,7 @@ export default function AdminPortofolioPage() {
         <EmptyState
           icon={ImageIcon}
           title="Tidak ada member ditemukan"
-          description="Tambahkan member untuk menampilkan portofolio komunitas Jago Akademi di sini."
+          description="Tambahkan member untuk menampilkan portofolio komunitas Hazl Academy di sini."
         />
       ) : (
         <div className="dash-grid">
@@ -398,7 +398,7 @@ export default function AdminPortofolioPage() {
                 type="text"
                 value={formPhotoUrl}
                 onChange={(e) => setFormPhotoUrl(e.target.value)}
-                placeholder="https://media.jago.id/..."
+                placeholder="https://media.hazl.id/..."
                 containerClassName="md:col-span-2"
               />
               <Select

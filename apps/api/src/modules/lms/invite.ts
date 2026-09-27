@@ -48,7 +48,7 @@ router.post("/tenants/:tenantId/invites", authenticate, async (req, res, next) =
       const tenantId = req.params.tenantId as string;
       // Needed for the invite email only; a missing (or unreadable) name must not
       // block the invite itself, so this degrades to a neutral brand name below.
-      let tenantName = "Jago Akademi";
+      let tenantName = "Hazl Academy";
       try {
         const tenant = await prisma.lmsTenant.findUnique({
           where: { id: tenantId },

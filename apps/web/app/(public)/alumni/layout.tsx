@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
 
 export const metadata: Metadata = {
-  title: "Cerita Alumni — Kisah Nyata Peserta Jago Akademi",
+  title: "Cerita Alumni — Kisah Nyata Peserta Hazl Academy",
   description:
-    "Cerita nyata dari alumni Jago Akademi: perjalanan belajar, capaian karier, dan pengalaman mereka mengikuti program kami.",
+    "Cerita nyata dari alumni Hazl Academy: perjalanan belajar, capaian karier, dan pengalaman mereka mengikuti program kami.",
   alternates: { canonical: "/alumni" },
   openGraph: {
-    title: "Cerita Alumni — Jago Akademi",
+    title: "Cerita Alumni — Hazl Academy",
     description:
-      "Kisah nyata alumni Jago Akademi: perjalanan belajar dan capaian karier mereka.",
+      "Kisah nyata alumni Hazl Academy: perjalanan belajar dan capaian karier mereka.",
     type: "website",
     url: "/alumni",
   },

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = getCategoryBySlug(kategori);
   if (!category) return { title: "Not Found" };
   return {
-    title: `${category.title} — E-Course Jago Akademi`,
+    title: `${category.title} — E-Course Hazl Academy`,
     description: category.description,
   };
 }

@@ -11,11 +11,11 @@ import { listEvents, type EventSummary } from "@/lib/api/events";
 import { resolveEventListState } from "@/lib/events/listState";
 
 export const metadata: Metadata = {
-  title: "Event & Workshop — Jago Akademi",
+  title: "Event & Workshop — Hazl Academy",
   description:
-    "Webinar, workshop intensif, dan bootcamp langsung dari praktisi berpengalaman. Tingkatkan skill dan jaringanmu bersama komunitas Jago Akademi.",
+    "Webinar, workshop intensif, dan bootcamp langsung dari praktisi berpengalaman. Tingkatkan skill dan jaringanmu bersama komunitas Hazl Academy.",
   openGraph: {
-    title: "Event & Workshop Jago Akademi",
+    title: "Event & Workshop Hazl Academy",
     description:
       "Bergabung dalam webinar, workshop, dan bootcamp yang dipandu oleh praktisi terbaik di industri.",
     type: "website",

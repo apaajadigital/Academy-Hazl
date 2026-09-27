@@ -5,10 +5,10 @@ import { LandingTemplate } from "@/components/landing/LandingTemplate";
 export const metadata: Metadata = {
   title: "Trainer Program — Jadi Trainer Bersertifikat",
   description:
-    "Jadilah trainer profesional bersertifikat bersama Jago Akademi: kembangkan personal brand, ajar audiens luas, dan hasilkan pendapatan. Daftar minat sekarang.",
+    "Jadilah trainer profesional bersertifikat bersama Hazl Academy: kembangkan personal brand, ajar audiens luas, dan hasilkan pendapatan. Daftar minat sekarang.",
   alternates: { canonical: "/trainer-program" },
   openGraph: {
-    title: "Trainer Program — Jago Akademi",
+    title: "Trainer Program — Hazl Academy",
     description: "Jadi trainer bersertifikat: personal brand, audiens luas, pendapatan. Daftar minat.",
     type: "website",
     url: "/trainer-program",
@@ -20,9 +20,9 @@ const benefits = [
   // BL-23: "ribuan pembelajar" removed — this page recruits trainers, so an
   // inflated audience figure is a promise made to someone deciding whether to
   // invest their time.
-  { icon: Presentation, title: "Bangun kelas sendiri", body: "Rancang dan terbitkan materimu di platform Jago Akademi." },
+  { icon: Presentation, title: "Bangun kelas sendiri", body: "Rancang dan terbitkan materimu di platform Hazl Academy." },
   { icon: Wallet, title: "Hasilkan pendapatan", body: "Dapatkan bagi hasil dari setiap peserta yang belajar bersamamu." },
-  { icon: Users, title: "Audiens luas", body: "Manfaatkan platform Jago Akademi untuk menjangkau lebih banyak orang." },
+  { icon: Users, title: "Audiens luas", body: "Manfaatkan platform Hazl Academy untuk menjangkau lebih banyak orang." },
   { icon: GraduationCap, title: "Dibimbing hingga siap", body: "Pendampingan menyiapkan kurikulum, rekaman, dan strategi kelas." },
   { icon: Rocket, title: "Kembangkan personal brand", body: "Jadikan keahlianmu sebagai reputasi profesional yang diakui." },
 ];
@@ -32,7 +32,7 @@ export default function TrainerProgramPage() {
     <LandingTemplate
       eyebrow="Trainer Program"
       title={<>Ubah keahlianmu jadi <span className="text-accent">dampak</span></>}
-      lede="Jadilah trainer bersertifikat Jago Akademi — bangun kelasmu sendiri, jangkau audiens luas, dan hasilkan pendapatan dari ilmu yang kamu bagikan. Daftarkan minatmu, tim kami akan menghubungi."
+      lede="Jadilah trainer bersertifikat Hazl Academy — bangun kelasmu sendiri, jangkau audiens luas, dan hasilkan pendapatan dari ilmu yang kamu bagikan. Daftarkan minatmu, tim kami akan menghubungi."
       benefits={benefits}
       formSource="trainer"
       formTitle="Daftar minat trainer"

@@ -178,12 +178,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside className="al-sidebar">
-        {/* Logo — branded Jago Akademi mark (matches member shell) */}
+        {/* Logo — branded Hazl Academy mark (matches member shell) */}
         <div className="al-logo-row">
           {!collapsed && (
             <div className="al-logo-wrap">
               <Link href="/" className="al-logo-link">
-                <Image src="/logo.png" alt="Jago Akademi" width={120} height={32} className="al-logo-img" />
+                <Image src="/logo.png" alt="Hazl Academy" width={158} height={32} className="al-logo-img" />
               </Link>
               <span className="al-logo-sub">Control Panel</span>
             </div>

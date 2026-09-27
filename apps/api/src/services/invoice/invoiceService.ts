@@ -19,7 +19,7 @@ export function generateInvoicePDF(order: InvoiceOrder): Promise<Buffer> {
     const W = doc.page.width - 120;
 
     // Header
-    doc.fillColor("#0077A8").fontSize(22).font("Helvetica-Bold").text("JAGO AKADEMI", 60, 60);
+    doc.fillColor("#0077A8").fontSize(22).font("Helvetica-Bold").text("HAZL ACADEMY", 60, 60);
     doc.fillColor("#6E6E73").fontSize(10).font("Helvetica").text("Platform Edukasi Digital Indonesia", 60, 86);
 
     // Invoice title
@@ -105,7 +105,7 @@ export function generateInvoicePDF(order: InvoiceOrder): Promise<Buffer> {
     const footerY = doc.page.height - 80;
     doc.moveTo(60, footerY).lineTo(doc.page.width - 60, footerY).stroke("#E5E5EA");
     doc.fillColor("#6E6E73").fontSize(9).font("Helvetica");
-    doc.text("Jago Akademi | platform.jagoakademi.com | support@jagoakademi.com", 60, footerY + 12, { align: "center", width: W });
+    doc.text("Hazl Academy | skill.hazl.id | support@hazl.id", 60, footerY + 12, { align: "center", width: W });
     doc.text("Dokumen ini diterbitkan secara elektronik dan sah tanpa tanda tangan.", 60, footerY + 26, { align: "center", width: W });
 
     doc.end();

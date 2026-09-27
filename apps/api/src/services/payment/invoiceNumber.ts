@@ -36,8 +36,8 @@
  */
 const BODY_LENGTH = 25;
 
-/** DOKU's tightest documented limit (credit card acquirers). */
-export const MAX_INVOICE_LENGTH = 30;
+/** Duitku's documented merchantOrderId limit (string(50)). */
+export const MAX_INVOICE_LENGTH = 50;
 
 const PREFIX = {
   /** Orders that go to the gateway. */
@@ -77,7 +77,7 @@ export function buildInvoiceNumber(orderId: string, kind: InvoiceKind = "paid"):
   // with a readable message — instead of as an opaque gateway rejection.
   if (invoiceNumber.length > MAX_INVOICE_LENGTH) {
     throw new Error(
-      `invoice number exceeds DOKU's ${MAX_INVOICE_LENGTH}-char limit: ${invoiceNumber.length}`,
+      `invoice number exceeds Duitku's ${MAX_INVOICE_LENGTH}-char limit: ${invoiceNumber.length}`,
     );
   }
   if (!ALPHANUMERIC.test(invoiceNumber)) {

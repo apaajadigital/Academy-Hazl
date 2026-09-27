@@ -59,7 +59,7 @@ export async function generateCertificatePDF(
       .fillColor("#0077A8")
       .fontSize(28)
       .font("Helvetica-Bold")
-      .text("JAGO AKADEMI", 0, 48, { align: "center" });
+      .text("HAZL ACADEMY", 0, 48, { align: "center" });
 
     doc
       .fillColor("#6E6E73")

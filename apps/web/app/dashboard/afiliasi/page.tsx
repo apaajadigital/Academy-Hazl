@@ -225,7 +225,7 @@ export default function AfiliasiPage() {
           </span>
           <h1 className="font-display text-2xl font-extrabold text-text-primary">Bergabung Program Afiliasi</h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-text-secondary">
-            Dapatkan komisi untuk setiap referral yang berhasil bertransaksi di Jago Akademi.
+            Dapatkan komisi untuk setiap referral yang berhasil bertransaksi di Hazl Academy.
             Tanpa modal, daftar gratis!
           </p>
           <div className="mt-6 flex flex-col gap-3 text-left">
@@ -270,7 +270,7 @@ export default function AfiliasiPage() {
               {profile.status === "active" ? "Aktif" : "Nonaktif"}
             </Badge>
           </div>
-          <p className="mt-1 text-sm text-text-secondary">Program referral Jago Akademi</p>
+          <p className="mt-1 text-sm text-text-secondary">Program referral Hazl Academy</p>
         </div>
         <div className="glass-card flex items-center gap-4 rounded-[var(--radius-card)] p-4 shadow-e1">
           <div className="flex flex-col">

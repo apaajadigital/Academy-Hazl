@@ -3,12 +3,12 @@ import { Wallet, Link2, TrendingUp, Users, ShieldCheck, Headphones } from "lucid
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
 export const metadata: Metadata = {
-  title: "Program Afiliasi — Hasilkan Komisi Bersama Jago Akademi",
+  title: "Program Afiliasi — Hasilkan Komisi Bersama Hazl Academy",
   description:
-    "Bergabung dengan Program Afiliasi Jago Akademi. Bagikan link, ajak orang belajar, dan dapatkan komisi dari setiap transaksi. Daftar minat sekarang.",
+    "Bergabung dengan Program Afiliasi Hazl Academy. Bagikan link, ajak orang belajar, dan dapatkan komisi dari setiap transaksi. Daftar minat sekarang.",
   alternates: { canonical: "/afiliasi" },
   openGraph: {
-    title: "Program Afiliasi Jago Akademi",
+    title: "Program Afiliasi Hazl Academy",
     description: "Bagikan link, ajak belajar, dapatkan komisi. Daftar minat sekarang.",
     type: "website",
     url: "/afiliasi",
@@ -29,7 +29,7 @@ export default function AfiliasiPage() {
     <LandingTemplate
       eyebrow="Program Afiliasi"
       title={<>Bagikan ilmu, <span className="text-accent">dapatkan komisi</span></>}
-      lede="Ajak lebih banyak orang belajar bersama Jago Akademi dan dapatkan komisi dari setiap transaksi yang kamu bawa. Daftarkan minatmu — tim kami akan menghubungi saat program dibuka."
+      lede="Ajak lebih banyak orang belajar bersama Hazl Academy dan dapatkan komisi dari setiap transaksi yang kamu bawa. Daftarkan minatmu — tim kami akan menghubungi saat program dibuka."
       benefits={benefits}
       formSource="affiliate"
       formTitle="Daftar minat afiliasi"

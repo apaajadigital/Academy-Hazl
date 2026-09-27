@@ -11,7 +11,7 @@ const waHref = waLink();
 export const metadata: Metadata = {
   title: "FAQ — Pertanyaan Umum",
   description:
-    "Temukan jawaban atas pertanyaan umum seputar Jago Akademi — cara beli kursus, sertifikat, pembayaran, refund, dan lainnya.",
+    "Temukan jawaban atas pertanyaan umum seputar Hazl Academy — cara beli kursus, sertifikat, pembayaran, refund, dan lainnya.",
 };
 
 /** A FAQ answer may embed inline links, so it is a ReactNode rather than a string. */
@@ -23,8 +23,8 @@ export const FAQ_ITEMS: FaqGroup[] = [
     category: "Umum",
     items: [
       {
-        q: "Apa itu Jago Akademi?",
-        a: "Jago Akademi adalah platform edukasi digital yang menyediakan e-course video, e-book, event pelatihan, dan program trainer bersertifikat dalam satu ekosistem terintegrasi.",
+        q: "Apa itu Hazl Academy?",
+        a: "Hazl Academy adalah platform edukasi digital yang menyediakan e-course video, e-book, event pelatihan, dan program trainer bersertifikat dalam satu ekosistem terintegrasi.",
       },
       {
         q: "Apakah saya perlu mendaftar untuk mengakses konten?",
@@ -37,7 +37,7 @@ export const FAQ_ITEMS: FaqGroup[] = [
     items: [
       {
         q: "Metode pembayaran apa yang diterima?",
-        a: "Kami menerima Transfer Bank (Virtual Account), QRIS, dan Kartu Kredit/Debit melalui gateway pembayaran DOKU yang aman.",
+        a: "Kami menerima Transfer Bank (Virtual Account) melalui gateway pembayaran Duitku yang aman.",
       },
       {
         q: "Apakah ada biaya berlangganan?",
@@ -75,7 +75,7 @@ export const FAQ_ITEMS: FaqGroup[] = [
       },
       {
         q: "Apakah sertifikat bisa diverifikasi?",
-        a: "Ya, setiap sertifikat memiliki kode unik dan QR code yang bisa dipindai untuk verifikasi keaslian di halaman verify.jagoakademi.com.",
+        a: "Ya, setiap sertifikat memiliki kode unik dan QR code yang bisa dipindai untuk verifikasi keaslian di halaman verify.hazl.id.",
       },
       {
         q: "Bisakah saya membagikan sertifikat ke LinkedIn?",

@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const lesson = getLessonBySlug(kategori, topik, materi);
   if (!category || !topic || !lesson) return { title: "Not Found" };
   return {
-    title: `${lesson.title} | ${topic.title} — Jago Akademi`,
+    title: `${lesson.title} | ${topic.title} — Hazl Academy`,
     description: `Pelajari ${lesson.title} dalam topik ${topic.title}. ${lesson.chapterCount} bab video pembelajaran.`,
   };
 }

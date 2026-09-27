@@ -12,31 +12,31 @@ const config: Config = {
       colors: {
         // Primary: Cyan (brand)
         cyan: {
-          50: "#e0fbff",
-          100: "#b3f5ff",
-          200: "#80eeff",
-          300: "#4de7ff",
-          400: "#1ae0ff",
-          500: "#00d4ff", // Brand fill (buttons, progress)
-          600: "#00aad4",
-          700: "#0077A8", // brand-cyan-strong — use for text/icons on white
-          800: "#005c7a",
-          900: "#00374d",
-          950: "#001f2e",
+          50: "#E6F7FE",
+          100: "#C3ECFB",
+          200: "#96DEF8",
+          300: "#69D0F5",
+          400: "#4EC5F3",
+          500: "#36BDF2", // Hazl brand blue — buttons, progress, active states
+          600: "#0077A8", // brand-cyan-strong — use for text/icons on white
+          700: "#005F87",
+          800: "#004A6B",
+          900: "#003049",
+          950: "#001A28",
         },
         // Accent: Hot Pink
         pink: {
-          50: "#ffe0ef",
-          100: "#ffb3d2",
-          200: "#ff80b3",
-          300: "#ff4d94",
-          400: "#ff1a75",
-          500: "#ff0066", // Brand accent fill
+          50: "#FFE6F1",
+          100: "#FFC2DE",
+          200: "#FF8FC0",
+          300: "#FF5CA2",
+          400: "#FF3D91",
+          500: "#FF2F86", // Hazl brand pink — accent fill, notifications
           600: "#CC0052", // brand-pink-strong — accessible text on white
-          700: "#a80042",
-          800: "#7a0031",
-          900: "#4d001f",
-          950: "#2e0013",
+          700: "#A30043",
+          800: "#7A0032",
+          900: "#4D001F",
+          950: "#2E0013",
         },
         // Neutral — light scale (was dark-first)
         dark: {
@@ -54,8 +54,8 @@ const config: Config = {
         },
         // Semantic aliases
         brand: {
-          primary: "#00d4ff",
-          accent:  "#ff0066",
+          primary: "#36BDF2",
+          accent:  "#FF2F86",
           dark:    "#1D1D1F",
           darker:  "#000000",
         },
@@ -116,10 +116,10 @@ const config: Config = {
 
       // ─── Background Image ─────────────────────────────────────────
       backgroundImage: {
-        "gradient-brand":      "linear-gradient(135deg, #0077A8 0%, #ff0066 100%)",
-        "gradient-brand-soft": "linear-gradient(135deg, rgba(0,119,168,0.1) 0%, rgba(255,0,102,0.08) 100%)",
+        "gradient-brand":      "linear-gradient(120deg, #36BDF2 0%, #FF2F86 100%)",
+        "gradient-brand-soft": "linear-gradient(135deg, rgba(0,119,168,0.1) 0%, rgba(255,47,134,0.08) 100%)",
         "gradient-page":       "linear-gradient(180deg, #F5F5F7 0%, #FFFFFF 100%)",
-        "gradient-hero":       "radial-gradient(ellipse at top, rgba(0,119,168,0.06) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(255,0,102,0.04) 0%, transparent 60%)",
+        "gradient-hero":       "radial-gradient(ellipse at top, rgba(0,119,168,0.06) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(255,47,134,0.04) 0%, transparent 60%)",
         // Legacy aliases → light equivalents
         "gradient-dark":       "linear-gradient(180deg, #F5F5F7 0%, #FAFAFA 100%)",
         "gradient-dark-card":  "linear-gradient(145deg, #FFFFFF 0%, #F5F5F7 100%)",

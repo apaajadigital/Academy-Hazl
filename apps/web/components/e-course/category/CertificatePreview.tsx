@@ -11,7 +11,7 @@ export function CertificatePreview({ category }: CertificatePreviewProps) {
       <div className="mx-auto flex max-w-[1152px] flex-col gap-8 px-8">
         <header className="flex flex-col gap-1.5">
           <h2 className="font-display text-xl font-bold text-text-primary">
-            Sertifikat Resmi Jago Akademi
+            Sertifikat Resmi Hazl Academy
           </h2>
           <p className="text-sm text-text-muted">
             Selesaikan 80% materi dan dapatkan sertifikat ini
@@ -24,7 +24,7 @@ export function CertificatePreview({ category }: CertificatePreviewProps) {
           <div className="mt-2 flex items-center justify-center gap-2">
             <BookOpen size={18} className="text-accent" aria-hidden="true" />
             <span className="font-display font-bold tracking-wide text-accent">
-              JAGO AKADEMI
+              HAZL ACADEMY
             </span>
           </div>
 
@@ -58,7 +58,7 @@ export function CertificatePreview({ category }: CertificatePreviewProps) {
 
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="font-display text-sm italic leading-none text-text-primary">
-                Jago
+                Hazl
               </span>
               <span className="w-full border-t border-[var(--text-primary)] pt-1 text-[10px] text-text-muted">
                 Founder &amp; CEO

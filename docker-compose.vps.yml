@@ -3,13 +3,13 @@ services:
     image: postgres:16-alpine
     restart: always
     environment:
-      POSTGRES_DB: jago_akademi
-      POSTGRES_USER: ${POSTGRES_USER:-jagouser}
+      POSTGRES_DB: hazl_akademi
+      POSTGRES_USER: ${POSTGRES_USER:-hazluser}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?DB password required}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jagouser}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hazluser}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,7 +45,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    image: jago-api-vps:local
+    image: hazl-api-vps:local
     restart: always
     depends_on:
       postgres:
@@ -58,7 +58,7 @@ services:
       - "4010:4000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hazluser}:${POSTGRES_PASSWORD}@postgres:5432/hazl_akademi
       REDIS_URL: redis://redis:6379
       PORT: 4000
       WEB_URL: ${WEB_URL}
@@ -71,13 +71,23 @@ services:
       COOKIE_SECURE: "true"
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Jago Akademi}
-      DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
-      DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
-      DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
-      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
-      # paylater). Change it here to re-scope checkout without a rebuild.
-      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Hazl Academy}
+      DUITKU_MERCHANT_CODE: ${DUITKU_MERCHANT_CODE}
+      DUITKU_API_KEY: ${DUITKU_API_KEY}
+      # Fixed bug from the DOKU era: that block's default silently pointed at
+      # PRODUCTION when unset and never passed the is-production flag into the
+      # container at all. This defaults to sandbox and passes the flag through,
+      # so a misconfigured .env fails safe instead of silently going live.
+      DUITKU_IS_PRODUCTION: ${DUITKU_IS_PRODUCTION:-false}
+      # MUST pass through empty when unset, NOT default to sandbox here — that
+      # would silently override DUITKU_IS_PRODUCTION=true with the sandbox host
+      # (the exact bug found live 27 Sep 2026: prod flag true, this line
+      # defaulted to sandbox.duitku.com anyway, so real BCA VA transfers were
+      # paid into Duitku's sandbox and never confirmed). duitkuService.ts's own
+      # baseUrl() already derives sandbox-vs-production correctly from
+      # DUITKU_IS_PRODUCTION when this is empty — this line must not compete
+      # with that logic by supplying its own default.
+      DUITKU_BASE_URL: ${DUITKU_BASE_URL:-}
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_KEY: ${MEILISEARCH_KEY}
       UPLOAD_DIR: /app/uploads
@@ -101,7 +111,7 @@ services:
   # Without this (and redis above) BullMQ is disabled and jobs run inline in the
   # request path; async emails/certificates would block responses on the VPS.
   worker:
-    image: jago-api-vps:local
+    image: hazl-api-vps:local
     restart: always
     command: ["node", "dist/worker.js"]
     # The api image bakes in a HEALTHCHECK against :4000, but the worker runs
@@ -117,7 +127,7 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hazluser}:${POSTGRES_PASSWORD}@postgres:5432/hazl_akademi
       REDIS_URL: redis://redis:6379
       # The worker builds user-facing links too, so it needs the same WEB_URL as
       # the api. Without it env.ts falls back to http://localhost:3004 and every
@@ -128,13 +138,15 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Required}
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM}
-      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Jago Akademi}
-      DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
-      DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
-      DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
-      # BL-147: empty falls back to the in-code default (VA/card/e-wallet, no
-      # paylater). Change it here to re-scope checkout without a rebuild.
-      DOKU_PAYMENT_METHOD_TYPES: ${DOKU_PAYMENT_METHOD_TYPES:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Hazl Academy}
+      DUITKU_MERCHANT_CODE: ${DUITKU_MERCHANT_CODE}
+      DUITKU_API_KEY: ${DUITKU_API_KEY}
+      # Fixed bug from the DOKU era: that block's default silently pointed at
+      # PRODUCTION when unset and never passed the is-production flag into the
+      # container at all. This defaults to sandbox and passes the flag through,
+      # so a misconfigured .env fails safe instead of silently going live.
+      DUITKU_IS_PRODUCTION: ${DUITKU_IS_PRODUCTION:-false}
+      DUITKU_BASE_URL: ${DUITKU_BASE_URL:-}
       MEILISEARCH_URL: http://meilisearch:7700
       MEILISEARCH_KEY: ${MEILISEARCH_KEY}
       UPLOAD_DIR: /app/uploads
@@ -158,7 +170,7 @@ services:
         API_PROXY_TARGET: ${API_PROXY_TARGET:-}
         NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
         NEXT_PUBLIC_MIXPANEL_TOKEN: ${NEXT_PUBLIC_MIXPANEL_TOKEN:-}
-        NEXT_PUBLIC_APP_NAME: "Jago Akademi"
+        NEXT_PUBLIC_APP_NAME: "Hazl Academy"
         # Feature flags are inlined at BUILD time (lib/features.ts). Before these
         # lines no flag could ever be enabled in a Docker image regardless of the
         # host .env (30 Jul audit). Empty = OFF, unchanged behaviour.
