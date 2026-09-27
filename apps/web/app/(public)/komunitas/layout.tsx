@@ -4,22 +4,20 @@ import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
 
 export const metadata: Metadata = {
-  title: "Komunitas Hazl Academy",
+  title: "Komunitas Kreator Video AI — Hazl Academy",
   description:
-    "Gabung Komunitas Hazl Academy: belajar bareng sesama learner, ikut sharing session dan kelas gratis bulanan, networking, serta info program lebih dulu.",
+    "Gabung Komunitas Kreator Hazl Academy: ruang diskusi prompt, bedah node ComfyUI, review portofolio UGC, dan peluang proyek komersial bersama 14.200+ kreator.",
   alternates: { canonical: "/komunitas" },
   openGraph: {
-    title: "Komunitas Hazl Academy",
+    title: "Komunitas Kreator Video AI — Hazl Academy",
     description:
-      "Belajar bareng, sharing session, dan networking bersama sesama learner Hazl Academy.",
+      "Ruang diskusi prompt, bedah workflow node, review portofolio komersial, dan networking bersama 14.200+ kreator Video AI.",
     type: "website",
     url: "/komunitas",
   },
 };
 
 export default function KomunitasLayout({ children }: { children: ReactNode }) {
-  // Gated behind the Community feature flag — while OFF the route 404s,
-  // matching how other unshipped feature pages behave (see kelas-privat gating).
   if (!features.community) notFound();
   return <>{children}</>;
 }

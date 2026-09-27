@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import BlogListClient from "./BlogListClient";
 
 export const metadata: Metadata = {
-  title: "Blog — Hazl Academy",
+  title: "Wawasan & Riset Video AI — Hazl Academy",
   description:
-    "Insight, tips, dan panduan pengembangan skill dan karier dari para praktisi. Baca artikel terbaru dari Hazl Academy.",
+    "Riset komparasi tools generative video, tutorial workflow ComfyUI, teknik prompt engineering, dan panduan komersialisasi UGC dari praktisi industri.",
   openGraph: {
-    title: "Blog Hazl Academy",
+    title: "Wawasan & Riset Video AI — Hazl Academy",
     description:
-      "Insight, tips, dan panduan pengembangan skill dan karier dari para praktisi.",
+      "Riset komparasi tools generative video, tutorial workflow ComfyUI, teknik prompt engineering, dan panduan komersialisasi UGC.",
     type: "website",
   },
 };

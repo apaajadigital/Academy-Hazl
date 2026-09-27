@@ -108,7 +108,7 @@ export default function BlogArticleClient() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl px-6 py-10 md:py-14">
+      <div className="mx-auto max-w-[760px] px-6 py-10 md:py-14">
         <article>
           {/* Header */}
           <header className="mb-8">
@@ -157,7 +157,7 @@ export default function BlogArticleClient() {
           )}
 
           {/* Body */}
-          <div className="prose prose-neutral max-w-none whitespace-pre-wrap leading-relaxed text-[var(--text-primary)] prose-headings:font-display prose-headings:text-[var(--text-primary)] prose-a:text-[var(--brand-cyan-strong)]">
+          <div className="prose prose-neutral mx-auto max-w-[680px] whitespace-pre-wrap text-[16.5px] leading-[1.8] text-[var(--text-primary)] prose-headings:font-display prose-headings:tracking-tight prose-headings:text-[var(--text-primary)] prose-a:text-[var(--brand-cyan-strong)] prose-p:mb-5">
             {post.content}
           </div>
 

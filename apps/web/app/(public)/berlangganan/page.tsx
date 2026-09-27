@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   // meta description is quoted verbatim by search engines — it is the one place
   // an inflated claim travels furthest.
   description:
-    "Pilih paket berlangganan Hazl Academy yang sesuai kebutuhan. Akses kursus, event, e-book, dan sertifikasi dalam satu langganan.",
+    "Pilih paket berlangganan Hazl Academy yang sesuai kebutuhan creator. Akses e-course, event, workflow ComfyUI, dan sertifikasi industri dalam satu keanggotaan.",
   alternates: { canonical: "/berlangganan" },
 };
 
@@ -330,16 +330,15 @@ export default async function BerlanggananPage() {
         <div className="relative z-10 mx-auto max-w-3xl">
           <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(0,119,168,0.2)] bg-surface-accent-soft px-4 py-1.5 text-xs font-semibold tracking-wide text-accent-cyan-strong">
             <Sparkles size={14} />
-            Hazl Academy Premium
+            Hazl Academy Creator Membership
           </span>
           <h1 className="mb-5 text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-[1.12] tracking-tight text-text-primary">
-            Satu Langganan,
+            Satu Keanggotaan,
             <br />
-            <span className="text-accent">Akses Semua Konten</span>
+            <span className="text-accent-cyan-strong">Akses Seluruh Ekosistem AI</span>
           </h1>
           <p className="mx-auto mb-9 max-w-xl text-[1.05rem] leading-relaxed text-text-secondary">
-            Kursus, e-book, rekaman event, mentoring, dan sertifikasi — semuanya
-            dalam satu paket terjangkau.
+            Masterclass video AI, workflow ComfyUI, rekaman live coaching, mentoring praktisi, dan lisensi aset komersial — semuanya dalam satu paket transparan.
           </p>
 
           {/*
@@ -447,7 +446,7 @@ export default async function BerlanggananPage() {
                   href={plan.href}
                   className={
                     featured
-                      ? "btn bg-brand-gradient w-full justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
+                      ? "btn btn-primary w-full justify-center text-white shadow-e1 hover:opacity-95 hover:shadow-e2"
                       : "btn btn-outline w-full justify-center"
                   }
                 >
