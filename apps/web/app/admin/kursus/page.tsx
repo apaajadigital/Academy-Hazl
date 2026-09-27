@@ -388,7 +388,7 @@ export default function AdminKursusPage() {
                             </Badge>
                           )}
                           {c.format === "private_class" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-accent-purple/10 px-2 py-0.5 text-xs font-semibold text-accent-purple">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-surface-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-cyan-strong">
                               <Lock size={11} aria-hidden="true" /> Private Class
                             </span>
                           )}
@@ -609,7 +609,7 @@ export default function AdminKursusPage() {
               </div>
 
               {/* Private Class Settings */}
-              <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-accent-purple/25 bg-accent-purple/5 p-4">
+              <div className="flex flex-col gap-3 rounded-[var(--radius-md)] border border-border-default bg-surface-card p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wide text-text-primary">Pengaturan Private Class</h3>
                 <Select
                   label="Format Kursus"
@@ -635,7 +635,7 @@ export default function AdminKursusPage() {
                   onChange={(e) => setPcContact(e.target.value)}
                 />
                 <button
-                  className="inline-flex items-center gap-2 self-start rounded-full bg-accent-purple px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 self-start rounded-full bg-brand-gradient px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                   onClick={handleSavePrivateClass}
                   disabled={savingPrivate || savingApproval}
                 >

@@ -396,10 +396,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .al-role-badge {
-          background: #EBE5FC; color: var(--brand-purple);
+          background: var(--surface-accent-soft); color: var(--brand-cyan-strong);
           font-size: 9px; font-weight: 800; line-height: 1;
           padding: 2px 5px; border-radius: 4px; letter-spacing: 0.05em;
-          border: 1px solid rgba(124, 58, 237, 0.2); flex-shrink: 0;
+          border: 1px solid rgba(0, 119, 168, 0.2); flex-shrink: 0;
         }
 
         .al-nav { flex: 1; min-height: 0; padding: 12px 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }

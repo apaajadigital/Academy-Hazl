@@ -67,7 +67,7 @@ const STATUS_LABEL: Record<string, string> = {
 // Product-type accent pill (Lumina): tinted, uppercase micro-label per item type.
 const ITEM_TYPE_PILL: Record<string, { label: string; className: string }> = {
   course:       { label: "Kursus",    className: "bg-surface-accent-soft text-accent-cyan-strong" },
-  ebook:        { label: "E-Book",    className: "bg-accent-purple/10 text-accent-purple" },
+  ebook:        { label: "E-Book",    className: "bg-emerald-500/10 text-emerald-700" },
   event:        { label: "Event",     className: "bg-amber-500/10 text-amber-700" },
   subscription: { label: "Langganan", className: "bg-surface-pink-soft text-accent-pink-strong" },
 };
