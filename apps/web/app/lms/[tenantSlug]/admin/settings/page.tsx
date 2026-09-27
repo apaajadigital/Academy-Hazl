@@ -213,7 +213,7 @@ export default function LmsAdminSettingsPage() {
           />
           <div className="mt-3 rounded-[var(--radius-md)] bg-surface-sunken p-3 text-xs text-text-secondary">
             <strong className="text-text-primary">URL default portal Anda:</strong><br />
-            {`${typeof window !== "undefined" ? window.location.origin : "https://skill.hazl.id"}/lms/${settings.slug}`}
+            {`${typeof window !== "undefined" ? window.location.origin : "https://hazl.id"}/lms/${settings.slug}`}
           </div>
         </Card>
 

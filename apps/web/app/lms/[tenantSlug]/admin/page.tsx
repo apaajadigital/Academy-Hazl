@@ -54,7 +54,7 @@ export default function LmsAdminDashboardPage() {
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: "Batch Aktif", value: stat._count.batches, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
-          { label: "Kursus LMS", value: stat._count.courses, Icon: BookOpen, tint: "bg-accent-purple/10 text-accent-purple" },
+          { label: "Kursus LMS", value: stat._count.courses, Icon: BookOpen, tint: "bg-[rgba(255,47,134,0.10)] text-accent-pink" },
           { label: "Enrollment", value: stat._count.enrollments, Icon: GraduationCap, tint: "bg-green-600/10 text-green-700" },
           { label: "Undangan", value: stat._count.invites, Icon: Mail, tint: "bg-amber-500/10 text-amber-700" },
         ].map(({ label, value, Icon, tint }) => (
@@ -71,7 +71,7 @@ export default function LmsAdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[
           { label: "Batch & Peserta", desc: "Buat batch, undang peserta via email, import CSV", href: `/lms/${tenantSlug}/admin/batches`, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
-          { label: "Course Builder", desc: "Buat kursus, tambah pelajaran, dan kuis", href: `/lms/${tenantSlug}/admin/courses`, Icon: BookOpen, tint: "bg-accent-purple/10 text-accent-purple" },
+          { label: "Course Builder", desc: "Buat kursus, tambah pelajaran, dan kuis", href: `/lms/${tenantSlug}/admin/courses`, Icon: BookOpen, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
           { label: "Laporan Completion", desc: "Pantau progres peserta, unduh CSV & PDF", href: `/lms/${tenantSlug}/admin/reports`, Icon: BarChart3, tint: "bg-green-600/10 text-green-700" },
           { label: "Pengaturan Workspace", desc: "Logo, warna brand, domain kustom", href: `/lms/${tenantSlug}/admin/settings`, Icon: Settings, tint: "bg-amber-500/10 text-amber-700" },
         ].map(({ label, desc, href, Icon, tint }) => (

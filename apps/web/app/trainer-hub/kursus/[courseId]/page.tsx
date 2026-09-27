@@ -184,7 +184,7 @@ export default function CourseAnalyticsPage() {
 
   const metrics = [
     { label: "Total Pelajaran", value: data.totalLessons, icon: BookOpen, accent: "#0077A8", tint: "rgba(0,119,168,0.10)" },
-    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, accent: "#7C3AED", tint: "rgba(124,58,237,0.10)" },
+    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, accent: "#FF2F86", tint: "rgba(255,47,134,0.10)" },
     { label: "Completion Rate", value: `${data.completionRate}%`, icon: CheckCircle2, accent: "#16A34A", tint: "rgba(22,163,74,0.10)" },
     { label: "Rating Rata-rata", value: data.avgRating > 0 ? `⭐ ${data.avgRating.toFixed(1)} (${data.reviewCount})` : "Belum ada", icon: Star, accent: "#D97706", tint: "rgba(217,119,6,0.10)" },
     { label: "Pendapatan Kotor", value: `Rp ${data.grossRevenue.toLocaleString("id-ID")}`, icon: Wallet, accent: "#0891B2", tint: "rgba(8,145,178,0.10)" },
@@ -317,7 +317,7 @@ export default function CourseAnalyticsPage() {
           href={`/trainer-hub/kursus/${courseId}/siswa`}
           className="flex items-center gap-2 rounded-[var(--radius-card)] border border-border-default bg-surface-card px-4 py-3 text-sm font-medium text-text-primary shadow-e1 transition-all hover:border-accent-cyan-strong hover:shadow-e2"
         >
-          <Users size={16} className="text-[#7C3AED]" />
+          <Users size={16} className="text-accent-pink" />
           Daftar Siswa →
         </Link>
         <Link
