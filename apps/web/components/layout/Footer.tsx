@@ -60,7 +60,7 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-sm text-[#5B616E] leading-relaxed max-w-sm">
-              Platform edukasi teknologi presisi tinggi untuk akselerasi karier software engineering, infrastruktur cloud, dan sistem data skala enterprise.
+              Tempat kreator video AI Indonesia belajar, lalu menjual kelas, template prompt, video jadi, dan karyanya sendiri.
             </p>
 
             <div className="text-xs text-[#707880]">
@@ -188,7 +188,7 @@ export function Footer() {
 
       {/* Bottom bar */}
       <div className="max-w-[1440px] mx-auto px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#707880]">
-        <p>© 2025–2026 PT Hazl Akselerasi Indonesia. Hak cipta dilindungi.</p>
+        <p>© 2026 Hazl Academy. Bagian dari ekosistem Hazl. Dibuat untuk kreator AI Indonesia.</p>
         <div className="flex items-center gap-6">
           <Link href="/privacy" className="hover:text-[#16181D] transition-colors">
             Kebijakan Privasi
