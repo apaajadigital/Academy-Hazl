@@ -241,7 +241,7 @@ export default function EventDetailClient() {
         ) : (
           <div
             className="flex h-full w-full items-center justify-center text-6xl"
-            style={{ background: "linear-gradient(135deg, var(--brand-cyan-strong) 0%, #7C3AED 100%)" }}
+            style={{ background: "linear-gradient(135deg, #0077A8 0%, #36BDF2 100%)" }}
           >
             🎤
           </div>

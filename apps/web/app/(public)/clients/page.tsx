@@ -11,12 +11,12 @@ import { LeadCaptureForm } from "@/components/landing/LeadCaptureForm";
 export const metadata: Metadata = {
   title: "LMS B2B untuk Perusahaan — Hazl Academy",
   description:
-    "Digitalkan program pelatihan karyawan dengan LMS B2B Hazl Academy. Kelola batch, tugaskan kursus, pantau progres tim, dan terbitkan sertifikat ber-branding perusahaan Anda.",
+    "Digitalkan program pelatihan kreatif karyawan dengan LMS B2B Hazl Academy. Kelola batch, tugaskan kursus Video AI, pantau progres tim, dan terbitkan sertifikat ber-branding perusahaan Anda.",
   alternates: { canonical: "/clients" },
   openGraph: {
     title: "LMS B2B untuk Perusahaan — Hazl Academy",
     description:
-      "Platform pelatihan karyawan terpusat — workspace eksklusif, laporan real-time, sertifikasi otomatis.",
+      "Platform pelatihan Video AI karyawan terpusat — workspace eksklusif, laporan real-time, sertifikasi otomatis.",
     type: "website",
   },
 };
@@ -47,7 +47,7 @@ const CAPABILITIES = [
   {
     icon: Layers,
     title: "Konten Fleksibel",
-    desc: "Buat kursus sendiri atau gabungkan dengan katalog kursus Hazl Academy yang sudah ada.",
+    desc: "Buat kursus sendiri atau gabungkan dengan katalog kursus Video AI Hazl Academy yang sudah ada.",
   },
   {
     icon: ShieldCheck,
@@ -70,7 +70,7 @@ const PLANS = [
   {
     name: "Starter",
     badge: "Populer",
-    badgeCls: "bg-[rgba(124,58,237,0.1)] text-[#7C3AED]",
+    badgeCls: "bg-[rgba(255,47,134,0.12)] text-[#CC0052]",
     perks: ["100 kursi", "5 batch", "Laporan lengkap", "Sertifikat branded"],
     highlight: true,
     cta: "Konsultasi Paket Starter",
@@ -322,7 +322,7 @@ export default function ClientsPage() {
             <div
               className="rounded-2xl p-1"
               style={{
-                background: "linear-gradient(135deg, var(--brand-cyan-strong) 0%, #7C3AED 100%)",
+                background: "linear-gradient(135deg, #0077A8 0%, #36BDF2 100%)",
               }}
             >
               <div

@@ -2,8 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { CheckCircle2, Mail, Lock, User } from "lucide-react";
-import { Button, Input, PasswordInput } from "@/components/ui";
+import { CheckCircle2, Mail, Lock, User, ArrowRight, Check, Circle } from "lucide-react";
 import { register, buildGoogleLoginUrl } from "@/lib/auth/api";
 
 export function DaftarForm() {
@@ -15,12 +14,22 @@ export function DaftarForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Live password validation
+  const hasMinLength = password.length >= 8;
+  const hasLetterAndNumber = /[a-zA-Z]/.test(password) && /\d/.test(password);
+  const hasSpecialChar = /[@#$%^&*!_~]/.test(password);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!consent) {
-      setError("Anda harus menyetujui Kebijakan Privasi untuk mendaftar.");
+      setError("Anda harus menyetujui Ketentuan Layanan dan Kebijakan Privasi Hazl Academy.");
+      return;
+    }
+
+    if (!hasMinLength) {
+      setError("Kata sandi harus minimal 8 karakter.");
       return;
     }
 
@@ -29,135 +38,241 @@ export function DaftarForm() {
     setLoading(false);
 
     if (!result.success) {
-      setError(result.error?.message ?? "Terjadi kesalahan.");
+      setError(result.error?.message ?? "Terjadi kesalahan saat pendaftaran.");
       return;
     }
 
     setSuccess(true);
   }
 
+  const googleUrl = buildGoogleLoginUrl();
+
   if (success) {
     return (
-      <div className="space-y-3 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-accent-soft">
-          <CheckCircle2 size={24} className="text-accent" aria-hidden="true" />
+      <div className="space-y-4 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E8F6FF] text-[#0077A8] border border-[#BDE5F8]">
+          <CheckCircle2 size={32} />
         </div>
-        <h2 className="text-lg font-semibold text-text-primary">Registrasi berhasil!</h2>
-        <p className="text-sm text-text-secondary">
-          Akun untuk <strong>{email}</strong> berhasil dibuat. Silakan masuk untuk
-          mulai menggunakan Hazl Academy.
+        <h2 className="text-xl font-extrabold text-[#16181D]">Registrasi Berhasil!</h2>
+        <p className="text-xs text-[#5B616E] leading-relaxed">
+          Akun untuk <strong className="text-[#16181D]">{email}</strong> berhasil dibuat. Silakan masuk untuk mulai mengakses workspace pembelajaran Hazl Academy.
         </p>
-        <Link
-          href="/masuk"
-          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3 text-[0.9375rem] font-semibold text-white shadow-e1 transition hover:opacity-90 hover:shadow-e2"
-        >
-          Ke halaman masuk
-        </Link>
+        <div className="pt-2">
+          <Link
+            href="/masuk"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#0077A8] px-6 text-xs font-bold text-white hover:bg-[#0D5B8A] transition-colors shadow-sm"
+          >
+            <span>Masuk ke Akun Sekarang</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <>
-      <h1 className="mb-1 text-2xl font-bold text-text-primary">Buat akun</h1>
-      <p className="mb-6 text-sm text-text-secondary">
-        Sudah punya akun?{" "}
-        <Link href="/masuk" className="font-medium text-accent hover:underline">
-          Masuk di sini
-        </Link>
-      </p>
+    <div className="space-y-5">
+      {/* Top Step Eyebrow */}
+      <div className="flex items-center justify-between text-[11px] font-bold text-[#5B616E]">
+        <span className="uppercase tracking-wider">LANGKAH 2 DARI 5 : PENDAFTARAN</span>
+        <div className="flex items-center gap-1">
+          <span className="h-1.5 w-4 rounded-full bg-[#0077A8]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#CCD0D5]" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#CCD0D5]" />
+        </div>
+      </div>
+
+      {/* Title & Subtitle */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#16181D]">
+          Buat Akun Hazl Academy
+        </h1>
+        <p className="mt-1 text-xs text-[#5B616E] leading-relaxed">
+          Akses modul praktikal video AI, starter prompt kit, dan workspace kreator.
+        </p>
+      </div>
+
+      {/* Google OAuth Button */}
+      {googleUrl && (
+        <a
+          href={googleUrl}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-full border border-[#E7E9EC] bg-white text-xs font-bold text-[#16181D] hover:bg-[#F6F7F9] transition-colors shadow-sm"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+              fill="#EA4335"
+            />
+          </svg>
+          <span>Daftar Cepat dengan Google</span>
+        </a>
+      )}
+
+      {/* Divider */}
+      <div className="relative flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E7E9EC]" />
+        </div>
+        <span className="relative bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-[#8A909A]">
+          atau daftar manual
+        </span>
+      </div>
 
       {error && (
-        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs text-rose-700">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        <Input
-          id="name"
-          type="text"
-          label="Nama lengkap"
-          leftIcon={<User size={18} aria-hidden="true" />}
-          autoComplete="name"
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nama Anda"
-        />
+      {/* Form */}
+      <form onSubmit={handleSubmit} noValidate className="space-y-3.5">
+        {/* Nama Lengkap */}
+        <div className="space-y-1">
+          <label htmlFor="name" className="block text-xs font-bold text-[#16181D]">
+            Nama Lengkap
+          </label>
+          <div className="relative">
+            <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A909A]" />
+            <input
+              id="name"
+              type="text"
+              autoComplete="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Misal: Dimas Pratama (untuk sertifikasi)"
+              className="h-10 w-full rounded-xl border border-[#E7E9EC] bg-[#FAFAFA] pl-10 pr-3 text-xs text-[#16181D] placeholder:text-[#8A909A] focus:border-[#0077A8] focus:bg-white focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
 
-        <Input
-          id="email"
-          type="email"
-          label="Email"
-          leftIcon={<Mail size={18} aria-hidden="true" />}
-          autoComplete="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="nama@email.com"
-        />
+        {/* Email */}
+        <div className="space-y-1">
+          <label htmlFor="email" className="block text-xs font-bold text-[#16181D]">
+            Email Aktif
+          </label>
+          <div className="relative">
+            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A909A]" />
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nama@email.com"
+              className="h-10 w-full rounded-xl border border-[#E7E9EC] bg-[#FAFAFA] pl-10 pr-3 text-xs text-[#16181D] placeholder:text-[#8A909A] focus:border-[#0077A8] focus:bg-white focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
 
-        <PasswordInput
-          id="password"
-          label="Kata Sandi"
-          leftIcon={<Lock size={18} aria-hidden="true" />}
-          autoComplete="new-password"
-          required
-          minLength={8}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Minimal 8 karakter"
-        />
+        {/* Password */}
+        <div className="space-y-1">
+          <label htmlFor="password" className="block text-xs font-bold text-[#16181D]">
+            Kata Sandi
+          </label>
+          <div className="relative">
+            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A909A]" />
+            <input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Buat sandi yang kuat"
+              className="h-10 w-full rounded-xl border border-[#E7E9EC] bg-[#FAFAFA] pl-10 pr-3 text-xs text-[#16181D] placeholder:text-[#8A909A] focus:border-[#0077A8] focus:bg-white focus:outline-none transition-colors"
+            />
+          </div>
+        </div>
 
-        <div className="flex items-start gap-3">
-          <input
-            id="consent"
-            type="checkbox"
-            required
-            checked={consent}
-            onChange={(e) => setConsent(e.target.checked)}
-            className="mt-0.5 h-4 w-4 cursor-pointer rounded border-border-strong text-accent focus:ring-accent-cyan-strong"
-          />
-          <label htmlFor="consent" className="cursor-pointer text-sm leading-snug text-text-secondary">
-            Saya menyetujui{" "}
-            <Link href="/privacy" className="text-accent hover:underline" target="_blank">
-              Kebijakan Privasi
-            </Link>{" "}
-            dan{" "}
-            <Link href="/terms" className="text-accent hover:underline" target="_blank">
-              Syarat &amp; Ketentuan
-            </Link>{" "}
-            Hazl Academy, termasuk pemrosesan data pribadi saya sesuai UU PDP.
+        {/* Password Requirements Checklist */}
+        <div className="rounded-xl border border-[#E7E9EC] bg-[#FAFAFA] p-3 space-y-1.5 text-[11px] text-[#5B616E]">
+          <div className="flex items-center gap-2">
+            {hasMinLength ? (
+              <Check size={13} className="text-emerald-600" />
+            ) : (
+              <Circle size={13} className="text-[#8A909A]" />
+            )}
+            <span className={hasMinLength ? "text-[#16181D] font-semibold" : ""}>Minimal 8 karakter</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasLetterAndNumber ? (
+              <Check size={13} className="text-emerald-600" />
+            ) : (
+              <Circle size={13} className="text-[#8A909A]" />
+            )}
+            <span className={hasLetterAndNumber ? "text-[#16181D] font-semibold" : ""}>
+              Kombinasi huruf &amp; angka
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {hasSpecialChar ? (
+              <Check size={13} className="text-emerald-600" />
+            ) : (
+              <Circle size={13} className="text-[#8A909A]" />
+            )}
+            <span className={hasSpecialChar ? "text-[#16181D] font-semibold" : ""}>
+              Menyertakan simbol spesifik (@#$%^&amp;*)
+            </span>
+          </div>
+        </div>
+
+        {/* Consent Checkbox */}
+        <div className="pt-1">
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-[#E7E9EC] text-[#0077A8] focus:ring-0"
+            />
+            <span className="text-[11px] text-[#5B616E] leading-relaxed">
+              Saya menyetujui{" "}
+              <Link href="/terms" className="font-semibold text-[#16181D] underline">
+                Ketentuan Layanan
+              </Link>{" "}
+              dan{" "}
+              <Link href="/privacy" className="font-semibold text-[#16181D] underline">
+                Kebijakan Privasi
+              </Link>{" "}
+              Hazl Academy.
+            </span>
           </label>
         </div>
 
-        <Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
-          {loading ? "Mendaftarkan…" : "Buat akun"}
-        </Button>
+        {/* Submit Button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#0077A8] px-6 text-xs font-bold text-white hover:bg-[#0D5B8A] transition-colors shadow-sm disabled:opacity-50"
+          >
+            <span>{loading ? "Mendaftarkan Akun..." : "Buat Akun & Verifikasi Email"}</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </form>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-border-default" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-transparent px-3 text-text-secondary">atau</span>
-        </div>
+      {/* Card Bottom Link */}
+      <div className="border-t border-[#E7E9EC] pt-3 text-center text-xs text-[#5B616E]">
+        <span>Sudah punya akun? </span>
+        <Link href="/masuk" className="font-bold text-[#0077A8] hover:underline">
+          Masuk di sini
+        </Link>
       </div>
-
-      <a
-        href={buildGoogleLoginUrl()}
-        className="flex w-full items-center justify-center gap-3 rounded-full border border-border-strong px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-accent-soft"
-      >
-        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18">
-          <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" />
-          <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" />
-          <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.548 0 9s.348 2.825.957 4.039l3.007-2.332z" />
-          <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" />
-        </svg>
-        Daftar dengan Google
-      </a>
-    </>
+    </div>
   );
 }

@@ -3,13 +3,13 @@ import { Users, Handshake, Building2, CalendarDays, Globe, TrendingUp } from "lu
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
 export const metadata: Metadata = {
-  title: "Kolaborasi — Hazl Academy",
+  title: "Kolaborasi Mitra & Ekosistem — Hazl Academy",
   description:
-    "Bergabunglah sebagai mitra Hazl Academy. Kolaborasi terbuka untuk institusi pendidikan, kreator konten, komunitas belajar, dan event organizer.",
+    "Bergabunglah sebagai mitra Hazl Academy. Kolaborasi terbuka untuk studio produksi, creative agency, instruktur Video AI, institusi pendidikan, dan korporat.",
   alternates: { canonical: "/kolaborasi" },
   openGraph: {
     title: "Kolaborasi dengan Hazl Academy",
-    description: "Terbuka untuk institusi, kreator, komunitas, dan EO. Daftarkan minat kolaborasi Anda.",
+    description: "Terbuka untuk studio, kreator Video AI, komunitas visual, dan korporat. Daftarkan minat kemitraan Anda.",
     type: "website",
     url: "/kolaborasi",
   },
@@ -18,48 +18,48 @@ export const metadata: Metadata = {
 const benefits = [
   {
     icon: Building2,
-    title: "Institusi Pendidikan",
-    body: "Kampus, sekolah, dan lembaga pelatihan yang ingin memperluas akses konten edukasi berkualitas untuk peserta didik mereka.",
+    title: "Production House & Agensi",
+    body: "Kolaborasi talent pool kreator Video AI bersertifikat untuk percepatan produksi iklan komersial, storyboard, dan aset UGC.",
   },
   {
     icon: Users,
-    title: "Kreator Konten",
-    body: "Instruktur, dosen, dan praktisi yang ingin mempublish kursus, e-book, atau rekaman workshop ke platform Hazl Academy.",
+    title: "Kreator & Prompt Engineer",
+    body: "Instruktur dan praktisi visual AI yang ingin menerbitkan kursus, workflow pack, atau mengadakan workshop berbayar di Hazl Academy.",
   },
   {
     icon: Globe,
-    title: "Komunitas Belajar",
-    body: "Komunitas profesi, alumni, atau minat yang ingin mengadakan program pelatihan eksklusif bagi anggota mereka.",
+    title: "Komunitas Kreatif & Visual AI",
+    body: "Komunitas desain, film, dan multimedia yang ingin mengadakan program kurikulum eksklusif atau kompetisi prompt show.",
   },
   {
     icon: CalendarDays,
-    title: "Event Organizer",
-    body: "EO dan panitia workshop yang ingin menjual tiket, merekam event, dan mendistribusikan materi kepada peserta.",
+    title: "Event & Webinar Organizer",
+    body: "Penyelenggara festival kreatif yang ingin menjual tiket terintegrasi, live broadcast studio, dan distribusi sertifikat digital ber-QR.",
   },
   {
     icon: Handshake,
-    title: "Mitra Korporat",
-    body: "Perusahaan yang ingin menyediakan program LMS internal, pelatihan karyawan, atau program CSR pendidikan.",
+    title: "Mitra Korporat & Enterprise",
+    body: "Perusahaan yang ingin mengadopsi generative AI workflow untuk efisiensi tim marketing dan multimedia internal.",
   },
   {
     icon: TrendingUp,
-    title: "Afiliasi & Reseller",
-    body: "Individu atau tim yang ingin memonetisasi jaringan mereka dengan mempromosikan produk dan program Hazl Academy.",
+    title: "Afiliasi & Creative Reseller",
+    body: "Kreator konten yang ingin memonetisasi rekomendasi tools dan modul belajar Hazl Academy dengan komisi kompetitif.",
   },
 ];
 
 export default function KolaborasiPage() {
   return (
     <LandingTemplate
-      eyebrow="Kolaborasi"
-      title={<>Bersama Kita <span className="text-[var(--brand-cyan-strong)]">Lebih Jauh</span></>}
-      lede="Hazl Academy terbuka untuk berbagai bentuk kemitraan — dari institusi pendidikan, kreator konten, komunitas belajar, hingga mitra korporat. Mari bangun ekosistem belajar yang lebih luas bersama."
+      eyebrow="Program Kemitraan"
+      title={<>Bangun Masa Depan <span className="text-[var(--brand-cyan-strong)]">Video AI</span> Bersama</>}
+      lede="Hazl Academy membuka peluang kolaborasi seluas-luasnya bagi studio produksi, kreator konten generative AI, institusi, hingga mitra korporasi. Mari kembangkan standar industri konten visual AI di Indonesia."
       benefits={benefits}
       formSource="other"
-      formTitle="Daftarkan Minat Anda"
-      formLede="Tim kami akan menghubungi Anda dalam 1–2 hari kerja untuk membahas peluang kemitraan."
+      formTitle="Daftarkan Minat Kemitraan"
+      formLede="Tim partnership kami akan menghubungi Anda dalam 1–2 hari kerja untuk eksplorasi sinergi kolaborasi."
       withCompany
-      submitLabel="Daftar Kolaborasi"
+      submitLabel="Kirim Formulir Kolaborasi"
     />
   );
 }
