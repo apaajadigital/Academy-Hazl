@@ -129,7 +129,7 @@ export default function DashboardPage() {
 
   const kpis = [
     { label: "Kursus Diikuti", value: stats.totalEnrolled, icon: BookOpen, accent: "#0077A8", tint: "rgba(0,119,168,0.10)" },
-    { label: "Sedang Berjalan", value: stats.totalInProgress, icon: ClipboardList, accent: "#7C3AED", tint: "rgba(124,58,237,0.10)" },
+    { label: "Sedang Berjalan", value: stats.totalInProgress, icon: ClipboardList, accent: "#FF2F86", tint: "rgba(255,47,134,0.10)" },
     { label: "Selesai", value: stats.totalCompleted, icon: CheckCircle2, accent: "#16A34A", tint: "rgba(22,163,74,0.10)" },
     { label: "Sertifikat", value: stats.totalCertificates, icon: Award, accent: "#D97706", tint: "rgba(217,119,6,0.10)" },
   ];
@@ -213,7 +213,7 @@ export default function DashboardPage() {
             action={
               <Link
                 href="/e-course"
-                className="inline-flex items-center rounded-full bg-brand-gradient px-6 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+                className="inline-flex items-center rounded-full bg-accent-cyan-strong px-6 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-95"
               >
                 Jelajahi Kursus
               </Link>

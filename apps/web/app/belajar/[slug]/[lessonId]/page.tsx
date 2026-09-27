@@ -288,7 +288,7 @@ export default function LessonPlayerPage() {
             {courseCompleted && !reviewDone && (
               <div className="rounded-2xl border border-border-brand bg-surface-accent-soft p-6">
                 <div className="flex items-start gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-gradient text-white">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-cyan-strong text-white">
                     <Award aria-hidden="true" className="h-6 w-6" />
                   </span>
                   <div className="flex-1">
@@ -381,7 +381,7 @@ export default function LessonPlayerPage() {
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-surface-sunken">
               <div
-                className="h-full rounded-full bg-brand-gradient transition-all"
+                className="h-full rounded-full bg-accent-cyan-strong transition-all"
                 style={{ width: `${progressPct}%` }}
               />
             </div>

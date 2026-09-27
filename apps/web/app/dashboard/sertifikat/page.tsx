@@ -80,14 +80,18 @@ export default function SertifikatPage() {
         <>
           {/* Achievement banner */}
           <section className="dash-grid">
-            <div className="bg-brand-gradient relative col-span-12 flex flex-col justify-center overflow-hidden rounded-[var(--radius-card)] p-6 text-white shadow-e2 lg:col-span-8">
+            <div className="relative col-span-12 flex flex-col justify-center overflow-hidden rounded-[var(--radius-card)] border border-border-default bg-[#0B1528] p-6 text-white shadow-e1 lg:col-span-8">
               <div className="relative z-10">
-                <h2 className="font-display text-xl font-bold">Pencapaian Luar Biasa!</h2>
-                <p className="mt-2 max-w-md text-sm text-white/90">
-                  Kamu telah memperoleh {certs.length} sertifikat keahlian. Terus tingkatkan skill dan kumpulkan lebih banyak.
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent-cyan-strong mb-3">
+                  <Award size={14} />
+                  Kredensial Terverifikasi Kriptografis
+                </div>
+                <h2 className="font-display text-xl font-bold">Pencapaian Kredensial Resmi</h2>
+                <p className="mt-2 max-w-md text-sm text-slate-300">
+                  Kamu telah menyelesaikan kurikulum dan memperoleh {certs.length} sertifikat berstandar industri dengan tanda tangan digital SHA-256.
                 </p>
               </div>
-              <Award className="pointer-events-none absolute -bottom-6 -right-4 text-white/20" size={160} aria-hidden="true" />
+              <Award className="pointer-events-none absolute -bottom-6 -right-4 text-white/10" size={160} aria-hidden="true" />
             </div>
             <div className="col-span-12 flex flex-col justify-center rounded-[var(--radius-card)] border border-border-default bg-surface-card p-6 shadow-e1 lg:col-span-4">
               <span className="text-sm text-text-secondary">Total Sertifikat</span>

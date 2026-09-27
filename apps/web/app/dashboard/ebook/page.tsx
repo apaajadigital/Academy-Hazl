@@ -83,7 +83,7 @@ export default function EbookPage() {
         </div>
         <Link
           href="/ebook"
-          className="inline-flex items-center gap-2 rounded-full bg-accent-purple px-5 py-2 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+          className="btn btn-primary btn-sm"
         >
           <ShoppingBag size={16} aria-hidden="true" /> Beli E-Book
         </Link>
@@ -112,7 +112,7 @@ export default function EbookPage() {
           action={
             <Link
               href="/ebook"
-              className="inline-flex items-center rounded-full bg-accent-purple px-6 py-3 text-sm font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+              className="btn btn-primary btn-sm"
             >
               Jelajahi E-Book
             </Link>
@@ -126,16 +126,16 @@ export default function EbookPage() {
               className="group col-span-12 flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-solid border-border-default bg-surface-card shadow-e1 transition-all hover:-translate-y-1 hover:shadow-e3 md:col-span-6 xl:col-span-4"
             >
               {/* Cover */}
-              <div className="relative h-40 flex-shrink-0 overflow-hidden bg-accent-purple/10">
+              <div className="relative h-40 flex-shrink-0 overflow-hidden bg-surface-accent-soft">
                 {book.coverUrl ? (
                   <Image src={book.coverUrl} alt={book.title} fill sizes="(min-width: 768px) 25vw, 50vw" className="object-cover" />
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center gap-2">
-                    <BookOpen size={40} className="text-accent-purple" aria-hidden="true" />
-                    <span className="rounded-full bg-accent-purple/10 px-2 py-0.5 text-[11px] font-extrabold tracking-widest text-accent-purple">PDF</span>
+                    <BookOpen size={40} className="text-accent-cyan-strong" aria-hidden="true" />
+                    <span className="rounded-full bg-surface-accent-soft px-2 py-0.5 text-[11px] font-extrabold tracking-widest text-accent-cyan-strong">PDF</span>
                   </div>
                 )}
-                <span className="absolute right-2.5 top-2.5 rounded-full bg-accent-purple px-2 py-1 text-[10px] font-bold text-white">E-Book</span>
+                <span className="absolute right-2.5 top-2.5 rounded-full bg-accent-cyan-strong px-2 py-1 text-[10px] font-bold text-white">E-Book</span>
               </div>
 
               {/* Info */}
@@ -155,7 +155,7 @@ export default function EbookPage() {
                   <button
                     onClick={() => handleDownload(book.slug)}
                     disabled={downloadingSlug === book.slug}
-                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-purple px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-accent-cyan-strong px-3 py-2 text-xs font-semibold text-white transition-opacity hover:opacity-95 disabled:opacity-60"
                   >
                     {downloadingSlug === book.slug
                       ? <><Loader2 size={14} className="animate-spin" aria-hidden="true" /> Memuat...</>
