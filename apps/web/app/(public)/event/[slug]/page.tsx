@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const event = await getEvent(slug);
 
   if (!event) {
-    return { title: "Event tidak ditemukan — Hazl Academy" };
+    return { title: "Event tidak ditemukan | Hazl Academy" };
   }
 
   const description =
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     `Ikuti ${event.title} bersama Hazl Academy.`;
 
   return {
-    title: `${event.title} — Event Hazl Academy`,
+    title: `${event.title} | Hazl Academy`,
     description,
     openGraph: {
       title: event.title,

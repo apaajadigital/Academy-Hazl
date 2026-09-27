@@ -58,7 +58,7 @@ export function CertificatePreview({ category }: CertificatePreviewProps) {
 
             <div className="flex flex-col items-center gap-1 text-center">
               <span className="font-display text-sm italic leading-none text-text-primary">
-                Hazl
+                Jago
               </span>
               <span className="w-full border-t border-[var(--text-primary)] pt-1 text-[10px] text-text-muted">
                 Founder &amp; CEO
