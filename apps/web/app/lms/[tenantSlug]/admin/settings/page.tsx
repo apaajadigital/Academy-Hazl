@@ -132,7 +132,7 @@ export default function LmsAdminSettingsPage() {
         {settings.planType === "trial" && settings.trialEndsAt && (
           <div className={`mt-2 text-xs ${trialExpired ? "font-semibold text-amber-700" : "text-text-secondary"}`}>
             {trialExpired
-              ? "⚠️ Masa trial telah berakhir. Hubungi admin Jago Akademi untuk upgrade."
+              ? "⚠️ Masa trial telah berakhir. Hubungi admin Hazl Academy untuk upgrade."
               : `Trial berakhir: ${new Date(settings.trialEndsAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}`}
           </div>
         )}
@@ -209,11 +209,11 @@ export default function LmsAdminSettingsPage() {
             value={form.customDomain}
             onChange={(e) => setForm({ ...form, customDomain: e.target.value })}
             placeholder="lms.perusahaan.com (opsional)"
-            hint="Hubungi tim Jago Akademi untuk mengaktifkan domain kustom setelah diisi."
+            hint="Hubungi tim Hazl Academy untuk mengaktifkan domain kustom setelah diisi."
           />
           <div className="mt-3 rounded-[var(--radius-md)] bg-surface-sunken p-3 text-xs text-text-secondary">
             <strong className="text-text-primary">URL default portal Anda:</strong><br />
-            {`${typeof window !== "undefined" ? window.location.origin : "https://jagoakademi.com"}/lms/${settings.slug}`}
+            {`${typeof window !== "undefined" ? window.location.origin : "https://skill.hazl.id"}/lms/${settings.slug}`}
           </div>
         </Card>
 

@@ -3,12 +3,12 @@ import { Users, Handshake, Building2, CalendarDays, Globe, TrendingUp } from "lu
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
 export const metadata: Metadata = {
-  title: "Kolaborasi — Jago Akademi",
+  title: "Kolaborasi — Hazl Academy",
   description:
-    "Bergabunglah sebagai mitra Jago Akademi. Kolaborasi terbuka untuk institusi pendidikan, kreator konten, komunitas belajar, dan event organizer.",
+    "Bergabunglah sebagai mitra Hazl Academy. Kolaborasi terbuka untuk institusi pendidikan, kreator konten, komunitas belajar, dan event organizer.",
   alternates: { canonical: "/kolaborasi" },
   openGraph: {
-    title: "Kolaborasi dengan Jago Akademi",
+    title: "Kolaborasi dengan Hazl Academy",
     description: "Terbuka untuk institusi, kreator, komunitas, dan EO. Daftarkan minat kolaborasi Anda.",
     type: "website",
     url: "/kolaborasi",
@@ -24,7 +24,7 @@ const benefits = [
   {
     icon: Users,
     title: "Kreator Konten",
-    body: "Instruktur, dosen, dan praktisi yang ingin mempublish kursus, e-book, atau rekaman workshop ke platform Jago Akademi.",
+    body: "Instruktur, dosen, dan praktisi yang ingin mempublish kursus, e-book, atau rekaman workshop ke platform Hazl Academy.",
   },
   {
     icon: Globe,
@@ -44,7 +44,7 @@ const benefits = [
   {
     icon: TrendingUp,
     title: "Afiliasi & Reseller",
-    body: "Individu atau tim yang ingin memonetisasi jaringan mereka dengan mempromosikan produk dan program Jago Akademi.",
+    body: "Individu atau tim yang ingin memonetisasi jaringan mereka dengan mempromosikan produk dan program Hazl Academy.",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function KolaborasiPage() {
     <LandingTemplate
       eyebrow="Kolaborasi"
       title={<>Bersama Kita <span className="text-[var(--brand-cyan-strong)]">Lebih Jauh</span></>}
-      lede="Jago Akademi terbuka untuk berbagai bentuk kemitraan — dari institusi pendidikan, kreator konten, komunitas belajar, hingga mitra korporat. Mari bangun ekosistem belajar yang lebih luas bersama."
+      lede="Hazl Academy terbuka untuk berbagai bentuk kemitraan — dari institusi pendidikan, kreator konten, komunitas belajar, hingga mitra korporat. Mari bangun ekosistem belajar yang lebih luas bersama."
       benefits={benefits}
       formSource="other"
       formTitle="Daftarkan Minat Anda"

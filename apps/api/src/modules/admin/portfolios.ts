@@ -52,25 +52,12 @@ router.get("/portfolios/:id", async (req: Request, res: Response, next: NextFunc
   }
 });
 
-// Image fields (photoUrl, item.imageUrl) accept either an https URL or our
-// own local-upload path (POST /api/upload/image → "/uploads/images/<file>").
-// Safe to allow unlike an arbitrary relative path: the upload endpoint fixes
-// the extension from the validated MIME type, so this can never admit
-// attacker-chosen content. Kept separate from `url` below (the external
-// "Lihat karya" link, opened in a new tab) which stays https-only.
-const imageUrlSchema = z
-  .string()
-  .refine(
-    (v) => /^https:\/\//.test(v) || /^\/uploads\//.test(v),
-    "Harus berupa link https:// atau hasil upload dari perangkat.",
-  );
-
 // A single showcased work — shape stored as JSON on the row, so Zod here is the
 // only guard keeping the array well-formed.
 const portfolioItemSchema = z.object({
   title: z.string().min(1).max(160),
   url: z.string().url().startsWith("https://").optional(),
-  imageUrl: imageUrlSchema.optional(),
+  imageUrl: z.string().url().startsWith("https://").optional(),
   description: z.string().max(300).optional(),
 });
 
@@ -78,7 +65,7 @@ const portfolioSchema = z.object({
   name: z.string().min(2).max(120),
   role: z.string().min(2).max(120),
   headline: z.string().max(200).nullable().optional(),
-  photoUrl: imageUrlSchema.nullable().optional(),
+  photoUrl: z.string().url().startsWith("https://").nullable().optional(),
   portfolioItems: z.array(portfolioItemSchema).max(30).default([]),
   featured: z.boolean().default(false),
   status: z.enum(["draft", "published"]).default("draft"),

@@ -143,9 +143,7 @@ export default defineConfig({
       // running on :3004 without these flags, beta-feature specs will see 404s;
       // stop it and let Playwright start its own.
       env: {
-        // Hazl decision: Private Class stays OFF; video sales use E-Course,
-        // seminar sales use Event. The E2E contract verifies this route 404s.
-        NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: "false",
+        NEXT_PUBLIC_FEATURE_PRIVATE_CLASS: "true",
         NEXT_PUBLIC_FEATURE_COMMUNITY: "true",
         NEXT_PUBLIC_FEATURE_ALUMNI: "true",
         NEXT_PUBLIC_FEATURE_PORTFOLIO: "true",

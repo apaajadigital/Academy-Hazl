@@ -4,14 +4,14 @@ import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
 
 export const metadata: Metadata = {
-  title: "Portofolio Member — Karya Nyata Member Jago Akademi",
+  title: "Portofolio Member — Karya Nyata Member Hazl Academy",
   description:
-    "Jelajahi portofolio member Jago Akademi: karya, proyek, dan pencapaian nyata dari para member komunitas kami.",
+    "Jelajahi portofolio member Hazl Academy: karya, proyek, dan pencapaian nyata dari para member komunitas kami.",
   alternates: { canonical: "/portofolio-member" },
   openGraph: {
-    title: "Portofolio Member — Jago Akademi",
+    title: "Portofolio Member — Hazl Academy",
     description:
-      "Karya dan proyek nyata dari member komunitas Jago Akademi.",
+      "Karya dan proyek nyata dari member komunitas Hazl Academy.",
     type: "website",
     url: "/portofolio-member",
   },

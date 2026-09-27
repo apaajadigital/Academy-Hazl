@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const topic = getTopicBySlug(kategori, topik);
   if (!category || !topic) return { title: "Not Found" };
   return {
-    title: `${topic.title} | ${category.title} — Jago Akademi`,
+    title: `${topic.title} | ${category.title} — Hazl Academy`,
     description: `Pelajari ${topic.title} dalam Learning Path ${category.title}. ${topic.lessonCount} materi video, ${topic.videoCount} video pembelajaran.`,
   };
 }

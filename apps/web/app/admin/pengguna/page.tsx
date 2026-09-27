@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Download, Users, Plus } from "lucide-react";
+import { Search, Download, Users } from "lucide-react";
 import {
   Avatar,
   Badge,
   Button,
   Input,
-  Select,
-  Modal,
-  ModalContent,
   Pagination,
   TableContainer,
   Table,
@@ -80,56 +77,6 @@ export default function AdminPenggunaPage() {
   // Bumped to force a refetch when the query itself did not change (re-submitting
   // the same search, or reloading after a verify toggle).
   const [reloadKey, setReloadKey] = useState(0);
-
-  // Create-user modal state
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formName, setFormName] = useState("");
-  const [formEmail, setFormEmail] = useState("");
-  const [formPassword, setFormPassword] = useState("");
-  const [formRole, setFormRole] = useState("student");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState("");
-
-  function handleOpenCreate() {
-    setFormName("");
-    setFormEmail("");
-    setFormPassword("");
-    setFormRole("student");
-    setCreateError("");
-    setShowCreateModal(true);
-  }
-
-  async function handleCreateUser(e: React.FormEvent) {
-    e.preventDefault();
-    setCreateError("");
-    const token = await getValidToken();
-    if (!token) return;
-
-    setCreating(true);
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          name: formName.trim(),
-          email: formEmail.trim(),
-          password: formPassword,
-          role: formRole,
-        }),
-      });
-      const json = await res.json();
-      if (!json.success) {
-        setCreateError(json.error?.message ?? "Gagal membuat pengguna.");
-        return;
-      }
-      setShowCreateModal(false);
-      setReloadKey((k) => k + 1);
-    } catch {
-      setCreateError("Gagal terhubung ke server.");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function handleExportCSV() {
     const token = await getValidToken();
@@ -228,25 +175,15 @@ export default function AdminPenggunaPage() {
         breadcrumb={<span className="flex items-center gap-2"><span className="text-text-secondary">Admin</span> <span>/</span> <span className="font-medium text-text-primary">Pengguna</span></span>}
         title="Manajemen Pengguna"
         actions={
-          <div className="flex gap-2">
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleOpenCreate}
-              leftIcon={<Plus size={16} aria-hidden="true" />}
-            >
-              Tambah Pengguna
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleExportCSV}
-              disabled={exporting}
-              leftIcon={<Download size={16} aria-hidden="true" />}
-            >
-              {exporting ? "Mengekspor..." : "Ekspor CSV"}
-            </Button>
-          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            leftIcon={<Download size={16} aria-hidden="true" />}
+          >
+            {exporting ? "Mengekspor..." : "Ekspor CSV"}
+          </Button>
         }
       />
 
@@ -367,65 +304,6 @@ export default function AdminPenggunaPage() {
           )}
         </TableContainer>
       )}
-
-      {/* Create User Modal */}
-      <Modal open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <ModalContent title="Tambah Pengguna Baru" className="max-w-md">
-          <form onSubmit={handleCreateUser} className="flex flex-col gap-4">
-            <Input
-              label="Nama"
-              type="text"
-              required
-              minLength={2}
-              maxLength={100}
-              value={formName}
-              onChange={(e) => setFormName(e.target.value)}
-              placeholder="Contoh: Budi Santoso"
-            />
-            <Input
-              label="Email"
-              type="email"
-              required
-              value={formEmail}
-              onChange={(e) => setFormEmail(e.target.value)}
-              placeholder="nama@email.com"
-            />
-            <Input
-              label="Password"
-              type="password"
-              required
-              minLength={8}
-              maxLength={128}
-              value={formPassword}
-              onChange={(e) => setFormPassword(e.target.value)}
-              placeholder="Minimal 8 karakter, jangan hanya angka"
-            />
-            <Select
-              label="Role"
-              value={formRole}
-              onChange={(e) => setFormRole(e.target.value)}
-            >
-              <option value="student">Student</option>
-              <option value="trainer">Trainer</option>
-              <option value="affiliate">Affiliate</option>
-              <option value="event_participant">Event Participant</option>
-              <option value="corporate_client">Corporate Client</option>
-              <option value="partner">Partner</option>
-              <option value="creator">Creator</option>
-              <option value="super_admin">Super Admin</option>
-            </Select>
-            {createError && <p className="text-sm text-red-500">{createError}</p>}
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" onClick={() => setShowCreateModal(false)} variant="ghost" size="sm">
-                Batal
-              </Button>
-              <Button type="submit" disabled={creating} variant="primary" size="sm">
-                {creating ? "Menyimpan..." : "Simpan Pengguna"}
-              </Button>
-            </div>
-          </form>
-        </ModalContent>
-      </Modal>
     </div>
   );
 }

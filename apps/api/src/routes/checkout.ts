@@ -21,12 +21,30 @@ const router = Router();
  */
 const CHECKOUT_LINE_QUANTITY = 1;
 
+const DUITKU_CHANNEL_MAP: Record<string, string> = {
+  qris: "SP",
+  va: "BC",
+  va_bca: "BC",
+  va_mandiri: "M2",
+  va_bni: "I1",
+  va_bri: "BR",
+  va_permata: "BT",
+  va_cimb: "B1",
+  cc: "VC",
+  credit_card: "VC",
+  ewallet_ovo: "OV",
+  ewallet_dana: "DA",
+  ewallet_shopee: "SA",
+};
+
 const checkoutSchema = z.object({
   itemType: z.enum(["course", "ebook", "event"]),
   itemId: z.string().min(1),
   couponCode: z.string().optional(),
   referralCode: z.string().optional(),
+  paymentMethod: z.string().optional(),
 });
+
 
 router.post("/", authenticate, async (req, res, next) => {
   try {
@@ -34,7 +52,7 @@ router.post("/", authenticate, async (req, res, next) => {
     if (!body.success) {
       return res.status(400).json(errorResponse("VALIDATION_ERROR", body.error.issues[0]?.message ?? "Validasi gagal."));
     }
-    const { itemType, itemId, couponCode, referralCode } = body.data;
+    const { itemType, itemId, couponCode, referralCode, paymentMethod } = body.data;
     const userId = req.user!.id;
 
     // Get item details
@@ -303,6 +321,7 @@ router.post("/", authenticate, async (req, res, next) => {
         discountAmount,
         finalAmount,
         status: "pending",
+        paymentMethod: paymentMethod ?? "va_bca",
         couponId: couponId ?? null,
         referralCode: resolvedReferralCode ?? null,
         expiredAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour
@@ -340,6 +359,8 @@ router.post("/", authenticate, async (req, res, next) => {
     // (paid, still-processing VA transfer, or cancelled).
     const pendingUrl = `${env.WEB_URL}/payment/pending?orderId=${order.id}`;
 
+    const duitkuChannel = DUITKU_CHANNEL_MAP[paymentMethod || ""] ?? paymentMethod ?? "BC";
+
     const { paymentUrl } = await createDuitkuOrder(
       invoiceNumber,
       [{ name: itemTitle, price: Math.round(finalAmount), quantity: 1 }],
@@ -347,7 +368,8 @@ router.post("/", authenticate, async (req, res, next) => {
       callbackUrl,
       pendingUrl,
       order.user.name,
-      order.user.email
+      order.user.email,
+      duitkuChannel
     );
 
     // Store transaction record

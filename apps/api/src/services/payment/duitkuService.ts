@@ -13,8 +13,8 @@ function baseUrl() {
   return env.DUITKU_IS_PRODUCTION ? PRODUCTION_URL : SANDBOX_URL;
 }
 
-/** Hardcoded to Virtual Account BCA for this first version — no method picker yet. */
-const PAYMENT_METHOD = "BC";
+/** Default payment method when none or invalid is specified: BCA Virtual Account. */
+export const DEFAULT_DUITKU_PAYMENT_METHOD = "BC";
 
 /**
  * Duitku create-invoice signature (docs.duitku.com/api/en, "Create Invoice").
@@ -52,6 +52,9 @@ type DuitkuCreateOrderResult = { invoiceNumber: string; paymentUrl: string };
  * hosted payment URL to redirect the buyer to. Dev fallback mirrors the old
  * DOKU behaviour: no credentials configured -> return a mock success URL so
  * checkout/order-creation can be exercised with zero gateway dependency.
+ *
+ * Supports dynamic channel codes (e.g., "SP" for QRIS, "BC" for BCA VA, "VC" for CC)
+ * with graceful fallback to DEFAULT_DUITKU_PAYMENT_METHOD if a merchant channel is unconfigured.
  */
 export async function createDuitkuOrder(
   merchantOrderId: string,
@@ -60,7 +63,8 @@ export async function createDuitkuOrder(
   callbackUrl: string,
   returnUrl: string,
   customerName: string,
-  customerEmail: string
+  customerEmail: string,
+  paymentMethod: string = DEFAULT_DUITKU_PAYMENT_METHOD
 ): Promise<DuitkuCreateOrderResult> {
   if (!env.DUITKU_MERCHANT_CODE || !env.DUITKU_API_KEY) {
     return {
@@ -72,39 +76,56 @@ export async function createDuitkuOrder(
   const paymentAmount = Math.round(totalAmount);
   const signature = signInvoice(env.DUITKU_MERCHANT_CODE, merchantOrderId, paymentAmount, env.DUITKU_API_KEY);
 
-  const body = JSON.stringify({
-    merchantCode: env.DUITKU_MERCHANT_CODE,
-    paymentAmount,
-    paymentMethod: PAYMENT_METHOD,
-    merchantOrderId,
-    productDetails: items.map((i) => i.name).join(", ").slice(0, 255) || "Pembayaran Hazl Academy",
-    email: customerEmail,
-    customerVaName: customerName,
-    callbackUrl,
-    returnUrl,
-    signature,
-  });
+  async function executeInquiry(methodCode: string) {
+    const body = JSON.stringify({
+      merchantCode: env.DUITKU_MERCHANT_CODE,
+      paymentAmount,
+      paymentMethod: methodCode,
+      merchantOrderId,
+      productDetails: items.map((i) => i.name).join(", ").slice(0, 255) || "Pembayaran Hazl Academy",
+      email: customerEmail,
+      customerVaName: customerName,
+      callbackUrl,
+      returnUrl,
+      signature,
+    });
 
-  const res = await fetch(`${baseUrl()}/webapi/api/merchant/v2/inquiry`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
+    const res = await fetch(`${baseUrl()}/webapi/api/merchant/v2/inquiry`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Duitku API error ${res.status}: ${err}`);
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Duitku API error ${res.status}: ${err}`);
+    }
+
+    const data = (await res.json()) as {
+      statusCode?: string;
+      statusMessage?: string;
+      paymentUrl?: string;
+      reference?: string;
+    };
+    return data;
   }
 
-  // Flat response — no wrapper object (unlike DOKU's `response.payment.url`).
-  // Duitku can return HTTP 200 with a business-level failure statusCode, so
-  // that must be checked explicitly rather than trusting res.ok alone.
-  const data = (await res.json()) as {
-    statusCode?: string;
-    statusMessage?: string;
-    paymentUrl?: string;
-    reference?: string;
-  };
+  let data: { statusCode?: string; statusMessage?: string; paymentUrl?: string; reference?: string };
+  try {
+    data = await executeInquiry(paymentMethod);
+    if ((data.statusCode !== "00" || !data.paymentUrl) && paymentMethod !== DEFAULT_DUITKU_PAYMENT_METHOD) {
+      logger.warn(`Duitku inquiry non-00 with channel ${paymentMethod}, falling back to ${DEFAULT_DUITKU_PAYMENT_METHOD}`, { data });
+      data = await executeInquiry(DEFAULT_DUITKU_PAYMENT_METHOD);
+    }
+  } catch (err) {
+    if (paymentMethod !== DEFAULT_DUITKU_PAYMENT_METHOD) {
+      logger.warn(`Duitku inquiry error with channel ${paymentMethod}, retrying with ${DEFAULT_DUITKU_PAYMENT_METHOD}`, { err });
+      data = await executeInquiry(DEFAULT_DUITKU_PAYMENT_METHOD);
+    } else {
+      throw err;
+    }
+  }
+
   if (data.statusCode !== "00" || !data.paymentUrl) {
     throw new Error(`Duitku API returned no payment url: ${JSON.stringify(data)}`);
   }

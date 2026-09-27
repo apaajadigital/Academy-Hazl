@@ -178,7 +178,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside className="al-sidebar">
-        {/* Logo — branded Jago Akademi mark (matches member shell) */}
+        {/* Logo — branded Hazl Academy mark (matches member shell) */}
         <div className="al-logo-row">
           {!collapsed && (
             <div className="al-logo-wrap">

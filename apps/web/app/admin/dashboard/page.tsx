@@ -531,7 +531,7 @@ export default function AdminDashboardPage() {
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-xs text-text-secondary" title={course.trainer?.name ?? undefined}>
-                        {course.trainer?.name ?? "Trainer Jago"}
+                        {course.trainer?.name ?? "Trainer Hazl"}
                       </p>
                       <div className="mt-2 flex items-center gap-2">
                         {/* Relative bar only — the API gives no target, so this

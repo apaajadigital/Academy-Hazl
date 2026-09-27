@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Briefcase, Sparkles } from "lucide-react";
-import { getApiBase } from "@/lib/api/base";
+import { API_BASE as API } from "@/lib/api/base";
 
 const PAGE_SIZE = 12;
 
@@ -38,15 +38,9 @@ function initialsOf(name: string): string {
   );
 }
 
-/**
- * Only render photos from https URLs or from our own /uploads/ path (local
- * file uploads via POST /api/upload/image, served by our own API) — anything
- * else falls back to initials. `/uploads/` is safe to allow unlike an
- * arbitrary relative path: the upload endpoint fixes the extension from the
- * validated MIME type, so it can never serve back attacker-chosen content.
- */
+/** Only render remote photos from https URLs; anything else falls back to initials. */
 function safePhotoUrl(url: string | null | undefined): string | null {
-  return url && (url.startsWith("https://") || url.startsWith("/uploads/")) ? url : null;
+  return url && url.startsWith("https://") ? url : null;
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
@@ -97,10 +91,7 @@ export default function PortofolioMemberPage() {
     total: number | null;
   }> => {
     try {
-      // Relative via getApiBase() — an absolute NEXT_PUBLIC_API_URL-less URL
-      // hits the production CSP's connect-src and silently fails (see
-      // lib/api/listResource.ts for the documented failure mode this repeats).
-      const res = await fetch(`${getApiBase()}/api/portfolios?page=${pageNum}&limit=${PAGE_SIZE}`);
+      const res = await fetch(`${API}/api/portfolios?page=${pageNum}&limit=${PAGE_SIZE}`);
       const body = (await res.json()) as {
         success?: boolean;
         data?: unknown;
@@ -162,8 +153,8 @@ export default function PortofolioMemberPage() {
             <span className="pm-hero-gradient">Dari Member Komunitas Kami</span>
           </h1>
           <p className="pm-hero-desc">
-            Proyek dan karya yang dipublikasikan langsung oleh member Jago
-            Akademi — bukti nyata hasil belajar mereka.
+            Proyek dan karya yang dipublikasikan langsung oleh member Hazl
+            Academy — bukti nyata hasil belajar mereka.
           </p>
         </div>
         <div className="pm-hero-glow" aria-hidden="true" />

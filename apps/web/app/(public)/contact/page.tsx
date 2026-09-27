@@ -10,15 +10,15 @@ const waHref = waLink();
 export const metadata: Metadata = {
   title: "Hubungi Kami",
   description:
-    "Ada pertanyaan atau ingin berkolaborasi? Hubungi tim Jago Akademi melalui form, email, atau WhatsApp.",
+    "Ada pertanyaan atau ingin berkolaborasi? Hubungi tim Hazl Academy melalui form, email, atau WhatsApp.",
 };
 
 const CONTACTS = [
   {
     icon: <Mail size={20} aria-hidden="true" />,
     label: "Email",
-    value: "halo@jagoakademi.com",
-    href: "mailto:halo@jagoakademi.com",
+    value: "halo@hazl.id",
+    href: "mailto:halo@hazl.id",
   },
   // WhatsApp row only exists when a real number is configured. Previously an
   // unset number rendered the value as a bare "+" next to a dead wa.me link —

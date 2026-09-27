@@ -4,7 +4,7 @@ import { Target, Handshake, Rocket, Lightbulb } from "lucide-react";
 export const metadata: Metadata = {
   title: "Tentang Kami",
   description:
-    "Jago Akademi adalah platform edukasi digital yang mengintegrasikan e-course, event, e-book, dan program trainer dalam satu ekosistem belajar.",
+    "Hazl Academy adalah platform edukasi digital yang mengintegrasikan e-course, event, e-book, dan program trainer dalam satu ekosistem belajar.",
 };
 
 // Real product offerings (no fabricated metrics — TASK-052).
@@ -44,12 +44,12 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="border-b border-[var(--border-subtle)] bg-[var(--surface-card)] px-6 pb-16 pt-24">
         <div className="mx-auto max-w-4xl space-y-6 text-center">
-          <p className="eyebrow eyebrow-center justify-center">Tentang Jago Akademi</p>
+          <p className="eyebrow eyebrow-center justify-center">Tentang Hazl Academy</p>
           <h1 className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--text-primary)] text-balance md:text-5xl">
             Membangun Indonesia yang <span className="text-accent">Lebih Kompeten</span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
-            Jago Akademi hadir untuk menjembatani kesenjangan antara dunia pendidikan dan kebutuhan industri,
+            Hazl Academy hadir untuk menjembatani kesenjangan antara dunia pendidikan dan kebutuhan industri,
             melalui ekosistem belajar yang terintegrasi dan berorientasi pada hasil nyata.
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function AboutPage() {
             </h2>
             <p className="leading-relaxed text-[var(--text-secondary)]">
               Kami percaya bahwa setiap orang berhak mendapat akses ke pendidikan berkualitas tinggi yang
-              relevan dengan kebutuhan karier mereka. Jago Akademi menghadirkan pengalaman belajar yang
+              relevan dengan kebutuhan karier mereka. Hazl Academy menghadirkan pengalaman belajar yang
               terstruktur, praktis, dan didukung oleh komunitas yang solid.
             </p>
             <p className="leading-relaxed text-[var(--text-secondary)]">

@@ -1,0 +1,164 @@
+# ⛔ DO NOT USE ON THE LIVE VPS (srv1693732 / jagoakademi.com). ⛔
+# That host uses docker-compose.vps.yml + a HOST-level nginx (systemd) proxying
+# to published ports 3010 (web) and 4010 (api). This file describes the OLD
+# containerized-nginx topology: it publishes NO host ports on web/api, so
+# running it there detaches the site from host nginx → 502 outage
+# (incident 17 Jul 2026, BL-43). Kept only as reference for a future
+# fully-containerized setup.
+#
+# Shared app environment for api + worker (TASK-022) — single source, no drift.
+x-app-env: &app-env
+  NODE_ENV: production
+  DATABASE_URL: postgresql://${POSTGRES_USER:-jagouser}:${POSTGRES_PASSWORD}@postgres:5432/jago_akademi
+  REDIS_URL: redis://redis:6379
+  WEB_URL: ${WEB_URL}
+  CORS_ORIGIN: ${WEB_URL}
+  JWT_SECRET: ${JWT_SECRET:?Required}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Required}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+  GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+  COOKIE_SECURE: "true"
+  RESEND_API_KEY: ${RESEND_API_KEY}
+  EMAIL_FROM: ${EMAIL_FROM}
+  EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Jago Akademi}
+  DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
+  DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
+  DOKU_BASE_URL: ${DOKU_BASE_URL:-https://api.doku.com}
+  MEILISEARCH_URL: http://meilisearch:7700
+  MEILISEARCH_KEY: ${MEILISEARCH_KEY}
+  UPLOAD_DIR: /app/uploads
+  MAX_FILE_SIZE_MB: "50"
+  SENTRY_DSN: ${SENTRY_DSN:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: jago_akademi
+      POSTGRES_USER: ${POSTGRES_USER:-jagouser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?DB password required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-jagouser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.5
+    restart: always
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:?Meilisearch master key required}
+      MEILI_ENV: production
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    # Persistence for BullMQ jobs (TASK-022): AOF every second.
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: ${API_IMAGE:-jago-api:local}
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+      PORT: 4000
+    volumes:
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # BullMQ worker (TASK-022) — reuses the api image, runs the worker entrypoint.
+  worker:
+    image: ${API_IMAGE:-jago-api:local}
+    restart: always
+    command: ["node", "dist/worker.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    environment:
+      <<: *app-env
+    volumes:
+      - ${UPLOADS_PATH:-uploads}:/app/uploads
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        # Server-side rewrite target (BL-75/BL-79). Unset falls back to
+        # NEXT_PUBLIC_API_URL, i.e. previous behaviour.
+        API_PROXY_TARGET: ${API_PROXY_TARGET:-}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
+        NEXT_PUBLIC_APP_NAME: "Jago Akademi"
+    restart: always
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    depends_on:
+      - web
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
+      - nginx_cache:/var/cache/nginx
+
+volumes:
+  postgres_data:
+  meilisearch_data:
+  redis_data:
+  uploads:
+  nginx_cache:

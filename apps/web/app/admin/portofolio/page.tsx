@@ -19,7 +19,6 @@ import {
   PageHeader,
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ImageUploadField } from "@/components/admin";
 
 type PortfolioItem = {
   title: string;
@@ -48,16 +47,6 @@ function isHttpsUrl(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * Image fields (member photo, item image) additionally accept our own
- * /uploads/ path from local file uploads (POST /api/upload/image) — mirrors
- * the backend's imageUrlSchema in modules/admin/portfolios.ts. External links
- * ("Lihat karya") stay https-only via isHttpsUrl above.
- */
-function isValidImageUrl(value: string): boolean {
-  return isHttpsUrl(value) || value.startsWith("/uploads/");
 }
 
 export default function AdminPortofolioPage() {
@@ -168,8 +157,8 @@ export default function AdminPortofolioPage() {
     if (name.length < 2 || name.length > 120) return "Nama wajib 2-120 karakter.";
     if (role.length < 2 || role.length > 120) return "Role wajib 2-120 karakter.";
     if (formHeadline.trim().length > 200) return "Headline maksimal 200 karakter.";
-    if (formPhotoUrl.trim() && !isValidImageUrl(formPhotoUrl.trim())) {
-      return "URL Foto harus berupa link https:// yang valid, atau hasil upload dari perangkat.";
+    if (formPhotoUrl.trim() && !isHttpsUrl(formPhotoUrl.trim())) {
+      return "URL Foto harus berupa link https:// yang valid.";
     }
     if (formItems.length > MAX_ITEMS) return `Maksimal ${MAX_ITEMS} item portofolio.`;
     for (const [i, it] of formItems.entries()) {
@@ -180,8 +169,8 @@ export default function AdminPortofolioPage() {
       if ((it.url ?? "").trim() && !isHttpsUrl((it.url ?? "").trim())) {
         return `Item #${i + 1}: URL harus berupa link https:// yang valid.`;
       }
-      if ((it.imageUrl ?? "").trim() && !isValidImageUrl((it.imageUrl ?? "").trim())) {
-        return `Item #${i + 1}: URL gambar harus berupa link https:// yang valid, atau hasil upload dari perangkat.`;
+      if ((it.imageUrl ?? "").trim() && !isHttpsUrl((it.imageUrl ?? "").trim())) {
+        return `Item #${i + 1}: URL gambar harus berupa link https:// yang valid.`;
       }
       if ((it.description ?? "").trim().length > 300) {
         return `Item #${i + 1}: deskripsi maksimal 300 karakter.`;
@@ -300,7 +289,7 @@ export default function AdminPortofolioPage() {
         <EmptyState
           icon={ImageIcon}
           title="Tidak ada member ditemukan"
-          description="Tambahkan member untuk menampilkan portofolio komunitas Jago Akademi di sini."
+          description="Tambahkan member untuk menampilkan portofolio komunitas Hazl Academy di sini."
         />
       ) : (
         <div className="dash-grid">
@@ -404,11 +393,12 @@ export default function AdminPortofolioPage() {
                 placeholder="Contoh: Alumni Bootcamp Batch 3 — kini bekerja di startup fintech"
                 containerClassName="md:col-span-2"
               />
-              <ImageUploadField
-                label="Foto Member"
+              <Input
+                label="URL Foto (https)"
+                type="text"
                 value={formPhotoUrl}
-                onChange={setFormPhotoUrl}
-                placeholder="https://media.jago.id/... atau upload dari perangkat"
+                onChange={(e) => setFormPhotoUrl(e.target.value)}
+                placeholder="https://media.hazl.id/..."
                 containerClassName="md:col-span-2"
               />
               <Select
@@ -478,11 +468,12 @@ export default function AdminPortofolioPage() {
                       placeholder="URL karya https:// (opsional)"
                       className="text-sm"
                     />
-                    <ImageUploadField
-                      label="Gambar Karya"
+                    <Input
+                      type="text"
                       value={item.imageUrl ?? ""}
-                      onChange={(url) => handleItemChange(index, "imageUrl", url)}
-                      placeholder="URL gambar https:// atau upload (opsional)"
+                      onChange={(e) => handleItemChange(index, "imageUrl", e.target.value)}
+                      placeholder="URL gambar https:// (opsional)"
+                      className="text-sm"
                     />
                     <Input
                       type="text"

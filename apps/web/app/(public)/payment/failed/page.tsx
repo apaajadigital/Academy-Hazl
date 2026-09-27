@@ -2,244 +2,136 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense } from "react";
+import { XCircle, RefreshCw, MessageSquare } from "lucide-react";
+import { WA_NUMBER, buildWaLink } from "@/lib/config";
 
-// ─── Animated X mark ─────────────────────────────────────────────────────────
-function AnimatedXMark() {
-  return (
-    <div className="relative flex items-center justify-center" aria-hidden="true">
-      {/* Shake ring */}
-      <span
-        className="absolute inset-0 rounded-full"
-        style={{
-          background: "rgba(239, 68, 68, 0.1)",
-          animation: "error-ring 0.5s 0.2s ease-out both",
-        }}
-      />
-      <div
-        className="relative flex h-20 w-20 items-center justify-center rounded-full"
-        style={{ background: "rgba(239,68,68,0.1)", border: "2px solid rgba(239,68,68,0.3)" }}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="h-10 w-10"
-          fill="none"
-          stroke="#DC2626"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        >
-          {/* First line of X */}
-          <line
-            x1="6" y1="6" x2="18" y2="18"
-            style={{
-              strokeDasharray: 17,
-              strokeDashoffset: 17,
-              animation: "draw-line 0.3s 0.2s ease forwards",
-            }}
-          />
-          {/* Second line of X */}
-          <line
-            x1="18" y1="6" x2="6" y2="18"
-            style={{
-              strokeDasharray: 17,
-              strokeDashoffset: 17,
-              animation: "draw-line 0.3s 0.4s ease forwards",
-            }}
-          />
-        </svg>
-      </div>
+// ─── Gateway Reason Dictionary ────────────────────────────────────────────────
 
-      <style>{`
-        @keyframes error-ring {
-          0%   { opacity: 0; transform: scale(0.8); }
-          60%  { opacity: 1; transform: scale(1.1); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes draw-line {
-          to { stroke-dashoffset: 0; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
-// ─── Common failure reasons map ───────────────────────────────────────────────
 const REASON_MAP: Record<string, string> = {
-  EXPIRED: "Batas waktu pembayaran telah habis.",
-  CANCELLED: "Pembayaran dibatalkan oleh pengguna.",
-  DECLINED: "Kartu/rekening ditolak oleh bank.",
-  INSUFFICIENT_FUNDS: "Saldo tidak mencukupi.",
-  INVALID_CARD: "Data kartu tidak valid.",
+  EXPIRED: "Waktu pembayaran telah habis sebelum transaksi diselesaikan.",
+  CANCELLED: "Transaksi dibatalkan oleh pengguna atau penyedia pembayaran.",
+  DECLINED: "Transaksi ditolak oleh bank penerbit kartu. Periksa batas limit Anda.",
+  INSUFFICIENT_FUNDS: "Saldo tidak mencukupi untuk menyelesaikan transaksi.",
+  SUSPECTED_FRAUD: "Transaksi tidak dapat diproses oleh sistem keamanan bank.",
+  GATEWAY_ERROR: "Terjadi gangguan sementara pada sistem perbankan. Silakan coba sesaat lagi.",
 };
 
-// ─── Main content ─────────────────────────────────────────────────────────────
+// ─── Main Failed Content ──────────────────────────────────────────────────────
+
 function FailedContent() {
   const params = useSearchParams();
-  /**
-   * returnUrl — URL to send the user back to when they click "Coba Lagi".
-   * Set by the payment gateway redirect or our checkout.ts backend.
-   * Falls back to /e-course if not provided.
-   */
   const returnUrl = params.get("returnUrl") ?? "/e-course";
   const orderId = params.get("orderId");
   const rawReason = params.get("reason");
   const reason = rawReason
     ? (REASON_MAP[rawReason.toUpperCase()] ?? decodeURIComponent(rawReason))
-    : null;
+    : "Pembayaran tidak dapat diselesaikan atau telah dibatalkan.";
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
+  const supportWaHref = buildWaLink(
+    WA_NUMBER,
+    `Halo Admin Hazl, saya mengalami kendala pembayaran${
+      orderId ? ` untuk pesanan ${orderId.slice(0, 8).toUpperCase()}` : ""
+    }. Mohon bantuan verifikasinya.`
+  );
 
   return (
-    <div
-      className="flex min-h-screen flex-col items-center justify-center px-4 py-16"
-      style={{ background: "var(--surface-page)" }}
-    >
-      <div
-        className="w-full max-w-md"
-        style={{
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? "translateY(0)" : "translateY(24px)",
-          transition: "opacity 0.5s ease, transform 0.5s ease",
-        }}
-      >
-        {/* Icon */}
-        <div className="mb-8 flex justify-center">
-          <AnimatedXMark />
-        </div>
+    <div className="min-h-screen bg-[#fcfcfd] flex flex-col justify-center items-center px-4 py-16 text-[#202124] antialiased">
+      <div className="w-full max-w-lg">
+        {/* Main Card */}
+        <div className="rounded-[22px] border border-[#e8e8e9] bg-white p-7 sm:p-9 shadow-none text-center">
+          {/* Animated / Prominent X Icon */}
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-18 w-18 items-center justify-center rounded-full bg-rose-50 border-2 border-rose-200">
+              <XCircle size={38} className="text-rose-600" />
+            </div>
+          </div>
 
-        {/* Heading */}
-        <div className="mb-6 text-center">
-          <h1
-            className="mb-2 text-3xl font-extrabold tracking-tight"
-            style={{ color: "var(--text-primary)", fontFamily: "var(--font-display)" }}
-          >
-            Pembayaran Gagal
+          <h1 className="text-2xl font-bold tracking-tight text-[#202124] mb-2">
+            Pembayaran Belum Berhasil
           </h1>
-          <p style={{ color: "var(--text-secondary)" }}>
-            Pembayaran tidak dapat diproses. Silakan coba lagi atau gunakan metode
-            pembayaran lain.
+          <p className="text-xs text-[#77787d] leading-relaxed mb-6">
+            Kami tidak dapat memproses transaksi Anda saat ini. Jangan khawatir, saldo Anda tidak akan terpotong untuk transaksi yang gagal.
           </p>
-          {orderId && (
-            <p className="mt-2 text-xs" style={{ color: "var(--text-muted)" }}>
-              Ref:{" "}
-              <span className="font-mono font-semibold" style={{ color: "var(--text-secondary)" }}>
-                {orderId.slice(0, 8).toUpperCase()}
-              </span>
-            </p>
-          )}
-        </div>
 
-        {/* Reason card — shown only if reason is provided */}
-        {reason && (
-          <div
-            className="mb-6 rounded-2xl p-4 opacity-0"
-            style={{
-              animation: "fade-in-up 0.4s 0.5s ease forwards",
-              background: "rgba(239,68,68,0.05)",
-              border: "1px solid rgba(239,68,68,0.2)",
-            }}
-          >
-            <p className="flex items-start gap-2 text-sm" style={{ color: "#B91C1C" }}>
-              <span className="mt-0.5 flex-shrink-0">⚠️</span>
-              {reason}
+          {/* Reason Alert Box */}
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50/70 p-4 text-left">
+            <div className="flex items-start gap-2.5">
+              <span className="text-sm">⚠️</span>
+              <div>
+                <h4 className="text-xs font-bold text-rose-900 mb-0.5">Penyebab Kegagalan:</h4>
+                <p className="text-xs text-rose-800 leading-relaxed">{reason}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction Metadata if present */}
+          {orderId && (
+            <div className="mb-6 rounded-xl border border-[#e8e8e9] bg-[#fbfbfc] p-3.5 text-left flex justify-between items-center text-xs">
+              <span className="text-[#77787d]">Referensi Transaksi</span>
+              <span className="font-mono font-bold text-[#202124]">
+                {orderId.slice(0, 12).toUpperCase()}
+              </span>
+            </div>
+          )}
+
+          {/* Solution Checklist */}
+          <div className="mb-6 rounded-xl border border-[#e8e8e9] p-4 text-left text-xs text-[#77787d] space-y-2">
+            <p className="font-bold text-[#202124] mb-1">Solusi yang dapat Anda coba:</p>
+            <p className="flex items-start gap-2">
+              <span>•</span> Gunakan metode pembayaran lain seperti QRIS atau Virtual Account bank berbeda.
+            </p>
+            <p className="flex items-start gap-2">
+              <span>•</span> Pastikan saldo rekening atau limit kartu Anda mencukupi nominal tagihan.
+            </p>
+            <p className="flex items-start gap-2">
+              <span>•</span> Periksa kembali koneksi internet saat proses otorisasi PIN / OTP.
             </p>
           </div>
-        )}
 
-        {/* Tips card */}
-        <div
-          className="mb-6 rounded-2xl p-5 opacity-0"
-          style={{
-            animation: "fade-in-up 0.4s 0.6s ease forwards",
-            background: "var(--surface-card)",
-            border: "1px solid var(--border-subtle)",
-            boxShadow: "var(--shadow-e1)",
-          }}
-        >
-          <p
-            className="mb-3 text-xs font-semibold uppercase tracking-widest"
-            style={{ color: "var(--brand-cyan-strong)" }}
-          >
-            Yang bisa kamu lakukan
-          </p>
-          <ul className="space-y-2">
-            {[
-              { icon: "🔄", text: "Coba lagi dengan metode pembayaran yang sama" },
-              { icon: "💳", text: "Gunakan metode pembayaran lain (transfer bank, e-wallet)" },
-              { icon: "📞", text: "Hubungi bank jika kartu kamu diblokir" },
-              { icon: "🎧", text: "Hubungi support kami jika masalah berlanjut" },
-            ].map((tip, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 opacity-0"
-                style={{ animation: `fade-in-up 0.3s ${0.7 + i * 0.1}s ease forwards` }}
-              >
-                <span className="flex-shrink-0">{tip.icon}</span>
-                <span className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                  {tip.text}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {/* Action Buttons */}
+          <div className="space-y-2.5">
+            <Link
+              id="payment-failed-retry-btn"
+              href={returnUrl}
+              className="w-full h-11 rounded-full bg-[#252527] hover:bg-[#1a1b1d] text-white text-xs font-semibold flex items-center justify-center gap-2 transition"
+            >
+              <RefreshCw size={14} />
+              <span>Coba Bayar Lagi</span>
+            </Link>
+
+            <a
+              href={supportWaHref ?? "https://wa.me/6281234567890"}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full h-11 rounded-full border border-[#e8e8e9] hover:bg-[#f2f2f4] text-[#202124] text-xs font-semibold flex items-center justify-center gap-2 transition"
+            >
+              <MessageSquare size={14} className="text-[#77787d]" />
+              <span>Hubungi Bantuan CS (WhatsApp)</span>
+            </a>
+          </div>
         </div>
 
-        {/* CTA buttons */}
-        <div
-          className="flex flex-col gap-3 sm:flex-row opacity-0"
-          style={{ animation: "fade-in-up 0.4s 1.1s ease forwards" }}
-        >
-          {/* Dynamic "Coba Lagi" — goes back to the checkout page that failed */}
-          <Link
-            id="payment-failed-retry-btn"
-            href={returnUrl}
-            className="btn bg-brand-gradient btn-lg flex-1 justify-center text-white shadow-e1 hover:opacity-90 hover:shadow-e2"
-          >
-            Coba Lagi
+        {/* Back Link */}
+        <p className="mt-6 text-center text-xs text-[#77787d]">
+          Ingin memilih program lain?{" "}
+          <Link href="/e-course" className="font-semibold text-[#0077A8] hover:underline">
+            Lihat Katalog Kursus
           </Link>
-          <Link
-            id="payment-failed-orders-btn"
-            href="/dashboard/pesanan"
-            className="btn btn-outline btn-lg flex-1 justify-center"
-          >
-            Lihat Pesanan
-          </Link>
-        </div>
-
-        {/* Support + home links */}
-        <div
-          className="mt-6 flex justify-center gap-4 text-sm opacity-0"
-          style={{ animation: "fade-in-up 0.4s 1.2s ease forwards", color: "var(--text-muted)" }}
-        >
-          <Link href="/contact" className="hover:underline" style={{ color: "var(--text-muted)" }}>
-            Hubungi Support
-          </Link>
-          <span aria-hidden="true">·</span>
-          <Link href="/" className="hover:underline" style={{ color: "var(--text-muted)" }}>
-            Kembali ke Beranda
-          </Link>
-        </div>
+        </p>
       </div>
     </div>
   );
 }
 
-// ─── Page wrapper ─────────────────────────────────────────────────────────────
+// ─── Export with Suspense ─────────────────────────────────────────────────────
+
 export default function PaymentFailedPage() {
   return (
     <Suspense
       fallback={
-        <div
-          className="flex min-h-screen items-center justify-center"
-          style={{ background: "var(--surface-page)" }}
-        >
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-            style={{ borderColor: "#DC2626", borderTopColor: "transparent" }}
-          />
+        <div className="flex min-h-screen items-center justify-center bg-[#fcfcfd]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0077A8] border-t-transparent" />
         </div>
       }
     >

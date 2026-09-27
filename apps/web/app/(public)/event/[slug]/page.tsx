@@ -35,15 +35,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const event = await getEvent(slug);
 
   if (!event) {
-    return { title: "Event tidak ditemukan — Jago Akademi" };
+    return { title: "Event tidak ditemukan — Hazl Academy" };
   }
 
   const description =
     event.description?.slice(0, 160).replace(/\s+/g, " ").trim() ??
-    `Ikuti ${event.title} bersama Jago Akademi.`;
+    `Ikuti ${event.title} bersama Hazl Academy.`;
 
   return {
-    title: `${event.title} — Event Jago Akademi`,
+    title: `${event.title} — Event Hazl Academy`,
     description,
     openGraph: {
       title: event.title,

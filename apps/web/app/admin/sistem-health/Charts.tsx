@@ -79,8 +79,8 @@ export function LineChart({
       </defs>
 
       {/* Grid lines */}
-      {yLabels.map(({ val, y }, i) => (
-        <g key={i}>
+      {yLabels.map(({ val, y }) => (
+        <g key={val}>
           <line x1={pad.left} y1={y} x2={w - pad.right} y2={y} stroke="rgba(0,0,0,0.06)" strokeDasharray="4" />
           <text x={pad.left - 8} y={y + 4} textAnchor="end" className="sh-tick">{formatVal(val)}</text>
         </g>

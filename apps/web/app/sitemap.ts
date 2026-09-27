@@ -1,7 +1,7 @@
 import { type MetadataRoute } from "next";
 import { API_BASE as API } from "@/lib/api/base";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jagoakademi.com";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://skill.hazl.id";
 
 const STATIC_PAGES: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/`,                 lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },

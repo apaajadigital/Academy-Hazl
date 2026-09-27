@@ -1,66 +1,64 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { Section } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
+import Image from "next/image";
+import { ArrowRightIcon, SparklesIcon } from "./HomeIcons";
 
-/**
- * Dark editorial closing band (tone="ink") — honest early-access invitation.
- * Replaces the two look-alike centered CTA sections from the old homepage.
- */
 export function EarlyAccessBand() {
   return (
-    <Section tone="ink">
-      <div className="relative overflow-hidden">
-        {/* Decorative brand-gradient glow on the dark band (Stitch flair). */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-brand-gradient opacity-25 blur-[100px]"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -left-24 -bottom-24 h-72 w-72 rounded-full bg-[var(--brand-cyan)] opacity-[0.12] blur-[100px]"
-        />
+    <section className="w-full bg-white py-16 sm:py-24">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[40px] bg-gradient-to-r from-[#0077A8] via-[#0D5B8A] to-[#CC0052] px-6 py-16 sm:py-20 text-center shadow-lg">
+          {/* Decorative Background Elements */}
+          <div className="pointer-events-none absolute inset-0 opacity-20 bg-[radial-gradient(#FFFFFF_1px,transparent_1px)] [background-size:20px_20px]"></div>
 
-        <div className="relative grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
-          <Reveal className="lg:col-span-8">
-            <p className="eyebrow mb-4 !text-[var(--brand-cyan)]">Early access</p>
-            <h2 className="font-display text-3xl font-bold tracking-tight text-white text-balance md:text-4xl">
-              Platform ini baru dibuka.
-              <br />
-              Jadilah bagian dari{" "}
-              <span className="bg-brand-gradient bg-clip-text text-transparent">angkatan pertama</span>.
+          <div className="relative z-10 flex flex-col items-center max-w-3xl mx-auto">
+            {/* Mascot Hazel Welcoming */}
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
+              <Image
+                src="/brand/mascot/hazel-menyambut.webp"
+                alt="Hazel menyambut"
+                fill
+                sizes="128px"
+                className="object-contain drop-shadow-md"
+              />
+            </div>
+
+            {/* Badge */}
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs sm:text-sm font-bold text-white backdrop-blur-sm mb-6">
+              <SparklesIcon className="w-4 h-4 text-pink-300" />
+              <span>Daftar gratis</span>
+              <span className="hidden sm:inline opacity-60">•</span>
+              <span className="hidden sm:inline font-semibold">Jualan mulai hari ini</span>
+            </span>
+
+            {/* Main Headline */}
+            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08] mb-5">
+              Siap ubah skill AI-mu jadi penghasilan?
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/70">
-              Daftar gratis hari ini — dapatkan akses awal saat katalog dirilis,
-              dan bantu bentuk arah platform ini bersama kami.
-            </p>
-          </Reveal>
 
-          <Reveal delay={0.1} className="lg:col-span-4">
-            <div className="flex flex-col gap-3 lg:items-end">
+            {/* Subheading */}
+            <p className="text-base sm:text-lg text-white/90 max-w-xl mb-10 leading-relaxed font-normal">
+              Mulai dari satu kelas. Saat sudah siap, buka lapakmu sendiri di Hazl Academy dan nikmati bagi hasil 95%.
+            </p>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center justify-center gap-3.5">
               <Link
                 href="/daftar"
-                className="btn btn-lg bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2 w-full sm:w-auto"
+                className="h-12 px-8 rounded-full bg-white text-[#16181D] text-sm sm:text-base font-bold inline-flex items-center gap-2 hover:bg-[#F6F7F9] transition-all shadow-md active:scale-[0.99]"
               >
-                Daftar Gratis
-                <ArrowRight size={18} aria-hidden="true" />
+                <span>Daftar gratis</span>
+                <ArrowRightIcon className="w-4 h-4" />
               </Link>
               <Link
-                href="/early-access"
-                className="btn btn-lg w-full border border-white/25 bg-transparent text-white transition-colors hover:border-white/50 hover:bg-white/10 sm:w-auto"
+                href="/trainer-program"
+                className="h-12 px-8 rounded-full border border-white/30 bg-white/10 text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-sm active:scale-[0.99]"
               >
-                Gabung Early Access
-              </Link>
-              <Link
-                href="/kelas-gratis"
-                className="text-sm text-white/50 hover:text-white/80 transition-colors text-center"
-              >
-                Atau mulai dari kelas gratis →
+                Pelajari jadi kreator
               </Link>
             </div>
-          </Reveal>
+          </div>
         </div>
       </div>
-    </Section>
+    </section>
   );
 }

@@ -223,7 +223,7 @@ const nextConfig = {
     ];
   },
 
-  transpilePackages: ["@repo/ui", "@repo/brand"],
+  transpilePackages: ["@repo/ui"],
 
   images: {
     // BL-159: AVIF deliberately NOT served. This is defence in depth against the

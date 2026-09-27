@@ -20,7 +20,7 @@ export function generateInvoicePDF(order: InvoiceOrder): Promise<Buffer> {
 
     // Header
     doc.fillColor("#0077A8").fontSize(22).font("Helvetica-Bold").text("HAZL ACADEMY", 60, 60);
-    doc.fillColor("#6E6E73").fontSize(10).font("Helvetica").text("Platform Pembelajaran Online", 60, 86);
+    doc.fillColor("#6E6E73").fontSize(10).font("Helvetica").text("Platform Edukasi Digital Indonesia", 60, 86);
 
     // Invoice title
     doc
@@ -105,7 +105,7 @@ export function generateInvoicePDF(order: InvoiceOrder): Promise<Buffer> {
     const footerY = doc.page.height - 80;
     doc.moveTo(60, footerY).lineTo(doc.page.width - 60, footerY).stroke("#E5E5EA");
     doc.fillColor("#6E6E73").fontSize(9).font("Helvetica");
-    doc.text("Hazl Academy | academy.hazl.id | TBD", 60, footerY + 12, { align: "center", width: W });
+    doc.text("Hazl Academy | skill.hazl.id | support@hazl.id", 60, footerY + 12, { align: "center", width: W });
     doc.text("Dokumen ini diterbitkan secara elektronik dan sah tanpa tanda tangan.", 60, footerY + 26, { align: "center", width: W });
 
     doc.end();

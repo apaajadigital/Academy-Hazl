@@ -59,6 +59,16 @@ const CASES: Case[] = [
     dataText: /Alumni Uji/,
   },
   {
+    name: "kelas-privat",
+    path: "/kelas-privat",
+    endpoint: "**/api/courses*",
+    errorText: /Gagal memuat daftar paket/i,
+    emptyText: /Paket sedang disiapkan/i,
+    rows: [{ id: "c1", slug: "paket-uji", title: "Paket Uji", price: "1000000", salePrice: null }],
+    envelope: paginated,
+    dataText: /Paket Uji/,
+  },
+  {
     name: "marketplace",
     path: "/marketplace",
     endpoint: "**/api/ebooks*",

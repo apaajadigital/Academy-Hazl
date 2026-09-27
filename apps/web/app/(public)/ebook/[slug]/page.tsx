@@ -41,17 +41,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const book = await getEBook(slug);
 
   if (!book) {
-    return { title: "E-Book tidak ditemukan — Jago Akademi" };
+    return { title: "E-Book tidak ditemukan — Hazl Academy" };
   }
 
   const description =
-    (book.description ?? `${book.title} — e-book di Jago Akademi.`)
+    (book.description ?? `${book.title} — e-book di Hazl Academy.`)
       .slice(0, 160)
       .replace(/\s+/g, " ")
       .trim();
 
   return {
-    title: `${book.title} — E-Book Jago Akademi`,
+    title: `${book.title} — E-Book Hazl Academy`,
     description,
     alternates: { canonical: `/ebook/${book.slug}` },
     openGraph: {

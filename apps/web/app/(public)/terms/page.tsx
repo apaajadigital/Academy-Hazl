@@ -5,13 +5,13 @@ import { Card } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Syarat & Ketentuan",
-  description: "Syarat dan ketentuan penggunaan layanan Jago Akademi.",
+  description: "Syarat dan ketentuan penggunaan layanan Hazl Academy.",
 };
 
 const sections = [
   {
     h: "1. Penerimaan Ketentuan",
-    p: "Dengan mengakses dan menggunakan Jago Akademi, Anda menyetujui syarat dan ketentuan ini serta Kebijakan Privasi kami.",
+    p: "Dengan mengakses dan menggunakan Hazl Academy, Anda menyetujui syarat dan ketentuan ini serta Kebijakan Privasi kami.",
   },
   {
     h: "2. Akun",
@@ -27,7 +27,7 @@ const sections = [
   },
   {
     h: "5. Konten & Hak Kekayaan Intelektual",
-    p: "Seluruh materi di platform dilindungi hak cipta milik Jago Akademi atau pemberi lisensinya. Dilarang menyalin, memodifikasi, atau mendistribusikan tanpa izin tertulis.",
+    p: "Seluruh materi di platform dilindungi hak cipta milik Hazl Academy atau pemberi lisensinya. Dilarang menyalin, memodifikasi, atau mendistribusikan tanpa izin tertulis.",
   },
   {
     h: "6. Batasan Tanggung Jawab",
@@ -85,7 +85,7 @@ export default function TermsPage() {
               </div>
               <Card className="p-5">
                 <p className="mb-1 text-xs text-text-secondary">Berlaku sejak</p>
-                <p className="text-sm font-semibold text-text-primary">Peluncuran layanan Jago Akademi</p>
+                <p className="text-sm font-semibold text-text-primary">Peluncuran layanan Hazl Academy</p>
               </Card>
             </div>
           </aside>
@@ -95,7 +95,7 @@ export default function TermsPage() {
             <Card className="p-6 md:p-10">
               <header className="mb-8 border-b border-border-default pb-6">
                 <h1 className="mb-2 text-3xl font-bold text-text-primary md:text-4xl">Syarat &amp; Ketentuan</h1>
-                <p className="text-sm text-text-secondary">Berlaku sejak peluncuran layanan Jago Akademi.</p>
+                <p className="text-sm text-text-secondary">Berlaku sejak peluncuran layanan Hazl Academy.</p>
               </header>
 
               <div className="space-y-10">

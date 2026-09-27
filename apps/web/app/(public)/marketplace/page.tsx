@@ -260,7 +260,7 @@ function MarketplaceCatalog() {
           Koleksi Materi <span className="text-accent" style={{ background: "linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Digital</span>
         </h1>
         <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
-          Etalase materi digital Jago Akademi — saat ini berisi koleksi e-book dari para praktisi. Beli sekali, unduh langsung, akses selamanya.
+          Etalase materi digital Hazl Academy — saat ini berisi koleksi e-book dari para praktisi. Beli sekali, unduh langsung, akses selamanya.
         </p>
       </div>
 

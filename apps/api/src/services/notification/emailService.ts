@@ -67,7 +67,7 @@ export async function sendPaymentSuccess(to: string, name: string, orderId: stri
      <p>Pembayaran Anda untuk kursus <b>${escapeHtml(courseName)}</b> sebesar <b>Rp ${amount.toLocaleString("id-ID")}</b> telah berhasil dikonfirmasi.</p>
      <p>Order ID: <code>${escapeHtml(orderId)}</code></p>
      <p>Silakan login dan mulai belajar: <a href="${env.WEB_URL}/dashboard/kursus">Mulai Belajar</a></p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -84,25 +84,25 @@ export async function sendPaymentSuccess(to: string, name: string, orderId: stri
 export async function sendPaymentPending(to: string, name: string, orderId: string, amount: number, paymentUrl: string) {
   await send(
     to,
-    "Selesaikan Pembayaran Anda — Jago Akademi",
+    "Selesaikan Pembayaran Anda — Hazl Academy",
     `<p>Halo <b>${escapeHtml(name)}</b>,</p>
      <p>Order Anda sebesar <b>Rp ${amount.toLocaleString("id-ID")}</b> sedang menunggu pembayaran.</p>
      <p>Order ID: <code>${escapeHtml(orderId)}</code></p>
      <p><a href="${escapeHtml(paymentUrl)}">Klik di sini untuk menyelesaikan pembayaran</a></p>
      <p>Atau <a href="${env.WEB_URL}/payment/pending?orderId=${encodeURIComponent(orderId)}">lacak status pesanan</a> Anda.</p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
 export async function sendVerificationEmail(to: string, name: string, token: string) {
   await send(
     to,
-    "Verifikasi Email Anda — Jago Akademi",
+    "Verifikasi Email Anda — Hazl Academy",
     `<p>Halo <b>${escapeHtml(name)}</b>,</p>
-     <p>Terima kasih telah mendaftar di Jago Akademi. Klik tautan berikut untuk memverifikasi email Anda:</p>
+     <p>Terima kasih telah mendaftar di Hazl Academy. Klik tautan berikut untuk memverifikasi email Anda:</p>
      <p><a href="${env.WEB_URL}/verifikasi-email?token=${token}">Verifikasi Email</a></p>
      <p>Tautan ini berlaku selama 24 jam.</p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -117,12 +117,12 @@ export async function sendVerificationEmail(to: string, name: string, token: str
 export async function sendPasswordResetEmail(to: string, name: string, token: string) {
   await send(
     to,
-    "Reset Kata Sandi Anda — Jago Akademi",
+    "Reset Kata Sandi Anda — Hazl Academy",
     `<p>Halo <b>${escapeHtml(name)}</b>,</p>
      <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun Anda. Klik tautan berikut untuk membuat kata sandi baru:</p>
      <p><a href="${env.WEB_URL}/reset-password?token=${token}">Reset Kata Sandi</a></p>
      <p>Tautan ini berlaku selama <b>1 jam</b>. Jika Anda tidak meminta reset kata sandi, abaikan email ini — kata sandi Anda tidak akan berubah.</p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -134,12 +134,12 @@ export async function sendPasswordResetEmail(to: string, name: string, token: st
 export async function sendLmsInviteEmail(to: string, tenantName: string, token: string) {
   await send(
     to,
-    `Undangan Bergabung — ${tenantName} di Jago Akademi`,
+    `Undangan Bergabung — ${tenantName} di Hazl Academy`,
     `<p>Halo,</p>
-     <p>Anda diundang untuk bergabung ke ruang belajar <b>${escapeHtml(tenantName)}</b> di Jago Akademi.</p>
+     <p>Anda diundang untuk bergabung ke ruang belajar <b>${escapeHtml(tenantName)}</b> di Hazl Academy.</p>
      <p><a href="${env.WEB_URL}/lms/invite/${token}">Terima Undangan</a></p>
      <p>Undangan ini berlaku selama <b>7 hari</b>. Anda perlu masuk (atau mendaftar) dengan alamat email <b>${escapeHtml(to)}</b> agar undangan dapat diterima.</p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -151,7 +151,7 @@ export async function sendEventFullRefund(to: string, name: string, orderId: str
      <p>Mohon maaf, kuota untuk event <b>${escapeHtml(eventName)}</b> ternyata sudah penuh saat pembayaran Anda dikonfirmasi.</p>
      <p>Pembayaran Anda akan <b>dikembalikan sepenuhnya (refund)</b> dan sedang kami proses.</p>
      <p>Order ID: <code>${escapeHtml(orderId)}</code></p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -232,7 +232,7 @@ export async function sendEventRegistrationConfirmed(
      </ul>
      ${orderId ? `<p>Order ID: <code>${escapeHtml(orderId)}</code></p>` : ""}
      <p>Tiket Anda juga tersimpan di <a href="${env.WEB_URL}/dashboard/tiket">Dashboard &rsaquo; Tiket Saya</a>.</p>
-     <br><p>Sampai jumpa di acara!<br>Tim Jago Akademi</p>`
+     <br><p>Sampai jumpa di acara!<br>Tim Hazl Academy</p>`
   );
 }
 
@@ -286,17 +286,17 @@ export async function sendPrivateClassWelcome(
      </ol>
      <p>Butuh bantuan? Hubungi admin kami di <a href="https://wa.me/${escapeHtml(adminWa)}">wa.me/${escapeHtml(adminWa)}</a></p>
      <p>Order ID: <code>${escapeHtml(orderId)}</code></p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }
 
 export async function sendOrderInvoice(to: string, name: string, orderId: string) {
   await send(
     to,
-    `Invoice Pesanan #${orderId.slice(0, 8).toUpperCase()} — Jago Akademi`,
+    `Invoice Pesanan #${orderId.slice(0, 8).toUpperCase()} — Hazl Academy`,
     `<p>Halo <b>${escapeHtml(name)}</b>,</p>
      <p>Invoice untuk pesanan Anda dapat diunduh melalui tautan berikut:</p>
      <p><a href="${env.WEB_URL}/pesanan/${escapeHtml(orderId)}">Lihat dan Unduh Invoice</a></p>
-     <br><p>Salam,<br>Tim Jago Akademi</p>`
+     <br><p>Salam,<br>Tim Hazl Academy</p>`
   );
 }

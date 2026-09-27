@@ -9,12 +9,12 @@ import { Reveal } from "@/components/ui/Reveal";
 import { LeadCaptureForm } from "@/components/landing/LeadCaptureForm";
 
 export const metadata: Metadata = {
-  title: "LMS B2B untuk Perusahaan — Jago Akademi",
+  title: "LMS B2B untuk Perusahaan — Hazl Academy",
   description:
-    "Digitalkan program pelatihan karyawan dengan LMS B2B Jago Akademi. Kelola batch, tugaskan kursus, pantau progres tim, dan terbitkan sertifikat ber-branding perusahaan Anda.",
+    "Digitalkan program pelatihan karyawan dengan LMS B2B Hazl Academy. Kelola batch, tugaskan kursus, pantau progres tim, dan terbitkan sertifikat ber-branding perusahaan Anda.",
   alternates: { canonical: "/clients" },
   openGraph: {
-    title: "LMS B2B untuk Perusahaan — Jago Akademi",
+    title: "LMS B2B untuk Perusahaan — Hazl Academy",
     description:
       "Platform pelatihan karyawan terpusat — workspace eksklusif, laporan real-time, sertifikasi otomatis.",
     type: "website",
@@ -47,7 +47,7 @@ const CAPABILITIES = [
   {
     icon: Layers,
     title: "Konten Fleksibel",
-    desc: "Buat kursus sendiri atau gabungkan dengan katalog kursus Jago Akademi yang sudah ada.",
+    desc: "Buat kursus sendiri atau gabungkan dengan katalog kursus Hazl Academy yang sudah ada.",
   },
   {
     icon: ShieldCheck,

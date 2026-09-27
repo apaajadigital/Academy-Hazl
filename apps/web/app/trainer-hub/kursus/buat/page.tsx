@@ -153,7 +153,7 @@ export default function CreateCoursePage() {
               }}
               placeholder="mastering-digital-marketing-dari-nol"
               required
-              hint={`URL: jagoakademi.com/kursus/${form.slug || "..."}`}
+              hint={`URL: skill.hazl.id/kursus/${form.slug || "..."}`}
             />
           </div>
 

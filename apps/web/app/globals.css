@@ -2,20 +2,32 @@
 @config "../tailwind-legacy.config.ts";
 @plugin "@tailwindcss/typography";
 
-/* ─── CSS Design Tokens — Jago Akademi Light Theme ─────────────────── */
+/* ─── CSS Design Tokens — Hazl Academy Light Theme ─────────────────── */
 :root {
-  /* ── Brand primitives ───────────────────────────────────────────── */
-  --brand-cyan:          #36bdf2;
+  /* ── Brand primitives (Hazl redesign, Sep 2026) ───────────────────
+     Two brand colors + neutrals, NO purple — per HAZL_REDESIGN_BRIEF.md
+     Section 2.1: purple/ungu must never be added back to the brand
+     palette. --brand-purple removed entirely (it was the gradient
+     mid-stop); every gradient below drops to a straight blue-to-pink
+     2-stop instead of the old 3-stop blue-purple-pink. */
+  --brand-cyan:          #36BDF2;   /* Hazl primary blue */
   --brand-cyan-strong:   #0077A8;   /* accessible for text/icons on white (4.67:1) */
-  --brand-cyan-dark:     #00aad4;   /* legacy compat */
-  --brand-pink:          #ff2f86;
+  --brand-cyan-dark:     #0077A8;   /* legacy compat alias */
+  --brand-pink:          #FF2F86;   /* Hazl accent pink */
   --brand-pink-strong:   #CC0052;   /* accessible for text on white (4.84:1) */
-  --brand-pink-dark:     #d40054;   /* legacy compat */
-  --brand-purple:        #946bee;   /* gradient mid-stop (Stitch `secondary`) */
+  --brand-pink-dark:     #CC0052;   /* legacy compat alias */
 
-  /* Canonical brand gradient — hero/accent only. Use via `.bg-brand-gradient`
-     so pages stop inlining the raw linear-gradient(...). */
-  --brand-gradient:      linear-gradient(100deg, #36bdf2 0%, #946bee 55%, #ff2f86 100%);
+  /* Canonical brand gradient — hero/accent only, MAX 1x per page per the
+     redesign brief. Two stops (blue to pink), no purple mid-stop. Use via
+     `.bg-brand-gradient` so pages stop inlining raw linear-gradient(...). */
+  --brand-gradient:      linear-gradient(120deg, #36BDF2 0%, #FF2F86 100%);
+
+  /* DEPRECATED — kept only so admin/dashboard/trainer pages that still
+     reference accent-purple (14 files, not yet migrated off it in this
+     redesign pass) do not break. New public-facing work must never use
+     this token; it is scheduled for removal once those pages are migrated
+     in a later pass. */
+  --brand-purple:        #7C3AED;
 
   /* ── Surfaces ───────────────────────────────────────────────────── */
   --surface-page:        #F5F5F7;
@@ -23,8 +35,8 @@
   --surface-sunken:      #FAFAFA;
   --surface-raised:      #FFFFFF;
   --surface-overlay:     rgba(0, 0, 0, 0.45);
-  --surface-accent-soft: rgba(0, 212, 255, 0.08);
-  --surface-pink-soft:   rgba(255, 0, 102, 0.07);
+  --surface-accent-soft: rgba(54, 189, 242, 0.08); /* #36BDF2 */
+  --surface-pink-soft:   rgba(255, 47, 134, 0.07); /* #FF2F86 */
 
   /* ── Legacy bg aliases (light values) ──────────────────────────── */
   --bg-base:             #F5F5F7;
@@ -249,20 +261,25 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
-  /* Cards — white + elevation. `.card` is the canonical name; `.card-dark`
-     kept as a legacy alias from the dark-theme era. */
+  /* Cards — flat by default, elevation only on hover (Hazl redesign,
+     Sep 2026): per the audit of hazl-creators-ui v2, this system uses
+     borders, not shadows, for at-rest depth. A shadow sitting under every
+     card at all times reads as generic "AI slop"; the shadow appearing
+     only as a hover micro-interaction is what makes it feel deliberate.
+     `.card` is the canonical name; `.card-dark` kept as a legacy alias
+     from the dark-theme era. */
   .card,
   .card-dark {
     background: var(--surface-card);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-e1);
+    box-shadow: var(--shadow-e0);
     transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
   }
   .card:hover,
   .card-dark:hover {
     border-color: var(--border-strong);
-    box-shadow: var(--shadow-e2);
+    box-shadow: var(--shadow-e1);
     transform: translateY(-2px);
   }
 

@@ -14,14 +14,76 @@ import { collectConsoleErrors, errorEnvelope, okEnvelope } from "./mock-utils";
 
 // ─── /kelas-privat ────────────────────────────────────────────────────────────
 
-// Hazl decision: Private Class stays OFF. Video sales use E-Course and seminar
-// sales use Event, so this legacy mentoring route must remain unavailable.
 test.describe("Private Class page (/kelas-privat)", () => {
-  test("returns 404 while the legacy mentoring feature is OFF", async ({ page }) => {
-    const response = await page.goto("/kelas-privat");
+  const packages = [
+    {
+      id: "c1",
+      slug: "private-class-basic",
+      title: "Private Basic",
+      description: "Fondasi yang kuat.\n- Mentoring mingguan\n- Review tugas",
+      price: "1500000",
+      totalLessons: 12,
+    },
+    {
+      id: "c2",
+      slug: "private-class-pro",
+      title: "Private Pro",
+      description: "Paket paling lengkap.\n- Semua benefit Basic\n- Sesi 1-on-1",
+      price: 2500000,
+      salePrice: 1990000,
+      liveSchedule: "Setiap Sabtu 19.00 WIB",
+    },
+    {
+      id: "c3",
+      slug: "private-class-ultimate",
+      title: "Private Ultimate",
+      description: null,
+      price: null,
+    },
+  ];
 
-    expect(response?.status()).toBe(404);
-    await expect(page.getByText("404", { exact: true })).toBeVisible();
+  test("renders 3 tier cards with badge and checkout CTAs", async ({ page }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await page.route("**/api/courses**", (route) =>
+      route.fulfill(okEnvelope(packages)),
+    );
+
+    await page.goto("/kelas-privat");
+
+    // 3 tier cards
+    const cards = page.locator("article.pc-plan-card");
+    await expect(cards).toHaveCount(3);
+
+    // "Paling Populer" badge on the featured (middle) tier
+    await expect(page.locator(".pc-plan-badge")).toHaveText("Paling Populer");
+    await expect(page.locator("article.pc-plan-featured")).toContainText("Private Pro");
+
+    // Every CTA points to /checkout/<slug>?type=course
+    for (const pkg of packages) {
+      const cta = page.locator(`a[href="/checkout/${pkg.slug}?type=course"]`);
+      await expect(cta).toBeVisible();
+      await expect(cta).toHaveText("Ambil Paket Ini");
+    }
+
+    expect(consoleErrors.errors).toEqual([]);
+  });
+
+  test("empty package list shows polite empty state with WA consult link", async ({ page }) => {
+    const consoleErrors = collectConsoleErrors(page);
+    await page.route("**/api/courses**", (route) =>
+      route.fulfill(okEnvelope([])),
+    );
+
+    await page.goto("/kelas-privat");
+
+    const empty = page.locator(".pc-empty");
+    await expect(empty).toBeVisible();
+    await expect(empty).toContainText("Paket sedang disiapkan");
+    // WhatsApp consult CTA inside the empty state
+    const waLink = empty.locator('a[href*="wa.me/6285283423737"]');
+    await expect(waLink).toBeVisible();
+
+    expect(consoleErrors.errors).toEqual([]);
   });
 });
 

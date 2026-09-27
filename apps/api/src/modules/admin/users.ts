@@ -6,8 +6,6 @@ import { prisma } from "../../db/prisma.js";
 import { AppError, successResponse, ROLES, type Role } from "../../types/index.js";
 import { csvCell, CSV_EXPORT_MAX_ROWS } from "../../lib/csv.js";
 import { writeAudit } from "../../services/audit/log.js";
-import { hashPassword } from "../../services/auth/hash.js";
-import { passwordSchema } from "../auth/shared.js";
 
 const router = Router();
 
@@ -250,71 +248,6 @@ const GRANTABLE_ROLES = ROLES.filter((r): r is GrantableRole => r !== "visitor")
 ];
 const RoleValueSchema = z.enum(GRANTABLE_ROLES);
 const RoleGrantSchema = z.object({ role: RoleValueSchema });
-
-const CreateUserSchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email(),
-  password: passwordSchema,
-  role: RoleValueSchema,
-});
-
-// POST /api/admin/users — admin creates a user account directly, with a role
-// assigned immediately (Student/Trainer/Affiliate/Super Admin from the UI
-// dropdown). Distinct from POST /users/:id/roles above, which grants a role to
-// an EXISTING user — this creates the account itself. Mirrors the public
-// registration flow in modules/auth/register.ts (same password policy and
-// hashing), but skips the email-verification step and marks the account
-// verified immediately: an admin creating the account in front of them is
-// already a stronger identity check than a self-service email link.
-router.post(
-  "/users",
-  validateBody(CreateUserSchema),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { name, email, password, role } = req.body as z.infer<typeof CreateUserSchema>;
-
-      const existing = await prisma.user.findUnique({ where: { email } });
-      if (existing) {
-        return next(new AppError(409, "Email sudah terdaftar."));
-      }
-
-      const passwordHash = await hashPassword(password);
-
-      const user = await prisma.user.create({
-        data: {
-          name,
-          email,
-          passwordHash,
-          isVerified: true,
-          isActive: true,
-          authProvider: "local",
-          consentGivenAt: new Date(),
-          roles: { create: { role, tenantId: GLOBAL_TENANT_ID } },
-        },
-        select: { id: true, name: true, email: true, isVerified: true, createdAt: true },
-      });
-
-      await writeAudit({
-        actorId: req.user!.id,
-        actorEmail: req.user!.email,
-        action: "USER_CREATE",
-        resource: "User",
-        resourceId: user.id,
-        newValue: { role, targetEmail: user.email },
-        ip: req.ip,
-        userAgent: req.headers["user-agent"],
-      });
-
-      res.status(201).json(successResponse({ ...user, roles: [role] }));
-    } catch (err) {
-      // A concurrent signup/create with the same email lost the pre-check race.
-      if (isUniqueViolation(err)) {
-        return next(new AppError(409, "Email sudah terdaftar."));
-      }
-      next(err);
-    }
-  },
-);
 
 /** Prisma unique-constraint violation, detected without importing the runtime class. */
 function isUniqueViolation(err: unknown): boolean {

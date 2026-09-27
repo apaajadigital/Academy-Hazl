@@ -73,7 +73,7 @@ export default function EarlyAccessPage() {
             <h2 className="ea-section-title">Keuntungan Pendaftar Awal:</h2>
             <div className="ea-perks-list">
               {[
-                { title: "Diskon 40% Selamanya", desc: "Nikmati potongan harga eksklusif untuk seluruh item pembelajaran di ekosistem Jago Akademi." },
+                { title: "Diskon 40% Selamanya", desc: "Nikmati potongan harga eksklusif untuk seluruh item pembelajaran di ekosistem Hazl Academy." },
                 { title: "Prioritas Akses Fitur Baru", desc: "Akses pertama ke fitur-fitur interaktif terbaru, LMS B2B, dan sertifikasi sebelum dirilis ke publik." },
                 { title: "Undangan Event Eksklusif", desc: "Dapatkan akses gratis ke live webinar & coaching clinic bersama para mentor ahli." },
                 { title: "Kupon Spesial Partner", desc: "Kupon diskon bundling spesial dari partner kolaborasi kami." }

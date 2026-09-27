@@ -1,4 +1,4 @@
-// Jago Akademi UI kit — presentational, light-only, token-driven components.
+// Hazl Academy UI kit — presentational, light-only, token-driven components.
 // Built with CVA + cn() on top of the design tokens and legacy .btn/.card/.badge
 // classes in app/globals.css. Consumed by redesign waves; no data fetching here.
 

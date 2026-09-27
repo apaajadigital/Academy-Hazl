@@ -1,63 +1,71 @@
 import Link from "next/link";
-import { Building2, BarChart3, Shield } from "lucide-react";
-import { Section } from "@/components/ui/Section";
-import { Reveal } from "@/components/ui/Reveal";
+import { ArrowRightIcon, CheckCircleIcon } from "./HomeIcons";
 
-/**
- * B2B enterprise mini-section: connects homepage → /clients funnel.
- * Placed between TestimonialsSection and EarlyAccessBand.
- */
+const B2B_BENEFITS = [
+  "Workspace terpisah per divisi atau tim",
+  "Pantau progres belajar tiap anggota secara real-time",
+  "Data terisolasi per perusahaan dengan standar keamanan enterprise",
+];
+
 export function B2BSection() {
   return (
-    <Section>
-      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-        {/* Left: copy */}
-        <Reveal className="lg:col-span-7">
-          <p className="eyebrow mb-4">Untuk Perusahaan & Institusi</p>
-          <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--text-primary)] text-balance md:text-4xl">
-            Kelola pelatihan tim dalam{" "}
-            <span className="bg-brand-gradient bg-clip-text text-transparent">satu platform terpadu</span>
-          </h2>
-          <p className="mt-4 max-w-lg text-base leading-relaxed text-[var(--text-secondary)]">
-            Jago Akademi LMS B2B memungkinkan perusahaan mengelola program pelatihan karyawan, melacak progres, dan menerbitkan sertifikat — semua dalam satu workspace yang bisa dikustomisasi.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-6">
-            {[
-              { icon: Building2, text: "Workspace per divisi atau team" },
-              { icon: BarChart3, text: "Dashboard progres real-time" },
-              { icon: Shield,    text: "Data terisolasi per perusahaan" },
-            ].map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--surface-accent-soft)] text-[var(--brand-cyan-strong)]">
-                  <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
-                </span>
-                <span className="text-sm font-medium text-[var(--text-secondary)]">{text}</span>
-              </div>
-            ))}
-          </div>
-        </Reveal>
-
-        {/* Right: CTA card */}
-        <Reveal delay={0.1} className="lg:col-span-5">
-          <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border-subtle)] bg-white p-8 shadow-e2">
-            {/* Gradient accent bar (Stitch flair) — decorative. */}
-            <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1 bg-brand-gradient" />
-            <p className="text-sm font-semibold text-[var(--text-secondary)] mb-1">Mulai dari trial 14 hari</p>
-            <p className="font-display text-2xl font-bold text-[var(--text-primary)] mb-6">
-              Coba LMS B2B gratis — tanpa kartu kredit
+    <section className="w-full bg-[#E8FFF4]/50 py-20 sm:py-24 border-b border-[#E7E9EC]">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          {/* Left Column: Messaging & Benefits */}
+          <div className="lg:col-span-7">
+            <span className="text-[12px] font-bold uppercase tracking-[0.16em] text-[#00875A] bg-white px-3 py-1 rounded-full border border-[#BFC7D0]/40">
+              Untuk tim &amp; institusi
+            </span>
+            <h2 className="mt-4 text-3xl sm:text-4xl lg:text-[42px] font-extrabold text-[#16181D] tracking-tight leading-[1.1]">
+              Latih tim kreatifmu pakai video AI.
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-[#5B616E] leading-relaxed max-w-xl">
+              LMS Hazl Academy untuk agensi, brand, dan kampus: kelola program pelatihan, lacak progres skill, dan terbitkan sertifikat dari satu workspace terpusat.
             </p>
-            <Link
-              href="/clients"
-              className="btn bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2 w-full justify-center mb-3"
-            >
-              Lihat Paket LMS B2B
-            </Link>
-            <Link href="/contact" className="btn btn-ghost w-full justify-center text-[var(--text-secondary)]">
-              Konsultasi dengan tim kami
-            </Link>
+
+            <ul className="mt-8 flex flex-col gap-3.5">
+              {B2B_BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white text-[#00875A] shadow-sm border border-[#E7E9EC]">
+                    <CheckCircleIcon className="w-4 h-4 text-[#00875A]" />
+                  </span>
+                  <span className="text-sm sm:text-base font-semibold text-[#16181D]">
+                    {benefit}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </Reveal>
+
+          {/* Right Column: CTA Bento Card */}
+          <div className="lg:col-span-5">
+            <div className="rounded-[32px] border border-[#E7E9EC] bg-white p-8 sm:p-9 shadow-sm">
+              <span className="text-xs font-bold text-[#0077A8] uppercase tracking-wider block mb-1">
+                COBA DULU 14 HARI
+              </span>
+              <h3 className="text-2xl font-extrabold text-[#16181D] leading-tight mb-6">
+                LMS untuk tim kreatif, tanpa kartu kredit.
+              </h3>
+              <div className="flex flex-col gap-3">
+                <Link
+                  href="/clients"
+                  className="h-11 px-6 rounded-full bg-[#0077A8] text-white text-sm font-bold inline-flex items-center justify-center gap-2 hover:bg-[#005A80] transition-colors shadow-sm"
+                >
+                  <span>Lihat paket LMS</span>
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/contact"
+                  className="h-11 px-6 rounded-full border border-[#E7E9EC] bg-white text-[#16181D] text-sm font-semibold inline-flex items-center justify-center hover:bg-[#F6F7F9] transition-colors"
+                >
+                  Konsultasi dengan tim kami
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

@@ -63,7 +63,7 @@ export default async function LmsPortalLayout({
       {tenant && !tenant.isActive && !trialExpired && (
         <div className="flex items-center justify-center gap-2 bg-red-600 px-4 py-2.5 text-center text-sm font-medium text-white">
           <AlertTriangle size={15} className="flex-shrink-0" aria-hidden="true" />
-          <span>Workspace <strong>{tenant.name}</strong> sedang tidak aktif. Hubungi admin Jago Akademi.</span>
+          <span>Workspace <strong>{tenant.name}</strong> sedang tidak aktif. Hubungi admin Hazl Academy.</span>
         </div>
       )}
 

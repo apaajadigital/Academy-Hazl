@@ -137,7 +137,7 @@ export default function PortalSidebar({ slug, name, logoUrl, primaryColor }: Pro
           className="flex items-center gap-1.5 text-[11px] text-text-muted transition-colors hover:text-accent-cyan-strong"
         >
           <GraduationCap size={13} aria-hidden="true" />
-          Jago Akademi
+          Hazl Academy
         </Link>
       </div>
     </aside>

@@ -4,15 +4,15 @@ import { LandingTemplate } from "@/components/landing/LandingTemplate";
 import { FreeCourseCatalog } from "@/components/kelas-gratis/FreeCourseCatalog";
 
 export const metadata: Metadata = {
-  // Finding #6: root layout applies the "%s | Jago Akademi" template, so a
-  // manual "| Jago Akademi" here produced a doubled suffix. Use `absolute` to
+  // Finding #6: root layout applies the "%s | Hazl Academy" template, so a
+  // manual "| Hazl Academy" here produced a doubled suffix. Use `absolute` to
   // set the full title verbatim and bypass the template.
-  title: { absolute: "Kelas Gratis — Mulai Belajar Tanpa Biaya | Jago Akademi" },
+  title: { absolute: "Kelas Gratis — Mulai Belajar Tanpa Biaya | Hazl Academy" },
   description:
-    "Akses kelas gratis Jago Akademi sebagai langkah pertama upgrade skill-mu. Daftar sekarang, dapatkan akses materi pengantar, dan lanjutkan ke jenjang berikutnya.",
+    "Akses kelas gratis Hazl Academy sebagai langkah pertama upgrade skill-mu. Daftar sekarang, dapatkan akses materi pengantar, dan lanjutkan ke jenjang berikutnya.",
   alternates: { canonical: "/kelas-gratis" },
   openGraph: {
-    title: "Kelas Gratis — Jago Akademi",
+    title: "Kelas Gratis — Hazl Academy",
     description: "Mulai belajar tanpa biaya. Daftar dan dapatkan akses materi pengantar.",
     type: "website",
     url: "/kelas-gratis",
@@ -35,7 +35,7 @@ export default function FreeClassPage() {
       <LandingTemplate
         eyebrow="Kelas Gratis"
         title={<>Coba dulu, <span className="text-accent">gratis</span></>}
-        lede="Rasakan cara belajar Jago Akademi lewat kelas gratis. Daftar sekarang untuk mendapatkan akses materi pengantar — dan temukan jalur belajar yang paling cocok untukmu."
+        lede="Rasakan cara belajar Hazl Academy lewat kelas gratis. Daftar sekarang untuk mendapatkan akses materi pengantar — dan temukan jalur belajar yang paling cocok untukmu."
         benefits={benefits}
         formSource="free-class"
         formTitle="Daftar kelas gratis"

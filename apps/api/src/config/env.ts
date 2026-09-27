@@ -55,8 +55,8 @@ const envSchema = z.object({
   RECONCILE_BATCH_SIZE: z.coerce.number().int().positive().default(100),
   // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
-  EMAIL_FROM: z.string().default("noreply@jagoakademi.com"),
-  EMAIL_FROM_NAME: z.string().default("Jago Akademi"),
+  EMAIL_FROM: z.string().default("noreply@hazl.id"),
+  EMAIL_FROM_NAME: z.string().default("Hazl Academy"),
   // WhatsApp (Fonnte)
   FONNTE_TOKEN: z.string().optional(),
   // Redis / BullMQ (TASK-022) — absent = queue disabled, jobs run inline (dev/test)

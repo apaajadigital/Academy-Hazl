@@ -27,7 +27,7 @@ function CallbackHandler() {
     if (errCode) {
       setError(
         errCode === "account_disabled"
-          ? "Akun Anda dinonaktifkan. Hubungi dukungan Jago Akademi."
+          ? "Akun Anda dinonaktifkan. Hubungi dukungan Hazl Academy."
           : "Gagal masuk dengan Google. Silakan coba lagi.",
       );
       return;

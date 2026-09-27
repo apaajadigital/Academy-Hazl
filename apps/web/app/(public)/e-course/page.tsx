@@ -7,9 +7,9 @@ import { ECourseCatalog } from "@/components/e-course/ECourseCatalog";
 export const metadata: Metadata = {
   title: "E-Course — Skill Profesional & Bersertifikat",
   description:
-    "Kuasai skill profesional dengan akses materi sekali bayar. Belajar fleksibel, dapatkan sertifikat resmi, dan buka peluang karier bersama Jago Akademi.",
+    "Kuasai skill profesional dengan akses materi sekali bayar. Belajar fleksibel, dapatkan sertifikat resmi, dan buka peluang karier bersama Hazl Academy.",
   openGraph: {
-    title: "E-Course Jago Akademi — Materi Profesional & Bersertifikat",
+    title: "E-Course Hazl Academy — Materi Profesional & Bersertifikat",
     description:
       "Platform e-learning untuk Digital Marketing, Data Science, UI/UX, Product Management, Web Development, dan banyak lagi.",
     type: "website",

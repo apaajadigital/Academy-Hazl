@@ -256,7 +256,7 @@ export default function BerlanggananDashboardPage() {
         <Link href="/terms" className="text-accent-cyan-strong hover:underline">Syarat & Ketentuan</Link>
         {" "}dan{" "}
         <Link href="/privacy" className="text-accent-cyan-strong hover:underline">Kebijakan Privasi</Link>
-        {" "}Jago Akademi.
+        {" "}Hazl Academy.
       </p>
     </div>
   );

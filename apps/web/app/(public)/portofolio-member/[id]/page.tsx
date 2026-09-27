@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, Sparkles } from "lucide-react";
-import { getApiBase } from "@/lib/api/base";
+import { API_BASE as API } from "@/lib/api/base";
 
 // ─── Types (defensive — backend contract is being built in parallel) ──────────
 
@@ -39,26 +39,15 @@ function initialsOf(name: string): string {
   );
 }
 
-/** Only render external links (opened in a new tab) from https URLs. */
+/** Only render remote media / external links from https URLs. */
 function safeHttpsUrl(url: string | null | undefined): string | null {
   return url && url.startsWith("https://") ? url : null;
-}
-
-/**
- * Images may additionally come from our own /uploads/ path (local file
- * uploads via POST /api/upload/image, served by our own API) — safe unlike an
- * arbitrary relative path because the upload endpoint fixes the extension
- * from the validated MIME type. External links (safeHttpsUrl above) stay
- * https-only since they leave our origin.
- */
-function safeImageUrl(url: string | null | undefined): string | null {
-  return url && (url.startsWith("https://") || url.startsWith("/uploads/")) ? url : null;
 }
 
 // ─── Item card ────────────────────────────────────────────────────────────────
 
 function PortfolioItemCard({ item }: { item: ApiPortfolioItem }) {
-  const image = safeImageUrl(item.imageUrl);
+  const image = safeHttpsUrl(item.imageUrl);
   const link = safeHttpsUrl(item.url);
 
   return (
@@ -104,9 +93,7 @@ export default function PortofolioMemberDetailPage() {
       return;
     }
     let cancelled = false;
-    // Relative via getApiBase() — see the sibling list page for why an
-    // absolute API_BASE URL fails silently under the production CSP.
-    fetch(`${getApiBase()}/api/portfolios/${encodeURIComponent(id)}`)
+    fetch(`${API}/api/portfolios/${encodeURIComponent(id)}`)
       .then(async (res) => {
         const body = (await res.json()) as { success?: boolean; data?: unknown };
         if (cancelled) return;
@@ -128,7 +115,7 @@ export default function PortofolioMemberDetailPage() {
   // API said 404 / not published / malformed → render the app's 404 page.
   if (member === null) notFound();
 
-  const photo = member ? safeImageUrl(member.photoUrl) : null;
+  const photo = member ? safeHttpsUrl(member.photoUrl) : null;
   const items = (member?.portfolioItems ?? []).filter((it) => Boolean(it && it.title));
 
   return (

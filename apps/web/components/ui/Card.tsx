@@ -3,19 +3,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * Surface card. White surface, hairline border, e1 shadow. Uses the dashboard
- * card radius token (20px, --radius-card) so every card surface across the app
- * — StatCard, QuickActionCard, tables, and this Card — shares ONE corner
- * radius. Opt-in hover lift and a frosted `glass` variant built on `.glass-card`.
+ * Surface card. White surface, hairline border, FLAT by default (Hazl
+ * redesign, Sep 2026) — shadow only appears on hover as a micro-interaction,
+ * per the audit of hazl-creators-ui v2: this design language uses borders,
+ * not a shadow sitting under every card at rest, for depth. Uses the
+ * dashboard card radius token (20px, --radius-card) so every card surface
+ * across the app — StatCard, QuickActionCard, tables, and this Card — shares
+ * ONE corner radius. Opt-in hover lift and a frosted `glass` variant built
+ * on `.glass-card`.
  */
 const cardVariants = cva("rounded-[var(--radius-card)]", {
   variants: {
     variant: {
-      default: "border border-solid border-border-default bg-surface-card shadow-e1",
-      glass: "glass-card shadow-e2",
+      default: "border border-solid border-border-default bg-surface-card shadow-e0",
+      glass: "glass-card shadow-e1",
     },
     hoverable: {
-      true: "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-e2",
+      true: "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-border-strong hover:shadow-e1",
       false: "",
     },
   },
