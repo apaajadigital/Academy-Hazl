@@ -108,9 +108,9 @@ export default async function VerifyCertPage({
             <Image
               src="/logo.png"
               alt="Hazl Academy"
-              width={1037}
-              height={190}
-              className="mx-auto h-8 w-auto"
+              width={1080}
+              height={600}
+              className="mx-auto h-14 w-auto"
             />
           </div>
 

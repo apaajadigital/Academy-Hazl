@@ -183,7 +183,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {!collapsed && (
             <div className="al-logo-wrap">
               <Link href="/" className="al-logo-link">
-                <Image src="/logo.png" alt="Hazl Academy" width={158} height={32} className="al-logo-img" />
+                <Image src="/logo.png" alt="Hazl Academy" width={1080} height={600} className="al-logo-img h-9 w-auto" />
               </Link>
               <span className="al-logo-sub">Control Panel</span>
             </div>

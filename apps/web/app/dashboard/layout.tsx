@@ -185,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Logo */}
         <div className="sidebar-logo">
           <Link href="/" className="sidebar-logo-link">
-            <Image src="/logo.png" alt="Hazl Academy" width={158} height={32} className="sidebar-logo-img" />
+            <Image src="/logo.png" alt="Hazl Academy" width={1080} height={600} className="sidebar-logo-img h-9 w-auto" />
           </Link>
           <button
             className="sidebar-close-btn"
@@ -284,7 +284,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Menu size={22} aria-hidden="true" />
           </button>
           <Link href="/" className="topbar-logo">
-            <Image src="/logo.png" alt="Hazl Academy" width={129} height={26} />
+            <Image src="/logo.png" alt="Hazl Academy" width={1080} height={600} className="h-8 w-auto" />
           </Link>
           <div className="topbar-avatar">
             {user?.avatarUrl ? (

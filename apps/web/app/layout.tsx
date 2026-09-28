@@ -54,13 +54,13 @@ export const metadata: Metadata = {
       "Hazl Academy: kelas video AI, template, dan webinar dari kreator Indonesia. Belajar dari kreator, lalu jadi kreator dan jual karyamu sendiri.",
     // Explicit so WhatsApp/Telegram/X link previews always pick the Hazl
     // artwork; the old file at this path was still the Jago Akademi logo.
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Hazl Academy" }],
+    images: [{ url: "/og-hazl-skill.png", width: 1200, height: 630, alt: "Hazl Academy" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Hazl Academy: Belajar & Jualan Karya Video AI",
     description: "Kelas video AI, template, dan webinar dari kreator Indonesia.",
-    images: ["/og-image.png"],
+    images: ["/og-hazl-skill.png"],
   },
   robots: {
     index: true,

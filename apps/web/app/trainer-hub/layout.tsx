@@ -130,7 +130,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
         <div className="th-logo">
           {!collapsed && (
             <Link href="/trainer-hub" className="th-logo-wrap">
-              <Image src="/logo.png" alt="Hazl Academy" width={32} height={32} className="th-logo-img" />
+              <Image src="/logo.png" alt="Hazl Academy" width={1080} height={600} className="th-logo-img h-8 w-auto" />
               <span className="th-brand">
                 <span className="th-brand-name">Hazl Academy</span>
                 <span className="th-brand-sub">Trainer Hub</span>
@@ -220,7 +220,7 @@ export default function TrainerHubLayout({ children }: { children: React.ReactNo
             <Menu size={22} aria-hidden="true" />
           </button>
           <Link href="/trainer-hub" className="th-topbar-logo">
-            <Image src="/logo.png" alt="Hazl Academy" width={129} height={26} />
+            <Image src="/logo.png" alt="Hazl Academy" width={1080} height={600} className="h-8 w-auto" />
           </Link>
           <div className="th-topbar-avatar">
             {trainer?.avatarUrl ? (
