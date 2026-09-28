@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon } from "./HomeIcons";
+import { features } from "@/lib/features";
 
 const LEARNER_STEPS = [
   {
@@ -185,6 +186,7 @@ export function PillarsSection() {
             </div>
 
             <div className="pt-8">
+              {features.trainerProgram && (
               <Link
                 href="/trainer-program"
                 className="h-11 px-6 rounded-full bg-[#16181D] text-white text-sm font-bold inline-flex items-center gap-2 hover:bg-[#FF2F86] hover:text-white transition-all"
@@ -192,6 +194,7 @@ export function PillarsSection() {
                 <span>Jadi kreator</span>
                 <ArrowRightIcon className="w-4 h-4" />
               </Link>
+              )}
             </div>
           </div>
         </div>

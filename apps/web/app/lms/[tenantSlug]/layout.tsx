@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import PortalSidebar from "@/components/lms/PortalSidebar";
 import { API_BASE } from "@/lib/api/base";
+import { notFound } from "next/navigation";
+import { features } from "@/lib/features";
 
 type TenantBranding = {
   name: string;
@@ -34,6 +36,8 @@ export default async function LmsPortalLayout({
   children: ReactNode;
   params: Promise<{ tenantSlug: string }>;
 }) {
+  if (!features.lmsB2b) notFound();
+  if (!features.lmsB2b) notFound();
   const { tenantSlug } = await params;
   const tenant = await fetchBranding(tenantSlug);
   const primary = tenant?.primaryColor ?? "#0077A8";

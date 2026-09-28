@@ -25,30 +25,39 @@ const komunitasChildren = [
     : []),
 ];
 
+// Produk-group items — same "empty children = omit the whole dropdown" rule as
+// the Komunitas group below, so a fully-scoped-down build doesn't leave a
+// "Produk" menu that opens to nothing.
+const produkChildren = [
+  { label: "E-Book",             href: "/ebook",           desc: "Buku digital berkualitas" },
+  { label: "Kelas Gratis",       href: "/kelas-gratis",    desc: "Mulai belajar tanpa biaya" },
+  // Only surfaced once the private-class catalog ships (flag is build-time).
+  ...(features.privateClass
+    ? [{ label: "Private Class", href: "/kelas-privat", desc: "Mentoring intensif bareng mentor" }]
+    : []),
+  ...(features.trainerProgram
+    ? [{ label: "Trainer Program", href: "/trainer-program", desc: "Jadilah trainer profesional" }]
+    : []),
+  ...(features.clients
+    ? [{ label: "Paket LMS", href: "/clients", desc: "LMS untuk institusi & perusahaan" }]
+    : []),
+  // desc must match real inventory — the page lists e-books, not event recordings.
+  ...(features.marketplace
+    ? [{ label: "Marketplace Materi", href: "/marketplace", desc: "Etalase materi digital praktisi" }]
+    : []),
+];
+
 const navLinks = [
   { label: "E-Course", href: "/e-course" },
   { label: "Event", href: "/event" },
-  {
-    label: "Produk",
-    href: "#",
-    children: [
-      { label: "E-Book",             href: "/ebook",           desc: "Buku digital berkualitas" },
-      { label: "Kelas Gratis",       href: "/kelas-gratis",    desc: "Mulai belajar tanpa biaya" },
-      // Only surfaced once the private-class catalog ships (flag is build-time).
-      ...(features.privateClass
-        ? [{ label: "Private Class", href: "/kelas-privat", desc: "Mentoring intensif bareng mentor" }]
-        : []),
-      { label: "Trainer Program",    href: "/trainer-program", desc: "Jadilah trainer profesional" },
-      { label: "Paket LMS",          href: "/clients",         desc: "LMS untuk institusi & perusahaan" },
-      // desc must match real inventory — the page lists e-books, not event recordings.
-      { label: "Marketplace Materi", href: "/marketplace",     desc: "Etalase materi digital praktisi" },
-    ],
-  },
+  ...(produkChildren.length > 0
+    ? [{ label: "Produk", href: "#", children: produkChildren }]
+    : []),
   // The Komunitas dropdown only renders when at least one community feature is on.
   ...(komunitasChildren.length > 0
     ? [{ label: "Komunitas", href: "#", children: komunitasChildren }]
     : []),
-  { label: "Blog", href: "/blog" },
+  ...(features.blog ? [{ label: "Blog", href: "/blog" }] : []),
   { label: "Tentang", href: "/about" },
 ];
 
@@ -207,13 +216,15 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden md:flex items-center gap-3">
-          <Link
-            href="/kolaborasi"
-            className="flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent-cyan-strong transition-colors"
-          >
-            <Sparkles size={14} aria-hidden="true" />
-            Kolaborasi
-          </Link>
+          {features.trainerHub && (
+            <Link
+              href="/kolaborasi"
+              className="flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-accent-cyan-strong transition-colors"
+            >
+              <Sparkles size={14} aria-hidden="true" />
+              Kolaborasi
+            </Link>
+          )}
           {isLoggedIn ? (
             <>
               <Link
@@ -314,14 +325,16 @@ export function Navbar() {
                 )
               )}
 
-              <Link
-                href="/kolaborasi"
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-accent-cyan-strong hover:bg-surface-accent-soft transition-colors"
-                onClick={() => setIsMobileOpen(false)}
-              >
-                <Sparkles size={15} aria-hidden="true" />
-                Kolaborasi
-              </Link>
+              {features.trainerHub && (
+                <Link
+                  href="/kolaborasi"
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-text-secondary hover:text-accent-cyan-strong hover:bg-surface-accent-soft transition-colors"
+                  onClick={() => setIsMobileOpen(false)}
+                >
+                  <Sparkles size={15} aria-hidden="true" />
+                  Kolaborasi
+                </Link>
+              )}
             </div>
 
             <div className="px-5 py-5 border-t border-border-default flex flex-col gap-2">

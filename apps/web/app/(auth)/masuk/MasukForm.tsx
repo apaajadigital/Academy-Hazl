@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
 import { login, buildGoogleLoginUrl } from "@/lib/auth/api";
 import { setToken } from "@/lib/auth/token";
+import { features } from "@/lib/features";
 
 function safeRedirect(raw: string | null): string | null {
   if (!raw) return null;
@@ -57,7 +58,7 @@ export function MasukForm() {
           return;
         }
         if (roleNames.includes("trainer")) {
-          window.location.href = "/trainer-hub";
+          window.location.href = features.trainerHub ? "/trainer-hub" : "/dashboard";
           return;
         }
       }

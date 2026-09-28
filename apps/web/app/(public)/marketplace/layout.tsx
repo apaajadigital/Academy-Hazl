@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { features } from "@/lib/features";
 
 // Metadata must promise exactly what the catalog contains (EPIC 8). The page body
 // was corrected to drop "modul"/recordings; the title, description, and OG tags are
@@ -17,5 +19,6 @@ export const metadata: Metadata = {
 };
 
 export default function MarketplaceLayout({ children }: { children: ReactNode }) {
+  if (!features.marketplace) notFound();
   return <>{children}</>;
 }

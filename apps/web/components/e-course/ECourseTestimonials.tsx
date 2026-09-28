@@ -1,8 +1,10 @@
+import { features } from "@/lib/features";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export function ECourseTestimonials() {
+  if (!features.trainerProgram) return null;
   return (
     <section className="w-full bg-white py-20 sm:py-24">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-8">

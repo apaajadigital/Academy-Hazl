@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { getToken, setToken, clearToken, refreshAccessToken } from "@/lib/auth/token";
 import { logout as revokeSession } from "@/lib/auth/api";
+import { features } from "@/lib/features";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Beranda", icon: Home, exact: true },
@@ -30,8 +31,12 @@ const NAV_ITEMS = [
   { href: "/dashboard/ebook", label: "E-Book Saya", icon: BookMarked },
   { href: "/dashboard/tiket", label: "Tiket Event", icon: Ticket },
   { href: "/dashboard/pesanan", label: "Pesanan", icon: ShoppingBag },
-  { href: "/dashboard/berlangganan", label: "Berlangganan", icon: Crown },
-  { href: "/dashboard/afiliasi", label: "Afiliasi", icon: Handshake },
+  ...(features.subscription
+    ? [{ href: "/dashboard/berlangganan", label: "Berlangganan", icon: Crown }]
+    : []),
+  ...(features.affiliate
+    ? [{ href: "/dashboard/afiliasi", label: "Afiliasi", icon: Handshake }]
+    : []),
   { href: "/dashboard/profil", label: "Profil Saya", icon: User },
 ];
 

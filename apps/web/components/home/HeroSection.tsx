@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon, CheckCircleIcon, SparklesIcon, PlayIcon } from "./HomeIcons";
+import { features } from "@/lib/features";
 
 export function HeroSection() {
   return (
@@ -39,12 +40,14 @@ export function HeroSection() {
             >
               Lihat Kelas &amp; Karya
             </Link>
+            {features.trainerProgram && (
             <Link
               href="/trainer-program"
               className="h-12 px-6 rounded-full bg-[#EDEDF4] text-[#0077A8] text-sm font-bold inline-flex items-center justify-center hover:bg-[#E2E2E9] transition-colors"
             >
               Jadi Kreator
             </Link>
+            )}
           </div>
 
           {/* Tools & Creator Stack Pill Ribbon */}

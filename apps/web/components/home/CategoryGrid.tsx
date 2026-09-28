@@ -8,6 +8,7 @@ import {
   RadioIcon,
   AwardIcon,
 } from "./HomeIcons";
+import { features } from "@/lib/features";
 
 export function CategoryGrid() {
   return (
@@ -90,6 +91,7 @@ export function CategoryGrid() {
           </div>
 
           {/* Card 3: Template Siap Pakai */}
+          {features.marketplace && (
           <div className="group relative flex flex-col justify-between overflow-hidden rounded-[28px] border border-[#E7E9EC] bg-white p-7 shadow-sm hover:shadow-md transition-all duration-300">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-[#EDEDF4] flex items-center justify-center text-[#0077A8] mb-5 group-hover:scale-95 transition-transform">
@@ -111,8 +113,10 @@ export function CategoryGrid() {
               </Link>
             </div>
           </div>
+          )}
 
           {/* Card 4: Jualan Potongan 5% (2 cols) */}
+          {features.trainerProgram && (
           <div className="group relative flex flex-col justify-between overflow-hidden rounded-[28px] border border-[#E7E9EC] bg-white p-7 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 md:col-span-2">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-[#EDEDF4] flex items-center justify-center text-[#CC0052] mb-5 group-hover:scale-95 transition-transform">
@@ -139,6 +143,7 @@ export function CategoryGrid() {
               </Link>
             </div>
           </div>
+          )}
 
           {/* Card 5: Webinar Live (1 col) */}
           <div className="group relative flex flex-col justify-between overflow-hidden rounded-[28px] border border-[#E7E9EC] bg-white p-7 shadow-sm hover:shadow-md transition-all duration-300">

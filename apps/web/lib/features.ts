@@ -8,18 +8,7 @@
 const on = (v: string | undefined): boolean => v === "true" || v === "1";
 
 export const features = {
-  // Note: the B2B LMS landing (/clients) is deliberately NOT flagged — it ships
-  // live, sits in the sitemap, and is linked from the navbar/footer/homepage, so
-  // gating it behind a default-OFF flag would 404 an already-public funnel.
-  //
-  // The same reasoning removed three flags — `marketplace`, `collaboration`, and
-  // `affiliate`. Each was declared here but read by nothing (zero call sites),
-  // while /marketplace, /kolaborasi, and /afiliasi all ship live with real content
-  // and are swept by e2e/public-sweep.spec.ts expecting HTTP 200. That combination
-  // is the actual defect: the flag reads as "this page is gated" in review while
-  // the page is in fact fully public, so it hides a live surface from scrutiny.
-  //
-  // `allAccess`/`gamification` below are also unread today, but they gate NOTHING
+  // `allAccess`/`gamification` below are unread today, but they gate NOTHING
   // public — they are forward declarations reserved by EPIC 7 (and, for
   // gamification, by the resolved reviewer decision in BL-25 → TASK-097), so they
   // stay. Never re-add a flag for an already-public page without its call site.
@@ -47,6 +36,25 @@ export const features = {
   // Member portfolio showcase (/portofolio-member) — published member
   // portfolios. OFF until the portfolios endpoint ships.
   portfolio: on(process.env.NEXT_PUBLIC_FEATURE_PORTFOLIO),
+
+  // ─── Scope-down pass (28 Sep 2026, owner decision) ─────────────────────────
+  // Owner compared the platform against hazl-skill.vercel.app (a deliberately
+  // minimal browse → checkout → simple-dashboard reference) and asked to hide
+  // every large standalone surface that reference doesn't have. Every flag
+  // below defaults OFF but the underlying code, routes, and nav wiring are
+  // untouched — flip the env var to "true" and rebuild to restore the exact
+  // surface, nothing here was deleted.
+  blog: on(process.env.NEXT_PUBLIC_FEATURE_BLOG),
+  marketplace: on(process.env.NEXT_PUBLIC_FEATURE_MARKETPLACE),
+  affiliate: on(process.env.NEXT_PUBLIC_FEATURE_AFFILIATE),
+  trainerHub: on(process.env.NEXT_PUBLIC_FEATURE_TRAINER_HUB),
+  lmsB2b: on(process.env.NEXT_PUBLIC_FEATURE_LMS_B2B),
+  subscription: on(process.env.NEXT_PUBLIC_FEATURE_SUBSCRIPTION),
+  // /clients markets the LMS B2B workspace and /trainer-program markets
+  // becoming a trainer — both gated with their underlying feature so we never
+  // advertise a funnel whose destination is hidden.
+  clients: on(process.env.NEXT_PUBLIC_FEATURE_LMS_B2B),
+  trainerProgram: on(process.env.NEXT_PUBLIC_FEATURE_TRAINER_HUB),
 } as const;
 
 export type FeatureKey = keyof typeof features;

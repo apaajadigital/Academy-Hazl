@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon, SparklesIcon } from "./HomeIcons";
+import { features } from "@/lib/features";
 
 export function EarlyAccessBand() {
   return (
@@ -49,12 +50,14 @@ export function EarlyAccessBand() {
                 <span>Daftar gratis</span>
                 <ArrowRightIcon className="w-4 h-4" />
               </Link>
+              {features.trainerProgram && (
               <Link
                 href="/trainer-program"
                 className="h-12 px-8 rounded-full border border-white/30 bg-white/10 text-white text-sm sm:text-base font-bold inline-flex items-center gap-2 hover:bg-white/20 transition-all backdrop-blur-sm active:scale-[0.99]"
               >
                 Pelajari jadi kreator
               </Link>
+              )}
             </div>
           </div>
         </div>

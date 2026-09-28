@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Mail, MapPin, MessageCircle, Clock, ShieldCheck, Headphones } from "lucide-react";
 import ContactForm from "./ContactForm";
 import { WA_NUMBER_DISPLAY, waLink } from "@/lib/config";
+import { features } from "@/lib/features";
 
 const waHref = waLink();
 
@@ -143,6 +144,7 @@ export default function ContactPage() {
               </div>
 
               {/* B2B callout */}
+          {features.clients && (
               <div className="rounded-2xl border border-border-default bg-white p-6">
                 <p className="text-xs font-bold uppercase tracking-wider text-accent-cyan-strong">Kemitraan Korporasi</p>
                 <h3 className="mt-1 font-bold text-text-primary">Pelatihan Tim Kreatif Perusahaan</h3>
@@ -156,6 +158,7 @@ export default function ContactPage() {
                   Lihat Solusi B2B LMS →
                 </a>
               </div>
+          )}
             </div>
 
             {/* Form Column (7 cols) */}

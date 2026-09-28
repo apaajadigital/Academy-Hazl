@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRightIcon } from "./HomeIcons";
+import { features } from "@/lib/features";
 
 const TESTIMONIALS = [
   {
@@ -64,6 +65,7 @@ export function TestimonialsSection() {
         </div>
 
         {/* Become Creator Feature Bento Box */}
+          {features.trainerProgram && (
         <div className="relative overflow-hidden rounded-[36px] bg-[#16181D] text-white p-8 sm:p-12 lg:p-14">
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Content */}
@@ -126,6 +128,7 @@ export function TestimonialsSection() {
             </div>
           </div>
         </div>
+          )}
       </div>
     </section>
   );

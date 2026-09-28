@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BadgeCheck, Sparkles, Video, FileCode } from "lucide-react";
+import { features } from "@/lib/features";
 
 const TOPICS = [
   { name: "Semua", href: "/e-course" },
@@ -40,12 +41,14 @@ export function ECourseHero() {
                 <span>Mulai Belajar</span>
                 <ArrowRight size={16} aria-hidden="true" />
               </Link>
+              {features.trainerProgram && (
               <Link
                 href="/trainer-program"
                 className="h-11 px-6 rounded-full border border-[#E7E9EC] bg-white text-sm font-bold text-[#16181D] inline-flex items-center gap-2 hover:bg-[#F6F7F9] transition-colors shadow-sm"
               >
                 Buka Kelas Sendiri
               </Link>
+              )}
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { setToken } from "@/lib/auth/token";
+import { features } from "@/lib/features";
 
 /**
  * OAuth callback landing (TASK-055).
@@ -56,7 +57,7 @@ function CallbackHandler() {
         if (roles.some((r) => ["admin", "super_admin"].includes(r))) {
           router.replace("/admin/dashboard");
         } else if (roles.includes("trainer")) {
-          router.replace("/trainer-hub");
+          router.replace(features.trainerHub ? "/trainer-hub" : "/dashboard");
         } else {
           router.replace("/dashboard");
         }

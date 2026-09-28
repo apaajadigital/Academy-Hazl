@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { getValidToken } from "@/lib/auth/token";
+import { features } from "@/lib/features";
 
 type SubscriptionLockProps = {
   children: ReactNode;
@@ -81,12 +82,14 @@ export function SubscriptionLock({ children, isLocked }: SubscriptionLockProps) 
           <p className="mb-5 text-sm leading-relaxed text-text-secondary">
             Berlangganan Hazl Academy untuk mengakses semua materi, video, dan sertifikat pembelajaran.
           </p>
+          {features.subscription && (
           <Link
             href="/berlangganan"
             className="btn btn-primary w-full justify-center"
           >
             Berlangganan Sekarang
           </Link>
+          )}
           <p className="mt-3 text-xs text-[#AEAEB2]">
             Akses seumur hidup · Sertifikat resmi · Komunitas eksklusif
           </p>

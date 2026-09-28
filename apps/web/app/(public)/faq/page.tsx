@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { features } from "@/lib/features";
 import {
   List,
   MessageCircle,
@@ -134,6 +135,7 @@ export const FAQ_ITEMS: FaqGroup[] = [
       },
     ],
   },
+  ...(features.clients ? [
   {
     category: "Kemitraan Korporat & B2B LMS",
     items: [
@@ -155,6 +157,7 @@ export const FAQ_ITEMS: FaqGroup[] = [
       },
     ],
   },
+  ] : []),
 ];
 
 export function faqAnchorId(category: string): string {

@@ -5,6 +5,7 @@ import { ECourseSpotlight } from "@/components/home/ECourseSpotlight";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { B2BSection } from "@/components/home/B2BSection";
 import { EarlyAccessBand } from "@/components/home/EarlyAccessBand";
+import { features } from "@/lib/features";
 
 /**
  * Homepage (design refresh, Jul 2026) — varied editorial rhythm:
@@ -20,7 +21,7 @@ export default function HomePage() {
       <PillarsSection />
       <ECourseSpotlight />
       <TestimonialsSection />
-      <B2BSection />
+      {features.clients && <B2BSection />}
       <EarlyAccessBand />
     </>
   );
