@@ -52,7 +52,7 @@ type CourseDetail = {
   price: number | string;
   salePrice?: number | string | null;
   category?: { name?: string } | null;
-  trainer?: { name?: string; avatarUrl?: string | null } | null;
+  trainer?: { id?: string; name?: string; avatarUrl?: string | null } | null;
   sections: Section[];
 };
 
@@ -319,10 +319,10 @@ export default function CourseDetailPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-[#16181D] truncate">{course.trainer.name}</p>
                       <Link
-                        href="/e-course"
+                        href={course.trainer.id ? `/kreator/${course.trainer.id}` : "/e-course"}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-[#0077A8] hover:underline"
                       >
-                        Lihat kelas lain
+                        Lihat portofolio
                         <ExternalLink size={11} aria-hidden="true" />
                       </Link>
                     </div>

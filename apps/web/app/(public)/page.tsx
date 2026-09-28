@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { HeroSection } from "@/components/home/HeroSection";
 import { CategoryGrid } from "@/components/home/CategoryGrid";
 import { PillarsSection } from "@/components/home/PillarsSection";
@@ -12,8 +13,16 @@ import { features } from "@/lib/features";
  * asymmetric hero → unit grid (sunken) → 3 pillars → flagship split
  * (sunken) → dark closing band. No fabricated data anywhere; social
  * proof is intentionally OMITTED until real testimonials/partners exist.
+ *
+ * HIDDEN, not deleted (Sep 2026, owner decision): the reference site
+ * (hazl-skill.vercel.app) has no separate marketing homepage — its root
+ * redirects straight to the catalog. `features.homepage` mirrors that:
+ * OFF (default) sends '/' to /e-course; flip it "true" and rebuild to
+ * restore this exact page at the root, nothing below was removed.
  */
 export default function HomePage() {
+  if (!features.homepage) redirect("/e-course");
+
   return (
     <>
       <HeroSection />

@@ -50,6 +50,7 @@ const produkChildren = [
 const navLinks = [
   { label: "E-Course", href: "/e-course" },
   { label: "Event", href: "/event" },
+  ...(features.creators ? [{ label: "Kreator", href: "/kreator" }] : []),
   ...(produkChildren.length > 0
     ? [{ label: "Produk", href: "#", children: produkChildren }]
     : []),

@@ -55,6 +55,19 @@ export const features = {
   // advertise a funnel whose destination is hidden.
   clients: on(process.env.NEXT_PUBLIC_FEATURE_LMS_B2B),
   trainerProgram: on(process.env.NEXT_PUBLIC_FEATURE_TRAINER_HUB),
+
+  // Root ('/') as the marketing homepage vs the catalog (Sep 2026, owner
+  // decision). Owner asked the site root to match the reference (hazl-skill.
+  // vercel.app), whose root is the catalog with no separate homepage. This
+  // flag HIDES the homepage rather than deleting it: OFF means '/' redirects
+  // to /e-course; ON restores the marketing homepage at '/' untouched.
+  homepage: on(process.env.NEXT_PUBLIC_FEATURE_HOMEPAGE),
+  // Public creator directory + profile pages (/creators, /creator/[id]).
+  // Reads real trainer + MemberPortfolio data via GET /api/creators — no
+  // fabricated profiles, so this stays independent of `trainerHub`.
+  // Default ON (unlike the flags above): this is a shipped, working
+  // feature, not something staged behind a launch decision.
+  creators: process.env.NEXT_PUBLIC_FEATURE_CREATORS !== "false",
 } as const;
 
 export type FeatureKey = keyof typeof features;
