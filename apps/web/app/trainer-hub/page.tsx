@@ -112,7 +112,7 @@ export default function TrainerHubPage() {
 
   const stats: { label: string; value: string | number; icon: LucideIcon; color: string; bg: string }[] = [
     { label: "Total Kursus", value: data.totalCourses, icon: BookOpen, color: "#0077A8", bg: "rgba(0,119,168,0.10)" },
-    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, color: "#7C3AED", bg: "rgba(124,58,237,0.10)" },
+    { label: "Total Peserta", value: data.totalEnrollments.toLocaleString("id-ID"), icon: Users, color: "#FF2F86", bg: "rgba(255,47,134,0.10)" },
     { label: "Pendapatan Kotor", value: rupiah(data.totalRevenue), icon: CreditCard, color: "#16A34A", bg: "rgba(22,163,74,0.10)" },
     hasBalanceBreakdown
       ? { label: "Saldo Bisa Ditarik", value: rupiah(data.availableBalance), icon: Wallet, color: "#D97706", bg: "rgba(217,119,6,0.10)" }

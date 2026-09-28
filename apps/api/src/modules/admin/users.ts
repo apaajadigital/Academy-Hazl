@@ -152,6 +152,7 @@ router.get("/users", async (req: Request, res: Response, next: NextFunction) => 
           email: true,
           isActive: true,
           isVerified: true,
+          authProvider: true,
           createdAt: true,
           roles: { select: { role: true } },
           _count: { select: { enrollments: true } },

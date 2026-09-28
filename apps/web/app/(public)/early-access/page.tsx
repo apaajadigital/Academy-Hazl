@@ -52,12 +52,11 @@ export default function EarlyAccessPage() {
         {/* Hero Section */}
         <header className="ea-header">
           <h1 className="ea-title">
-            Jadilah yang Pertama Merasakan<br />
-            <span className="ea-title-gradient">Platform Edukasi Terlengkap</span>
+            Jadilah yang Pertama Menguasai<br />
+            <span className="ea-title-gradient">Generative Video AI &amp; ComfyUI</span>
           </h1>
           <p className="ea-subtitle">
-            {/* BL-23: "ratusan e-course" removed — the catalogue is not that size. */}
-            Akses premium awal ke e-course, event live, modul, dan e-book dengan harga khusus sebelum rilis publik.
+            Akses prioritas awal ke masterclass Kling AI, Runway Gen-3, custom node ComfyUI, dan lisensi aset komersial sebelum peluncuran publik.
           </p>
         </header>
 
@@ -73,7 +72,7 @@ export default function EarlyAccessPage() {
             <h2 className="ea-section-title">Keuntungan Pendaftar Awal:</h2>
             <div className="ea-perks-list">
               {[
-                { title: "Diskon 40% Selamanya", desc: "Nikmati potongan harga eksklusif untuk seluruh item pembelajaran di ekosistem Hazl Academy." },
+                { title: "Diskon 40% Akses Awal", desc: "Nikmati potongan harga eksklusif untuk seluruh masterclass dan lisensi workflow di ekosistem Hazl Academy." },
                 { title: "Prioritas Akses Fitur Baru", desc: "Akses pertama ke fitur-fitur interaktif terbaru, LMS B2B, dan sertifikasi sebelum dirilis ke publik." },
                 { title: "Undangan Event Eksklusif", desc: "Dapatkan akses gratis ke live webinar & coaching clinic bersama para mentor ahli." },
                 { title: "Kupon Spesial Partner", desc: "Kupon diskon bundling spesial dari partner kolaborasi kami." }

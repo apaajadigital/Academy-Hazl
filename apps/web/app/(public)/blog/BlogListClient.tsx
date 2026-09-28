@@ -20,7 +20,14 @@ type BlogPost = {
   author: { name: string; avatarUrl: string | null };
 };
 
-const CATEGORIES = ["Bisnis", "Marketing", "Teknologi", "Desain", "Keuangan", "Karir"];
+const CATEGORIES = [
+  "Prompt Engineering",
+  "ComfyUI Nodes",
+  "Generative Video",
+  "Audio & Voice AI",
+  "Bisnis & Lisensi UGC",
+  "Studi Kasus",
+];
 
 const dateLong = (iso: string) =>
   new Date(iso).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
@@ -75,15 +82,15 @@ export default function BlogListClient() {
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-accent-purple/10 blur-3xl"
+          className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-accent-pink-strong/5 blur-3xl"
         />
         <div className="container-pad relative py-14 md:py-20">
-          <p className="eyebrow mb-3">Blog</p>
+          <p className="eyebrow mb-3">Riset &amp; Wawasan</p>
           <h1 className="max-w-3xl font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-[var(--text-primary)] text-balance md:text-5xl">
-            Insight & <span className="text-accent">panduan</span> karier
+            Wawasan &amp; <span className="text-accent">Riset</span> Video AI
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-[var(--text-secondary)]">
-            Tips dan wawasan pengembangan skill dan karier dari para praktisi.
+            Tutorial teknis, benchmark model generasi video, workflow ComfyUI, dan strategi komersialisasi UGC dari praktisi industri.
           </p>
         </div>
       </section>
@@ -110,7 +117,7 @@ export default function BlogListClient() {
             </div>
             <div className="flex flex-col justify-center gap-4 p-6 md:p-8 lg:w-2/5">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-accent-purple">
+                <span className="text-xs font-semibold uppercase tracking-wider text-accent-pink-strong">
                   Artikel Pilihan
                 </span>
                 {featured.category && <span className="badge badge-cyan">{featured.category}</span>}

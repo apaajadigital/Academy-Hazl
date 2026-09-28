@@ -75,7 +75,7 @@ const STATUSES = [
 
 const SOURCE_STYLE: Record<string, { bg: string; text: string; label: string }> = {
   lms:        { bg: "rgba(0,119,168,0.1)",    text: "#0077A8", label: "LMS B2B" },
-  affiliate:  { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Afiliasi" },
+  affiliate:  { bg: "rgba(255,47,134,0.1)",  text: "#FF2F86", label: "Afiliasi" },
   trainer:    { bg: "rgba(234,179,8,0.12)",   text: "#A16207", label: "Trainer" },
   "free-class": { bg: "rgba(22,163,74,0.1)", text: "#15803D", label: "Kelas Gratis" },
   other:      { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Lainnya" },
@@ -84,7 +84,7 @@ const SOURCE_STYLE: Record<string, { bg: string; text: string; label: string }> 
 const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
   new:       { bg: "rgba(59,130,246,0.1)",   text: "#2563EB", label: "Baru" },
   contacted: { bg: "rgba(234,179,8,0.12)",   text: "#A16207", label: "Dihubungi" },
-  qualified: { bg: "rgba(124,58,237,0.1)",   text: "#7C3AED", label: "Qualified" },
+  qualified: { bg: "rgba(0,119,168,0.1)",    text: "#0077A8", label: "Qualified" },
   converted: { bg: "rgba(22,163,74,0.1)",    text: "#15803D", label: "Konversi" },
   archived:  { bg: "rgba(107,114,128,0.1)",  text: "#6B7280", label: "Arsip" },
 };

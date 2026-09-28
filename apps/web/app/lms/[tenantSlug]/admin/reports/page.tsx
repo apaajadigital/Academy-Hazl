@@ -112,7 +112,7 @@ export default function LmsAdminReportsPage() {
         {[
           { label: "Total Enrollment", value: totalEnrollments, Icon: Users, tint: "bg-surface-accent-soft text-accent-cyan-strong" },
           { label: "Selesai", value: completedCount, Icon: CheckCircle2, tint: "bg-green-600/10 text-green-700" },
-          { label: "Rata-rata Progress", value: `${avgPct}%`, Icon: TrendingUp, tint: "bg-accent-purple/10 text-accent-purple" },
+          { label: "Rata-rata Progress", value: `${avgPct}%`, Icon: TrendingUp, tint: "bg-[rgba(255,47,134,0.10)] text-accent-pink" },
         ].map(({ label, value, Icon, tint }) => (
           <Card key={label} className="p-4 text-center">
             <span className={`mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${tint}`}>

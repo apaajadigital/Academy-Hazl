@@ -23,16 +23,22 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 import { getValidToken } from "@/lib/auth/token";
 
+/**
+ * Mirrors the raw Prisma `Coupon` row returned by GET /api/admin/coupons.
+ * The write side (POST/PATCH) accepts `maxUses`/`expiresAt` aliases, but the
+ * read side returns the real column names — a previous mismatch here made
+ * every finite/expired coupon render as "Tanpa batas" / never expired.
+ */
 type Coupon = {
   id: string;
   code: string;
   type: string;
   value: number;
   minPurchase: number;
-  maxUses: number | null;
-  usedCount: number;
+  usageLimit: number | null;
+  usageCount: number;
   isActive: boolean;
-  expiresAt: string | null;
+  endDate: string | null;
   createdAt: string;
 };
 
@@ -201,8 +207,8 @@ export default function AdminKuponPage() {
             </THead>
             <TBody>
               {coupons.map((c) => {
-                const expired = c.expiresAt && new Date(c.expiresAt) < new Date();
-                const usageRate = c.maxUses ? Math.round((c.usedCount / c.maxUses) * 100) : null;
+                const expired = c.endDate && new Date(c.endDate) < new Date();
+                const usageRate = c.usageLimit ? Math.round((c.usageCount / c.usageLimit) * 100) : null;
                 const inactive = !c.isActive || expired;
                 const isPct = c.type === "percentage";
                 return (
@@ -224,10 +230,10 @@ export default function AdminKuponPage() {
                       </div>
                     </TD>
                     <TD className="py-4">
-                      {c.expiresAt ? (
+                      {c.endDate ? (
                         <div className="flex flex-col">
                           <span className="inline-flex items-center gap-1 whitespace-nowrap text-sm text-text-primary">
-                            <Clock size={13} aria-hidden="true" /> {new Date(c.expiresAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                            <Clock size={13} aria-hidden="true" /> {new Date(c.endDate).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                           </span>
                           {expired && <span className="mt-0.5 text-xs font-medium text-red-600">Sudah berakhir</span>}
                         </div>
@@ -238,8 +244,8 @@ export default function AdminKuponPage() {
                     <TD className="py-4">
                       <div className="flex w-28 flex-col gap-2">
                         <span className="text-xs font-bold text-text-secondary">
-                          {c.usedCount}
-                          {c.maxUses ? `/${c.maxUses}` : " / ∞"}
+                          {c.usageCount}
+                          {c.usageLimit ? `/${c.usageLimit}` : " / ∞"}
                         </span>
                         {usageRate !== null && (
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-sunken">

@@ -36,7 +36,8 @@ type BlogPost = {
   publishedAt: string | null;
   createdAt: string;
   author: { name: string } | null;
-  category: { name: string } | null;
+  // Scalar column on BlogPost (`category String?`), not a relation.
+  category: string | null;
   _count?: { comments: number };
 };
 
@@ -172,7 +173,7 @@ export default function AdminBlogPage() {
                       </div>
                     </TD>
                     <TD className="py-3">
-                      <Badge variant="info">{p.category?.name ?? "Umum"}</Badge>
+                      <Badge variant="info">{p.category ?? "Umum"}</Badge>
                     </TD>
                     <TD className="py-3"><Badge variant={s.variant} dot>{s.label}</Badge></TD>
                     <TD className="py-3 text-xs text-text-secondary">

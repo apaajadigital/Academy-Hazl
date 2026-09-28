@@ -36,6 +36,8 @@ export type CatalogCourse = {
   totalEnrolled?: number;
   totalDuration?: number;
   thumbnailUrl?: string | null;
+  price?: number;
+  salePrice?: number | null;
   trainer?: { name?: string; avatarUrl?: string | null } | null;
   category?: { slug?: string; name?: string } | null;
 };

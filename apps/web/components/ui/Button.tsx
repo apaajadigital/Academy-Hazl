@@ -18,10 +18,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Hero/primary CTA — brand gradient pill (matches Stitch primary action).
-        primary: "bg-brand-gradient text-white shadow-e1 hover:opacity-90 hover:shadow-e2",
-        // Solid cyan — aligns to legacy `.btn-primary`.
-        cyan: "bg-accent-cyan text-text-on-accent shadow-e1 hover:bg-accent-cyan-strong hover:text-white hover:shadow-e2",
+        // Hero/primary CTA — solid cyan strong (matches Stitch flat primary action).
+        primary: "bg-accent-cyan-strong text-white shadow-sm hover:bg-[#005f85] transition-colors",
+        // Solid cyan bright — aligns to Stitch public CTA pill.
+        cyan: "bg-accent-cyan text-text-on-accent shadow-sm hover:bg-accent-cyan-strong hover:text-white transition-colors",
         // Outline secondary — aligns to legacy `.btn-outline`.
         secondary:
           "border-solid border-[1.5px] border-border-strong text-accent-cyan-strong hover:border-accent-cyan-strong hover:bg-surface-accent-soft hover:shadow-e1",

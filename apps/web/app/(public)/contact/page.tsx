@@ -1,34 +1,28 @@
 import type { Metadata } from "next";
-import { Mail, MapPin, MessageCircle } from "lucide-react";
-import { Card } from "@/components/ui";
+import { Mail, MapPin, MessageCircle, Clock, ShieldCheck, Headphones } from "lucide-react";
 import ContactForm from "./ContactForm";
 import { WA_NUMBER_DISPLAY, waLink } from "@/lib/config";
 
-// Resolved once: waLink() reads a build-time inlined constant.
 const waHref = waLink();
 
 export const metadata: Metadata = {
-  title: "Hubungi Kami",
+  title: "Hubungi Kami — Hazl Academy",
   description:
-    "Ada pertanyaan atau ingin berkolaborasi? Hubungi tim Hazl Academy melalui form, email, atau WhatsApp.",
+    "Ada pertanyaan seputar kursus Video AI, akses workspace, atau kemitraan korporasi? Hubungi tim Hazl Academy melalui formulir, email, atau WhatsApp.",
 };
 
 const CONTACTS = [
   {
     icon: <Mail size={20} aria-hidden="true" />,
-    label: "Email",
-    value: "halo@hazl.id",
-    href: "mailto:halo@hazl.id",
+    label: "Email Resmi",
+    value: "halo@hazl.academy",
+    href: "mailto:halo@hazl.academy",
   },
-  // WhatsApp row only exists when a real number is configured. Previously an
-  // unset number rendered the value as a bare "+" next to a dead wa.me link —
-  // a contact channel that looked live and went nowhere (found in production
-  // 10 Aug 2026).
   ...(waHref && WA_NUMBER_DISPLAY
     ? [
         {
           icon: <MessageCircle size={20} aria-hidden="true" />,
-          label: "WhatsApp",
+          label: "WhatsApp Support (24/7 CS)",
           value: WA_NUMBER_DISPLAY,
           href: waHref,
         },
@@ -36,97 +30,138 @@ const CONTACTS = [
     : []),
   {
     icon: <MapPin size={20} aria-hidden="true" />,
-    label: "Alamat",
-    value: "Jakarta Selatan, DKI Jakarta",
+    label: "Kantor Operasional",
+    value: "Menara Cakrawala Lt. 12, Jl. M.H. Thamrin No. 9, Jakarta Pusat 10340",
     href: null,
+  },
+  {
+    icon: <Clock size={20} aria-hidden="true" />,
+    label: "Jam Pelayanan Konsultasi",
+    value: "Senin – Jumat: 09.00 – 18.00 WIB",
+    href: null,
+  },
+];
+
+const TRUST_METRICS = [
+  {
+    icon: Headphones,
+    title: "Respon < 15 Menit",
+    desc: "Bantuan teknis via WhatsApp pada jam operasional kerja.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Kerahasiaan Terjamin",
+    desc: "Data profil dan invoice dienkripsi menggunakan TLS 1.3.",
   },
 ];
 
 export default function ContactPage() {
   return (
-    <main id="main-content">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-surface-page pt-20 pb-16">
-        {/* Decorative gradient orbs */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent-cyan-strong/10 blur-3xl"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-accent-purple/10 blur-3xl"
-        />
+    <main id="main-content" className="bg-surface-page min-h-screen">
+      {/* Hero Header */}
+      <section className="relative border-b border-border-default bg-white py-16 md:py-20">
         <div className="container-pad relative text-center">
           <div className="mx-auto max-w-2xl space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-accent-pink-strong">Kontak</p>
-            <h1 className="text-4xl font-bold text-text-primary md:text-5xl">Hubungi Kami</h1>
-            <p className="text-text-secondary">
-              Tim kami siap membantu Anda dari Senin–Jumat pukul 09.00–17.00 WIB.
+            <div className="inline-flex items-center gap-2 rounded-full border border-border-default bg-surface-page px-3.5 py-1 text-xs font-semibold text-accent-cyan-strong">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-cyan-strong animate-pulse" />
+              PUSAT LAYANAN & DOKUMENTASI
+            </div>
+            <h1 className="text-3xl font-extrabold tracking-tight text-text-primary md:text-5xl">
+              Hubungi Tim <span className="text-accent-cyan-strong">Hazl Academy</span>
+            </h1>
+            <p className="text-sm md:text-base leading-relaxed text-text-secondary">
+              Punya pertanyaan mengenai materi Video AI, sertifikasi terverifikasi, atau kebutuhan pelatihan korporasi tim Anda? Kami siap membantu.
             </p>
           </div>
         </div>
       </section>
 
       {/* 2-column: contact info + message form */}
-      <section className="bg-surface-card section-sm">
+      <section className="section-sm">
         <div className="container-pad">
-          <div className="mx-auto grid max-w-5xl items-start gap-12 md:grid-cols-2">
-            {/* Info */}
-            <div className="space-y-6">
-              <Card className="p-6 md:p-8">
-                <h2 className="mb-6 text-xl font-bold text-text-primary">Informasi Kontak</h2>
-                <ul className="space-y-5">
+          <div className="mx-auto grid max-w-5xl items-start gap-8 lg:grid-cols-12">
+            {/* Info Column (5 cols) */}
+            <div className="space-y-6 lg:col-span-5">
+              <div className="rounded-2xl border border-border-default bg-white p-6 md:p-8 shadow-sm">
+                <h2 className="mb-6 text-lg font-bold text-text-primary">Informasi Kontak Resmi</h2>
+                <ul className="space-y-6">
                   {CONTACTS.map((c) => (
                     <li key={c.label} className="flex items-start gap-4">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-accent-soft text-accent-cyan-strong">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border-default bg-surface-page text-accent-cyan-strong">
                         {c.icon}
                       </span>
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">{c.label}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">{c.label}</p>
                         {c.href ? (
                           <a
                             href={c.href}
-                            className="font-medium text-text-primary transition-colors hover:text-accent-cyan-strong"
+                            className="mt-0.5 block text-sm font-semibold text-text-primary transition-colors hover:text-accent-cyan-strong"
                           >
                             {c.value}
                           </a>
                         ) : (
-                          <p className="font-medium text-text-primary">{c.value}</p>
+                          <p className="mt-0.5 text-sm font-medium text-text-primary">{c.value}</p>
                         )}
                       </div>
                     </li>
                   ))}
                 </ul>
 
-                {/* Prominent WhatsApp CTA — omitted when unconfigured. The
-                    email and address channels above remain, so the page never
-                    leaves a visitor without a way to reach us. */}
+                {/* WhatsApp button */}
                 {waHref && (
                   <a
                     href={waHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] px-5 py-3.5 font-semibold text-white shadow-e1 transition-opacity hover:opacity-90"
+                    className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#16A34A] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#15803D]"
                   >
                     <MessageCircle size={18} aria-hidden="true" />
-                    Chat via WhatsApp
+                    Chat Langsung via WhatsApp
                   </a>
                 )}
-              </Card>
+              </div>
 
-              <div className="space-y-3 rounded-2xl bg-surface-page p-6">
-                <h3 className="font-semibold text-text-primary">Butuh solusi korporat?</h3>
-                <p className="text-sm text-text-secondary">
-                  Tim sales kami siap membantu Anda merancang program pelatihan yang tepat untuk organisasi Anda.
+              {/* Trust Metric Badges */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {TRUST_METRICS.map((tm) => {
+                  const Icon = tm.icon;
+                  return (
+                    <div
+                      key={tm.title}
+                      className="flex items-start gap-3.5 rounded-xl border border-border-default bg-white p-4 text-left"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-accent-soft text-accent-cyan-strong">
+                        <Icon size={16} aria-hidden="true" />
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold text-text-primary">{tm.title}</p>
+                        <p className="mt-0.5 text-xs text-text-secondary leading-relaxed">{tm.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* B2B callout */}
+              <div className="rounded-2xl border border-border-default bg-white p-6">
+                <p className="text-xs font-bold uppercase tracking-wider text-accent-cyan-strong">Kemitraan Korporasi</p>
+                <h3 className="mt-1 font-bold text-text-primary">Pelatihan Tim Kreatif Perusahaan</h3>
+                <p className="mt-2 text-xs leading-relaxed text-text-secondary">
+                  Tingkatkan efisiensi produksi video agensi dan brand Anda dengan modul kurikulum Video AI terstruktur.
                 </p>
-                <a href="/clients" className="text-sm font-medium text-accent-cyan-strong hover:underline">
-                  Lihat paket korporat →
+                <a
+                  href="/clients"
+                  className="mt-4 inline-flex items-center text-xs font-semibold text-accent-cyan-strong hover:underline"
+                >
+                  Lihat Solusi B2B LMS →
                 </a>
               </div>
             </div>
 
-            {/* Form */}
-            <ContactForm />
+            {/* Form Column (7 cols) */}
+            <div className="lg:col-span-7">
+              <ContactForm />
+            </div>
           </div>
         </div>
       </section>

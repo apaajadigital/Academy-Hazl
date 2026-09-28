@@ -8,7 +8,7 @@ describe("GET /api/health", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe("healthy");
-    expect(res.body.service).toContain("Jago Akademi");
+    expect(res.body.service).toContain("Hazl Academy");
     expect(res.body.timestamp).toBeDefined();
     expect(res.body.version).toBe("1.0.0");
   });

@@ -199,7 +199,7 @@ export function parseCourses(data: unknown): PopularCourse[] | null {
         totalEnrolled,
         avgRating: str(c.avgRating) ?? String(num(c.avgRating) ?? 0),
         price: str(c.price) ?? String(num(c.price) ?? 0),
-        trainer: { name: str(trainer?.name) ?? "Trainer Jago" },
+        trainer: { name: str(trainer?.name) ?? "Trainer" },
       },
     ];
   });

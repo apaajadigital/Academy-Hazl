@@ -27,7 +27,7 @@ export const categories: Category[] = [
       {
         title: "Benefit",
         description:
-          "Akses seumur hidup ke materi, sertifikat resmi Jago Akademi, dan keanggotaan komunitas Digital Marketer Indonesia.",
+          "Akses seumur hidup ke materi, sertifikat Hazl Academy, dan keanggotaan komunitas Digital Marketer Indonesia.",
       },
       {
         title: "Persyaratan",
@@ -855,7 +855,7 @@ export const categories: Category[] = [
     infoCards: [
       { title: "Materi", description: "68 video mencakup Excel lanjutan, PowerPoint design, Word profesional, dan otomasi VBA." },
       { title: "Praktik", description: "Template siap pakai, latihan spreadsheet nyata, dan proyek presentasi profesional." },
-      { title: "Benefit", description: "Sertifikat Jago Akademi dan template premium untuk langsung digunakan di pekerjaan." },
+      { title: "Benefit", description: "Sertifikat Hazl Academy dan template premium untuk langsung digunakan di pekerjaan." },
       { title: "Persyaratan", description: "Sudah familiar dengan komputer dasar. Microsoft Office 2019/365 diperlukan." },
     ],
     topics: [

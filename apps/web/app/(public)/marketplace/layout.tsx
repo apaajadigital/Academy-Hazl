@@ -5,13 +5,13 @@ import type { ReactNode } from "react";
 // was corrected to drop "modul"/recordings; the title, description, and OG tags are
 // what search results and share previews actually show, so they carry the same rule.
 export const metadata: Metadata = {
-  title: "Marketplace Materi Digital — Hazl Academy",
+  title: "Marketplace Aset & Workflow Video AI — Hazl Academy",
   description:
-    "Koleksi e-book dan materi digital dari praktisi Hazl Academy. Beli sekali, unduh langsung, akses selamanya.",
+    "Koleksi workflow ComfyUI, prompt bundle masterclass, checkpoint LoRA, dan modul aset generative video dari creator Hazl Academy. Beli sekali, akses selamanya.",
   openGraph: {
-    title: "Marketplace Materi Digital — Hazl Academy",
+    title: "Marketplace Aset & Workflow Video AI — Hazl Academy",
     description:
-      "E-book dan materi digital dari praktisi berpengalaman. Unduh PDF, akses kapan saja.",
+      "Workflow ComfyUI, prompt bundle masterclass, dan aset generative video dari praktisi AI terpercaya.",
     type: "website",
   },
 };

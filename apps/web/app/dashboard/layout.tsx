@@ -309,14 +309,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         /* ── Pro Badge ── */
         .pro-badge {
-          background: #EBE5FC;
-          color: var(--brand-purple);
+          background: rgba(0, 119, 168, 0.1);
+          color: var(--brand-cyan-strong);
           font-size: 9px;
           font-weight: 800;
-          padding: 2px 5px;
+          padding: 2px 6px;
           border-radius: 4px;
           letter-spacing: 0.05em;
-          border: 1px solid rgba(124, 58, 237, 0.2);
+          border: 1px solid rgba(0, 119, 168, 0.25);
           display: inline-block;
           line-height: 1;
         }

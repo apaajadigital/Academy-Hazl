@@ -16,13 +16,9 @@ const mockIndex = {
   updateSortableAttributes: vi.fn().mockResolvedValue({}),
 };
 
-const mockMeiliClient = {
-  index: vi.fn().mockReturnValue(mockIndex),
-};
-
 vi.mock("meilisearch", () => ({
   Meilisearch: class {
-    index(name: string) { return mockIndex; }
+    index(_name: string) { return mockIndex; }
   },
 }));
 

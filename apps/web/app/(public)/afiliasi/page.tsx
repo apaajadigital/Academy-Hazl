@@ -3,37 +3,37 @@ import { Wallet, Link2, TrendingUp, Users, ShieldCheck, Headphones } from "lucid
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
 export const metadata: Metadata = {
-  title: "Program Afiliasi — Hasilkan Komisi Bersama Hazl Academy",
+  title: "Program Afiliasi Kreator — Hazl Academy",
   description:
-    "Bergabung dengan Program Afiliasi Hazl Academy. Bagikan link, ajak orang belajar, dan dapatkan komisi dari setiap transaksi. Daftar minat sekarang.",
+    "Bergabung dengan Program Afiliasi Hazl Academy. Bagikan link referal kursus Video AI, rekomendasikan tools, dan dapatkan komisi transparan dari setiap transaksi.",
   alternates: { canonical: "/afiliasi" },
   openGraph: {
-    title: "Program Afiliasi Hazl Academy",
-    description: "Bagikan link, ajak belajar, dapatkan komisi. Daftar minat sekarang.",
+    title: "Program Afiliasi Kreator — Hazl Academy",
+    description: "Bagikan link referal Video AI, ajak kreator belajar, dan raih komisi berkelanjutan.",
     type: "website",
     url: "/afiliasi",
   },
 };
 
 const benefits = [
-  { icon: Wallet, title: "Komisi berkelanjutan", body: "Dapatkan komisi dari setiap transaksi yang berasal dari link afiliasimu." },
-  { icon: Link2, title: "Link & tracking mudah", body: "Satu link unik untuk melacak setiap klik dan konversi secara transparan." },
-  { icon: TrendingUp, title: "Dashboard performa", body: "Pantau klik, konversi, dan pendapatan langsung dari dashboard afiliasi." },
-  { icon: Users, title: "Cocok untuk siapa saja", body: "Kreator, komunitas, dosen, atau siapa pun yang ingin berbagi manfaat belajar." },
-  { icon: ShieldCheck, title: "Pembayaran tepercaya", body: "Pencairan komisi yang jelas dengan pencatatan yang bisa kamu audit." },
-  { icon: Headphones, title: "Didukung tim kami", body: "Materi promosi dan bantuan tim untuk memaksimalkan hasilmu." },
+  { icon: Wallet, title: "Komisi Kompetitif & Otomatis", body: "Dapatkan bagi hasil menarik dari setiap transaksi pembelian kursus dan aset melalui link afiliasi unikmu." },
+  { icon: Link2, title: "Tracking Cookie 30 Hari", body: "Sistem pelacakan referal cerdas yang memastikan setiap konversi pembelian dalam 30 hari tercatat ke akunmu." },
+  { icon: TrendingUp, title: "Dashboard Analitik Real-time", body: "Pantau jumlah impresi klik, leads, status settlement, dan saldo komisi langsung dari dashboard." },
+  { icon: Users, title: "Dukungan Materi Promosi", body: "Akses banner resmi, cuplikan teaser video, dan template copy promosi siap posting di media sosial." },
+  { icon: ShieldCheck, title: "Pencairan Saldo Fleksibel", body: "Penarikan komisi ke seluruh rekening bank lokal dan e-wallet di Indonesia tanpa potongan tersembunyi." },
+  { icon: Headphones, title: "Grup Dukungan Kreator", body: "Bimbingan strategi promosi dan update rilis kursus baru lebih awal bersama tim Hazl Academy." },
 ];
 
 export default function AfiliasiPage() {
   return (
     <LandingTemplate
       eyebrow="Program Afiliasi"
-      title={<>Bagikan ilmu, <span className="text-accent">dapatkan komisi</span></>}
-      lede="Ajak lebih banyak orang belajar bersama Hazl Academy dan dapatkan komisi dari setiap transaksi yang kamu bawa. Daftarkan minatmu — tim kami akan menghubungi saat program dibuka."
+      title={<>Bagikan Inspirasi <span className="text-accent">Video AI</span>, Dapatkan Komisi</>}
+      lede="Ajak jejaring audiens Anda mempelajari keahlian Video AI di Hazl Academy dan nikmati pendapatan komisi berkelanjutan dari setiap pendaftaran yang berhasil."
       benefits={benefits}
       formSource="affiliate"
-      formTitle="Daftar minat afiliasi"
-      formLede="Isi data singkat, kami hubungi saat program siap."
+      formTitle="Daftar Program Afiliasi"
+      formLede="Isi formulir pendaftaran mitra afiliasi — kami akan mengaktifkan link referal Anda."
     />
   );
 }

@@ -315,7 +315,7 @@ export default function AdminLMSPage() {
   const metrics: { label: string; value: number; color: string; icon: typeof Building2 }[] = [
     { label: "Total Tenant", value: total, color: "#0077A8", icon: Building2 },
     { label: "Tenant Aktif", value: activeTenants, color: "#16A34A", icon: Users },
-    { label: "Total Kursi", value: totalSeats, color: "#7C3AED", icon: Layers },
+    { label: "Total Kursi", value: totalSeats, color: "#FF2F86", icon: Layers },
     { label: "Total Enrolled", value: totalEnrolled, color: "#B45309", icon: Users },
   ];
 

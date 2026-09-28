@@ -38,9 +38,9 @@ export default function ResetPasswordForm() {
         <p className="text-sm text-text-secondary">Silakan masuk dengan kata sandi baru Anda.</p>
         <Link
           href="/masuk"
-          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3 text-[0.9375rem] font-semibold text-white shadow-e1 transition hover:opacity-90 hover:shadow-e2"
+          className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[#0077A8] px-7 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-[#0D5B8A]"
         >
-          Masuk sekarang
+          Masuk ke Akun Sekarang
         </Link>
       </div>
     );

@@ -58,8 +58,6 @@ router.post("/", authenticate, async (req, res, next) => {
     // Get item details
     let itemTitle = "";
     let price = 0;
-    /** Slug of the purchased item — used to build the failure redirect URL */
-    let itemSlug = "";
     /**
      * BL-63: event schedule/venue kept from the lookup above so the e-ticket email
      * can be built on the 100%-off-coupon path without a second Event query.
@@ -89,13 +87,11 @@ router.post("/", authenticate, async (req, res, next) => {
       // work against a live DB and only broke once the value crossed a boundary
       // that turned it into a plain number. `??` is correct for both.
       price = Number(course.salePrice ?? course.price);
-      itemSlug = course.slug;
     } else if (itemType === "ebook") {
       const ebook = await prisma.eBook.findUnique({ where: { id: itemId } });
       if (!ebook || ebook.status !== "published") throw new AppError(404, "E-Book tidak ditemukan.");
       itemTitle = ebook.title;
       price = ebook.salePrice ? Number(ebook.salePrice) : Number(ebook.price);
-      itemSlug = ebook.slug;
     } else {
       const event = await prisma.event.findUnique({ where: { id: itemId } });
       if (!event || event.status !== "published") throw new AppError(404, "Event tidak ditemukan.");
@@ -123,7 +119,6 @@ router.post("/", authenticate, async (req, res, next) => {
 
       itemTitle = event.title;
       price = event.salePrice ? Number(event.salePrice) : Number(event.price);
-      itemSlug = event.slug;
       eventDetail = {
         startDate: event.startDate,
         location: event.location,

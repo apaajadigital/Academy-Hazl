@@ -34,10 +34,10 @@ const footerLinks = {
 };
 
 const socials = [
-  { label: "IG", text: "Instagram", href: "https://instagram.com/jagoakademi" },
-  { label: "YT", text: "YouTube", href: "https://youtube.com/@jagoakademi" },
-  { label: "LI", text: "LinkedIn", href: "https://linkedin.com/company/jagoakademi" },
-  { label: "X", text: "Twitter/X", href: "https://twitter.com/jagoakademi" },
+  { label: "IG", text: "Instagram", href: "https://instagram.com/hazl.id" },
+  { label: "YT", text: "YouTube", href: "https://youtube.com/@hazl.id" },
+  { label: "LI", text: "LinkedIn", href: "https://linkedin.com/company/hazl-id" },
+  { label: "X", text: "Twitter/X", href: "https://twitter.com/hazl_id" },
 ];
 
 export function Footer() {

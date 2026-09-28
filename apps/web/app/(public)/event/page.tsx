@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { CalendarDays, MapPin, Mic2, Users, Radio, Building2, Layers3 } from "lucide-react";
-import { Section, SectionHeader } from "@/components/ui/Section";
+import { CalendarDays, MapPin, Mic2, Users, Radio, Building2, Layers3, Sparkles, ArrowRight } from "lucide-react";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Reveal } from "@/components/ui/Reveal";
 import { MediaPlaceholder } from "@/components/shared/MediaPlaceholder";
 import { getEventTypeLabel } from "@/lib/event-labels";
 import { listEvents, type EventSummary } from "@/lib/api/events";
 import { resolveEventListState } from "@/lib/events/listState";
 
 export const metadata: Metadata = {
-  title: "Event & Workshop — Hazl Academy",
+  title: "Webinar & Workshop Video AI | Hazl Academy",
   description:
-    "Webinar, workshop intensif, dan bootcamp langsung dari praktisi berpengalaman. Tingkatkan skill dan jaringanmu bersama komunitas Hazl Academy.",
+    "Ikuti webinar live interaktif, bedah prompt sinematik, dan workshop praktik video AI bersama kreator industri Indonesia.",
   openGraph: {
-    title: "Event & Workshop Hazl Academy",
+    title: "Webinar & Workshop Video AI | Hazl Academy",
     description:
-      "Bergabung dalam webinar, workshop, dan bootcamp yang dipandu oleh praktisi terbaik di industri.",
+      "Belajar video AI langsung dari kreator yang sudah menghasilkan karya komersial. Sesi live, tanya jawab langsung, dan bedah prompt nyata.",
     type: "website",
   },
 };
+
+export const dynamic = "force-dynamic";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("id-ID", {
@@ -49,13 +49,11 @@ function FeaturedHero({ event }: { event: EventSummary }) {
   const price = event.salePrice ? Number(event.salePrice) : Number(event.price);
 
   return (
-    <Reveal>
-      <Link
-        href={`/event/${event.slug}`}
-        className="group relative mb-10 flex min-h-[320px] items-end overflow-hidden rounded-2xl"
-        style={{ boxShadow: "var(--shadow-e3)" }}
-        aria-label={`Event unggulan: ${event.title}`}
-      >
+    <Link
+      href={`/event/${event.slug}`}
+      className="group relative mb-12 flex min-h-[340px] items-end overflow-hidden rounded-[32px] border border-[#E7E9EC] shadow-sm hover:shadow-md transition-all"
+      aria-label={`Event unggulan: ${event.title}`}
+    >
         {/* Background */}
         <div className="absolute inset-0">
           {event.coverUrl ? (
@@ -72,51 +70,48 @@ function FeaturedHero({ event }: { event: EventSummary }) {
             <div
               className="h-full w-full"
               style={{
-                background: "linear-gradient(135deg, var(--brand-cyan-strong) 0%, #7C3AED 100%)",
+                background: "linear-gradient(135deg, #0077A8 0%, #0D5B8A 60%, #CC0052 100%)",
               }}
             />
           )}
           {/* Gradient overlay */}
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)" }}
+            style={{ background: "linear-gradient(to top, rgba(22,24,29,0.92) 0%, rgba(22,24,29,0.4) 60%, transparent 100%)" }}
           />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 w-full p-6 md:p-8">
-          <div className="mb-3 flex flex-wrap gap-2">
-            <span className="badge" style={{ background: "var(--brand-cyan)", color: "var(--text-on-accent)", border: "none" }}>
-              ⭐ Unggulan
+        <div className="relative z-10 w-full p-6 sm:p-10">
+          <div className="mb-4 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#36BDF2] px-3 py-1 text-xs font-bold text-[#16181D]">
+              <Sparkles size={12} />
+              Unggulan
             </span>
-            <span className="badge" style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }}>
+            <span className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
               {getEventTypeLabel(event.type)}
             </span>
           </div>
-          <h2
-            className="mb-2 max-w-2xl text-2xl font-extrabold tracking-tight text-white md:text-3xl"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
+          <h2 className="mb-3 max-w-3xl text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
             {event.title}
           </h2>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-white/80">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/90">
             {event.speakerName && (
-              <span className="flex items-center gap-1.5">
-                <Mic2 size={14} aria-hidden="true" />
+              <span className="flex items-center gap-1.5 font-medium">
+                <Mic2 size={15} aria-hidden="true" className="text-[#36BDF2]" />
                 {event.speakerName}
               </span>
             )}
-            <span className="flex items-center gap-1.5">
-              <CalendarDays size={14} aria-hidden="true" />
+            <span className="flex items-center gap-1.5 font-medium">
+              <CalendarDays size={15} aria-hidden="true" className="text-[#36BDF2]" />
               {formatDate(event.startDate)}
             </span>
-            <span className="font-bold text-white">
+            <span className="font-extrabold text-[#36BDF2] text-base">
               {price === 0 ? "Gratis" : `Rp ${price.toLocaleString("id-ID")}`}
             </span>
           </div>
         </div>
       </Link>
-    </Reveal>
   );
 }
 
@@ -135,20 +130,11 @@ function FilterPill({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all"
-      style={
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs sm:text-sm font-bold transition-all ${
         active
-          ? {
-              background: "var(--brand-cyan)",
-              color: "var(--text-on-accent)",
-              boxShadow: "var(--shadow-e1)",
-            }
-          : {
-              background: "var(--surface-card)",
-              color: "var(--text-secondary)",
-              border: "1px solid var(--border-default)",
-            }
-      }
+          ? "bg-[#0077A8] text-white shadow-sm"
+          : "bg-white border border-[#E7E9EC] text-[#5B616E] hover:border-[#0077A8] hover:text-[#16181D]"
+      }`}
       aria-current={active ? "page" : undefined}
     >
       <Icon size={14} aria-hidden="true" />
@@ -158,88 +144,88 @@ function FilterPill({
 }
 
 // ─── Event card ────────────────────────────────────────────────────────────────
-function EventCard({ ev, delay }: { ev: EventSummary; delay: number }) {
+function EventCard({ ev }: { ev: EventSummary }) {
   const spotsLeft = ev.quota ? ev.quota - ev.totalSold : null;
   const isFull = spotsLeft !== null && spotsLeft <= 0;
 
   return (
-    <Reveal delay={delay}>
-      <Link
-        href={`/event/${ev.slug}`}
-        className="card group flex h-full flex-col overflow-hidden !p-0"
-      >
-        {/* Cover */}
-        <div className="relative aspect-video w-full overflow-hidden border-b border-[var(--border-subtle)]">
-          {ev.coverUrl ? (
-            <Image
-              src={ev.coverUrl}
-              alt={ev.title}
-              fill
-              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <MediaPlaceholder type="foto" ratio="16:9" showRatio={false} className="!rounded-none !border-0" />
+    <Link
+      href={`/event/${ev.slug}`}
+      className="group flex h-full flex-col overflow-hidden rounded-[26px] border border-[#E7E9EC] bg-white shadow-sm hover:shadow-md transition-all duration-300"
+    >
+      {/* Cover */}
+      <div className="relative aspect-video w-full overflow-hidden bg-[#E8F6FF]">
+        {ev.coverUrl ? (
+          <Image
+            src={ev.coverUrl}
+            alt={ev.title}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <MediaPlaceholder type="foto" ratio="16:9" showRatio={false} className="!rounded-none !border-0" />
+        )}
+        <span className="absolute top-3 left-3 rounded-full bg-white/95 backdrop-blur-sm px-3 py-1 text-[11px] font-bold text-[#16181D] shadow-sm flex items-center gap-1">
+          <Radio size={11} className="text-[#0077A8]" />
+          {getEventTypeLabel(ev.type)}
+        </span>
+        {ev.isFeatured && (
+          <span className="absolute top-3 right-3 rounded-full bg-[#FF2F86] text-white px-2.5 py-0.5 text-[10px] font-bold shadow-xs">
+            Unggulan
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col p-5 sm:p-6">
+        {/* Title */}
+        <h3 className="font-display text-base sm:text-lg font-extrabold leading-snug text-[#16181D] transition-colors line-clamp-2 group-hover:text-[#0077A8]">
+          {ev.title}
+        </h3>
+
+        {/* Meta */}
+        <div className="mt-3 flex flex-col gap-1.5 text-xs sm:text-[13px] text-[#5B616E]">
+          {ev.speakerName && (
+            <span className="inline-flex items-center gap-1.5">
+              <Mic2 size={13} aria-hidden="true" className="text-[#707880]" />
+              {ev.speakerName}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays size={13} aria-hidden="true" className="text-[#707880]" />
+            {formatDate(ev.startDate)}
+          </span>
+          {ev.type !== "online" && ev.venue && (
+            <span className="inline-flex items-center gap-1.5 line-clamp-1">
+              <MapPin size={13} aria-hidden="true" className="text-[#707880]" />
+              {ev.venue}
+            </span>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 p-5">
-          {/* Badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="badge badge-cyan">{getEventTypeLabel(ev.type)}</span>
-            {ev.isFeatured && <span className="badge badge-pink">Unggulan</span>}
-            {isFull && (
-              <span
-                className="badge"
-                style={{ background: "rgba(239,68,68,0.08)", color: "#B91C1C", border: "1px solid rgba(239,68,68,0.2)" }}
-              >
-                Penuh
-              </span>
-            )}
-          </div>
-
-          {/* Title */}
-          <h2
-            className="font-display text-base font-bold leading-snug text-[var(--text-primary)] transition-colors line-clamp-2 group-hover:text-[var(--brand-cyan-strong)]"
-          >
-            {ev.title}
-          </h2>
-
-          {/* Meta */}
-          <div className="flex flex-col gap-1.5 text-[13px] text-[var(--text-secondary)]">
-            {ev.speakerName && (
-              <span className="inline-flex items-center gap-1.5">
-                <Mic2 size={13} aria-hidden="true" className="text-[var(--text-muted)]" />
-                {ev.speakerName}
-              </span>
-            )}
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={13} aria-hidden="true" className="text-[var(--text-muted)]" />
-              {formatDate(ev.startDate)}
+        {/* Footer */}
+        <div className="mt-auto flex items-center justify-between border-t border-[#F0F2F5] pt-4 mt-4">
+          <span className="text-base font-black text-[#16181D]">
+            {formatPrice(ev.price, ev.salePrice)}
+          </span>
+          {isFull ? (
+            <span className="rounded-full bg-red-50 border border-red-200 px-3 py-1 text-xs font-bold text-red-600">
+              Penuh
             </span>
-            {ev.type !== "online" && ev.venue && (
-              <span className="inline-flex items-center gap-1.5 line-clamp-1">
-                <MapPin size={13} aria-hidden="true" className="text-[var(--text-muted)]" />
-                {ev.venue}
-              </span>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="mt-auto flex items-center justify-between border-t border-[var(--border-subtle)] pt-3">
-            <span className="text-sm font-bold text-[var(--brand-cyan-strong)]">
-              {formatPrice(ev.price, ev.salePrice)}
+          ) : spotsLeft !== null ? (
+            <span className="inline-flex items-center gap-1 text-xs text-[#707880]">
+              <Users size={12} aria-hidden="true" />
+              {spotsLeft} kursi tersisa
             </span>
-            {spotsLeft !== null && !isFull && (
-              <span className="inline-flex items-center gap-1 text-xs text-[var(--text-muted)]">
-                <Users size={12} aria-hidden="true" />
-                {spotsLeft} tersisa
-              </span>
-            )}
-          </div>
+          ) : (
+            <span className="inline-flex h-8 items-center gap-1 rounded-full bg-[#16181D] px-3 text-xs font-bold text-white group-hover:bg-[#0077A8] transition-colors">
+              <span>Daftar</span>
+              <ArrowRight size={12} />
+            </span>
+          )}
         </div>
-      </Link>
-    </Reveal>
+      </div>
+    </Link>
   );
 }
 
@@ -251,37 +237,34 @@ interface PageProps {
 export default async function EventListPage({ searchParams }: PageProps) {
   const { type } = await searchParams;
   const activeType = TYPES.find((t) => t.value === (type ?? "")) ? (type ?? "") : "";
-  // E12: one shared client for every event call (lib/api/events). A failed or
-  // unreachable API degrades to an empty catalog rather than breaking the render.
-  const result = await listEvents({ type: activeType || undefined, limit: 24 });
-  // A failed API and an empty catalogue are DIFFERENT things and must render
-  // differently — see lib/events/listState.ts for why this used to be wrong.
+  const result = await listEvents({ type: activeType || undefined, limit: 24 }, 0);
   const state = resolveEventListState(result);
   const events = state.kind === "list" ? state.events : [];
   const total = state.kind === "list" ? state.total : 0;
 
-  // BL-62a: the hero only renders on the unfiltered list, but the grid used to
-  // drop the featured event unconditionally — so on /event?type=online it
-  // disappeared from both. Only pull it out of the grid when the hero shows it.
   const heroEvent = activeType ? undefined : events.find((e) => e.isFeatured);
   const regularEvents = heroEvent ? events.filter((e) => e.id !== heroEvent.id) : events;
 
   return (
-    <div className="pt-16">
-      <Section>
-        <SectionHeader
-          eyebrow="Event & Workshop"
-          title={
-            <>
-              Belajar langsung dari <span className="text-accent">praktisi</span>
-            </>
-          }
-          lede="Webinar dan workshop intensif untuk mengasah keahlian bersama ahli di bidangnya."
-        />
+    <div className="w-full bg-[#FAFAFC] pt-24 pb-20">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-10 text-center max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C8E6FF] bg-[#E8F6FF] px-3.5 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#0077A8]">
+            <Sparkles size={13} className="text-[#0077A8]" />
+            Event &amp; Webinar
+          </span>
+          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#16181D]">
+            Belajar langsung dari <span className="text-[#0077A8]">kreator video AI</span>
+          </h1>
+          <p className="mt-4 text-base sm:text-lg leading-relaxed text-[#5B616E]">
+            Sesi live interaktif, bedah prompt nyata, dan workshop praktik intensif untuk mengasah keahlian video AI-mu.
+          </p>
+        </div>
 
         {/* Filter tabs */}
         <nav
-          className="mb-8 flex flex-wrap gap-2"
+          className="mb-8 flex flex-wrap justify-center gap-2"
           aria-label="Filter tipe event"
         >
           {TYPES.map((t) => (
@@ -300,15 +283,12 @@ export default async function EventListPage({ searchParams }: PageProps) {
 
         {/* Grid */}
         {state.kind === "error" ? (
-          // Distinct from "empty": we do not know what the catalogue holds, so
-          // we must not claim it is empty. Offering a retry is honest; a
-          // schedule announcement would not be.
           <EmptyState
             icon={CalendarDays}
             title="Gagal memuat daftar event"
-            description="Terjadi gangguan saat mengambil jadwal event. Silakan muat ulang halaman beberapa saat lagi."
+            description="Terjadi gangguan saat mengambil jadwal webinar. Silakan muat ulang halaman beberapa saat lagi."
             action={
-              <Link href="/event" className="btn btn-primary">
+              <Link href="/event" className="h-10 px-6 rounded-full bg-[#0077A8] text-white font-bold text-sm inline-flex items-center justify-center hover:bg-[#0D5B8A] transition-colors shadow-sm">
                 Muat Ulang
               </Link>
             }
@@ -321,13 +301,13 @@ export default async function EventListPage({ searchParams }: PageProps) {
                 ? `Belum ada event ${getEventTypeLabel(activeType)} mendatang`
                 : "Belum ada event mendatang"
             }
-            description="Jadwal event dan workshop berikutnya akan diumumkan di halaman ini. Sementara itu, materi kami tetap bisa dipelajari kapan saja."
+            description="Jadwal webinar dan workshop video AI berikutnya akan diumumkan di sini. Kamu tetap bisa belajar lewat katalog kelas kami."
             action={
               <div className="flex flex-wrap justify-center gap-3">
-                <Link href="/e-course" className="btn btn-primary">
-                  Lihat Katalog Kursus
+                <Link href="/e-course" className="h-10 px-6 rounded-full bg-[#0077A8] text-white font-bold text-sm inline-flex items-center justify-center hover:bg-[#0D5B8A] transition-colors shadow-sm">
+                  Lihat Katalog Kelas
                 </Link>
-                <Link href="/contact" className="btn btn-outline">
+                <Link href="/contact" className="h-10 px-6 rounded-full border border-[#E7E9EC] bg-white text-[#16181D] font-bold text-sm inline-flex items-center justify-center hover:bg-[#F6F7F9] transition-colors">
                   Hubungi Kami
                 </Link>
               </div>
@@ -335,17 +315,17 @@ export default async function EventListPage({ searchParams }: PageProps) {
           />
         ) : (
           <>
-            <p className="mb-6 text-sm text-[var(--text-muted)]">
-              {total} event tersedia
+            <p className="mb-6 text-sm text-[#707880]">
+              Menampilkan <span className="font-bold text-[#16181D]">{total} event</span> tersedia
             </p>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {regularEvents.map((ev, i) => (
-                <EventCard key={ev.id} ev={ev} delay={(i % 3) * 0.05} />
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {regularEvents.map((ev) => (
+                <EventCard key={ev.id} ev={ev} />
               ))}
             </div>
           </>
         )}
-      </Section>
+      </div>
     </div>
   );
 }

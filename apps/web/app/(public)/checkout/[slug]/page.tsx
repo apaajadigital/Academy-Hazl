@@ -838,7 +838,7 @@ function CheckoutContent() {
               <div className="border-t border-[#bfc7d0]/40 pt-3 flex items-start space-x-3.5">
                 <Lock size={20} className="text-[#005d85] mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-semibold text-[#1a1b21]">Standar Kepatuhan ISO/IEC 27001</h4>
+                  <h4 className="text-sm font-semibold text-[#1a1b21]">Data Terenkripsi TLS 1.3</h4>
                   <p className="text-xs text-[#707880] mt-0.5">
                     Infrastruktur data kami terisolasi dan teraudit secara berkala untuk menjaga kerahasiaan identitas siswa.
                   </p>
@@ -869,7 +869,7 @@ function CheckoutContent() {
           </nav>
           {/* Copyright & Security Label */}
           <p className="text-xs text-[#707880] text-center opacity-80 hover:opacity-100 transition-opacity">
-            © 2025–2026 Hazl Academy. Seluruh hak cipta dilindungi. Sistem Keamanan ISO/IEC 27001 Terverifikasi.
+            © 2025–2026 Hazl Academy. Seluruh hak cipta dilindungi.
           </p>
         </div>
       </footer>

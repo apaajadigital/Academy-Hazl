@@ -4,43 +4,40 @@ import { LandingTemplate } from "@/components/landing/LandingTemplate";
 import { FreeCourseCatalog } from "@/components/kelas-gratis/FreeCourseCatalog";
 
 export const metadata: Metadata = {
-  // Finding #6: root layout applies the "%s | Hazl Academy" template, so a
-  // manual "| Hazl Academy" here produced a doubled suffix. Use `absolute` to
-  // set the full title verbatim and bypass the template.
-  title: { absolute: "Kelas Gratis — Mulai Belajar Tanpa Biaya | Hazl Academy" },
+  title: { absolute: "Kelas Gratis Video AI — Mulai Belajar Tanpa Biaya | Hazl Academy" },
   description:
-    "Akses kelas gratis Hazl Academy sebagai langkah pertama upgrade skill-mu. Daftar sekarang, dapatkan akses materi pengantar, dan lanjutkan ke jenjang berikutnya.",
+    "Akses kelas gratis video AI di Hazl Academy. Kuasai dasar prompt sinematik, camera motion, dan workflow pembuatan video tanpa biaya.",
   alternates: { canonical: "/kelas-gratis" },
   openGraph: {
-    title: "Kelas Gratis — Hazl Academy",
-    description: "Mulai belajar tanpa biaya. Daftar dan dapatkan akses materi pengantar.",
+    title: "Kelas Gratis Video AI | Hazl Academy",
+    description: "Mulai belajar video AI tanpa biaya. Daftar sekarang dan pelajari dasar prompting sinematik.",
     type: "website",
     url: "/kelas-gratis",
   },
 };
 
 const benefits = [
-  { icon: Gift,        title: "Sepenuhnya gratis",          body: "Materi pengantar berkualitas tanpa biaya — cukup daftar untuk mulai." },
-  { icon: PlayCircle,  title: "Video terstruktur",           body: "Belajar bertahap lewat video yang mudah diikuti dari mana saja." },
-  { icon: FileText,    title: "Worksheet praktis",           body: "Latihan aplikatif agar ilmu langsung bisa kamu terapkan." },
-  { icon: BadgeCheck,  title: "Sertifikat penyelesaian",     body: "Selesaikan kelas dan dapatkan bukti belajarmu." },
-  { icon: Clock,       title: "Akses fleksibel",             body: "Belajar kapan saja sesuai ritmemu, tanpa jadwal mengikat." },
-  { icon: Sparkles,    title: "Langkah ke jenjang berikut",  body: "Rekomendasi jalur lanjutan yang pas setelah kelas gratis." },
+  { icon: Gift,        title: "Sepenuhnya gratis",          body: "Materi video AI pengantar berkualitas tanpa biaya — cukup daftar untuk mulai." },
+  { icon: PlayCircle,  title: "Praktik video nyata",        body: "Belajar bertahap dengan video beresolusi tinggi yang mudah dipahami." },
+  { icon: FileText,    title: "Template prompt siap pakai", body: "Copy-paste prompt teruji untuk langsung dicoba di Kling AI dan Midjourney." },
+  { icon: BadgeCheck,  title: "Sertifikat kelulusan",       body: "Selesaikan modul dan dapatkan sertifikat digital ber-QR instan." },
+  { icon: Clock,       title: "Akses selamanya",            body: "Belajar kapan saja tanpa batas waktu dan tanpa kartu kredit." },
+  { icon: Sparkles,    title: "Langkah ke jenjang kreator", body: "Rekomendasi kelas lanjutan untuk mulai jualan karya dan terima order video." },
 ];
 
 export default function FreeClassPage() {
   return (
     <>
-      {/* ── Lead-capture form (existing) ─────────────────────────────────── */}
+      {/* ── Lead-capture form ─────────────────────────────────────────────── */}
       <LandingTemplate
-        eyebrow="Kelas Gratis"
-        title={<>Coba dulu, <span className="text-accent">gratis</span></>}
-        lede="Rasakan cara belajar Hazl Academy lewat kelas gratis. Daftar sekarang untuk mendapatkan akses materi pengantar — dan temukan jalur belajar yang paling cocok untukmu."
+        eyebrow="Kelas Gratis Video AI"
+        title={<>Coba dulu, <span className="text-[#0077A8]">Rp0 tanpa komitmen</span></>}
+        lede="Rasakan cara belajar di Hazl Academy. Dapatkan akses materi pengantar prompt, tips kamera sinematik, dan template awal untuk karyamu."
         benefits={benefits}
         formSource="free-class"
         formTitle="Daftar kelas gratis"
-        formLede="Isi data singkat, kami kirim akses & info kelasnya."
-        submitLabel="Daftar Gratis"
+        formLede="Isi data singkat, kami kirim akses kelas langsung ke akunmu."
+        submitLabel="Mulai Belajar Gratis"
       />
 
       {/* ── Live free course catalog from API ────────────────────────────── */}

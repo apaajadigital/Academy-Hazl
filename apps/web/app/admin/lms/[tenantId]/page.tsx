@@ -307,7 +307,7 @@ export default function AdminTenantDetailPage() {
 
   const stats: { label: string; value: number; icon: typeof Building2; color: string }[] = [
     { label: "Batch", value: tenant._count?.batches ?? 0, icon: Layers, color: "#0077A8" },
-    { label: "Kursus", value: tenant._count?.courses ?? 0, icon: Building2, color: "#7C3AED" },
+    { label: "Kursus", value: tenant._count?.courses ?? 0, icon: Building2, color: "#FF2F86" },
     { label: "Total Enrolled", value: tenant._count?.enrollments ?? 0, icon: BarChart3, color: "#16A34A" },
     { label: "Undangan", value: tenant._count?.invites ?? 0, icon: Users, color: "#B45309" },
   ];

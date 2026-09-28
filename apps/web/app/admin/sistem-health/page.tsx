@@ -55,12 +55,12 @@ const HorizontalBarChart = dynamic(() => import("./Charts").then((m) => m.Horizo
 
 const DB_LABELS: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   users: { label: "Users", icon: Users, color: "#0077A8" },
-  courses: { label: "Kursus", icon: BookOpen, color: "#7C3AED" },
+  courses: { label: "Kursus", icon: BookOpen, color: "#FF2F86" },
   orders: { label: "Orders", icon: CreditCard, color: "#059669" },
   enrollments: { label: "Enrollment", icon: GraduationCap, color: "#DC2626" },
   reviews: { label: "Review", icon: Star, color: "#F59E0B" },
   blogs: { label: "Blog", icon: Newspaper, color: "#EC4899" },
-  events: { label: "Event", icon: CalendarDays, color: "#8B5CF6" },
+  events: { label: "Event", icon: CalendarDays, color: "#D97706" },
   ebooks: { label: "E-Book", icon: BookMarked, color: "#0891B2" },
   leads: { label: "Leads", icon: ClipboardList, color: "#64748B" },
   payouts: { label: "Payouts", icon: Wallet, color: "#059669" },
@@ -117,7 +117,7 @@ export default function SystemHealthPage() {
     { label: "Total Users", value: data.users.total.toLocaleString("id-ID"), icon: Users, color: "#0077A8", bg: "#E8F4F9" },
     { label: "Active (24h)", value: data.users.activeToday.toLocaleString("id-ID"), icon: Activity, color: "#059669", bg: "#D1FAE5" },
     { label: "Total Revenue", value: `Rp ${data.revenue.total.toLocaleString("id-ID")}`, icon: Wallet, color: "#DC2626", bg: "#FEE2E2" },
-    { label: "Total Orders", value: data.orders.total.toLocaleString("id-ID"), icon: ShoppingBag, color: "#7C3AED", bg: "#EDE9FE" },
+    { label: "Total Orders", value: data.orders.total.toLocaleString("id-ID"), icon: ShoppingBag, color: "#FF2F86", bg: "rgba(255,47,134,0.10)" },
     { label: "Enrollments", value: data.enrollments.total.toLocaleString("id-ID"), icon: GraduationCap, color: "#059669", bg: "#D1FAE5" },
     { label: "Top Rating", value: data.topCourses[0] ? data.topCourses[0].rating.toFixed(1) : "-", icon: Trophy, color: "#F59E0B", bg: "#FEF3C7" },
   ];
@@ -159,8 +159,8 @@ export default function SystemHealthPage() {
         <AdminPanel title="Tren Revenue (12 Bulan)" icon={TrendingUp} iconClassName="text-accent-cyan-strong" bodyClassName="p-6">
             <LineChart data={data.revenue.chart} valueKey="amount" color="#0077A8" gradientId="revGrad" prefix="Rp " />
           </AdminPanel>
-        <AdminPanel title="Pertumbuhan User (12 Bulan)" icon={Users} iconClassName="text-accent-purple" bodyClassName="p-6">
-            <BarChart data={data.users.chart} valueKey="count" color="#7C3AED" />
+        <AdminPanel title="Pertumbuhan User (12 Bulan)" icon={Users} iconClassName="text-accent-pink" bodyClassName="p-6">
+            <BarChart data={data.users.chart} valueKey="count" color="#FF2F86" />
           </AdminPanel>
       </div>
 
@@ -222,7 +222,7 @@ export default function SystemHealthPage() {
         .sh-hbar-title { font-size: 13px; font-weight: 600; color: #1D1D1F; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sh-hbar-trainer { font-size: 11px; color: #9CA3AF; }
         .sh-hbar-bar-wrap { width: 200px; flex-shrink: 0; position: relative; }
-        .sh-hbar-bar { height: 22px; border-radius: 6px; background: linear-gradient(100deg, #0077A8 0%, #7C3AED 55%, #CC0052 100%); min-width: 8px; transition: width 0.5s ease; }
+        .sh-hbar-bar { height: 22px; border-radius: 6px; background: linear-gradient(100deg, var(--brand-cyan-strong) 0%, var(--brand-pink-strong) 100%); min-width: 8px; transition: width 0.5s ease; }
         .sh-hbar-val { position: absolute; right: 0; top: 3px; font-size: 11px; font-weight: 600; color: #6E6E73; padding-left: 8px; }
         .sh-hbar-rating { font-size: 12px; color: #F59E0B; font-weight: 600; flex-shrink: 0; width: 60px; text-align: right; }
 

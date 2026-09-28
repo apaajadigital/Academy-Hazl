@@ -1,7 +1,7 @@
 /**
  * @file lib/affiliate/referral.ts
  * @description Affiliate referral attribution (H3). Affiliate links look like
- *   `https://jagoakademi.com/?ref=<code>`. We capture that code on landing and
+ *   `https://skill.hazl.id/?ref=<code>`. We capture that code on landing and
  *   persist it until checkout, where it is sent to the API so the commission is
  *   attributed. Without this the entire affiliate earnings loop is dead.
  */

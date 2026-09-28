@@ -19,14 +19,22 @@ import {
 } from "@/components/ui";
 import { EmptyState } from "@/components/ui/EmptyState";
 
+/**
+ * Mirrors the Prisma `Review` row returned by GET /api/admin/reviews (which
+ * only includes `user`). `status` is "published" | "hidden" — the API's PATCH
+ * still takes `isApproved` and maps it to `status`. A previous shape with
+ * `isApproved`/`comment`/`course` made every real review render as
+ * "Menunggu" with no text and a total of 0.
+ */
 type Review = {
   id: string;
   rating: number;
-  comment: string | null;
-  isApproved: boolean;
+  content: string | null;
+  status: string;
+  itemType: string;
+  itemId: string;
   createdAt: string;
   user: { name: string; email: string };
-  course: { title: string } | null;
 };
 
 // Defensive typing: backend fields may lag behind (category/outcome ship in parallel).
@@ -69,7 +77,12 @@ export default function AdminReviewPage() {
     fetch(`/api/admin/reviews?${params}`, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((body) => {
-        if (body.success) { setReviews(body.data?.reviews ?? body.data ?? []); setTotal(body.data?.total ?? 0); }
+        if (body.success) {
+          const rows: Review[] = Array.isArray(body.data) ? body.data : [];
+          setReviews(rows);
+          // Total lives in the envelope `meta`, not inside `data`.
+          setTotal(typeof body.meta?.total === "number" ? body.meta.total : rows.length);
+        }
       })
       .finally(() => setLoading(false));
   }
@@ -294,33 +307,36 @@ export default function AdminReviewPage() {
         <EmptyState icon={Star} title="Tidak ada review ditemukan" />
       ) : (
         <div className="flex flex-col gap-3">
-          {reviews.map((r) => (
-            <Card key={r.id} className={`p-4 ${!r.isApproved ? "border-l-[3px] border-l-amber-500" : ""}`}>
+          {reviews.map((r) => {
+            const isApproved = r.status === "published";
+            return (
+            <Card key={r.id} className={`p-4 ${!isApproved ? "border-l-[3px] border-l-amber-500" : ""}`}>
               <div className="mb-2 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="bg-brand-gradient flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold text-white">{r.user.name.slice(0, 2).toUpperCase()}</div>
                   <div>
                     <p className="text-sm font-bold text-text-primary">{r.user.name}</p>
-                    <p className="text-xs text-text-secondary">{r.course?.title ?? "—"}</p>
+                    <p className="text-xs text-text-secondary">{r.itemType} · <span className="font-mono">{r.itemId.slice(0, 8)}</span></p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-amber-400">{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}</div>
+                  <div className="text-sm text-amber-400">{"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}</div>
                   <p className="mt-0.5 text-xs text-text-muted">{new Date(r.createdAt).toLocaleDateString("id-ID")}</p>
                 </div>
               </div>
-              {r.comment && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{r.comment}</p>}
+              {r.content && <p className="mb-3 rounded-lg bg-surface-sunken px-4 py-2 text-sm leading-relaxed text-text-primary">{r.content}</p>}
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={r.isApproved ? "success" : "warning"} className="mr-auto">
-                  {r.isApproved ? "✓ Disetujui" : "⏳ Menunggu"}
+                <Badge variant={isApproved ? "success" : "warning"} className="mr-auto">
+                  {isApproved ? "✓ Disetujui" : "⏳ Menunggu"}
                 </Badge>
-                <TableActionButton variant={r.isApproved ? "warn" : "ok"} onClick={() => toggleApprove(r.id, r.isApproved)}>
-                  {r.isApproved ? "Cabut" : "Setujui"}
+                <TableActionButton variant={isApproved ? "warn" : "ok"} onClick={() => toggleApprove(r.id, isApproved)}>
+                  {isApproved ? "Cabut" : "Setujui"}
                 </TableActionButton>
                 <TableActionButton variant="danger" leftIcon={<Trash2 size={12} />} onClick={() => deleteReview(r.id)}>Hapus</TableActionButton>
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -4,22 +4,20 @@ import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
 
 export const metadata: Metadata = {
-  title: "Cerita Alumni — Kisah Nyata Peserta Hazl Academy",
+  title: "Cerita Alumni — Kisah Nyata Lulusan Hazl Academy",
   description:
-    "Cerita nyata dari alumni Hazl Academy: perjalanan belajar, capaian karier, dan pengalaman mereka mengikuti program kami.",
+    "Cerita otentik dari alumni Hazl Academy: transformasi keahlian Video AI, capaian karier agensi, dan pengalaman produksi komersial mereka.",
   alternates: { canonical: "/alumni" },
   openGraph: {
     title: "Cerita Alumni — Hazl Academy",
     description:
-      "Kisah nyata alumni Hazl Academy: perjalanan belajar dan capaian karier mereka.",
+      "Kisah nyata alumni Hazl Academy: transformasi keahlian Video AI dan capaian karier industri kreatif.",
     type: "website",
     url: "/alumni",
   },
 };
 
 export default function AlumniLayout({ children }: { children: ReactNode }) {
-  // Gated behind the Alumni feature flag — while OFF the route 404s,
-  // matching how other unshipped feature pages behave (see kelas-privat gating).
   if (!features.alumni) notFound();
   return <>{children}</>;
 }

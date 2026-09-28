@@ -256,7 +256,7 @@ export default function AfiliasiPage() {
     { label: "Total Klik", value: profile.totalClicks.toLocaleString("id-ID"), Icon: MousePointerClick, iconColor: "#0077A8", iconBg: "rgba(0,119,168,0.10)" },
     { label: "Konversi", value: profile.totalConversions.toLocaleString("id-ID"), Icon: Target, iconColor: "#D97706", iconBg: "rgba(217,119,6,0.10)" },
     { label: "Total Komisi", value: rp(profile.totalEarnings), Icon: Wallet, iconColor: "#16A34A", iconBg: "rgba(22,163,74,0.10)" },
-    { label: "Saldo Tersedia", value: rp(profile.balance), Icon: PiggyBank, iconColor: "#7C3AED", iconBg: "rgba(124,58,237,0.10)" },
+    { label: "Saldo Tersedia", value: rp(profile.balance), Icon: PiggyBank, iconColor: "#FF2F86", iconBg: "rgba(255,47,134,0.10)" },
   ];
 
   return (

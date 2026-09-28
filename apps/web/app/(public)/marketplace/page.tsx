@@ -246,21 +246,18 @@ function MarketplaceCatalog() {
   ) as string[];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12">
+    <div className="mx-auto max-w-6xl px-4 pt-24 pb-16">
       
       {/* Section Header */}
       <div className="mb-10 text-center sm:text-left">
-        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.15)", color: "var(--brand-cyan)" }}>
-          <ShoppingBag size={12} /> Marketplace
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold" style={{ background: "rgba(0,119,168,0.08)", border: "1px solid rgba(0,119,168,0.2)", color: "var(--brand-cyan-strong)" }}>
+          <ShoppingBag size={12} /> Marketplace &amp; Aset
         </span>
-        {/* Copy must describe only what is actually purchasable here (EPIC 8: no
-            fictional inventory). The catalog lists e-books; the earlier headline
-            promised webinar recordings and source-code templates that do not exist. */}
-        <h1 className="mt-4 mb-3 text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
-          Koleksi Materi <span className="text-accent" style={{ background: "linear-gradient(135deg, var(--brand-cyan) 0%, var(--brand-pink) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Digital</span>
+        <h1 className="mt-4 mb-3 text-3xl md:text-4xl font-extrabold tracking-tight text-[var(--text-primary)] font-display">
+          Koleksi Materi &amp; <span className="text-accent-cyan-strong">Aset Digital</span>
         </h1>
         <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
-          Etalase materi digital Hazl Academy — saat ini berisi koleksi e-book dari para praktisi. Beli sekali, unduh langsung, akses selamanya.
+          Etalase aset dan panduan digital Hazl Academy — berisi e-book teknis, panduan workflow generative AI, dan modul referensi praktisi. Beli sekali, unduh langsung, akses selamanya.
         </p>
       </div>
 
@@ -322,7 +319,7 @@ function MarketplaceCatalog() {
               className="rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border"
               style={
                 activeCategory === ""
-                  ? { background: "var(--brand-cyan)", color: "#fff", borderColor: "var(--brand-cyan)" }
+                  ? { background: "var(--brand-cyan-strong)", color: "#fff", borderColor: "var(--brand-cyan-strong)" }
                   : { background: "var(--surface-card)", color: "var(--text-secondary)", borderColor: "var(--border-default)" }
               }
             >
@@ -336,7 +333,7 @@ function MarketplaceCatalog() {
                 className="rounded-full px-3.5 py-1.5 text-xs font-bold transition-all border"
                 style={
                   activeCategory === cat
-                    ? { background: "var(--brand-cyan)", color: "#fff", borderColor: "var(--brand-cyan)" }
+                    ? { background: "var(--brand-cyan-strong)", color: "#fff", borderColor: "var(--brand-cyan-strong)" }
                     : { background: "var(--surface-card)", color: "var(--text-secondary)", borderColor: "var(--border-default)" }
                 }
               >

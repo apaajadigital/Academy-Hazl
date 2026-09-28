@@ -33,7 +33,7 @@ type User = {
   name: string;
   email: string;
   isVerified: boolean;
-  provider: string;
+  authProvider: string;
   createdAt: string;
   // GET /api/admin/users returns roles as { role: string }, not a nested object.
   roles: { role: string }[];
@@ -270,7 +270,7 @@ export default function AdminPenggunaPage() {
                       </TD>
                       <TD>
                         <span className="rounded-md bg-surface-sunken px-2 py-0.5 text-xs text-text-secondary">
-                          {user.provider ?? "email"}
+                          {user.authProvider ?? "email"}
                         </span>
                       </TD>
                       <TD>
