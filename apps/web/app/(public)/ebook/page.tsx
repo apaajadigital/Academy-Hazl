@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import Link from "next/link";
 import Image from "next/image";
 import { BookOpen, Sparkles, ArrowRight, DownloadCloud, FileText } from "lucide-react";
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
   description:
     "Koleksi prompt library, cheat sheet terminologi kamera, buku panduan ComfyUI, dan rate card kreator video AI Indonesia.",
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "E-Book & Prompt Library Video AI | Hazl Academy",
     description:
       "Template prompt siap pakai dan buku panduan teknis dari kreator video AI Indonesia.",

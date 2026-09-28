@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import Link from "next/link";
 import {
   Users, BarChart3, Award, Building2, ShieldCheck,
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
     "Digitalkan program pelatihan kreatif karyawan dengan LMS B2B Hazl Academy. Kelola batch, tugaskan kursus Video AI, pantau progres tim, dan terbitkan sertifikat ber-branding perusahaan Anda.",
   alternates: { canonical: "/clients" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "LMS B2B untuk Perusahaan — Hazl Academy",
     description:
       "Platform pelatihan Video AI karyawan terpusat — workspace eksklusif, laporan real-time, sertifikasi otomatis.",

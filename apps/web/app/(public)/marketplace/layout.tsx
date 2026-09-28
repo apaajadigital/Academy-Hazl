@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
@@ -11,6 +12,7 @@ export const metadata: Metadata = {
   description:
     "Koleksi workflow ComfyUI, prompt bundle masterclass, checkpoint LoRA, dan modul aset generative video dari creator Hazl Academy. Beli sekali, akses selamanya.",
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Marketplace Aset & Workflow Video AI — Hazl Academy",
     description:
       "Workflow ComfyUI, prompt bundle masterclass, dan aset generative video dari praktisi AI terpercaya.",

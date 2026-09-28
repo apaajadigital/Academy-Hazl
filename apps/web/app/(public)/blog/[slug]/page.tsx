@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import BlogArticleClient from "./BlogArticleClient";
 import { API_BASE as API } from "@/lib/api/base";
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description,
       type: "article",
-      ...(post.coverUrl ? { images: [{ url: post.coverUrl }] } : {}),
+      images: post.coverUrl ? [{ url: post.coverUrl }] : OG_IMAGE_FALLBACK.images,
     },
   };
 }

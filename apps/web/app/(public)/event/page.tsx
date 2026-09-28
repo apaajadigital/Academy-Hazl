@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import Link from "next/link";
 import Image from "next/image";
 import { CalendarDays, MapPin, Mic2, Users, Radio, Building2, Layers3, Sparkles, ArrowRight } from "lucide-react";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
   description:
     "Ikuti webinar live interaktif, bedah prompt sinematik, dan workshop praktik video AI bersama kreator industri Indonesia.",
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Webinar & Workshop Video AI | Hazl Academy",
     description:
       "Belajar video AI langsung dari kreator yang sudah menghasilkan karya komersial. Sesi live, tanya jawab langsung, dan bedah prompt nyata.",

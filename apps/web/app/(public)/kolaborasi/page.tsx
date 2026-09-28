@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { Users, Handshake, Building2, CalendarDays, Globe, TrendingUp } from "lucide-react";
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     "Bergabunglah sebagai mitra Hazl Academy. Kolaborasi terbuka untuk studio produksi, creative agency, instruktur Video AI, institusi pendidikan, dan korporat.",
   alternates: { canonical: "/kolaborasi" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Kolaborasi dengan Hazl Academy",
     description: "Terbuka untuk studio, kreator Video AI, komunitas visual, dan korporat. Daftarkan minat kemitraan Anda.",
     type: "website",

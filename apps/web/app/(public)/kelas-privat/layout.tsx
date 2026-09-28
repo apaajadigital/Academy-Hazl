@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { features } from "@/lib/features";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     "Program belajar intensif Hazl Academy dengan pendampingan mentor: grup mentoring privat, sesi live terjadwal, dan kurikulum yang disesuaikan dengan tujuanmu.",
   alternates: { canonical: "/kelas-privat" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Private Class — Hazl Academy",
     description:
       "Belajar intensif didampingi mentor: grup mentoring privat, sesi live, dan kurikulum terarah.",

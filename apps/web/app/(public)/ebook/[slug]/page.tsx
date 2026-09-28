@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -59,7 +60,7 @@ export async function generateMetadata({
       description,
       type: "website",
       url: `/ebook/${book.slug}`,
-      ...(book.coverUrl ? { images: [{ url: book.coverUrl }] } : {}),
+      images: book.coverUrl ? [{ url: book.coverUrl }] : OG_IMAGE_FALLBACK.images,
     },
   };
 }

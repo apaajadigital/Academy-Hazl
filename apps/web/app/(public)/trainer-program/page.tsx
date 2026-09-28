@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { GraduationCap, BadgeCheck, Presentation, Wallet, Users, Rocket } from "lucide-react";
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     "Jadilah mentor dan kreator kursus Video AI resmi di Hazl Academy: bangun reputasi profesional, monetisasi keahlian generative AI, dan ajar ribuan talenta kreatif.",
   alternates: { canonical: "/trainer-program" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Program Mentor Video AI — Hazl Academy",
     description: "Jadilah mentor terverifikasi: personal brand, bagi hasil transparan, dan jangkauan audiens kreatif luas.",
     type: "website",

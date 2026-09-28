@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import EventDetailClient from "./EventDetailClient";
 import { API_BASE as API } from "@/lib/api/base";
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: event.title,
       description,
       type: "website",
-      ...(event.coverUrl ? { images: [{ url: event.coverUrl }] } : {}),
+      images: event.coverUrl ? [{ url: event.coverUrl }] : OG_IMAGE_FALLBACK.images,
     },
   };
 }

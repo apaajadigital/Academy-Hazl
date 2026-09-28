@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { Wallet, Link2, TrendingUp, Users, ShieldCheck, Headphones } from "lucide-react";
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
     "Bergabung dengan Program Afiliasi Hazl Academy. Bagikan link referal kursus Video AI, rekomendasikan tools, dan dapatkan komisi transparan dari setiap transaksi.",
   alternates: { canonical: "/afiliasi" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Program Afiliasi Kreator — Hazl Academy",
     description: "Bagikan link referal Video AI, ajak kreator belajar, dan raih komisi berkelanjutan.",
     type: "website",

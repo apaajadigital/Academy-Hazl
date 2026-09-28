@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { OG_IMAGE_FALLBACK } from "@/lib/seo";
 import { Gift, PlayCircle, FileText, BadgeCheck, Clock, Sparkles } from "lucide-react";
 import { LandingTemplate } from "@/components/landing/LandingTemplate";
 import { FreeCourseCatalog } from "@/components/kelas-gratis/FreeCourseCatalog";
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
     "Akses kelas gratis video AI di Hazl Academy. Kuasai dasar prompt sinematik, camera motion, dan workflow pembuatan video tanpa biaya.",
   alternates: { canonical: "/kelas-gratis" },
   openGraph: {
+    ...OG_IMAGE_FALLBACK,
     title: "Kelas Gratis Video AI | Hazl Academy",
     description: "Mulai belajar video AI tanpa biaya. Daftar sekarang dan pelajari dasar prompting sinematik.",
     type: "website",
