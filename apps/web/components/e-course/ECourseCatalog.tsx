@@ -227,7 +227,7 @@ export function ECourseCatalog() {
                   onClick={() => handleLevel(l.value)}
                   className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${
                     isActive
-                      ? "bg-[#0077A8] text-white shadow-sm"
+                      ? "bg-[#25252A] text-white shadow-sm"
                       : "bg-[#F3F3FA] text-[#5B616E] hover:bg-[#E8E7EF] hover:text-[#16181D]"
                   }`}
                   aria-pressed={isActive}
@@ -314,7 +314,7 @@ export function ECourseCatalog() {
                 return (
                   <ProgramCard
                     key={course.id}
-                    href={`/checkout/${course.slug}`}
+                    href={`/e-course/kelas/${course.slug}`}
                     title={course.title}
                     description={
                       course.trainer?.name
