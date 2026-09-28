@@ -48,8 +48,9 @@ type CourseDetail = {
   totalEnrolled: number;
   avgRating?: number | string;
   totalReviews: number;
-  price: number;
-  salePrice?: number | null;
+  /** Prisma Decimal serializes to a numeric string over JSON, not a number. */
+  price: number | string;
+  salePrice?: number | string | null;
   category?: { name?: string } | null;
   trainer?: { name?: string; avatarUrl?: string | null } | null;
   sections: Section[];
@@ -172,7 +173,9 @@ export default function CourseDetailPage() {
 
   const totalVideos = course.sections.reduce((n, s) => n + s.lessons.length, 0);
   const hours = course.totalDuration > 0 ? Math.round(course.totalDuration / 60) : 0;
-  const price = course.salePrice ?? course.price;
+  const basePrice = Number(course.price);
+  const salePrice = course.salePrice != null ? Number(course.salePrice) : null;
+  const price = salePrice ?? basePrice;
   const rating = Number(course.avgRating ?? 0);
 
   return (
@@ -280,9 +283,9 @@ export default function CourseDetailPage() {
               <div className="p-5 sm:p-6">
                 <div className="flex items-end gap-2">
                   <p className="text-2xl font-black text-[#16181D]">{formatRp(price)}</p>
-                  {course.salePrice != null && course.salePrice < course.price && (
+                  {salePrice != null && salePrice < basePrice && (
                     <p className="text-sm text-[#9CA3AF] line-through mb-0.5">
-                      {formatRp(course.price)}
+                      {formatRp(basePrice)}
                     </p>
                   )}
                 </div>
